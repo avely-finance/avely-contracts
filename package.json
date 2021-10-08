@@ -1,0 +1,12 @@
+{
+  "name": "zillica-dapp-template",
+  "version": "1.0.0",
+  "repository": "https://github.com/maxhiker/zillica-dapp-template.git",
+  "private": true,
+  "scripts": {
+    "typecheck:all": "echo NOT IMPLEMENTED",
+    "typecheck:single": "docker run -v $(readlink --canonicalize ./contracts/):/mnt --rm zilliqa/scilla:latest bin/scilla-checker -gaslimit 10000 -libdir src/stdlib",
+    "typecheck:helloWorld": "yarn run typecheck:single /mnt/helloWorld.scilla"
+  },
+  "packageManager": "yarn@3.0.2"
+}
