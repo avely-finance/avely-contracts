@@ -1,0 +1,8 @@
+  {
+    "networks": [
+      {"http://localhost:5555" : "Local isolated server"},
+      {"https://api.zilliqa.com" : "Mainnet"},
+      {"https://dev-api.zilliqa.com" : "Testnet"},
+      {"https://zilliqa-isolated-server.zilliqa.com" : "Isolated Server"}
+    ]
+  }

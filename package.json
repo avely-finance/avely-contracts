@@ -1,0 +1,20 @@
+{
+  "name": "zillica-dapp-template",
+  "version": "1.0.0",
+  "repository": "https://github.com/maxhiker/zillica-dapp-template.git",
+  "private": true,
+  "scripts": {
+    "start:devex": "docker start devex || docker run --name devex -d -p 5557:80 zilliqa/devex:latest; docker cp ./devex/networks.json devex:/usr/share/nginx/html/networks.json",
+    "start:isolatedserver": "docker start isolatedserver || docker run -d -p 5555:5555 --name isolatedserver zilliqa/zilliqa-isolated-server",
+    "typecheck:all": "echo NOT IMPLEMENTED",
+    "typecheck:single": "docker run -v $(readlink --canonicalize ./contracts/):/mnt --rm zilliqa/scilla:latest bin/scilla-checker -gaslimit 10000 -libdir src/stdlib",
+    "typecheck:helloWorld": "yarn run typecheck:single /mnt/helloWorld.scilla"
+  },
+  "packageManager": "yarn@3.0.2",
+  "dependencies": {
+    "@zilliqa-js/util": "^3.3.0",
+    "@zilliqa-js/zilliqa": "^3.3.0",
+    "bn.js": "^5.2.0",
+    "tslib": "^2.3.1"
+  }
+}
