@@ -13,6 +13,7 @@ x-dapp: &dapp
     - ./:/dapp:cached
     - ${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}
     - ~/.ssh:/root/.ssh
+    - ~/.bash_history:/root/.bash_history
   environment: &environment
     ZILLIQA_HOST: 'http://zilliqa_server:5555'
     EDITOR: vi
@@ -33,8 +34,11 @@ services:
     ports:
       - '5555:5555'
 
-  explorer:
+  devex:
     image: zilliqa/devex
     ports:
-      - '5557:5557'
-
+      - '5557:80'
+    volumes:
+      - ./devex/networks.json:/usr/share/nginx/html/networks.json
+    depends_on:
+      - zilliqa_server
