@@ -11,7 +11,7 @@ const zilliqa = new Zilliqa('http://localhost:5555');
 // You can manually pack the bytes according to chain id and msg version.
 // For more information: https://apidocs.zilliqa.com/?shell#getnetworkid
 
-const chainId = 2222;//333; // chainId of the developer testnet
+const chainId = 222;//333; // chainId of the developer testnet
 const msgVersion = 1; // current msgVersion
 const VERSION = bytes.pack(chainId, msgVersion);
 
@@ -21,12 +21,13 @@ const privateKey =
 
 zilliqa.wallet.addByPrivateKey(privateKey);
 
+const testRcptAddress = '0xA54E49719267E8312510D7b78598ceF16ff127CE';
+
 const address = getAddressFromPrivateKey(privateKey);
 console.log(`My account address is: ${address}`);
 console.log(`My account bech32 address is: ${toBech32Address(address)}`);
 
 async function testBlockchain() {
-  return;
   try {
     // Get Balance
     const balance = await zilliqa.blockchain.getBalance(address);
@@ -53,7 +54,7 @@ async function testBlockchain() {
       zilliqa.transactions.new(
         {
           version: VERSION,
-          toAddr: '0xA54E49719267E8312510D7b78598ceF16ff127CE',
+          toAddr: testRcptAddress,
           amount: new BN(units.toQa('1', units.Units.Zil)), // Sending an amount in Zil (1) and converting the amount to Qa
           gasPrice: myGasPrice, // Minimum gasPrice veries. Check the `GetMinimumGasPrice` on the blockchain
           gasLimit: Long.fromNumber(50),
@@ -64,6 +65,7 @@ async function testBlockchain() {
 
     console.log(`The transaction status is:`);
     console.log(tx.receipt);
+
 
     // Deploy a contract
     console.log(`Deploying a new contract....`);
@@ -149,6 +151,7 @@ async function testBlockchain() {
     // Get the deployed contract address
     console.log('The contract address is:');
     console.log(hello.address);
+
     //Following line added to fix issue https://github.com/Zilliqa/Zilliqa-JavaScript-Library/issues/168
     const deployedContract = zilliqa.contracts.at(hello.address);
 

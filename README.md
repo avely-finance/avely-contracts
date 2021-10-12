@@ -15,15 +15,20 @@
 * `yarn run typecheck:helloWorld` to typecheck contracts/helloWorld.scilla contract
 * `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
 
-## How to query local isolated server
-* through Devex web-interface (block explorer) http://localhost:5555
-* through cli RPC-client [zli is a command line tool based on the Zilliqa Golang SDK](https://github.com/Zilliqa/zli)
+## How to deploy and test contracts on local blockchain
+1. [**Zilliqa-JS SDK**](https://github.com/Zilliqa/Zilliqa-JavaScript-Library):
+    run test script from this repo `yarn node tests/basic.ts`
+2. to be continued...
+
+## Other ways to query local isolated server
+* through **Devex** web-interface (block explorer) http://localhost:5555
+* through **zli** command-line utility [zli is a command line tool based on the Zilliqa Golang SDK](https://github.com/Zilliqa/zli)
     ```
     $ zli rpc balance --api http://localhost:5555 -a d90f2e538ce0df89c8273cad3b63ec44a3c4ed82
     cannot load wallet =  open /home/mx/.zilliqa: no such file or directory
     {"balance":"90000000000000000000000","nonce":0}
     ```
-* REST-client like [Insomnia][https://insomnia.rest]
+* any **REST-client** like [Insomnia](https://insomnia.rest)
 ```
 > POST / HTTP/1.1
 > Host: localhost:5555
@@ -50,7 +55,6 @@
   }
 }
 ```
-* javascript
 
 ## Predefined zilliqa accounts
 https://github.com/Zilliqa/zilliqa-isolated-server/blob/master/boot.json
