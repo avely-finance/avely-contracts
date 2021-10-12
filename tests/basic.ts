@@ -1,3 +1,4 @@
+const { env } = require('process');
 const { BN, Long, bytes, units } = require('@zilliqa-js/util');
 const { Zilliqa } = require('@zilliqa-js/zilliqa');
 const {
@@ -5,7 +6,8 @@ const {
   getAddressFromPrivateKey,
 } = require('@zilliqa-js/crypto');
 
-const zilliqa = new Zilliqa('http://localhost:5555');
+const zilliqHost = env.ZILLIQA_HOST || 'http://localhost:5555'
+const zilliqa = new Zilliqa(zilliqHost);
 
 // These are set by the core protocol, and may vary per-chain.
 // You can manually pack the bytes according to chain id and msg version.
