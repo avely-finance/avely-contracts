@@ -1,0 +1,40 @@
+version: "3"
+x-app: &app
+  build:
+    context: .
+    dockerfile: ./docker/Dockerfile
+  image: avely-dev:0.0.2
+
+x-dapp: &dapp
+  <<: *app
+  stdin_open: true
+  tty: true
+  volumes: &volumes
+    - ./:/dapp:cached
+    - ${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}
+    - ~/.ssh:/root/.ssh
+  environment: &environment
+    ZILLIQA_HOST: 'http://zilliqa_server:5555'
+    EDITOR: vi
+  depends_on:
+    - zilliqa_server
+  networks:
+      default:
+
+services:
+  runner:
+    <<: *dapp
+    command: /bin/bash
+    entrypoint: ""
+    ports: []
+
+  zilliqa_server:
+    image: zilliqa/zilliqa-isolated-server
+    ports:
+      - '5555:5555'
+
+  explorer:
+    image: zilliqa/devex
+    ports:
+      - '5557:5557'
+
