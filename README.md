@@ -16,8 +16,10 @@
 * `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
 
 ## Docker Compose Setup
-* `docker-compose run --rm runner` to start bash with NodeJS, yarn and scilla inside.
 * `docker-compose up devex` to start the [zilliqa blockchain explorer](https://github.com/Zilliqa/devex)
+* `docker-compose run --rm runner` to start bash with NodeJS, yarn, scilla, zli inside
+
+If you see auth error, read [this](https://github.community/t/docker-pull-from-public-github-package-registry-fail-with-no-basic-auth-credentials-error/16358/90)
 
 ## How to deploy and test contracts on local blockchain
 1. [**Zilliqa-JS SDK**](https://github.com/Zilliqa/Zilliqa-JavaScript-Library):
