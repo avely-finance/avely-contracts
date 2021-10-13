@@ -30,3 +30,4 @@ RUN mkdir -p /dapp
 WORKDIR /dapp
 
 COPY ./ /dapp
+COPY --from=docker.pkg.github.com/zilliqa/zli/zli /bin/zli /bin/zli
