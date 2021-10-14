@@ -147,9 +147,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*, @types/node@npm:>=13.7.0":
-  version: 16.10.3
-  resolution: "@types/node@npm:16.10.3"
-  checksum: 3fd429bce8a4acb497dcc62b536782a5e87ccf7cd91d64a78b263ae5d66cb72bf84be9eeeff6f84ae0567b065a40b267caa66d311f9e094990a5847bbd168a29
+  version: 16.10.9
+  resolution: "@types/node@npm:16.10.9"
+  checksum: b47c3e3896ce243d3bc9e356578d4d607357d9ea0c1445a15cb564341580ac4db4f95677bf15fd354e46343edbd171ac19701740a53637234411da5b66c883a4
   languageName: node
   linkType: hard
 
@@ -483,12 +483,12 @@ __metadata:
   linkType: hard
 
 "bufferutil@npm:^4.0.1":
-  version: 4.0.4
-  resolution: "bufferutil@npm:4.0.4"
+  version: 4.0.5
+  resolution: "bufferutil@npm:4.0.5"
   dependencies:
     node-gyp: latest
-    node-gyp-build: ^4.2.0
-  checksum: 9ccea8c9c81c5d3a02de47dfac19f4ee2d42ffa319c86d6e2d6e510dc2fad1e6a8feb1a271e1ebfd81c53c4e7da560ea8a3f59a143679264e7791b6ebcc90bec
+    node-gyp-build: ^4.3.0
+  checksum: 37d5bef7cb38d29f9377b8891ff8a57f53ae6057313d77a8aa2a7417df37a72f16987100796cb2f1e1862f3eb80057705f3c052615ec076a0dcc7aa6c83b68c9
   languageName: node
   linkType: hard
 
@@ -947,13 +947,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ini@npm:^1.3.5":
-  version: 1.3.8
-  resolution: "ini@npm:1.3.8"
-  checksum: dfd98b0ca3a4fc1e323e38a6c8eb8936e31a97a918d3b377649ea15bdb15d481207a0dda1021efbd86b464cae29a0d33c1d7dcaf6c5672bee17fa849bc50a1b3
-  languageName: node
-  linkType: hard
-
 "ip@npm:^1.1.5":
   version: 1.1.5
   resolution: "ip@npm:1.1.5"
@@ -1215,7 +1208,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-gyp-build@npm:^4.2.0":
+"node-gyp-build@npm:^4.3.0":
   version: 4.3.0
   resolution: "node-gyp-build@npm:4.3.0"
   bin:
@@ -1550,13 +1543,12 @@ __metadata:
   linkType: hard
 
 "sodium-native@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "sodium-native@npm:3.2.1"
+  version: 3.3.0
+  resolution: "sodium-native@npm:3.3.0"
   dependencies:
-    ini: ^1.3.5
     node-gyp: latest
-    node-gyp-build: ^4.2.0
-  checksum: e68d8d2e79eee4b174ff7b2caa5ec890188fb31712eee316a8f9f2fd67ac9490b3c4ef47f869c2fe2bc0b721ddebefb898a4755566be135536a44355293e8aa2
+    node-gyp-build: ^4.3.0
+  checksum: 4412bc90155261e2006c979788d3b33e3bdba1c41669c7054a876b8731a68886e1450b356791abd2c4e7b217d21f50adfdc1e194d8909dd003223195bd8ddc0a
   languageName: node
   linkType: hard
 
@@ -1671,22 +1663,22 @@ __metadata:
   linkType: hard
 
 typescript@^4.4.3:
-  version: 4.4.3
-  resolution: "typescript@npm:4.4.3"
+  version: 4.4.4
+  resolution: "typescript@npm:4.4.4"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 05823f21796d450531a7e4ab299715d38fd9ded0e4ce7400876053f4b5166ca3dde7a68cecfe72d9086039f03c0b6edba36516fb10ed83c5837d9600532ea4c2
+  checksum: 89ecb8436bb48ef5594d49289f5f89103071716b6e4844278f4fb3362856e31203e187a9c76d205c3f0b674d221a058fd28310dbcbcf5d95e9a57229bb5203f1
   languageName: node
   linkType: hard
 
 "typescript@patch:typescript@^4.4.3#~builtin<compat/typescript>":
-  version: 4.4.3
-  resolution: "typescript@patch:typescript@npm%3A4.4.3#~builtin<compat/typescript>::version=4.4.3&hash=32657b"
+  version: 4.4.4
+  resolution: "typescript@patch:typescript@npm%3A4.4.4#~builtin<compat/typescript>::version=4.4.4&hash=32657b"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 28ab98313afab46788ff41014fdb5932430ada6e03cf9e92ac47f406526a2cac1ae2894834e7da61e46b7429318e9c47f45ba8de323332f0cb9af99b72ebae74
+  checksum: c97c33903f1eb4f9e178649befdfc859d93157db1eccd1e521e84976ec6861db53412d8018e5e4c5d09268771c65498d42caa64bd881878346c3644f6b7cd202
   languageName: node
   linkType: hard
 
@@ -1716,12 +1708,12 @@ typescript@^4.4.3:
   linkType: hard
 
 "utf-8-validate@npm:^5.0.2":
-  version: 5.0.6
-  resolution: "utf-8-validate@npm:5.0.6"
+  version: 5.0.7
+  resolution: "utf-8-validate@npm:5.0.7"
   dependencies:
     node-gyp: latest
-    node-gyp-build: ^4.2.0
-  checksum: 99496d6d054223d283dcf3fab70d05b23313b1ceb1d7ab16409e8941ce95abd873a7cab14144c84c76c6c76117b8cb8003a7374c1e3973ffae1cd896f722b8a6
+    node-gyp-build: ^4.3.0
+  checksum: 588d272b359bf555a0c4c2ffe97286edc73126de132f63f4f0c80110bd06b67d3ce44d2b3d24feea6da13ced50c04d774ba4d25fe28576371cd714cd013bd3b7
   languageName: node
   linkType: hard
 

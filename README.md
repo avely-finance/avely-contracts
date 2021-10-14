@@ -1,29 +1,19 @@
 # zillica-dapp-template
 
-## Requirements
-
-* nodejs, yarn https://classic.yarnpkg.com/en/docs/install
-* `yarn set version berry`
-* `yarn install`
-* `docker pull zilliqa/scilla:latest` (3.5Gb)
-* `docker pull zilliqa/zillica-isolated-server:latest` (1.5Gb)
-* `docker pull zilliqa/devex:latest` (37Mb)
-
-## Yarn scripts
-* `yarn run start:isolatedserver` run/start docker container with [zilliqa isolated server](https://github.com/Zilliqa/zilliqa-isolated-server)
-* `yarn run start:devex` run/start docker container with [zilliqa blockchain explorer](https://github.com/Zilliqa/devex)
-* `yarn run typecheck:helloWorld` to typecheck contracts/helloWorld.scilla contract
-* `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
-
 ## Docker Compose Setup
-* `docker-compose up devex` to start the [zilliqa blockchain explorer](https://github.com/Zilliqa/devex)
 * `docker-compose run --rm runner` to start bash with NodeJS, yarn, scilla, zli inside
+* `docker-compose up devex` to start the [zilliqa blockchain explorer](https://github.com/Zilliqa/devex)
 
 If you see auth error, read [this](https://github.community/t/docker-pull-from-public-github-package-registry-fail-with-no-basic-auth-credentials-error/16358/90)
 
+## Yarn scripts
+* `yarn run deploy helloWorld` will deploy ./constracts/helloWorld.scilla contract
+* `yarn run typecheck contracts/helloWorld.scilla` to typecheck contracts/helloWorld.scilla contract
+* `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
+
 ## How to deploy and test contracts on local blockchain
 1. [**Zilliqa-JS SDK**](https://github.com/Zilliqa/Zilliqa-JavaScript-Library):
-    run test script from this repo `yarn node tests/basic.ts`
+    run test script from this repo `yarn node scripts/example.js`
 2. to be continued...
 
 ## Other ways to query local isolated server
