@@ -15,6 +15,9 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
+require('dotenv-safe').config();
+
 process.on('uncaughtException', err => {
   console.error(err.message)
   process.exit(1)
@@ -29,24 +32,19 @@ const contractCode = require('./utils.js').readContractCodeByName(argv[2]);
 const { BN, Long, bytes, units } = require('@zilliqa-js/util');
 const { Zilliqa } = require('@zilliqa-js/zilliqa');
 const { toBech32Address, getAddressFromPrivateKey } = require('@zilliqa-js/crypto');
-const zilliqHost = env.ZILLIQA_HOST || 'http://localhost:5555'
-const zilliqa = new Zilliqa(zilliqHost);
+const zilliqa = new Zilliqa(env.ZIL_HOST);
 
 // These are set by the core protocol, and may vary per-chain.
 // You can manually pack the bytes according to chain id and msg version.
 // For more information: https://apidocs.zilliqa.com/?shell#getnetworkid
 
-const chainId = 222;//333; // chainId of the developer testnet
+const chainId = env.ZIL_CHAIN_ID;
 const msgVersion = 1; // current msgVersion
 const VERSION = bytes.pack(chainId, msgVersion);
 
 // Populate the wallet with an account
-const privateKey =
-  'e53d1c3edaffc7a7bab5418eb836cf75819a82872b4a1a0f1c7fcf5c3e020b89';
-
-zilliqa.wallet.addByPrivateKey(privateKey);
-
-const address = getAddressFromPrivateKey(privateKey);
+zilliqa.wallet.addByPrivateKey(env.ZIL_PRIVATE_KEY1);
+const address = getAddressFromPrivateKey(env.ZIL_PRIVATE_KEY1);
 console.log(`My account address is: ${address}`);
 console.log(`My account bech32 address is: ${toBech32Address(address)}`);
 
@@ -61,9 +59,9 @@ async function deployContract() {
     console.log(`Your account balance is:`);
     console.log(balance.result);
     console.log(`Current Minimum Gas Price: ${minGasPrice.result}`);
-    const myGasPrice = units.toQa('2000', units.Units.Li); // Gas Price that will be used by all transactions
-    console.log(`My Gas Price ${myGasPrice.toString()}`);
-    const isGasSufficient = myGasPrice.gte(new BN(minGasPrice.result)); // Checks if your gas price is less than the minimum gas price
+    const txGasPrice = units.toQa(env.TX_GAS_PRICE, units.Units.Li); // Gas Price that will be used by all transactions
+    console.log(`My Gas Price ${txGasPrice.toString()}`);
+    const isGasSufficient = txGasPrice.gte(new BN(minGasPrice.result)); // Checks if your gas price is less than the minimum gas price
     console.log(`Is the gas price sufficient? ${isGasSufficient}`);
 
     // Deploy a contract
@@ -91,8 +89,8 @@ async function deployContract() {
     const [deployTx, deployedContract] = await contract.deployWithoutConfirm(
       {
         version: VERSION,
-        gasPrice: myGasPrice,
-        gasLimit: Long.fromNumber(10000),
+        gasPrice: txGasPrice,
+        gasLimit: Long.fromNumber(env.TX_DEPLOY_GAS_LIMIT),
       },
       false,
     );

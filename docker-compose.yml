@@ -3,7 +3,7 @@ x-app: &app
   build:
     context: .
     dockerfile: ./docker/Dockerfile
-  image: avely-dev:0.0.4
+  image: avely-dev:0.0.5
 
 x-dapp: &dapp
   <<: *app
@@ -15,7 +15,6 @@ x-dapp: &dapp
     - ~/.ssh:/root/.ssh
     - ~/.bash_history:/root/.bash_history
   environment: &environment
-    ZILLIQA_HOST: 'http://zilliqa_server:5555'
     EDITOR: vi
   depends_on:
     - zilliqa_server
