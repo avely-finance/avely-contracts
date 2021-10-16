@@ -1,0 +1,27 @@
+scilla_version 0
+
+(***************************************************)
+(*             Associated libraries                *)
+(***************************************************)
+  
+(***************************************************)
+(*             The contract definition             *)
+(***************************************************)
+
+contract Azil
+
+(*  Parameters *)
+(owner     : ByStr20)
+
+(* Mutable fields *)
+
+(* Transitions *)
+
+(************************************************************)
+(*         Deposit undelegated zil, use our node            *)
+(************************************************************)
+transition DepositUndelegatedZilOurNode()
+
+end
+
+end
