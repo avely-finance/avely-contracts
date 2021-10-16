@@ -24,4 +24,11 @@ transition DepositUndelegatedZilOurNode()
 
 end
 
+(************************************************************)
+(*        Deposit undelegated zil, use custom node          *)
+(************************************************************)
+transition DepositUndelegatedZilCustomNode()
+
+end
+
 end
