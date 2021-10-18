@@ -1,4 +1,6 @@
 README.html
+.env.*
+!.env.example
 
 # Created by https://www.toptal.com/developers/gitignore/api/yarn,node,linux,sublimetext,macos,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=yarn,node,linux,sublimetext,macos,windows
