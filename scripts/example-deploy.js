@@ -23,9 +23,3 @@ const Contracts = require('./utils/contracts.js');
     console.error(err.message);
   }
 })();
-
-
-/*
-if (argv.length < 3) {
-  throw new Error("Format is: yarn run deploy contractName");
-}*/
