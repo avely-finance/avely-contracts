@@ -249,3 +249,6 @@ $RECYCLE.BIN/
 # .pnp.*
 
 # End of https://www.toptal.com/developers/gitignore/api/yarn,node,linux,sublimetext,macos,windows
+
+# Ignore LLVM IR contracts
+contracts/*.ll
