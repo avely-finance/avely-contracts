@@ -3,14 +3,14 @@ const { readContractCodeByName } = require('./fs.js');
 
 class AvelyContracts
 {
-    constructor()
-    {
+  constructor()
+  {
 
-    }
+  }
     
-    extendInitData (base, other)
-    {
-      /*
+  extendInitData (base, other)
+  {
+    /*
       input parameters format is:
       [
         {
@@ -25,21 +25,21 @@ class AvelyContracts
         },
       ]
       */
-      if (!Array.isArray(base) || !Array.isArray(other)) {
-          throw new Error('Input parameters must be arrays');
-      }
-      const result = [];
-      base.forEach(function(item, index){
-          result[item.vname] = item;
-      });
-      other.forEach(function(item, index){
-          result[item.vname] = item;
-      });
-      const out = [];
-      Object.keys(result).forEach(function(key) {
-          out.push(result[key]);
-      });
-      return out;
+    if (!Array.isArray(base) || !Array.isArray(other)) {
+      throw new Error('Input parameters must be arrays');
+    }
+    const result = [];
+    base.forEach(function(item){
+      result[item.vname] = item;
+    });
+    other.forEach(function(item){
+      result[item.vname] = item;
+    });
+    const out = [];
+    Object.keys(result).forEach(function(key) {
+      out.push(result[key]);
+    });
+    return out;
   }
 
   async newFromFile(contractName, initOptions = [])
