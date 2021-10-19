@@ -59,7 +59,6 @@ class AvelyContracts
         value: AvelyCore.fromAddress,
       },
     ], initOptions);
-    //console.log(init); return;
 
     const contract = await AvelyCore.zilliqa.contracts.new(contractCode, init);
     return contract;
