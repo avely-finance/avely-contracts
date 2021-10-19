@@ -1,30 +1,29 @@
 # zillica-dapp-template
 
-## Requirements
-
-* nodejs, yarn https://classic.yarnpkg.com/en/docs/install
-* `yarn set version berry`
-* `yarn install`
-* `docker pull zilliqa/scilla:latest` (3.5Gb)
-* `docker pull zilliqa/zillica-isolated-server:latest` (1.5Gb)
-* `docker pull zilliqa/devex:latest` (37Mb)
-
-## Yarn scripts
-* `yarn run start:isolatedserver` run/start docker container with [zilliqa isolated server](https://github.com/Zilliqa/zilliqa-isolated-server)
-* `yarn run start:devex` run/start docker container with [zilliqa blockchain explorer](https://github.com/Zilliqa/devex)
-* `yarn run typecheck:helloWorld` to typecheck contracts/helloWorld.scilla contract
-* `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
+## Configuration
+For local development you'll need .env.local file, copied from .env.example.
 
 ## Docker Compose Setup
-* `docker-compose run --rm runner` to start bash with NodeJS, yarn and scilla inside.
+* `docker-compose run --rm runner` to start bash with NodeJS, yarn, scilla, zli inside
 * `docker-compose up devex` to start the [zilliqa blockchain explorer](https://github.com/Zilliqa/devex)
 
-## How to deploy and test contracts on local blockchain
-1. [**Zilliqa-JS SDK**](https://github.com/Zilliqa/Zilliqa-JavaScript-Library):
-    run test script from this repo `yarn node tests/basic.ts`
-2. to be continued...
+If you see auth error, read [this](https://github.community/t/docker-pull-from-public-github-package-registry-fail-with-no-basic-auth-credentials-error/16358/90)
 
-## Other ways to query local isolated server
+## Yarn scripts
+* `yarn node scripts/example-deploy.js` will run corresponding script from ./scripts/ directory
+* `yarn run typecheck contracts/helloWorld.scilla` to typecheck contracts/helloWorld.scilla contract
+* `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
+
+## How to deploy and test contracts on local blockchain
+Check example of constracts deployment in ./scripts/example-deploy.js  
+Run `yarn node scripts/example-deploy.js --help` to see command line options.  
+For now, there are:
+
+* `--network=local|testnet`
+* `--env=local`
+
+## Ways to query local isolated server
+* [**Zilliqa-JS SDK**](https://github.com/Zilliqa/Zilliqa-JavaScript-Library)
 * through **Devex** web-interface (block explorer) http://localhost:5555
 * through **zli** command-line utility [zli is a command line tool based on the Zilliqa Golang SDK](https://github.com/Zilliqa/zli)
     ```
