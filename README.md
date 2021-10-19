@@ -10,12 +10,17 @@ For local development you'll need .env.local file, copied from .env.example.
 If you see auth error, read [this](https://github.community/t/docker-pull-from-public-github-package-registry-fail-with-no-basic-auth-credentials-error/16358/90)
 
 ## Yarn scripts
-* `yarn node ./scripts/script-name.js` will run corresponding script from ./scripts/
+* `yarn node scripts/example-deploy.js` will run corresponding script from ./scripts/ directory
 * `yarn run typecheck contracts/helloWorld.scilla` to typecheck contracts/helloWorld.scilla contract
 * `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
 
 ## How to deploy and test contracts on local blockchain
-Check example of constracts deployment in ./scripts/example-deploy.js
+Check example of constracts deployment in ./scripts/example-deploy.js  
+Run `yarn node scripts/example-deploy.js --help` to see command line options.  
+For now, there are:
+
+* `--network=local|testnet`
+* `--env=local`
 
 ## Ways to query local isolated server
 * [**Zilliqa-JS SDK**](https://github.com/Zilliqa/Zilliqa-JavaScript-Library)
