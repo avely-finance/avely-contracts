@@ -1,5 +1,8 @@
 # zillica-dapp-template
 
+## Configuration
+For local development you'll need .env.local file, copied from .env.example.
+
 ## Docker Compose Setup
 * `docker-compose run --rm runner` to start bash with NodeJS, yarn, scilla, zli inside
 * `docker-compose up devex` to start the [zilliqa blockchain explorer](https://github.com/Zilliqa/devex)
@@ -7,16 +10,15 @@
 If you see auth error, read [this](https://github.community/t/docker-pull-from-public-github-package-registry-fail-with-no-basic-auth-credentials-error/16358/90)
 
 ## Yarn scripts
-* `yarn run deploy helloWorld` will deploy ./constracts/helloWorld.scilla contract
+* `yarn node ./scripts/script-name.js` will run corresponding script from ./scripts/
 * `yarn run typecheck contracts/helloWorld.scilla` to typecheck contracts/helloWorld.scilla contract
 * `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
 
 ## How to deploy and test contracts on local blockchain
-1. [**Zilliqa-JS SDK**](https://github.com/Zilliqa/Zilliqa-JavaScript-Library):
-    run test script from this repo `yarn node scripts/example.js`
-2. to be continued...
+Check example of constracts deployment in ./scripts/example-deploy.js
 
-## Other ways to query local isolated server
+## Ways to query local isolated server
+* [**Zilliqa-JS SDK**](https://github.com/Zilliqa/Zilliqa-JavaScript-Library)
 * through **Devex** web-interface (block explorer) http://localhost:5555
 * through **zli** command-line utility [zli is a command line tool based on the Zilliqa Golang SDK](https://github.com/Zilliqa/zli)
     ```

@@ -16,7 +16,7 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 const AvelyCore = require('./core.js');
-const { BN, Long, bytes, units } = require('@zilliqa-js/util');
+const { Long } = require('@zilliqa-js/util');
 
 class AvelyDeployer
 {
@@ -25,7 +25,7 @@ class AvelyDeployer
   {
   }
 
-  async preDeployCheck(contractInstance)
+  async preDeployCheck()
   {
     //do some checks and return errors (reject)
 
@@ -42,7 +42,7 @@ class AvelyDeployer
     await this.preDeployCheck();
 
     // Deploy a contract
-    console.log(`Deploying a new contract....`);
+    console.log('Deploying a new contract....');
 
     // Deploy the contract.
     // Also notice here we have a default function parameter named toDs as mentioned above.
@@ -57,11 +57,11 @@ class AvelyDeployer
     );
 
     // process confirm
-    console.log(`The transaction id is:`, deployTx.id);
-    console.log(`Waiting transaction be confirmed`);
+    console.log('The transaction id is:', deployTx.id);
+    console.log('Waiting transaction be confirmed');
     const confirmedTxn = await deployTx.confirm(deployTx.id);
 
-    console.log(`The transaction status is:`);
+    console.log('The transaction status is:');
     console.log(confirmedTxn.receipt);
     if (confirmedTxn.receipt.success === true) {
       console.log(`Contract address is: ${deployedContract.address}`);

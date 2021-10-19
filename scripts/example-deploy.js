@@ -16,11 +16,11 @@ const Contracts = require('./utils/contracts.js');
     const MyContract2 = await Contracts.newFromFile('fooBar', extendedInit);
 
     //deploy
-      await Deployer.deploy(MyContract1);
-      await Deployer.deploy(MyContract2);
+    await Deployer.deploy(MyContract1);
+    await Deployer.deploy(MyContract2);
 
   } catch (err) {
-    console.error(err.message)
+    console.error(err.message);
   }
 })();
 
