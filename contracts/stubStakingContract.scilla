@@ -77,7 +77,7 @@ transition DelegateStake(ssnaddr: ByStr20, initiator: ByStr20)
 end
 
 
-transition foo()
+transition test()
   msg_to_delegator = {
     _tag : "DelegateStakeSuccessCallBack";
     _recipient : _sender;

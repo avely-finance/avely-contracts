@@ -30,7 +30,7 @@ contract=$1
 i=$2
 
 sdir="contracts"
-cdir="runner/$contract"
+cdir="tests/runner/$contract"
 
 if [[ ! -d ${cdir} || ! -f ${sdir}/${contract}.scilla || ! -f ${cdir}/state_${i}.json ]]
 then
@@ -38,9 +38,13 @@ then
     print_usage_and_exit
 fi
 
-echo "scilla-runner -init "${cdir}"/init.json -istate "${cdir}/state_${i}".json -imessage "${cdir}/message_${i}".json -o "${cdir}/output_${i}".json -iblockchain "${cdir}/blockchain_${i}".json -i "${sdir}/${contract}".scilla -gaslimit 100000 -libdir /scilla/0/_build/install/default/lib/scilla/stdlib/"
+echo "=== GDB ==="
+echo "file ${SCILLA_RTL_HOME}/bin/scilla-runner"
+echo "set args -n "${cdir}"/init.json -s "${cdir}/state_${i}".json -m "${cdir}/message_${i}".json -o "${cdir}/output_${i}".json -b "${cdir}/blockchain_${i}".json -i "${sdir}/${contract}".ll -g 1000000"
+echo "dir contracts"
+echo "=== === ==="
 
-scilla-runner "${cdir}"/init.json -istate "${cdir}/state_${i}".json -imessage "${cdir}/message_${i}".json -o "${cdir}/output_${i}".json -iblockchain "${cdir}/blockchain_${i}".json -i "${sdir}/${contract}".scilla -gaslimit 800000 -libdir /scilla/0/_build/install/default/lib/scilla/stdlib/
+scilla-runner -init "${cdir}"/init.json -istate "${cdir}/state_${i}".json -imessage "${cdir}/message_${i}".json -o "${cdir}/output_${i}".json -iblockchain "${cdir}/blockchain_${i}".json -i "${sdir}/${contract}".scilla -gaslimit 1000000 -libdir $SCILLA_HOME/stdlib/
 
 status=$?
 

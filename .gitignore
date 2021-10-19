@@ -252,3 +252,4 @@ $RECYCLE.BIN/
 
 # Ignore LLVM IR contracts
 contracts/*.ll
+sandbox
