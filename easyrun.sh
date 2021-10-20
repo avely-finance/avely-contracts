@@ -39,9 +39,9 @@ then
 fi
 
 echo "=== GDB ==="
-echo "file ${SCILLA_RTL_HOME}/bin/scilla-runner"
-echo "set args -n "${cdir}"/init.json -s "${cdir}/state_${i}".json -m "${cdir}/message_${i}".json -o "${cdir}/output_${i}".json -b "${cdir}/blockchain_${i}".json -i "${sdir}/${contract}".ll -g 1000000"
-echo "dir contracts"
+echo "🐞 file ${SCILLA_RTL_HOME}/bin/scilla-runner"
+echo "🐞 set args -n "${cdir}"/init.json -s "${cdir}/state_${i}".json -m "${cdir}/message_${i}".json -o "${cdir}/output_${i}".json -b "${cdir}/blockchain_${i}".json -i "${sdir}/${contract}".ll -g 1000000"
+echo "🐞 dir contracts"
 echo "=== === ==="
 
 scilla-runner -init "${cdir}"/init.json -istate "${cdir}/state_${i}".json -imessage "${cdir}/message_${i}".json -o "${cdir}/output_${i}".json -iblockchain "${cdir}/blockchain_${i}".json -i "${sdir}/${contract}".scilla -gaslimit 1000000 -libdir $SCILLA_HOME/stdlib/

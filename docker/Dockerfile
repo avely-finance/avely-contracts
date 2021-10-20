@@ -54,9 +54,23 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get update && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
 RUN ln -s /usr/bin/nodejs /usr/local/bin/node
+
 RUN curl -o- -L https://yarnpkg.com/install.sh | bash
+
 ENV PATH="$PATH:/root/.yarn/bin:/root/.config/yarn/global/node_modules/.bin"
+
+RUN mkdir -p /root/tools
+
+# Install LLVM with OCaml bindings
+RUN docker/install_llvm_with_ocaml.sh
+
+# Install Scilla Compiler
+RUN docker/install_scilla_compiler.sh
+
+# Install Scilla RTL
+RUN docker/install_scilla_rtl.sh
 
 # Install dev & debug tools
 RUN apt-get update \
