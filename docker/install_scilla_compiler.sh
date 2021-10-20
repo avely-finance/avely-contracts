@@ -12,8 +12,8 @@ tar -xzf ${scilla_compiler_commit}.tar.gz --directory="${HOME}/tools"
 cd "$scilla_compiler_src" || exit 1
 
 # missed libraries
-opam install batteries
-opam pin add scilla.dev git+https://github.com/Zilliqa/scilla\#master --no-action
+opam install batteries --yes
+opam pin add scilla.dev git+https://github.com/Zilliqa/scilla\#master --no-action --yes
 opam install scilla --yes
 opam install ./ --deps-only --with-test --yes
 
