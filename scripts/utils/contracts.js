@@ -7,7 +7,7 @@ class AvelyContracts
   {
 
   }
-    
+
   extendInitData (base, other)
   {
     /*
@@ -18,10 +18,11 @@ class AvelyContracts
           type: 'Uint32',
           value: '0',
         },
+        ,
         {
           vname: 'owner',
           type: 'ByStr20',
-          value: 'aaa',
+          value: AvelyCore.fromAddress,
         },
       ]
       */
@@ -52,12 +53,7 @@ class AvelyContracts
         vname: '_scilla_version',
         type: 'Uint32',
         value: '0',
-      },
-      {
-        vname: 'owner',
-        type: 'ByStr20',
-        value: AvelyCore.fromAddress,
-      },
+      }
     ], initOptions);
 
     const contract = await AvelyCore.zilliqa.contracts.new(contractCode, init);

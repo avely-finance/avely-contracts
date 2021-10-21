@@ -1,0 +1,91 @@
+{
+  "_accepted" : "true",
+  "events" : 
+  [
+    {
+      "_eventname" : "DelegateStake",
+      "params" : 
+      [
+        {
+          "type" : "ByStr20",
+          "value" : "0xabfeccdc9012345678901234567890f777564323",
+          "vname" : "ssn_addr"
+        },
+        {
+          "type" : "ByStr20",
+          "value" : "0xabfeccdc9012345678901234567890f777564323",
+          "vname" : "delegator"
+        },
+        {
+          "type" : "Uint128",
+          "value" : "1",
+          "vname" : "amount"
+        }
+      ]
+    }
+  ],
+  "gas_remaining" : "999944",
+  "messages" : 
+  [
+    {
+      "_amount" : "0",
+      "_recipient" : "0xabfeccdc9012345678901234567890f777564323",
+      "_tag" : "DelegateStakeSuccessCallBack",
+      "params" : 
+      [
+        {
+          "type" : "ByStr20",
+          "value" : "0xabfeccdc9012345678901234567890f777564323",
+          "vname" : "ssnaddr"
+        },
+        {
+          "type" : "Uint128",
+          "value" : "1",
+          "vname" : "amount"
+        }
+      ]
+    }
+  ],
+  "scilla_major_version" : "0",
+  "states" : 
+  [
+    {
+      "type" : "Uint128",
+      "value" : "1",
+      "vname" : "_balance"
+    },
+    {
+      "type" : "<unknown>",
+      "value" : 
+      [
+        {
+          "key" : "0xabfeccdc9012345678901234567890f777564323",
+          "val" : 
+          [
+            {
+              "key" : "0xabfeccdc9012345678901234567890f777564323",
+              "val" : 
+              [
+                {
+                  "key" : "1",
+                  "val" : "1"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "vname" : "direct_deposit_deleg"
+    },
+    {
+      "type" : "Uint32",
+      "value" : "1",
+      "vname" : "lastrewardcycle"
+    },
+    {
+      "type" : "Uint128",
+      "value" : "1",
+      "vname" : "totalstakeamount"
+    }
+  ]
+}

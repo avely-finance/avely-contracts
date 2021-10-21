@@ -1,0 +1,94 @@
+(* StubStakingContract contract *)
+
+scilla_version 0
+
+import ListUtils IntUtils
+
+(***************************************************)
+(*               Associated library                *)
+(***************************************************)
+library StubStakingContract
+
+
+let one_msg =
+  fun (msg : Message) =>
+    let nil_msg = Nil {Message} in
+    Cons {Message} msg nil_msg
+
+let uint128_zero = Uint128 0
+let uint32_one = Uint32 1
+
+(***************************************************)
+(*             The contract definition             *)
+(***************************************************)
+
+
+contract StubStakingContract()
+
+field lastrewardcycle: Uint32 = uint32_one
+field totalstakeamount: Uint128 = uint128_zero
+
+field direct_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
+
+(* Procedures *)
+
+procedure IncreaseTotalStakeAmt(amt: Uint128)
+  current_amt <- totalstakeamount;
+  new_amt = builtin add current_amt amt;
+  totalstakeamount := new_amt
+end
+
+procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
+  lrc <- lastrewardcycle;
+
+  (* If ssn becomes active, then we need to increase totalstakeamount *)
+  IncreaseTotalStakeAmt amount;
+  (* record this to direct deposit for deleg *)
+  stake_amt_for_deleg_option  <- direct_deposit_deleg[initiator][ssnaddr][lrc];
+  match stake_amt_for_deleg_option  with
+  | Some stake_amt_for_deleg =>
+    new_stake_amt_for_deleg = builtin add stake_amt_for_deleg amount;
+    direct_deposit_deleg[initiator][ssnaddr][lrc] := new_stake_amt_for_deleg
+  | None =>
+    direct_deposit_deleg[initiator][ssnaddr][lrc] := amount
+  end
+end
+
+(* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1535 *)
+(* @dev : To delegate the stake to the contract. *)
+(* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
+(* @param initiator: The original caller who called the proxy aka the deleg. *)
+transition DelegateStake(ssnaddr: ByStr20, initiator: ByStr20)
+  (* Accept the deposit from SSN and add to contract balance. *)
+  accept;
+  amount = _amount;
+  Delegate ssnaddr initiator amount;
+  e = { _eventname: "DelegateStake"; ssn_addr: ssnaddr; delegator: initiator; amount: amount };
+  event e;
+  msg_to_delegator = {
+    _tag : "DelegateStakeSuccessCallBack";
+    _recipient : initiator;
+    _amount : uint128_zero;
+    ssnaddr : ssnaddr;
+    amount : amount
+  };
+  msg = one_msg msg_to_delegator;
+  send msg
+end
+
+
+transition test()
+  msg_to_delegator = {
+    _tag : "DelegateStakeSuccessCallBack";
+    _recipient : _sender;
+    _amount : uint128_zero
+  };
+  msg = one_msg msg_to_delegator;
+  send msg
+end
+
+(* transition totalSupply()
+  b <- total_zil_balance;
+  e = {_eventname: "totalSupply"; msg: b};
+  event e
+end *)
