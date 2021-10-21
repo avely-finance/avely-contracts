@@ -3,7 +3,7 @@ x-app: &app
   build:
     context: .
     dockerfile: ./docker/Dockerfile
-  image: avely-dev:0.0.5
+  image: avely-dev:0.0.18
 
 x-dapp: &dapp
   <<: *app
@@ -16,6 +16,10 @@ x-dapp: &dapp
     - ~/.bash_history:/root/.bash_history
   environment: &environment
     EDITOR: vi
+  security_opt:
+    - seccomp:unconfined
+  cap_add:
+    - SYS_PTRACE
   depends_on:
     - zilliqa_server
   networks:
