@@ -96,11 +96,10 @@ end
 (************************************************************)
 
 
-
 transition IncreaseTotalStakeAmount(amount: Uint128)
   IncreaseTotalStakeAmt amount;
 
-  e = { _eventname: "IncreaseTotalStakeAmt"; amount: amount };
+  e = { _eventname: "IncreaseTotalStakeAmount"; amount: amount };
   event e
 end
 
