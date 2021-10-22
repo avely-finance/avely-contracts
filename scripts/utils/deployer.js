@@ -57,6 +57,7 @@ class AvelyDeployer
     );
 
     // process confirm
+    console.log(JSON.stringify(deployedContract));
     console.log('The transaction id is:', deployTx.id);
     console.log('Waiting transaction be confirmed');
     const confirmedTxn = await deployTx.confirm(deployTx.id);
@@ -66,7 +67,7 @@ class AvelyDeployer
     if (confirmedTxn.receipt.success === true) {
       console.log(`Contract address is: ${deployedContract.address}`);
     }
-    
+
     //Get the contract state
     console.log('Getting contract state...');
     const state = await deployedContract.getState();

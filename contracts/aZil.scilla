@@ -1,0 +1,148 @@
+scilla_version 0
+
+import ListUtils IntUtils
+
+(***************************************************)
+(*               Associated library                *)
+(***************************************************)
+library AZil
+
+let uint128_to_uint256 : Uint128 -> Uint256 =
+  fun (x : Uint128) =>
+    let ox256 = builtin to_uint256 x in
+      match ox256 with
+      | None =>
+        (* this never happens, hence we throw a division by zero exception just in case *)
+        let zero = Uint256 0 in
+        builtin div zero zero
+      | Some x256 => x256
+      end
+
+let muldiv : Uint128 -> Uint128 -> Uint128 -> Uint128 =
+    fun (x : Uint128) =>
+    fun (y : Uint128) =>
+    fun (z : Uint128) =>
+      let x256 = uint128_to_uint256 x in
+      let y256 = uint128_to_uint256 y in
+      let z256 = uint128_to_uint256 z in
+      let x_mul_y256 = builtin mul x256 y256 in
+      let res256 = builtin div x_mul_y256 z256 in
+      let ores128 = builtin to_uint128 res256 in
+      match ores128 with
+      | None =>
+        (* this must never happen, hence we throw an integer overflow exception *)
+        let max_uint128 = Uint128 340282366920938463463374607431768211455 in
+        let fourtytwo128 = Uint128 42 in
+        builtin mul max_uint128 fourtytwo128
+      | Some res128 =>
+        res128
+      end
+
+let one_msg =
+  fun (msg : Message) =>
+    let nil_msg = Nil {Message} in
+    Cons {Message} msg nil_msg
+
+let uint128_zero = Uint128 0
+let uint128_one = Uint128 1
+let uint32_one = Uint32 1
+
+(***************************************************)
+(*             The contract definition             *)
+(***************************************************)
+
+contract AZil()
+
+(*  Parameters *)
+(* (owner     : ByStr20) *)
+
+(* Mutable fields *)
+
+field totalstakeamount: Uint128 = uint128_one
+field totaltokenamount: Uint128 = uint128_one
+
+field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
+
+(* Procedures *)
+
+procedure IncreaseTotalStakeAmt(amt: Uint128)
+  current_stake_amt <- totalstakeamount;
+  new_amt = builtin add current_stake_amt amt;
+  totalstakeamount := new_amt
+end
+
+procedure IncreaseTotalTokenAmt(amt: Uint128)
+current_token_amt <- totaltokenamount;
+  new_amt = builtin add current_token_amt amt;
+  totaltokenamount := new_amt
+end
+
+(* newTokens = amount * totaltokenamount / totalstakeamount *)
+procedure Delegate(initiator: ByStr20, stake_amt_for_deleg: Uint128)
+  (* TODO: Deletage to the real staking contract *)
+
+  current_stake <- balances[initiator];
+  match current_stake  with
+  | Some current_stake_amount =>
+    total_stake_amount = builtin add current_stake_amount stake_amt_for_deleg;
+    balances[initiator] := total_stake_amount
+  | None =>
+    balances[initiator] := stake_amt_for_deleg
+  end
+end
+
+(************************************************************)
+(* @dev: Admin can increase token amount                    *)
+(************************************************************)
+
+transition IncreaseTotalStakeAmount(amount: Uint128)
+  IncreaseTotalStakeAmt amount;
+
+  e = { _eventname: "IncreaseTotalStakeAmt"; amount: amount };
+  event e
+end
+
+(************************************************************)
+(* @dev: Deposit undelegated zil, use our node              *)
+(************************************************************)
+transition DelegateStake()
+  accept;
+  amount = _amount;
+  initiator = _sender;
+
+  current_token_amt <- totaltokenamount;
+  current_stake_amt <- totalstakeamount;
+
+  stake_amt_for_deleg = muldiv amount current_token_amt current_stake_amt;
+
+  Delegate initiator amount;
+  IncreaseTotalStakeAmt amount;
+  IncreaseTotalTokenAmt stake_amt_for_deleg;
+
+  e = { _eventname: "DelegateStake"; delegator: initiator; amount: amount };
+  event e;
+
+  msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; amount : amount};
+  msg = one_msg msg_to_delegator;
+  send msg
+end
+
+(************************************************************)
+(* @dev: Returns an account zil amount                      *)
+(************************************************************)
+transition ZilBalanceOf(address: ByStr20)
+  current_token_amt <- totaltokenamount;
+  current_stake_amt <- totalstakeamount;
+
+  current_stake <- balances[address];
+
+  balance =
+    match current_stake with
+    | Some stake_amount => muldiv stake_amount current_stake_amt current_token_amt
+    | None => uint128_zero
+    end;
+
+  msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : _sender; _amount : uint128_zero; balance : balance};
+  msgs = one_msg msg_to_sender;
+  send msgs
+end
