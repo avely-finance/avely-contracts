@@ -58,42 +58,44 @@ contract AZil()
 
 (* Mutable fields *)
 
-field totalstakeamount: Uint128 = uint128_one
-field totaltokenamount: Uint128 = uint128_one
+field totalstakeamount: Uint128 = uint128_zero
+field totaltokenamount: Uint128 = uint128_zero
 
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
 (* Procedures *)
 
 procedure IncreaseTotalStakeAmt(amt: Uint128)
-  current_stake_amt <- totalstakeamount;
-  new_amt = builtin add current_stake_amt amt;
-  totalstakeamount := new_amt
+  total_stake_amt <- totalstakeamount;
+  new_total_amt = builtin add total_stake_amt amt;
+  totalstakeamount := new_total_amt
 end
 
 procedure IncreaseTotalTokenAmt(amt: Uint128)
-current_token_amt <- totaltokenamount;
-  new_amt = builtin add current_token_amt amt;
-  totaltokenamount := new_amt
+  total_token_amt <- totaltokenamount;
+  new_total_amt = builtin add total_token_amt amt;
+  totaltokenamount := new_total_amt
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
-procedure Delegate(initiator: ByStr20, stake_amt_for_deleg: Uint128)
+procedure Delegate(initiator: ByStr20, token_amt: Uint128)
   (* TODO: Deletage to the real staking contract *)
 
-  current_stake <- balances[initiator];
-  match current_stake  with
-  | Some current_stake_amount =>
-    total_stake_amount = builtin add current_stake_amount stake_amt_for_deleg;
-    balances[initiator] := total_stake_amount
+  current_token_amount <- balances[initiator];
+  match current_token_amount  with
+  | Some current_token_amt =>
+    new_current_token_amt = builtin add current_token_amt token_amt;
+    balances[initiator] := new_current_token_amt
   | None =>
-    balances[initiator] := stake_amt_for_deleg
+    balances[initiator] := token_amt
   end
 end
 
 (************************************************************)
-(* @dev: Admin can increase token amount                    *)
+(* @dev: Admin actions                                      *)
 (************************************************************)
+
+
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
   IncreaseTotalStakeAmt amount;
@@ -107,22 +109,28 @@ end
 (************************************************************)
 transition DelegateStake()
   accept;
-  amount = _amount;
+  stake_amt = _amount;
   initiator = _sender;
 
-  current_token_amt <- totaltokenamount;
+  total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
 
-  stake_amt_for_deleg = muldiv amount current_token_amt current_stake_amt;
+  first_delegation = builtin eq total_token_amt uint128_zero;
+  token_amt =
+    match first_delegation with
+    | True => stake_amt
+    | False => muldiv stake_amt total_token_amt current_stake_amt
+    end;
 
-  Delegate initiator amount;
-  IncreaseTotalStakeAmt amount;
-  IncreaseTotalTokenAmt stake_amt_for_deleg;
+  Delegate initiator token_amt;
 
-  e = { _eventname: "DelegateStake"; delegator: initiator; amount: amount };
+  IncreaseTotalStakeAmt stake_amt;
+  IncreaseTotalTokenAmt token_amt;
+
+  e = { _eventname: "DelegateStake"; delegator: initiator; amount: stake_amt };
   event e;
 
-  msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; amount : amount};
+  msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; amount : stake_amt};
   msg = one_msg msg_to_delegator;
   send msg
 end
@@ -131,14 +139,14 @@ end
 (* @dev: Returns an account zil amount                      *)
 (************************************************************)
 transition ZilBalanceOf(address: ByStr20)
-  current_token_amt <- totaltokenamount;
-  current_stake_amt <- totalstakeamount;
+  total_token_amt <- totaltokenamount;
+  total_stake_amt <- totalstakeamount;
 
-  current_stake <- balances[address];
+  current_token_amount <- balances[address];
 
   balance =
-    match current_stake with
-    | Some stake_amount => muldiv stake_amount current_stake_amt current_token_amt
+    match current_token_amount with
+    | Some current_token_amt => muldiv current_token_amt total_stake_amt total_token_amt
     | None => uint128_zero
     end;
 
