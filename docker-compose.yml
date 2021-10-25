@@ -33,7 +33,7 @@ services:
     ports: []
 
   zilliqa_server:
-    image: zilliqa/zilliqa-isolated-server
+    image: zilliqa/zilliqa-isolated-server:13ae5e3
     ports:
       - '5555:5555'
 
