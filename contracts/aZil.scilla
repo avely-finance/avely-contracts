@@ -7,6 +7,18 @@ import ListUtils IntUtils
 (***************************************************)
 library AZil
 
+type Error =
+  | ReDelegInvalidSSNAddr
+
+let make_error =
+  fun (result: Error) =>
+    let result_code =
+      match result with
+      | ReDelegInvalidSSNAddr => Int32 -21
+      end
+    in
+    { _exception: "Error"; code: result_code }
+
 let uint128_to_uint256 : Uint128 -> Uint256 =
   fun (x : Uint128) =>
     let ox256 = builtin to_uint256 x in
@@ -51,7 +63,8 @@ let uint32_one = Uint32 1
 (*             The contract definition             *)
 (***************************************************)
 
-contract AZil()
+contract AZil
+(azil_ssnaddr     : ByStr20)
 
 (*  Parameters *)
 (* (owner     : ByStr20) *)
@@ -64,6 +77,11 @@ field totaltokenamount: Uint128 = uint128_zero
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
 (* Procedures *)
+
+procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
+end
 
 procedure IncreaseTotalStakeAmt(amt: Uint128)
   total_stake_amt <- totalstakeamount;
@@ -78,8 +96,16 @@ procedure IncreaseTotalTokenAmt(amt: Uint128)
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
-procedure Delegate(initiator: ByStr20, token_amt: Uint128)
-  (* TODO: Deletage to the real staking contract *)
+procedure InternalDelegate(initiator: ByStr20, stake_amt: Uint128)
+  total_token_amt <- totaltokenamount;
+  current_stake_amt <- totalstakeamount;
+
+  first_delegation = builtin eq total_token_amt uint128_zero;
+  token_amt =
+    match first_delegation with
+    | True => stake_amt
+    | False => muldiv stake_amt total_token_amt current_stake_amt
+    end;
 
   current_token_amount <- balances[initiator];
   match current_token_amount  with
@@ -88,13 +114,15 @@ procedure Delegate(initiator: ByStr20, token_amt: Uint128)
     balances[initiator] := new_current_token_amt
   | None =>
     balances[initiator] := token_amt
-  end
+  end;
+
+  IncreaseTotalStakeAmt stake_amt;
+  IncreaseTotalTokenAmt token_amt
 end
 
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
-
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
   IncreaseTotalStakeAmt amount;
@@ -111,20 +139,8 @@ transition DelegateStake()
   stake_amt = _amount;
   initiator = _sender;
 
-  total_token_amt <- totaltokenamount;
-  current_stake_amt <- totalstakeamount;
-
-  first_delegation = builtin eq total_token_amt uint128_zero;
-  token_amt =
-    match first_delegation with
-    | True => stake_amt
-    | False => muldiv stake_amt total_token_amt current_stake_amt
-    end;
-
-  Delegate initiator token_amt;
-
-  IncreaseTotalStakeAmt stake_amt;
-  IncreaseTotalTokenAmt token_amt;
+  (* TODO: call Delegate *)
+  InternalDelegate initiator stake_amt;
 
   e = { _eventname: "DelegateStake"; delegator: initiator; amount: stake_amt };
   event e;
@@ -132,6 +148,30 @@ transition DelegateStake()
   msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; amount : stake_amt};
   msg = one_msg msg_to_delegator;
   send msg
+end
+
+transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
+  same_ssn = builtin eq ssnaddr azil_ssnaddr;
+
+  match same_ssn with
+  | True =>
+    e = ReDelegInvalidSSNAddr;
+    ThrowError e
+  | False =>
+    stake_amt = amount;
+    initiator = _sender;
+
+    (* TODO: call reDelegate *)
+    InternalDelegate initiator stake_amt;
+
+    e = { _eventname: "ReDelegateStakeSuccess"; ssnaddr: ssnaddr; delegator: initiator; delegate_amount: stake_amt };
+    event e;
+
+    msg_to_delegator = {_tag : "ReDelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
+                        ssnaddr: ssnaddr; amount : amount};
+    msg = one_msg msg_to_delegator;
+    send msg
+  end
 end
 
 (************************************************************)
