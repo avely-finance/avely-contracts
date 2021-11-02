@@ -64,15 +64,16 @@ let uint32_one = Uint32 1
 (***************************************************)
 
 contract Holder(
-  azil_ssn_addrress              : ByStr20,
-  proxy_staking_contract_address : ByStr20,
-  init_buffer_address            : ByStr20
+  azil_ssn_addrress                   : ByStr20,
+  init_proxy_staking_contract_address : ByStr20,
+  init_buffer_address                 : ByStr20
 )
 (*  Parameters *)
 (* (owner     : ByStr20) *)
 
 (* Mutable fields *)
-field buffer_address  : ByStr20 = init_buffer_address
+field buffer_address                  : ByStr20 = init_buffer_address
+field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
 
 field totalstakeamount: Uint128 = uint128_zero
 field totaltokenamount: Uint128 = uint128_zero

@@ -44,11 +44,6 @@ contract Buffer(
 field holder_address                  : ByStr20 = init_holder_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
 
-(* field totalstakeamount: Uint128 = uint128_zero
-field totaltokenamount: Uint128 = uint128_zero
-
-field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128 *)
-
 (* Procedures *)
 
 procedure ThrowError(err: Error)

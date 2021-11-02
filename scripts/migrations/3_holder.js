@@ -10,7 +10,7 @@ const Contracts = require('../utils/contracts.js');
         value: '0x166862bdd5d76b3a4775d2494820179d582acac5'
       },
       {
-        vname: 'proxy_staking_contract_address',
+        vname: 'init_proxy_staking_contract_address',
         type: 'ByStr20',
         value: '0xc6e4fa9abb99f2b3919990ba194d273fd3e21ac9'
       },
