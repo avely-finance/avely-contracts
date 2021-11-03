@@ -7,11 +7,6 @@
         "vname" : "ssnaddr",
         "type" : "ByStr20",
         "value" : "0xabfeccdc9012345678901234567890f777564323"
-    },
-    {
-        "vname" : "initiator",
-        "type" : "ByStr20",
-        "value" : "0xabfeccdc9012345678901234567890f777564323"
     }
   ],
   "_origin": "0x1234567890123456789012345678901234567890"

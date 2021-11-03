@@ -1,8 +1,8 @@
 [
   {
+    "vname" : "_balance",
     "type" : "Uint128",
-    "value" : "0",
-    "vname" : "_balance"
+    "value" : "0"
   },
   {
     "type" : "Uint128",
@@ -13,5 +13,17 @@
     "type" : "Uint32",
     "value" : "1",
     "vname" : "lastrewardcycle"
+  },
+  {
+    "vname": "_external",
+    "type": "Unit",
+    "value": [
+        {
+            "address": "0x1234567890123456789012345678901234567890",
+            "state": [
+                { "vname": "_balance", "type": "Uint128", "value": "142" }
+            ]
+        }
+    ]
   }
 ]
