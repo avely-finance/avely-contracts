@@ -1,20 +1,25 @@
 scilla_version 0
 
-import ListUtils IntUtils
+import ListUtils IntUtils PairUtils
 
 (***************************************************)
 (*               Associated library                *)
 (***************************************************)
 library Holder
 
+type Withdrawal =
+  | Withdrawal of Uint128 Uint128
+
 type Error =
   | ReDelegInvalidSSNAddr
+  | DelegDoesNotExistAtSSN
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
       | ReDelegInvalidSSNAddr => Int32 -21
+      | DelegDoesNotExistAtSSN => Int32 -7
       end
     in
     { _exception: "Error"; code: result_code }
@@ -80,6 +85,9 @@ field totaltokenamount: Uint128 = uint128_zero
 
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
+(* AddressOfDeleg -> BlockNumber -> Deposit *)
+field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
+
 (* Procedures *)
 
 procedure ThrowError(err: Error)
@@ -124,6 +132,66 @@ procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IncreaseTotalTokenAmt token_amt
 end
 
+procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_amt: Uint128)
+  current_token_amount <- balances[initiator];
+
+  match current_token_amount with
+    | Some current_token_amt =>
+      (* TODO: AsseertNoBufferedDeposit ssn initiator; *)
+      (* TODO: AdjustDeleg ssn initiator amt withdraw_amount; *)
+      (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
+      (* Calculate token to zil to withdraw *)
+      total_token_amt <- totaltokenamount;
+      total_stake_amt <- totalstakeamount;
+      withdraw_stake_amt = muldiv current_token_amt total_stake_amt total_token_amt;
+
+      withdrawal_bnum <- & BLOCKNUMBER;
+      withdraw_pending_o <- withdrawal_pending[initiator][withdrawal_bnum];
+
+      (* Upsert pending withdrawal *)
+      match withdraw_pending_o with
+      | Some (Withdrawal token stake) =>
+        new_withdraw_amt = builtin add token withdraw_amt;
+        new_withdraw_stake_amt = builtin add stake withdraw_stake_amt;
+        pending_withdrawal = Withdrawal new_withdraw_amt new_withdraw_stake_amt;
+        withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
+      | None =>
+        pending_withdrawal = Withdrawal withdraw_amt withdraw_stake_amt;
+        withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
+      end
+
+      (* new_amt = builtin sub stake_amt withdraw_amount;
+      minstake_tmp <- minstake;
+      status = uint128_le minstake_tmp new_amt; *)
+      (* ssn_option_tmp = Ssn status new_amt rewards name urlraw urlapi buffdeposit comm comm_rewards rec_addr; *)
+      (* ssnlist[ssn] := ssn_option_tmp; *)
+      (* withdrawal_bnum <- & BLOCKNUMBER;
+      withdraw_amt_o <- withdrawal_pending[initiator][withdrawal_bnum];
+      withdraw_amt_pending = match withdraw_amt_o with
+      | Some v => builtin add v withdraw_amount
+      | None => withdraw_amount
+      end;
+      withdrawal_pending[initiator][withdrawal_bnum] := withdraw_amt_pending;
+      e = { _eventname: "Deleg withdraw deposit"; ssn_addr: ssn; deleg_address: initiator; withdraw_amount: withdraw_amount };
+      event e;
+      match active_status with
+      | True => *)
+        (* If the original status is active, we can substract from totalstakeamt, otherwise dont do so *)
+        (* DecreaseTotalStakeAmt withdraw_amount;
+        event_decrease = { _eventname: "DecreaseTotalStakeAmt"; decreased_amt: withdraw_amount };
+        event event_decrease; *)
+        (* If ssn becomes inactive, we need to decrease the rest as well *)
+        (* DecreaseTotalStakeAmtOnStatus new_amt status
+      | False =>
+        event_decrease = { _eventname: "SSNInactiveBefore" };
+        event event_decrease *)
+      (* end *)
+    | None =>
+      e = DelegDoesNotExistAtSSN;
+      ThrowError e
+  end
+end
+
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
@@ -145,8 +213,16 @@ end
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
-transition RegisterDelegate(initiator: ByStr20, amount: Uint128)
+transition RegisterDelegate(amount: Uint128, initiator: ByStr20)
   Delegate initiator amount
+end
+
+transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
+  WithdrawalStakeAmt initiator amount;
+  msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
+  ssnaddr : azil_ssn_addrress; amount : amount};
+  msg = one_msg msg_to_delegator;
+  send msg
 end
 
 (************************************************************)
