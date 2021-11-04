@@ -13,6 +13,7 @@ type Withdrawal =
 type Error =
   | ReDelegInvalidSSNAddr
   | DelegDoesNotExistAtSSN
+  | InvalidTotalAmt
 
 let make_error =
   fun (result: Error) =>
@@ -20,6 +21,7 @@ let make_error =
       match result with
       | ReDelegInvalidSSNAddr => Int32 -21
       | DelegDoesNotExistAtSSN => Int32 -7
+      | InvalidTotalAmt => Int32 -18
       end
     in
     { _exception: "Error"; code: result_code }
@@ -107,6 +109,32 @@ procedure IncreaseTotalTokenAmt(amt: Uint128)
   totaltokenamount := new_total_amt
 end
 
+procedure DecreaseTotalStakeAmt(amt: Uint128)
+  current_amt <- totalstakeamount;
+  valid = uint128_le amt current_amt;
+  match valid with
+  | True =>
+    new_amt = builtin sub current_amt amt;
+    totalstakeamount := new_amt
+  | False =>
+    e = InvalidTotalAmt;
+    ThrowError e
+  end
+end
+
+procedure DecreaseTotalTokenAmt(amt: Uint128)
+  current_amt <- totaltokenamount;
+  valid = uint128_le amt current_amt;
+  match valid with
+  | True =>
+    new_amt = builtin sub current_amt amt;
+    totaltokenamount := new_amt
+  | False =>
+    e = InvalidTotalAmt;
+    ThrowError e
+  end
+end
+
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   total_token_amt <- totaltokenamount;
@@ -132,18 +160,19 @@ procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IncreaseTotalTokenAmt token_amt
 end
 
-procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_amt: Uint128)
+procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   current_token_amount <- balances[initiator];
 
   match current_token_amount with
     | Some current_token_amt =>
       (* TODO: AsseertNoBufferedDeposit ssn initiator; *)
       (* TODO: AdjustDeleg ssn initiator amt withdraw_amount; *)
+
       (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
       (* Calculate token to zil to withdraw *)
       total_token_amt <- totaltokenamount;
       total_stake_amt <- totalstakeamount;
-      withdraw_stake_amt = muldiv current_token_amt total_stake_amt total_token_amt;
+      withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_token_amt;
 
       withdrawal_bnum <- & BLOCKNUMBER;
       withdraw_pending_o <- withdrawal_pending[initiator][withdrawal_bnum];
@@ -151,41 +180,21 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_amt: Uint128)
       (* Upsert pending withdrawal *)
       match withdraw_pending_o with
       | Some (Withdrawal token stake) =>
-        new_withdraw_amt = builtin add token withdraw_amt;
+        new_withdraw_token_amt = builtin add token withdraw_token_amt;
         new_withdraw_stake_amt = builtin add stake withdraw_stake_amt;
-        pending_withdrawal = Withdrawal new_withdraw_amt new_withdraw_stake_amt;
+        pending_withdrawal = Withdrawal new_withdraw_token_amt new_withdraw_stake_amt;
         withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
       | None =>
-        pending_withdrawal = Withdrawal withdraw_amt withdraw_stake_amt;
+        pending_withdrawal = Withdrawal withdraw_token_amt withdraw_stake_amt;
         withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
-      end
-
-      (* new_amt = builtin sub stake_amt withdraw_amount;
-      minstake_tmp <- minstake;
-      status = uint128_le minstake_tmp new_amt; *)
-      (* ssn_option_tmp = Ssn status new_amt rewards name urlraw urlapi buffdeposit comm comm_rewards rec_addr; *)
-      (* ssnlist[ssn] := ssn_option_tmp; *)
-      (* withdrawal_bnum <- & BLOCKNUMBER;
-      withdraw_amt_o <- withdrawal_pending[initiator][withdrawal_bnum];
-      withdraw_amt_pending = match withdraw_amt_o with
-      | Some v => builtin add v withdraw_amount
-      | None => withdraw_amount
       end;
-      withdrawal_pending[initiator][withdrawal_bnum] := withdraw_amt_pending;
-      e = { _eventname: "Deleg withdraw deposit"; ssn_addr: ssn; deleg_address: initiator; withdraw_amount: withdraw_amount };
+
+      e = { _eventname: "Deleg withdraw deposit"; ssn_addr: azil_ssn_addrress; deleg_address: initiator; withdraw_amount: withdraw_token_amt };
       event e;
-      match active_status with
-      | True => *)
-        (* If the original status is active, we can substract from totalstakeamt, otherwise dont do so *)
-        (* DecreaseTotalStakeAmt withdraw_amount;
-        event_decrease = { _eventname: "DecreaseTotalStakeAmt"; decreased_amt: withdraw_amount };
-        event event_decrease; *)
-        (* If ssn becomes inactive, we need to decrease the rest as well *)
-        (* DecreaseTotalStakeAmtOnStatus new_amt status
-      | False =>
-        event_decrease = { _eventname: "SSNInactiveBefore" };
-        event event_decrease *)
-      (* end *)
+
+      (* Subtract withdrawn amounts from total counters *)
+      DecreaseTotalStakeAmt withdraw_stake_amt;
+      DecreaseTotalTokenAmt withdraw_token_amt
     | None =>
       e = DelegDoesNotExistAtSSN;
       ThrowError e
