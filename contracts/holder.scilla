@@ -14,6 +14,7 @@ type Error =
   | ReDelegInvalidSSNAddr
   | DelegDoesNotExistAtSSN
   | InvalidTotalAmt
+  | DelegHasNoSufficientAmt
 
 let make_error =
   fun (result: Error) =>
@@ -22,6 +23,7 @@ let make_error =
       | ReDelegInvalidSSNAddr => Int32 -21
       | DelegDoesNotExistAtSSN => Int32 -7
       | InvalidTotalAmt => Int32 -18
+      | DelegHasNoSufficientAmt => Int32 -13
       end
     in
     { _exception: "Error"; code: result_code }
@@ -135,6 +137,36 @@ procedure DecreaseTotalTokenAmt(amt: Uint128)
   end
 end
 
+procedure TruncateDeleg(deleg: ByStr20)
+  delete balances[deleg]
+  (* TODO: delete last_buf_deposit_cycle_deleg[deleg][ssnaddr]; *)
+end
+
+procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Uint128)
+  sufficient = uint128_le withdraw_amount total_amount;
+  match sufficient with
+  | True =>
+    need_truncate =  builtin eq withdraw_amount total_amount;
+    match need_truncate with
+    | True =>
+      (* Remove all info map recorded for this deleg *)
+      TruncateDeleg deleg
+    | False =>
+      (* Readjust all rest deleg to this cycle *)
+      rest_deleg = builtin sub total_amount withdraw_amount;
+      (* rest delegate should also meet mindelegstake *)
+      (* TODO: IsDelegstakeSufficient rest_deleg; *)
+      TruncateDeleg deleg;
+      (* Refer to transition TruncateDeleg, here we don't use Fillin transition because we *)
+      (* know they are all empty, and this can reduce some gasfee *)
+      balances[deleg] := rest_deleg
+    end
+  | False =>
+    e = DelegHasNoSufficientAmt;
+    ThrowError e
+  end
+end
+
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   total_token_amt <- totaltokenamount;
@@ -166,7 +198,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   match current_token_amount with
     | Some current_token_amt =>
       (* TODO: AsseertNoBufferedDeposit ssn initiator; *)
-      (* TODO: AdjustDeleg ssn initiator amt withdraw_amount; *)
+      AdjustDeleg initiator current_token_amt withdraw_token_amt;
 
       (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
       (* Calculate token to zil to withdraw *)
