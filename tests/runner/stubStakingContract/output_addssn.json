@@ -1,0 +1,45 @@
+{
+  "scilla_major_version": "0",
+  "gas_remaining": "999893",
+  "_accepted": "false",
+  "messages": [],
+  "states": [
+    { "vname": "_balance", "type": "Uint128", "value": "0" },
+    {
+      "vname": "ssnlist",
+      "type":
+        "Map (ByStr20) (0xabfeccdc9012345678901234567890f777567890.Ssn)",
+      "value": [
+        {
+          "key": "0x1111111111111111111111111111111111111111",
+          "val": {
+            "constructor": "0xabfeccdc9012345678901234567890f777567890.Ssn",
+            "argtypes": [],
+            "arguments": [
+              { "constructor": "False", "argtypes": [], "arguments": [] }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "vname": "direct_deposit_deleg",
+      "type": "Map (ByStr20) (Map (ByStr20) (Map (Uint32) (Uint128)))",
+      "value": []
+    },
+    { "vname": "totalstakeamount", "type": "Uint128", "value": "0" },
+    { "vname": "lastrewardcycle", "type": "Uint32", "value": "1" }
+  ],
+  "events": [
+    {
+      "_eventname": "SSN added",
+      "params": [
+        {
+          "vname": "ssn_addr",
+          "type": "ByStr20",
+          "value": "0x1111111111111111111111111111111111111111"
+        }
+      ]
+    }
+  ]
+}
