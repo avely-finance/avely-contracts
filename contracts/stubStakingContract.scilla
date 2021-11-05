@@ -9,6 +9,13 @@ import ListUtils IntUtils
 (***************************************************)
 library StubStakingContract
 
+(* SSN Data Type https://github.com/Zilliqa/staking-contract/blob/main/contracts/ssnlist.scilla#L8 *)
+(* Each SSN has the following fields: *)
+(* ActiveStatus      : Bool *)
+
+type Ssn =
+| Ssn of Bool 
+
 
 let one_msg =
   fun (msg : Message) =>
@@ -17,20 +24,23 @@ let one_msg =
 
 let uint128_zero = Uint128 0
 let uint32_one = Uint32 1
+let bool_active = True
+let bool_inactive = False
 
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
 
-
 contract StubStakingContract()
+
+(* Keeps track of SSNS *)
+(* AddressOfSSN -> SSNInfo *)
+field ssnlist: Map ByStr20 Ssn = Emp ByStr20 Ssn
 
 field lastrewardcycle: Uint32 = uint32_one
 field totalstakeamount: Uint128 = uint128_zero
 
 field direct_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-
-(* Procedures *)
 
 procedure IncreaseTotalStakeAmt(amt: Uint128)
   current_amt <- totalstakeamount;
@@ -54,10 +64,28 @@ procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
   end
 end
 
+(************************************************************)
+(* @dev: Admin transitions                                  *)
+(************************************************************)
+
+(* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1335 *)
+(* @dev : To add SSN for testing purposes *)
+(* @param ssnaddr: SSN address *)
+transition AddSSN(ssnaddr: ByStr20)
+  status = bool_inactive;
+  s = Ssn status;
+  ssnlist[ssnaddr] := s;
+  e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
+  event e
+end
+
+(************************************************************)
+(* @dev: Delegator transitions                              *)
+(************************************************************)
+
 (* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1535 *)
 (* @dev : To delegate the stake to the contract. *)
 (* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
-(* @param initiator: The original caller who called the proxy aka the deleg. *)
 transition DelegateStake(ssnaddr: ByStr20)
   (* Accept the deposit from SSN and add to contract balance. *)
   accept;
