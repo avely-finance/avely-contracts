@@ -42,7 +42,23 @@ field ssnlist: Map ByStr20 Ssn = Emp ByStr20 Ssn
 field lastrewardcycle: Uint32 = uint32_one
 field totalstakeamount: Uint128 = uint128_zero
 
+(* Keeps track of stake deposits for a delegator that can be considered for reward calcuation *)
+(* AddressofDeleg -> (AddressofSSN -> (RewardCycleNumber -> StakeAmount)) *)
 field direct_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
+
+(* Keeps track of buffered deposit for a delegator *)
+(* AddressOfDeleg -> (AddressofSSN -> (RewardCycleNumber -> BufferedStakeAmountDuringTheCycle)) *)
+(* The BufferedStakeAmount will only be truely delegated at next cycle *)
+field buff_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
+
+(***************************************************)
+(*              Procedures                         *)
+(***************************************************)
+
+procedure AddSSN(ssnaddr: ByStr20, status: Bool, buff_deposit: Uint128)
+  s = Ssn status buff_deposit;
+  ssnlist[ssnaddr] := s
+end
 
 procedure IncreaseTotalStakeAmt(amt: Uint128)
   current_amt <- totalstakeamount;
@@ -50,9 +66,8 @@ procedure IncreaseTotalStakeAmt(amt: Uint128)
   totalstakeamount := new_amt
 end
 
-procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
+procedure EmulateDelegateToInactiveSSN(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
   lrc <- lastrewardcycle;
-
   (* If ssn becomes active, then we need to increase totalstakeamount *)
   IncreaseTotalStakeAmt amount;
   (* record this to direct deposit for deleg *)
@@ -64,7 +79,45 @@ procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
   | None =>
     direct_deposit_deleg[initiator][ssnaddr][lrc] := amount
   end
+end
 
+procedure EmulateDelegateToActiveSSN(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
+  lrc <- lastrewardcycle;
+
+  curval <- ssnlist[ssnaddr];
+  match curval with
+  | None =>
+    (* @fixme we adding SSN here to avoid error while testing through scilla-runner *)
+    status = bool_active;
+    buffdeposit = uint128_zero;
+    AddSSN ssnaddr status buffdeposit
+  end;
+
+  curval <- ssnlist[ssnaddr];
+  match curval with
+  | Some (Ssn status buffdeposit) =>
+
+    (* The SSN is active so add the delegated stake to the buffer *)
+    (* @fixme Do we need this in stub contract ? last_buf_deposit_cycle_deleg[initiator][ssnaddr] := lrc; *)
+    new_buff_amt = builtin add amount buffdeposit;
+    ssn = Ssn bool_active new_buff_amt;
+    ssnlist[ssnaddr] := ssn;
+
+    (* record this to buffer deposit for deleg *)
+    stake_amt_for_deleg_option <- buff_deposit_deleg[initiator][ssnaddr][lrc];
+    match stake_amt_for_deleg_option with
+    | Some stake_amt_for_deleg =>
+      new_stake_amt_for_deleg = builtin add stake_amt_for_deleg amount;
+      buff_deposit_deleg[initiator][ssnaddr][lrc] := new_stake_amt_for_deleg
+    | None =>
+      buff_deposit_deleg[initiator][ssnaddr][lrc] := amount
+    end
+  end
+
+end
+
+procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
+  EmulateDelegateToActiveSSN ssnaddr initiator amount
 end
 
 (************************************************************)
@@ -76,9 +129,8 @@ end
 (* @param ssnaddr: SSN address *)
 transition AddSSN(ssnaddr: ByStr20)
   status = bool_inactive;
-  buff_deposit = Uint128 0;
-  s = Ssn status buff_deposit;
-  ssnlist[ssnaddr] := s;
+  buff_deposit = uint128_zero;
+  AddSSN ssnaddr status buff_deposit;
   e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
   event e
 end
