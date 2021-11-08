@@ -12,9 +12,11 @@ library StubStakingContract
 (* SSN Data Type https://github.com/Zilliqa/staking-contract/blob/main/contracts/ssnlist.scilla#L8 *)
 (* Each SSN has the following fields: *)
 (* ActiveStatus      : Bool *)
+(* BufferedDeposit   : Uint128 *)
+(*                     Stake deposit that cannot be counted as a part of reward calc. for the ongoing reward cycle. But, to be considered *)
 
 type Ssn =
-| Ssn of Bool 
+| Ssn of Bool Uint128
 
 
 let one_msg =
@@ -62,6 +64,7 @@ procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
   | None =>
     direct_deposit_deleg[initiator][ssnaddr][lrc] := amount
   end
+
 end
 
 (************************************************************)
@@ -73,7 +76,8 @@ end
 (* @param ssnaddr: SSN address *)
 transition AddSSN(ssnaddr: ByStr20)
   status = bool_inactive;
-  s = Ssn status;
+  buff_deposit = Uint128 0;
+  s = Ssn status buff_deposit;
   ssnlist[ssnaddr] := s;
   e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
   event e

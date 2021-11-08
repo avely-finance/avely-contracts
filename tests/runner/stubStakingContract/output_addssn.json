@@ -1,6 +1,6 @@
 {
   "scilla_major_version": "0",
-  "gas_remaining": "999893",
+  "gas_remaining": "999890",
   "_accepted": "false",
   "messages": [],
   "states": [
@@ -16,7 +16,8 @@
             "constructor": "0xabfeccdc9012345678901234567890f777567890.Ssn",
             "argtypes": [],
             "arguments": [
-              { "constructor": "False", "argtypes": [], "arguments": [] }
+              { "constructor": "False", "argtypes": [], "arguments": [] },
+              "0"
             ]
           }
         }

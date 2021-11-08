@@ -1,6 +1,6 @@
 {
   "scilla_major_version": "0",
-  "gas_remaining": "999848",
+  "gas_remaining": "999847",
   "_accepted": "true",
   "messages": [
     {
@@ -20,6 +20,12 @@
   "states": [
     { "vname": "_balance", "type": "Uint128", "value": "1" },
     { "vname": "totalstakeamount", "type": "Uint128", "value": "1" },
+    {
+      "vname": "ssnlist",
+      "type":
+        "Map (ByStr20) (0xabfeccdc9012345678901234567890f777567890.Ssn)",
+      "value": []
+    },
     {
       "vname": "direct_deposit_deleg",
       "type": "Map (ByStr20) (Map (ByStr20) (Map (Uint32) (Uint128)))",
