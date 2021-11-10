@@ -1,6 +1,6 @@
 [
-  { "vname" : "_balance", "type" : "Uint128", "value" : "0" },
-  { "vname": "totalstakeamount", "type": "Uint128", "value": "0" },
+  { "vname": "_balance", "type": "Uint128", "value": "12345" },
+  { "vname": "totalstakeamount", "type": "Uint128", "value": "12345" },
   { "vname": "lastrewardcycle", "type": "Uint32", "value": "1" },
   {
     "vname": "ssnlist",
@@ -13,7 +13,18 @@
           "constructor": "0xabfeccdc9012345678901234567890f777567890.Ssn",
           "argtypes": [],
           "arguments": [
-            { "constructor": "False", "argtypes": [], "arguments": [] },
+            { "constructor": "True", "argtypes": [], "arguments": [] },
+            "0"
+          ]
+        }
+      },
+      {
+        "key": "0x2222222222222222222222222222222222222222",
+        "val": {
+          "constructor": "0xabfeccdc9012345678901234567890f777567890.Ssn",
+          "argtypes": [],
+          "arguments": [
+            { "constructor": "True", "argtypes": [], "arguments": [] },
             "0"
           ]
         }

@@ -66,32 +66,14 @@ procedure IncreaseTotalStakeAmt(amt: Uint128)
   totalstakeamount := new_amt
 end
 
-procedure EmulateDelegateToInactiveSSN(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
-  lrc <- lastrewardcycle;
-  (* If ssn becomes active, then we need to increase totalstakeamount *)
-  IncreaseTotalStakeAmt amount;
-  (* record this to direct deposit for deleg *)
-  stake_amt_for_deleg_option  <- direct_deposit_deleg[initiator][ssnaddr][lrc];
-  match stake_amt_for_deleg_option  with
-  | Some stake_amt_for_deleg =>
-    new_stake_amt_for_deleg = builtin add stake_amt_for_deleg amount;
-    direct_deposit_deleg[initiator][ssnaddr][lrc] := new_stake_amt_for_deleg
-  | None =>
-    direct_deposit_deleg[initiator][ssnaddr][lrc] := amount
-  end
+procedure DecreaseTotalStakeAmt(amt: Uint128)
+  current_amt <- totalstakeamount;
+  new_amt = builtin sub current_amt amt;
+  totalstakeamount := new_amt
 end
 
-procedure EmulateDelegateToActiveSSN(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
+procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
   lrc <- lastrewardcycle;
-
-  curval <- ssnlist[ssnaddr];
-  match curval with
-  | None =>
-    (* @fixme we adding SSN here to avoid error while testing through scilla-runner *)
-    status = bool_active;
-    buffdeposit = uint128_zero;
-    AddSSN ssnaddr status buffdeposit
-  end;
 
   curval <- ssnlist[ssnaddr];
   match curval with
@@ -112,12 +94,19 @@ procedure EmulateDelegateToActiveSSN(ssnaddr: ByStr20, initiator: ByStr20, amoun
     | None =>
       buff_deposit_deleg[initiator][ssnaddr][lrc] := amount
     end
+  | None =>
+    e = { _exception : "SsnNotExists"; ssnaddr : ssnaddr };
+    throw e
   end
 
 end
 
-procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
-  EmulateDelegateToActiveSSN ssnaddr initiator amount
+(* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L996 *)
+(* We're supposing that SSN is active, so just substract undeleg_amt from totalstakeamount *)
+procedure UnDelegateStakeAmt(initiator: ByStr20, ssn: ByStr20, undeleg_amt: Uint128)
+  DecreaseTotalStakeAmt undeleg_amt;
+  event_decrease = { _eventname: "DecreaseTotalStakeAmt"; decreased_amt: undeleg_amt };
+  event event_decrease
 end
 
 (************************************************************)
@@ -160,4 +149,26 @@ transition DelegateStake(ssnaddr: ByStr20)
   };
   msg = one_msg msg_to_delegator;
   send msg
+end
+
+
+(* @dev: Transfer stake deposit from one SSN to another. Used by delegs. *)
+(* @param ssnaddr: SSN from where the stake deposit will be withdrawn for transfer purpose. *)
+(* @param to_ssn: SSN that will receive the withdrawn stake deposit. *)
+(* @param amount: The amount of stake deposit to transfer. *)
+(* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1621 *)
+transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
+  initiator = _sender;
+
+  UnDelegateStakeAmt initiator ssnaddr amount;
+  Delegate to_ssn initiator amount;
+
+  e = { _eventname: "ReDelegateStakeSuccess"; ssnaddr: ssnaddr; to_ssn: to_ssn; delegator: initiator; delegate_amount: amount };
+  event e;
+
+  msg_to_delegator = {_tag : "ReDelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; 
+  ssnaddr: ssnaddr; tossn: to_ssn; amount : amount};
+  msg = one_msg msg_to_delegator;
+  send msg
+
 end
