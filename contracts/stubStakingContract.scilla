@@ -42,10 +42,6 @@ field ssnlist: Map ByStr20 Ssn = Emp ByStr20 Ssn
 field lastrewardcycle: Uint32 = uint32_one
 field totalstakeamount: Uint128 = uint128_zero
 
-(* Keeps track of stake deposits for a delegator that can be considered for reward calcuation *)
-(* AddressofDeleg -> (AddressofSSN -> (RewardCycleNumber -> StakeAmount)) *)
-field direct_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-
 (* Keeps track of buffered deposit for a delegator *)
 (* AddressOfDeleg -> (AddressofSSN -> (RewardCycleNumber -> BufferedStakeAmountDuringTheCycle)) *)
 (* The BufferedStakeAmount will only be truely delegated at next cycle *)
