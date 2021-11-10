@@ -1,0 +1,108 @@
+{
+  "scilla_major_version": "0",
+  "gas_remaining": "999794",
+  "_accepted": "false",
+  "messages": [
+    {
+      "_tag": "ReDelegateStakeSuccessCallBack",
+      "_amount": "0",
+      "_recipient": "0x1234567890123456789012345678901234567890",
+      "params": [
+        {
+          "vname": "ssnaddr",
+          "type": "ByStr20",
+          "value": "0x1111111111111111111111111111111111111111"
+        },
+        {
+          "vname": "tossn",
+          "type": "ByStr20",
+          "value": "0x2222222222222222222222222222222222222222"
+        },
+        { "vname": "amount", "type": "Uint128", "value": "12345" }
+      ]
+    }
+  ],
+  "states": [
+    { "vname": "_balance", "type": "Uint128", "value": "12345" },
+    { "vname": "totalstakeamount", "type": "Uint128", "value": "0" },
+    { "vname": "lastrewardcycle", "type": "Uint32", "value": "1" },
+    {
+      "vname": "ssnlist",
+      "type":
+        "Map (ByStr20) (0xabfeccdc9012345678901234567890f777567890.Ssn)",
+      "value": [
+        {
+          "key": "0x1111111111111111111111111111111111111111",
+          "val": {
+            "constructor": "0xabfeccdc9012345678901234567890f777567890.Ssn",
+            "argtypes": [],
+            "arguments": [
+              { "constructor": "True", "argtypes": [], "arguments": [] },
+              "0"
+            ]
+          }
+        },
+        {
+          "key": "0x2222222222222222222222222222222222222222",
+          "val": {
+            "constructor": "0xabfeccdc9012345678901234567890f777567890.Ssn",
+            "argtypes": [],
+            "arguments": [
+              { "constructor": "True", "argtypes": [], "arguments": [] },
+              "12345"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "vname": "direct_deposit_deleg",
+      "type": "Map (ByStr20) (Map (ByStr20) (Map (Uint32) (Uint128)))",
+      "value": []
+    },
+    {
+      "vname": "buff_deposit_deleg",
+      "type": "Map (ByStr20) (Map (ByStr20) (Map (Uint32) (Uint128)))",
+      "value": [
+        {
+          "key": "0x1234567890123456789012345678901234567890",
+          "val": [
+            {
+              "key": "0x2222222222222222222222222222222222222222",
+              "val": [ { "key": "1", "val": "12345" } ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "_eventname": "ReDelegateStakeSuccess",
+      "params": [
+        {
+          "vname": "ssnaddr",
+          "type": "ByStr20",
+          "value": "0x1111111111111111111111111111111111111111"
+        },
+        {
+          "vname": "to_ssn",
+          "type": "ByStr20",
+          "value": "0x2222222222222222222222222222222222222222"
+        },
+        {
+          "vname": "delegator",
+          "type": "ByStr20",
+          "value": "0x1234567890123456789012345678901234567890"
+        },
+        { "vname": "delegate_amount", "type": "Uint128", "value": "12345" }
+      ]
+    },
+    {
+      "_eventname": "DecreaseTotalStakeAmt",
+      "params": [
+        { "vname": "decreased_amt", "type": "Uint128", "value": "12345" }
+      ]
+    }
+  ]
+}
