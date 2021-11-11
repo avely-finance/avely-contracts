@@ -7,134 +7,46 @@ import ListUtils IntUtils
 (***************************************************)
 library Buffer
 
-type Error =
-  | ReDelegInvalidSSNAddr
-
-let make_error =
-  fun (result: Error) =>
-    let result_code =
-      match result with
-      | ReDelegInvalidSSNAddr => Int32 -21
-      end
-    in
-    { _exception: "Error"; code: result_code }
+let uint128_zero = Uint128 0
 
 let one_msg =
   fun (msg : Message) =>
     let nil_msg = Nil {Message} in
     Cons {Message} msg nil_msg
 
-let uint128_zero = Uint128 0
-let uint128_one = Uint128 1
-let uint32_one = Uint32 1
-
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
 
-contract Buffer(
-  azil_ssn_addrress                   : ByStr20,
-  init_proxy_staking_contract_address : ByStr20,
-  init_holder_address                 : ByStr20
-)
-(*  Parameters *)
-(* (owner     : ByStr20) *)
-
-(* Mutable fields *)
-field holder_address                  : ByStr20 = init_holder_address
-field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
-
-(* Procedures *)
-
-procedure ThrowError(err: Error)
-  e = make_error err;
-  throw e
-end
-
-procedure HolderDeleagate(initiator: ByStr20, amount: Uint128)
-  holder_addr <- holder_address;
-
-  msg = {_tag: "RegisterDelegate"; _recipient: holder_addr; _amount: uint128_zero; initiator: initiator; amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
+contract Buffer()
 
 (* @dev : To delegate the stake to the contract. *)
 (* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
-procedure ProxyDelegate(amount: Uint128)
-  proxy_contract_addr <- proxy_staking_contract_address;
-  msg = {_tag: "DelegateStake"; _recipient: proxy_contract_addr; _amount: amount; ssnaddr: azil_ssn_addrress};
+procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: Uint128)
+  msg = {_tag: "DelegateStake"; _recipient: proxy_contract_addr; _amount: amount; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
 end
 
-procedure ProxyReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-  proxy_contract_addr <- proxy_staking_contract_address;
-  msg = {_tag: "ReDelegateStake"; _recipient: proxy_contract_addr; _amount: uint128_zero;
-        ssnaddr: ssnaddr; to_ssn: azil_ssn_addrress; amount: amount};
+procedure ProxyReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, proxy_staking_contract_addr: ByStr20, amount: Uint128)
+  msg = {_tag: "ReDelegateStake"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero;
+        ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount};
   msgs = one_msg msg;
   send msgs
-end
-
-(************************************************************)
-(* @dev: Admin actions                                      *)
-(************************************************************)
-
-transition ChangeHolderAddress(address: ByStr20)
-  holder_address := address;
-
-  e = { _eventname: "ChangeHolderAddress"; address: address };
-  event e
-end
-
-transition ChangeProxyContractAddress(address: ByStr20)
-  proxy_staking_contract_address := address;
-
-  e = { _eventname: "ChangeProxyContractAddress"; address: address };
-  event e
 end
 
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
-transition DelegateStake()
+transition DelegateStake(ssnaddr: ByStr20, proxy_staking_contract_addr: ByStr20)
   accept;
   stake_amt = _amount;
-  initiator = _sender;
 
-  ProxyDelegate stake_amt;
-  HolderDeleagate initiator stake_amt;
-
-  e = { _eventname: "DelegateStake"; delegator: initiator; amount: stake_amt };
-  event e;
-
-  msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; amount : stake_amt};
-  msg = one_msg msg_to_delegator;
-  send msg
+  ProxyDelegate ssnaddr proxy_staking_contract_addr stake_amt
 end
 
-transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-  same_ssn = builtin eq ssnaddr azil_ssn_addrress;
-
-  match same_ssn with
-  | True =>
-    e = ReDelegInvalidSSNAddr;
-    ThrowError e
-  | False =>
-    stake_amt = amount;
-    initiator = _sender;
-
-    ProxyReDelegateStake ssnaddr stake_amt;
-    HolderDeleagate initiator stake_amt;
-
-    e = { _eventname: "ReDelegateStakeSuccess"; ssnaddr: ssnaddr; delegator: initiator; delegate_amount: stake_amt };
-    event e;
-
-    msg_to_delegator = {_tag : "ReDelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
-                        ssnaddr: ssnaddr; amount : amount};
-    msg = one_msg msg_to_delegator;
-    send msg
-  end
+transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, proxy_staking_contract_addr: ByStr20, amount: Uint128)
+  ProxyReDelegateStake ssnaddr to_ssn proxy_staking_contract_addr amount
 end
 
 transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
