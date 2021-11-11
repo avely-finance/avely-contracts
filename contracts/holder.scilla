@@ -1,287 +1,30 @@
 scilla_version 0
 
-import ListUtils IntUtils PairUtils
-
 (***************************************************)
 (*               Associated library                *)
 (***************************************************)
 library Holder
 
-type Withdrawal =
-  | Withdrawal of Uint128 Uint128
-
-type Error =
-  | ReDelegInvalidSSNAddr
-  | DelegDoesNotExistAtSSN
-  | InvalidTotalAmt
-  | DelegHasNoSufficientAmt
-
-let make_error =
-  fun (result: Error) =>
-    let result_code =
-      match result with
-      | ReDelegInvalidSSNAddr => Int32 -21
-      | DelegDoesNotExistAtSSN => Int32 -7
-      | InvalidTotalAmt => Int32 -18
-      | DelegHasNoSufficientAmt => Int32 -13
-      end
-    in
-    { _exception: "Error"; code: result_code }
-
-let uint128_to_uint256 : Uint128 -> Uint256 =
-  fun (x : Uint128) =>
-    let ox256 = builtin to_uint256 x in
-      match ox256 with
-      | None =>
-        (* this never happens, hence we throw a division by zero exception just in case *)
-        let zero = Uint256 0 in
-        builtin div zero zero
-      | Some x256 => x256
-      end
-
-let muldiv : Uint128 -> Uint128 -> Uint128 -> Uint128 =
-    fun (x : Uint128) =>
-    fun (y : Uint128) =>
-    fun (z : Uint128) =>
-      let x256 = uint128_to_uint256 x in
-      let y256 = uint128_to_uint256 y in
-      let z256 = uint128_to_uint256 z in
-      let x_mul_y256 = builtin mul x256 y256 in
-      let res256 = builtin div x_mul_y256 z256 in
-      let ores128 = builtin to_uint128 res256 in
-      match ores128 with
-      | None =>
-        (* this must never happen, hence we throw an integer overflow exception *)
-        let max_uint128 = Uint128 340282366920938463463374607431768211455 in
-        let fourtytwo128 = Uint128 42 in
-        builtin mul max_uint128 fourtytwo128
-      | Some res128 =>
-        res128
-      end
+let uint128_zero = Uint128 0
 
 let one_msg =
   fun (msg : Message) =>
     let nil_msg = Nil {Message} in
     Cons {Message} msg nil_msg
 
-let uint128_zero = Uint128 0
-let uint128_one = Uint128 1
-let uint32_one = Uint32 1
-
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
 
-contract Holder(
-  azil_ssn_addrress                   : ByStr20,
-  init_proxy_staking_contract_address : ByStr20,
-  init_buffer_address                 : ByStr20
-)
-(*  Parameters *)
-(* (owner     : ByStr20) *)
+contract Holder()
 
-(* Mutable fields *)
-field buffer_address                  : ByStr20 = init_buffer_address
-field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
-
-field totalstakeamount: Uint128 = uint128_zero
-field totaltokenamount: Uint128 = uint128_zero
-
-field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
-
-(* AddressOfDeleg -> BlockNumber -> Deposit *)
-field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
-
-(* Procedures *)
-
-procedure ThrowError(err: Error)
-  e = make_error err;
-  throw e
-end
-
-procedure IncreaseTotalStakeAmt(amt: Uint128)
-  total_stake_amt <- totalstakeamount;
-  new_total_amt = builtin add total_stake_amt amt;
-  totalstakeamount := new_total_amt
-end
-
-procedure IncreaseTotalTokenAmt(amt: Uint128)
-  total_token_amt <- totaltokenamount;
-  new_total_amt = builtin add total_token_amt amt;
-  totaltokenamount := new_total_amt
-end
-
-procedure DecreaseTotalStakeAmt(amt: Uint128)
-  current_amt <- totalstakeamount;
-  valid = uint128_le amt current_amt;
-  match valid with
-  | True =>
-    new_amt = builtin sub current_amt amt;
-    totalstakeamount := new_amt
-  | False =>
-    e = InvalidTotalAmt;
-    ThrowError e
-  end
-end
-
-procedure DecreaseTotalTokenAmt(amt: Uint128)
-  current_amt <- totaltokenamount;
-  valid = uint128_le amt current_amt;
-  match valid with
-  | True =>
-    new_amt = builtin sub current_amt amt;
-    totaltokenamount := new_amt
-  | False =>
-    e = InvalidTotalAmt;
-    ThrowError e
-  end
-end
-
-procedure TruncateDeleg(deleg: ByStr20)
-  delete balances[deleg]
-  (* TODO: delete last_buf_deposit_cycle_deleg[deleg][ssnaddr]; *)
-end
-
-procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Uint128)
-  sufficient = uint128_le withdraw_amount total_amount;
-  match sufficient with
-  | True =>
-    need_truncate =  builtin eq withdraw_amount total_amount;
-    match need_truncate with
-    | True =>
-      (* Remove all info map recorded for this deleg *)
-      TruncateDeleg deleg
-    | False =>
-      (* Readjust all rest deleg to this cycle *)
-      rest_deleg = builtin sub total_amount withdraw_amount;
-      (* rest delegate should also meet mindelegstake *)
-      (* TODO: IsDelegstakeSufficient rest_deleg; *)
-      TruncateDeleg deleg;
-      (* Refer to transition TruncateDeleg, here we don't use Fillin transition because we *)
-      (* know they are all empty, and this can reduce some gasfee *)
-      balances[deleg] := rest_deleg
-    end
-  | False =>
-    e = DelegHasNoSufficientAmt;
-    ThrowError e
-  end
-end
-
-(* newTokens = amount * totaltokenamount / totalstakeamount *)
-procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
-  total_token_amt <- totaltokenamount;
-  current_stake_amt <- totalstakeamount;
-
-  first_delegation = builtin eq total_token_amt uint128_zero;
-  token_amt =
-    match first_delegation with
-    | True => stake_amt
-    | False => muldiv stake_amt total_token_amt current_stake_amt
-    end;
-
-  current_token_amount <- balances[initiator];
-  match current_token_amount  with
-  | Some current_token_amt =>
-    new_current_token_amt = builtin add current_token_amt token_amt;
-    balances[initiator] := new_current_token_amt
-  | None =>
-    balances[initiator] := token_amt
-  end;
-
-  IncreaseTotalStakeAmt stake_amt;
-  IncreaseTotalTokenAmt token_amt
-end
-
-procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
-  current_token_amount <- balances[initiator];
-
-  match current_token_amount with
-    | Some current_token_amt =>
-      (* TODO: AsseertNoBufferedDeposit ssn initiator; *)
-      AdjustDeleg initiator current_token_amt withdraw_token_amt;
-
-      (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
-      (* Calculate token to zil to withdraw *)
-      total_token_amt <- totaltokenamount;
-      total_stake_amt <- totalstakeamount;
-      withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_token_amt;
-
-      withdrawal_bnum <- & BLOCKNUMBER;
-      withdraw_pending_o <- withdrawal_pending[initiator][withdrawal_bnum];
-
-      (* Upsert pending withdrawal *)
-      match withdraw_pending_o with
-      | Some (Withdrawal token stake) =>
-        new_withdraw_token_amt = builtin add token withdraw_token_amt;
-        new_withdraw_stake_amt = builtin add stake withdraw_stake_amt;
-        pending_withdrawal = Withdrawal new_withdraw_token_amt new_withdraw_stake_amt;
-        withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
-      | None =>
-        pending_withdrawal = Withdrawal withdraw_token_amt withdraw_stake_amt;
-        withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
-      end;
-
-      e = { _eventname: "Deleg withdraw deposit"; ssn_addr: azil_ssn_addrress; deleg_address: initiator; withdraw_amount: withdraw_token_amt };
-      event e;
-
-      (* Subtract withdrawn amounts from total counters *)
-      DecreaseTotalStakeAmt withdraw_stake_amt;
-      DecreaseTotalTokenAmt withdraw_token_amt
-    | None =>
-      e = DelegDoesNotExistAtSSN;
-      ThrowError e
-  end
-end
-
-(************************************************************)
-(* @dev: Admin actions                                      *)
-(************************************************************)
-
-transition IncreaseTotalStakeAmount(amount: Uint128)
-  IncreaseTotalStakeAmt amount;
-
-  e = { _eventname: "IncreaseTotalStakeAmount"; amount: amount };
-  event e
-end
-
-transition ChangeBufferAddress(address: ByStr20)
-  buffer_address := address;
-
-  e = { _eventname: "ChangeBufferAddress"; address: address };
-  event e
-end
-
-(************************************************************)
-(* @dev: Deposit undelegated zil, use our node              *)
-(************************************************************)
-transition RegisterDelegate(amount: Uint128, initiator: ByStr20)
-  Delegate initiator amount
-end
-
-transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
-  WithdrawalStakeAmt initiator amount;
-  msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
-  ssnaddr : azil_ssn_addrress; amount : amount};
-  msg = one_msg msg_to_delegator;
-  send msg
-end
-
-(************************************************************)
-(* @dev: Returns an account zil amount                      *)
-(************************************************************)
-transition ZilBalanceOf(address: ByStr20)
-  total_token_amt <- totaltokenamount;
-  total_stake_amt <- totalstakeamount;
-
-  current_token_amount <- balances[address];
-
-  balance =
-    match current_token_amount with
-    | Some current_token_amt => muldiv current_token_amt total_stake_amt total_token_amt
-    | None => uint128_zero
-    end;
-
-  msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : _sender; _amount : uint128_zero; balance : balance};
-  msgs = one_msg msg_to_sender;
+procedure ProxyWithdrawStakeAmt(ssnaddr: ByStr20, proxy_staking_contract_addr: ByStr20, amount: Uint128)
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero;
+  ssnaddr: ssnaddr; amount: amount};
+  msgs = one_msg msg;
   send msgs
+end
+
+transition WithdrawStakeAmt(ssnaddr: ByStr20, proxy_staking_contract_addr: ByStr20, amount: Uint128)
+  (* TODO: ProxyWithdrawStakeAmt ssnaddr proxy_staking_contract_addr amount *)
 end
