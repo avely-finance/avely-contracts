@@ -21,11 +21,6 @@
     ]
   },
   {
-    "vname": "direct_deposit_deleg",
-    "type": "Map (ByStr20) (Map (ByStr20) (Map (Uint32) (Uint128)))",
-    "value": []
-  },
-  {
     "vname": "buff_deposit_deleg",
     "type": "Map (ByStr20) (Map (ByStr20) (Map (Uint32) (Uint128)))",
     "value": []
