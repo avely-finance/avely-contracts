@@ -108,21 +108,6 @@ procedure UnDelegateStakeAmt(initiator: ByStr20, ssn: ByStr20, undeleg_amt: Uint
   event event_decrease
 end
 
-(************************************************************)
-(* @dev: Admin transitions                                  *)
-(************************************************************)
-
-(* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1335 *)
-(* @dev : To add SSN for testing purposes *)
-(* @param ssnaddr: SSN address *)
-transition AddSSN(ssnaddr: ByStr20)
-  status = bool_inactive;
-  buff_deposit = uint128_zero;
-  AddSSN ssnaddr status buff_deposit;
-  e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
-  event e
-end
-
 (* custom procedure, partially based on UpdateStakeReward *)
 procedure SsnBufferToStake (ssn: Pair ByStr20 Ssn)
   match ssn with
@@ -139,6 +124,21 @@ procedure SsnBufferToStake (ssn: Pair ByStr20 Ssn)
       event e
     end
   end
+end
+
+(************************************************************)
+(* @dev: Admin transitions                                  *)
+(************************************************************)
+
+(* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1335 *)
+(* @dev : To add SSN for testing purposes *)
+(* @param ssnaddr: SSN address *)
+transition AddSSN(ssnaddr: ByStr20)
+  status = bool_inactive;
+  buff_deposit = uint128_zero;
+  AddSSN ssnaddr status buff_deposit;
+  e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
+  event e
 end
 
 (************************************************************)
