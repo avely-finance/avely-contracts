@@ -9,12 +9,18 @@ library AZil
 
 type Error =
   | ReDelegInvalidSSNAddr
+  | DelegDoesNotExistAtSSN
+  | InvalidTotalAmt
+  | DelegHasNoSufficientAmt
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
       | ReDelegInvalidSSNAddr => Int32 -21
+      | DelegDoesNotExistAtSSN => Int32 -7
+      | InvalidTotalAmt => Int32 -18
+      | DelegHasNoSufficientAmt => Int32 -13
       end
     in
     { _exception: "Error"; code: result_code }
@@ -64,13 +70,18 @@ let uint32_one = Uint32 1
 (***************************************************)
 
 contract AZil(
-  azil_ssn_addrress              : ByStr20,
-  proxy_staking_contract_address : ByStr20
+  azil_ssn_address                    : ByStr20,
+  init_proxy_staking_contract_address : ByStr20,
+  init_buffer_address                 : ByStr20,
+  init_holder_address                 : ByStr20
 )
 (*  Parameters *)
 (* (owner     : ByStr20) *)
 
 (* Mutable fields *)
+field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
+field buffer_address                  : ByStr20 = init_buffer_address
+field holder_address                  : ByStr20 = init_holder_address
 
 field totalstakeamount: Uint128 = uint128_zero
 field totaltokenamount: Uint128 = uint128_zero
@@ -121,24 +132,52 @@ procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IncreaseTotalTokenAmt token_amt
 end
 
-(* @dev : To delegate the stake to the contract. *)
-(* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
-procedure ProxyDelegate(amount: Uint128)
-  msg = {_tag: "DelegateStake"; _recipient: proxy_staking_contract_address; _amount: amount; ssnaddr: azil_ssn_addrress};
+(* @dev : To delegate the stake to the contract through buffer. *)
+procedure BufferDelegate(amount: Uint128)
+  buffer_addr <- buffer_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount;
+        ssnaddr: azil_ssn_address; proxy_staking_contract_addr: proxy_staking_contract_addr};
   msgs = one_msg msg;
   send msgs
 end
 
-procedure ProxyReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-    msg = {_tag: "ReDelegateStake"; _recipient: proxy_staking_contract_address; _amount: uint128_zero;
-          ssnaddr: ssnaddr; to_ssn: azil_ssn_addrress; amount: amount};
-    msgs = one_msg msg;
-    send msgs
+procedure BufferReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
+buffer_addr <- buffer_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  msg = {_tag: "ReDelegateStake"; _recipient: buffer_addr; _amount: uint128_zero;
+        ssnaddr: ssnaddr; to_ssn: azil_ssn_address;
+        proxy_staking_contract_addr: proxy_staking_contract_addr; amount: amount};
+  msgs = one_msg msg;
+  send msgs
 end
 
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
+
+transition ChangeHolderAddress(address: ByStr20)
+  holder_address := address;
+
+  e = { _eventname: "ChangeHolderAddress"; address: address };
+  event e
+end
+
+transition ChangeBufferAddress(address: ByStr20)
+  buffer_address := address;
+
+  e = { _eventname: "ChangeBufferAddress"; address: address };
+  event e
+end
+
+transition ChangeProxyContractAddress(address: ByStr20)
+  proxy_staking_contract_address := address;
+
+  e = { _eventname: "ChangeProxyContractAddress"; address: address };
+  event e
+end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
   IncreaseTotalStakeAmt amount;
@@ -155,7 +194,7 @@ transition DelegateStake()
   stake_amt = _amount;
   initiator = _sender;
 
-  ProxyDelegate stake_amt;
+  BufferDelegate stake_amt;
   Delegate initiator stake_amt;
 
   e = { _eventname: "DelegateStake"; delegator: initiator; amount: stake_amt };
@@ -167,7 +206,7 @@ transition DelegateStake()
 end
 
 transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-  same_ssn = builtin eq ssnaddr azil_ssn_addrress;
+  same_ssn = builtin eq ssnaddr azil_ssn_address;
 
   match same_ssn with
   | True =>
@@ -177,7 +216,7 @@ transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
     stake_amt = amount;
     initiator = _sender;
 
-    ProxyReDelegateStake ssnaddr stake_amt;
+    BufferReDelegateStake ssnaddr stake_amt;
     Delegate initiator stake_amt;
 
     e = { _eventname: "ReDelegateStakeSuccess"; ssnaddr: ssnaddr; delegator: initiator; delegate_amount: stake_amt };
@@ -208,13 +247,4 @@ transition ZilBalanceOf(address: ByStr20)
   msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : _sender; _amount : uint128_zero; balance : balance};
   msgs = one_msg msg_to_sender;
   send msgs
-end
-
-
-transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* We ignore the staking contract callbacks *)
-end
-
-transition ReDelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* We ignore the staking contract callbacks *)
 end
