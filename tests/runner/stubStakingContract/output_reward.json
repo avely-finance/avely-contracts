@@ -1,30 +1,11 @@
 {
   "scilla_major_version": "0",
-  "gas_remaining": "999794",
+  "gas_remaining": "999847",
   "_accepted": "false",
-  "messages": [
-    {
-      "_tag": "ReDelegateStakeSuccessCallBack",
-      "_amount": "0",
-      "_recipient": "0x1234567890123456789012345678901234567890",
-      "params": [
-        {
-          "vname": "ssnaddr",
-          "type": "ByStr20",
-          "value": "0x1111111111111111111111111111111111111111"
-        },
-        {
-          "vname": "tossn",
-          "type": "ByStr20",
-          "value": "0x2222222222222222222222222222222222222222"
-        },
-        { "vname": "amount", "type": "Uint128", "value": "12345" }
-      ]
-    }
-  ],
+  "messages": [],
   "states": [
     { "vname": "_balance", "type": "Uint128", "value": "12345" },
-    { "vname": "totalstakeamount", "type": "Uint128", "value": "0" },
+    { "vname": "totalstakeamount", "type": "Uint128", "value": "116" },
     { "vname": "lastrewardcycle", "type": "Uint32", "value": "1" },
     {
       "vname": "ssnlist",
@@ -49,7 +30,7 @@
             "argtypes": [],
             "arguments": [
               { "constructor": "True", "argtypes": [], "arguments": [] },
-              "12345"
+              "0"
             ]
           }
         }
@@ -63,8 +44,12 @@
           "key": "0x1234567890123456789012345678901234567890",
           "val": [
             {
+              "key": "0x1111111111111111111111111111111111111111",
+              "val": [ { "key": "1", "val": "52" } ]
+            },
+            {
               "key": "0x2222222222222222222222222222222222222222",
-              "val": [ { "key": "1", "val": "12345" } ]
+              "val": [ { "key": "1", "val": "64" } ]
             }
           ]
         }
@@ -73,30 +58,29 @@
   ],
   "events": [
     {
-      "_eventname": "ReDelegateStakeSuccess",
+      "_eventname": "SSN assign reward",
+      "params": [
+        {
+          "vname": "ssnaddr",
+          "type": "ByStr20",
+          "value": "0x2222222222222222222222222222222222222222"
+        },
+        { "vname": "cycle_number", "type": "Uint32", "value": "1" },
+        { "vname": "delegate_rewards", "type": "Uint128", "value": "0" },
+        { "vname": "comm_rewards", "type": "Uint128", "value": "0" }
+      ]
+    },
+    {
+      "_eventname": "SSN assign reward",
       "params": [
         {
           "vname": "ssnaddr",
           "type": "ByStr20",
           "value": "0x1111111111111111111111111111111111111111"
         },
-        {
-          "vname": "to_ssn",
-          "type": "ByStr20",
-          "value": "0x2222222222222222222222222222222222222222"
-        },
-        {
-          "vname": "delegator",
-          "type": "ByStr20",
-          "value": "0x1234567890123456789012345678901234567890"
-        },
-        { "vname": "delegate_amount", "type": "Uint128", "value": "12345" }
-      ]
-    },
-    {
-      "_eventname": "DecreaseTotalStakeAmt",
-      "params": [
-        { "vname": "decreased_amt", "type": "Uint128", "value": "12345" }
+        { "vname": "cycle_number", "type": "Uint32", "value": "1" },
+        { "vname": "delegate_rewards", "type": "Uint128", "value": "0" },
+        { "vname": "comm_rewards", "type": "Uint128", "value": "0" }
       ]
     }
   ]
