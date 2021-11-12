@@ -16,7 +16,33 @@ let one_msg =
 (*             The contract definition             *)
 (***************************************************)
 
-contract Buffer()
+contract Buffer(
+  init_azil_ssn_address               : ByStr20,
+  init_proxy_staking_contract_address : ByStr20
+)
+(*  Parameters *)
+
+(* Mutable fields *)
+field azil_ssn_address                : ByStr20 = init_azil_ssn_address
+field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
+
+(************************************************************)
+(* @dev: Admin actions                                      *)
+(************************************************************)
+
+transition ChangeAzilSSNAddress(address: ByStr20)
+  azil_ssn_address := address;
+
+  e = { _eventname: "ChangeAzilSSNAddress"; address: address };
+  event e
+end
+
+transition ChangeProxyStakingContractAddress(address: ByStr20)
+  proxy_staking_contract_address := address;
+
+  e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
+  event e
+end
 
 (* @dev : To delegate the stake to the contract. *)
 (* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
@@ -36,14 +62,20 @@ end
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
-transition DelegateStake(ssnaddr: ByStr20, proxy_staking_contract_addr: ByStr20)
+transition DelegateStake()
   accept;
   stake_amt = _amount;
+
+  ssnaddr <- azil_ssn_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
 
   ProxyDelegate ssnaddr proxy_staking_contract_addr stake_amt
 end
 
-transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, proxy_staking_contract_addr: ByStr20, amount: Uint128)
+transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
+  to_ssn <- azil_ssn_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
   ProxyReDelegateStake ssnaddr to_ssn proxy_staking_contract_addr amount
 end
 
