@@ -14,6 +14,7 @@ library StubStakingContract
 (* ActiveStatus      : Bool *)
 (* BufferedDeposit   : Uint128 *)
 (*                     Stake deposit that cannot be counted as a part of reward calc. for the ongoing reward cycle. But, to be considered *)
+(*                     for the next one. *)
 
 type Ssn =
 | Ssn of Bool Uint128
@@ -45,6 +46,8 @@ field totalstakeamount: Uint128 = uint128_zero
 (* Keeps track of buffered deposit for a delegator *)
 (* AddressOfDeleg -> (AddressofSSN -> (RewardCycleNumber -> BufferedStakeAmountDuringTheCycle)) *)
 (* The BufferedStakeAmount will only be truely delegated at next cycle *)
+(* seems this field used only when delegator withdrawing rewards, then it will be cleared *)
+(* so we don't touch it during Verifier->AssignStakeReward *)
 field buff_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
 
 (***************************************************)
@@ -105,6 +108,24 @@ procedure UnDelegateStakeAmt(initiator: ByStr20, ssn: ByStr20, undeleg_amt: Uint
   event event_decrease
 end
 
+(* custom procedure, partially based on UpdateStakeReward *)
+procedure SsnBufferToStake (ssn: Pair ByStr20 Ssn)
+  match ssn with
+  | Pair ssnaddr ssninfo =>
+    lastreward_blk <- lastrewardcycle;
+    match ssninfo with
+    | Ssn active_status buffdeposit =>
+      (* Update ssn info *)
+      new_buffdeposit = uint128_zero;
+      ssninfo = Ssn active_status new_buffdeposit;
+      ssnlist[ssnaddr] := ssninfo;
+      IncreaseTotalStakeAmt buffdeposit;
+      e = { _eventname: "SSN assign reward"; ssnaddr: ssnaddr; cycle_number: lastreward_blk; delegate_rewards: uint128_zero; comm_rewards: uint128_zero};
+      event e
+    end
+  end
+end
+
 (************************************************************)
 (* @dev: Admin transitions                                  *)
 (************************************************************)
@@ -118,6 +139,20 @@ transition AddSSN(ssnaddr: ByStr20)
   AddSSN ssnaddr status buff_deposit;
   e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
   event e
+end
+
+(************************************************************)
+(* @dev: Verifier transitions                               *)
+(************************************************************)
+
+(* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1654 *)
+(* Parameters differs from original, because we don't assign rewards here really, we just need to transfer buffered deposits to stake for each SSN *)
+
+transition AssignStakeReward()
+  cur_ssn_map <- ssnlist;
+  (* ssnlist map to list of pairs *)
+  cur_ssn_list = builtin to_list cur_ssn_map;
+  forall cur_ssn_list SsnBufferToStake 
 end
 
 (************************************************************)
