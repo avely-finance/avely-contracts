@@ -7,14 +7,23 @@ import ListUtils IntUtils
 (***************************************************)
 library AZil
 
+type Withdrawal =
+  | Withdrawal of Uint128 Uint128
+
 type Error =
   | ReDelegInvalidSSNAddr
+  | DelegDoesNotExistAtSSN
+  | InvalidTotalAmt
+  | DelegHasNoSufficientAmt
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
       | ReDelegInvalidSSNAddr => Int32 -21
+      | DelegDoesNotExistAtSSN => Int32 -7
+      | InvalidTotalAmt => Int32 -18
+      | DelegHasNoSufficientAmt => Int32 -13
       end
     in
     { _exception: "Error"; code: result_code }
@@ -64,18 +73,26 @@ let uint32_one = Uint32 1
 (***************************************************)
 
 contract AZil(
-  azil_ssn_addrress              : ByStr20,
-  proxy_staking_contract_address : ByStr20
+  azil_ssn_address                    : ByStr20,
+  init_proxy_staking_contract_address : ByStr20,
+  init_buffer_address                 : ByStr20,
+  init_holder_address                 : ByStr20
 )
 (*  Parameters *)
 (* (owner     : ByStr20) *)
 
 (* Mutable fields *)
+field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
+field buffer_address                  : ByStr20 = init_buffer_address
+field holder_address                  : ByStr20 = init_holder_address
 
 field totalstakeamount: Uint128 = uint128_zero
 field totaltokenamount: Uint128 = uint128_zero
 
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
+
+(* AddressOfDeleg -> BlockNumber -> Deposit *)
+field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
 
 (* Procedures *)
 
@@ -94,6 +111,37 @@ procedure IncreaseTotalTokenAmt(amt: Uint128)
   total_token_amt <- totaltokenamount;
   new_total_amt = builtin add total_token_amt amt;
   totaltokenamount := new_total_amt
+end
+
+procedure DecreaseTotalStakeAmt(amt: Uint128)
+  current_amt <- totalstakeamount;
+  valid = uint128_le amt current_amt;
+  match valid with
+  | True =>
+    new_amt = builtin sub current_amt amt;
+    totalstakeamount := new_amt
+  | False =>
+    e = InvalidTotalAmt;
+    ThrowError e
+  end
+end
+
+procedure DecreaseTotalTokenAmt(amt: Uint128)
+  current_amt <- totaltokenamount;
+  valid = uint128_le amt current_amt;
+  match valid with
+  | True =>
+    new_amt = builtin sub current_amt amt;
+    totaltokenamount := new_amt
+  | False =>
+    e = InvalidTotalAmt;
+    ThrowError e
+  end
+end
+
+procedure TruncateDeleg(deleg: ByStr20)
+  delete balances[deleg]
+  (* TODO: delete last_buf_deposit_cycle_deleg[deleg][ssnaddr]; *)
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
@@ -121,30 +169,128 @@ procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IncreaseTotalTokenAmt token_amt
 end
 
-(* @dev : To delegate the stake to the contract. *)
-(* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
-procedure ProxyDelegate(amount: Uint128)
-  msg = {_tag: "DelegateStake"; _recipient: proxy_staking_contract_address; _amount: amount; ssnaddr: azil_ssn_addrress};
-  msgs = one_msg msg;
-  send msgs
+procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Uint128)
+  sufficient = uint128_le withdraw_amount total_amount;
+  match sufficient with
+  | True =>
+    need_truncate =  builtin eq withdraw_amount total_amount;
+    match need_truncate with
+    | True =>
+      (* Remove all info map recorded for this deleg *)
+      TruncateDeleg deleg
+    | False =>
+      (* Readjust all rest deleg to this cycle *)
+      rest_deleg = builtin sub total_amount withdraw_amount;
+      (* rest delegate should also meet mindelegstake *)
+      (* TODO: IsDelegstakeSufficient rest_deleg; *)
+      TruncateDeleg deleg;
+      (* Refer to transition TruncateDeleg, here we don't use Fillin transition because we *)
+      (* know they are all empty, and this can reduce some gasfee *)
+      balances[deleg] := rest_deleg
+    end
+  | False =>
+    e = DelegHasNoSufficientAmt;
+    ThrowError e
+  end
 end
 
-procedure ProxyReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-    msg = {_tag: "ReDelegateStake"; _recipient: proxy_staking_contract_address; _amount: uint128_zero;
-          ssnaddr: ssnaddr; to_ssn: azil_ssn_addrress; amount: amount};
-    msgs = one_msg msg;
-    send msgs
+procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
+  current_token_amount <- balances[initiator];
+
+  match current_token_amount with
+  | Some current_token_amt =>
+    (* TODO: AsseertNoBufferedDeposit ssn initiator; *)
+    AdjustDeleg initiator current_token_amt withdraw_token_amt;
+
+    (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
+    (* Calculate token to zil to withdraw *)
+    total_token_amt <- totaltokenamount;
+    total_stake_amt <- totalstakeamount;
+    withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_token_amt;
+
+    withdrawal_bnum <- & BLOCKNUMBER;
+    withdraw_pending_o <- withdrawal_pending[initiator][withdrawal_bnum];
+
+      (* Upsert pending withdrawal *)
+    match withdraw_pending_o with
+    | Some (Withdrawal token stake) =>
+      new_withdraw_token_amt = builtin add token withdraw_token_amt;
+      new_withdraw_stake_amt = builtin add stake withdraw_stake_amt;
+      pending_withdrawal = Withdrawal new_withdraw_token_amt new_withdraw_stake_amt;
+      withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
+    | None =>
+      pending_withdrawal = Withdrawal withdraw_token_amt withdraw_stake_amt;
+      withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
+    end;
+
+    e = { _eventname: "Deleg withdraw deposit"; ssn_addr: azil_ssn_address; deleg_address: initiator; withdraw_amount:withdraw_token_amt };
+    event e;
+
+    (* Subtract withdrawn amounts from total counters *)
+    DecreaseTotalStakeAmt withdraw_stake_amt;
+    DecreaseTotalTokenAmt withdraw_token_amt
+  | None =>
+    e = DelegDoesNotExistAtSSN;
+    ThrowError e
+  end
 end
 
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
 
+transition ChangeHolderAddress(address: ByStr20)
+  holder_address := address;
+
+  e = { _eventname: "ChangeHolderAddress"; address: address };
+  event e
+end
+
+transition ChangeBufferAddress(address: ByStr20)
+  buffer_address := address;
+
+  e = { _eventname: "ChangeBufferAddress"; address: address };
+  event e
+end
+
+transition ChangeProxyContractAddress(address: ByStr20)
+  proxy_staking_contract_address := address;
+
+  e = { _eventname: "ChangeProxyContractAddress"; address: address };
+  event e
+end
+
 transition IncreaseTotalStakeAmount(amount: Uint128)
   IncreaseTotalStakeAmt amount;
 
   e = { _eventname: "IncreaseTotalStakeAmount"; amount: amount };
   event e
+end
+
+(************************************************************)
+(* @dev: Holder actions                                     *)
+(************************************************************)
+
+procedure HolderWithdrawStakeAmt(amount: Uint128)
+  holder_addr <- holder_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
+  msgs = one_msg msg;
+  send msgs
+end
+
+(************************************************************)
+(* @dev: Buffer actions                                     *)
+(************************************************************)
+
+(* @dev : To delegate the stake to the contract through buffer. *)
+procedure BufferDelegate(amount: Uint128)
+  buffer_addr <- buffer_address;
+
+  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
+  msgs = one_msg msg;
+  send msgs
 end
 
 (************************************************************)
@@ -155,7 +301,7 @@ transition DelegateStake()
   stake_amt = _amount;
   initiator = _sender;
 
-  ProxyDelegate stake_amt;
+  BufferDelegate stake_amt;
   Delegate initiator stake_amt;
 
   e = { _eventname: "DelegateStake"; delegator: initiator; amount: stake_amt };
@@ -166,28 +312,14 @@ transition DelegateStake()
   send msg
 end
 
-transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-  same_ssn = builtin eq ssnaddr azil_ssn_addrress;
+transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
+  HolderWithdrawStakeAmt amount;
+  WithdrawalStakeAmt initiator amount;
 
-  match same_ssn with
-  | True =>
-    e = ReDelegInvalidSSNAddr;
-    ThrowError e
-  | False =>
-    stake_amt = amount;
-    initiator = _sender;
-
-    ProxyReDelegateStake ssnaddr stake_amt;
-    Delegate initiator stake_amt;
-
-    e = { _eventname: "ReDelegateStakeSuccess"; ssnaddr: ssnaddr; delegator: initiator; delegate_amount: stake_amt };
-    event e;
-
-    msg_to_delegator = {_tag : "ReDelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
-                        ssnaddr: ssnaddr; amount : amount};
-    msg = one_msg msg_to_delegator;
-    send msg
-  end
+  msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
+  ssnaddr : azil_ssn_address; amount : amount};
+  msg = one_msg msg_to_delegator;
+  send msg
 end
 
 (************************************************************)
@@ -208,13 +340,4 @@ transition ZilBalanceOf(address: ByStr20)
   msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : _sender; _amount : uint128_zero; balance : balance};
   msgs = one_msg msg_to_sender;
   send msgs
-end
-
-
-transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* We ignore the staking contract callbacks *)
-end
-
-transition ReDelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* We ignore the staking contract callbacks *)
 end
