@@ -275,8 +275,7 @@ procedure HolderWithdrawStakeAmt(amount: Uint128)
   holder_addr <- holder_address;
   proxy_staking_contract_addr <- proxy_staking_contract_address;
 
-  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero;
-        ssnaddr: azil_ssn_address; proxy_staking_contract_addr: proxy_staking_contract_addr; amount: amount};
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
   msgs = one_msg msg;
   send msgs
 end
@@ -288,21 +287,17 @@ end
 (* @dev : To delegate the stake to the contract through buffer. *)
 procedure BufferDelegate(amount: Uint128)
   buffer_addr <- buffer_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
 
-  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount;
-        ssnaddr: azil_ssn_address; proxy_staking_contract_addr: proxy_staking_contract_addr};
+  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
   msgs = one_msg msg;
   send msgs
 end
 
 procedure BufferReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
   buffer_addr <- buffer_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
 
   msg = {_tag: "ReDelegateStake"; _recipient: buffer_addr; _amount: uint128_zero;
-        ssnaddr: ssnaddr; to_ssn: azil_ssn_address;
-        proxy_staking_contract_addr: proxy_staking_contract_addr; amount: amount};
+        ssnaddr: ssnaddr; amount: amount};
   msgs = one_msg msg;
   send msgs
 end
