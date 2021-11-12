@@ -293,15 +293,6 @@ procedure BufferDelegate(amount: Uint128)
   send msgs
 end
 
-procedure BufferReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-  buffer_addr <- buffer_address;
-
-  msg = {_tag: "ReDelegateStake"; _recipient: buffer_addr; _amount: uint128_zero;
-        ssnaddr: ssnaddr; amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
-
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
@@ -319,30 +310,6 @@ transition DelegateStake()
   msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; amount : stake_amt};
   msg = one_msg msg_to_delegator;
   send msg
-end
-
-transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-  same_ssn = builtin eq ssnaddr azil_ssn_address;
-
-  match same_ssn with
-  | True =>
-    e = ReDelegInvalidSSNAddr;
-    ThrowError e
-  | False =>
-    stake_amt = amount;
-    initiator = _sender;
-
-    BufferReDelegateStake ssnaddr stake_amt;
-    Delegate initiator stake_amt;
-
-    e = { _eventname: "ReDelegateStakeSuccess"; ssnaddr: ssnaddr; delegator: initiator; delegate_amount: stake_amt };
-    event e;
-
-    msg_to_delegator = {_tag : "ReDelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
-                        ssnaddr: ssnaddr; amount : amount};
-    msg = one_msg msg_to_delegator;
-    send msg
-  end
 end
 
 transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)

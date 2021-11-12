@@ -52,13 +52,6 @@ procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: 
   send msgs
 end
 
-procedure ProxyReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, proxy_staking_contract_addr: ByStr20, amount: Uint128)
-  msg = {_tag: "ReDelegateStake"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero;
-        ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
-
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
@@ -72,17 +65,6 @@ transition DelegateStake()
   ProxyDelegate ssnaddr proxy_staking_contract_addr stake_amt
 end
 
-transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-  to_ssn <- azil_ssn_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-
-  ProxyReDelegateStake ssnaddr to_ssn proxy_staking_contract_addr amount
-end
-
 transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* We ignore the staking contract callbacks *)
-end
-
-transition ReDelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
   (* We ignore the staking contract callbacks *)
 end
