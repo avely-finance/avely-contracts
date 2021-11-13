@@ -96,8 +96,14 @@ field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 (* AddressOfDeleg -> BlockNumber -> Deposit *)
 field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
 
+(* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
+(* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
+field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
+
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake: Uint128 = Uint128 10000000000000
+
+field lastrewardcycle: Uint32 = uint32_one
 
 (************************************************************)
 (* @dev: Procedures                                         *)
@@ -159,12 +165,15 @@ end
 
 procedure TruncateDeleg(deleg: ByStr20)
   delete balances[deleg]
-  (* TODO: delete last_buf_deposit_cycle_deleg[deleg][ssnaddr]; *)
+  delete last_buf_deposit_cycle_deleg[deleg]
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IsDelegstakeSufficient stake_amt;
+
+  lrc <- lastrewardcycle;
+  last_buf_deposit_cycle_deleg[initiator] := lrc;
 
   total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
@@ -293,6 +302,14 @@ transition UpdateStakingParameters(min_deleg_stake: Uint128)
   mindelegstake := min_deleg_stake;
 
   e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };
+  event e
+end
+
+
+transition UpdateLastRewardCycle(last_reward_cycle: Uint32)
+  lastrewardcycle := last_reward_cycle;
+
+  e = { _eventname: "UpdateLastRewardCycle"; last_reward_cycle: last_reward_cycle };
   event e
 end
 
