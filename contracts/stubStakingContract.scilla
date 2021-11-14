@@ -51,7 +51,7 @@ field buff_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp B
 (*              Procedures                         *)
 (***************************************************)
 
-procedure AddSSN(ssnaddr: ByStr20, status: Bool, buff_deposit: Uint128)
+procedure AddsSSN(ssnaddr: ByStr20, status: Bool, buff_deposit: Uint128)
   s = Ssn status buff_deposit;
   ssnlist[ssnaddr] := s
 end
@@ -115,7 +115,7 @@ end
 transition AddSSN(ssnaddr: ByStr20)
   status = bool_inactive;
   buff_deposit = uint128_zero;
-  AddSSN ssnaddr status buff_deposit;
+  AddsSSN ssnaddr status buff_deposit;
   e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
   event e
 end
