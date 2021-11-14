@@ -4,8 +4,9 @@ func (t *Testing) DelegateStake() {
 	t.LogStart("DelegateStake")
 
 	// deploy smart contract
-	stubStakingContract, bufferContract := t.DeployAndUpgrade()
+	stubStakingContract, aZilContract, bufferContract := t.DeployAndUpgrade()
 	stubStakingContract.LogContractStateJson()
+	aZilContract.LogContractStateJson()
 	bufferContract.LogContractStateJson()
 	// unpause
 	// proxy.Unpause()

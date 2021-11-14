@@ -15,7 +15,7 @@ import (
 	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 )
 
-type BufferContract struct {
+type AZil struct {
 	Code   string
 	Init   []core.ContractValue
 	Addr   string
@@ -23,7 +23,7 @@ type BufferContract struct {
 	Wallet *account.Wallet
 }
 
-func (b *BufferContract) LogContractStateJson() string {
+func (b *AZil) LogContractStateJson() string {
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
 	rsp, _ := provider.GetSmartContractState(b.Addr)
 	j, _ := json.Marshal(rsp)
@@ -31,18 +31,18 @@ func (b *BufferContract) LogContractStateJson() string {
 	return string(j)
 }
 
-func (b *BufferContract) LogPrettyStateJson(data interface{}) {
+func (b *AZil) LogPrettyStateJson(data interface{}) {
 	j, _ := json.MarshalIndent(data, "", "   ")
 	log.Println(string(j))
 }
 
-func (b *BufferContract) GetBalance() string {
+func (b *AZil) GetBalance() string {
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
 	balAndNonce, _ := provider.GetBalance(b.Addr)
 	return balAndNonce.Balance
 }
 
-func (b *BufferContract) ChangeProxyStakingContractAddress(new_addr string) (*transaction.Transaction, error) {
+func (b *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -50,10 +50,10 @@ func (b *BufferContract) ChangeProxyStakingContractAddress(new_addr string) (*tr
 			"0x" + new_addr,
 		},
 	}
-	return b.Call("ChangeProxyStakingContractAddress", args, "0")
+	return b.Call("ChangeBufferAddress", args, "0")
 }
 
-func (b *BufferContract) Call(transition string, params []core.ContractValue, amount string) (*transaction.Transaction, error) {
+func (b *AZil) Call(transition string, params []core.ContractValue, amount string) (*transaction.Transaction, error) {
 	contract := contract2.Contract{
 		Address: b.Bech32,
 		Signer:  b.Wallet,
@@ -73,8 +73,8 @@ func (b *BufferContract) Call(transition string, params []core.ContractValue, am
 	return tx, nil
 }
 
-func NewBufferContract(key string, aZilSSNAddress string, stubStakingAddr string) (*BufferContract, error) {
-	code, _ := ioutil.ReadFile("../contracts/buffer.scilla")
+func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
+	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
 	// adminAddr := keytools.GetAddressFromPrivateKey(util.DecodeHex(key))
 
 	init := []core.ContractValue{
@@ -90,6 +90,14 @@ func NewBufferContract(key string, aZilSSNAddress string, stubStakingAddr string
 			VName: "init_proxy_staking_contract_address",
 			Type:  "ByStr20",
 			Value: "0x" + stubStakingAddr,
+		}, {
+			VName: "init_buffer_address",
+			Type:  "ByStr20",
+			Value: "0xb2e2c996e6068f4ae11c4cc2c6a189b774819f79",
+		}, {
+			VName: "init_holder_address",
+			Type:  "ByStr20",
+			Value: "0xb2e2c996e6068f4ae11c4cc2c6a189b774819f79",
 		},
 	}
 
@@ -110,7 +118,7 @@ func NewBufferContract(key string, aZilSSNAddress string, stubStakingAddr string
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
-		return &BufferContract{
+		return &AZil{
 			Code:   string(code),
 			Init:   init,
 			Addr:   tx.ContractAddress,
