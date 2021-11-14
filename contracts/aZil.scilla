@@ -15,15 +15,17 @@ type Error =
   | DelegDoesNotExistAtSSN
   | InvalidTotalAmt
   | DelegHasNoSufficientAmt
+  | DelegStakeNotEnough
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | ReDelegInvalidSSNAddr => Int32 -21
       | DelegDoesNotExistAtSSN => Int32 -7
-      | InvalidTotalAmt => Int32 -18
       | DelegHasNoSufficientAmt => Int32 -13
+      | DelegStakeNotEnough => Int32 -15
+      | InvalidTotalAmt => Int32 -18
+      | ReDelegInvalidSSNAddr => Int32 -21
       end
     in
     { _exception: "Error"; code: result_code }
@@ -94,11 +96,33 @@ field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 (* AddressOfDeleg -> BlockNumber -> Deposit *)
 field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
 
-(* Procedures *)
+(* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
+(* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
+field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
+
+(* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
+field mindelegstake: Uint128 = Uint128 10000000000000
+
+field lastrewardcycle: Uint32 = uint32_one
+
+(************************************************************)
+(* @dev: Procedures                                         *)
+(************************************************************)
 
 procedure ThrowError(err: Error)
   e = make_error err;
   throw e
+end
+
+procedure IsDelegstakeSufficient(amount: Uint128)
+  mindelegstake_l <- mindelegstake;
+  suffi =  uint128_le mindelegstake_l amount;
+  match suffi with
+  | True =>
+  | False =>
+    e = DelegStakeNotEnough;
+    ThrowError e
+  end
 end
 
 procedure IncreaseTotalStakeAmt(amt: Uint128)
@@ -141,11 +165,16 @@ end
 
 procedure TruncateDeleg(deleg: ByStr20)
   delete balances[deleg]
-  (* TODO: delete last_buf_deposit_cycle_deleg[deleg][ssnaddr]; *)
+  delete last_buf_deposit_cycle_deleg[deleg]
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
+  IsDelegstakeSufficient stake_amt;
+
+  lrc <- lastrewardcycle;
+  last_buf_deposit_cycle_deleg[initiator] := lrc;
+
   total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
 
@@ -182,7 +211,7 @@ procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Ui
       (* Readjust all rest deleg to this cycle *)
       rest_deleg = builtin sub total_amount withdraw_amount;
       (* rest delegate should also meet mindelegstake *)
-      (* TODO: IsDelegstakeSufficient rest_deleg; *)
+      IsDelegstakeSufficient rest_deleg;
       TruncateDeleg deleg;
       (* Refer to transition TruncateDeleg, here we don't use Fillin transition because we *)
       (* know they are all empty, and this can reduce some gasfee *)
@@ -266,6 +295,24 @@ transition IncreaseTotalStakeAmount(amount: Uint128)
   e = { _eventname: "IncreaseTotalStakeAmount"; amount: amount };
   event e
 end
+
+(* @dev: Set the staking parameters of contract. *)
+(* @param min_deleg_stake: New mindelegstake value *)
+transition UpdateStakingParameters(min_deleg_stake: Uint128)
+  mindelegstake := min_deleg_stake;
+
+  e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };
+  event e
+end
+
+
+transition UpdateLastRewardCycle(last_reward_cycle: Uint32)
+  lastrewardcycle := last_reward_cycle;
+
+  e = { _eventname: "UpdateLastRewardCycle"; last_reward_cycle: last_reward_cycle };
+  event e
+end
+
 
 (************************************************************)
 (* @dev: Holder actions                                     *)
