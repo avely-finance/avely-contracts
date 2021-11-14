@@ -23,26 +23,26 @@ type AZil struct {
 	Wallet *account.Wallet
 }
 
-func (b *AZil) LogContractStateJson() string {
+func (a *AZil) LogContractStateJson() string {
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
-	rsp, _ := provider.GetSmartContractState(b.Addr)
+	rsp, _ := provider.GetSmartContractState(a.Addr)
 	j, _ := json.Marshal(rsp)
-	b.LogPrettyStateJson(rsp)
+	a.LogPrettyStateJson(rsp)
 	return string(j)
 }
 
-func (b *AZil) LogPrettyStateJson(data interface{}) {
+func (a *AZil) LogPrettyStateJson(data interface{}) {
 	j, _ := json.MarshalIndent(data, "", "   ")
 	log.Println(string(j))
 }
 
-func (b *AZil) GetBalance() string {
+func (a *AZil) GetBalance() string {
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
-	balAndNonce, _ := provider.GetBalance(b.Addr)
+	balAndNonce, _ := provider.GetBalance(a.Addr)
 	return balAndNonce.Balance
 }
 
-func (b *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, error) {
+func (a *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -50,13 +50,19 @@ func (b *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, e
 			"0x" + new_addr,
 		},
 	}
-	return b.Call("ChangeBufferAddress", args, "0")
+	return a.Call("ChangeBufferAddress", args, "0")
 }
 
-func (b *AZil) Call(transition string, params []core.ContractValue, amount string) (*transaction.Transaction, error) {
+func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+
+	return a.Call("DelegateStake", args, amount)
+}
+
+func (a *AZil) Call(transition string, params []core.ContractValue, amount string) (*transaction.Transaction, error) {
 	contract := contract2.Contract{
-		Address: b.Bech32,
-		Signer:  b.Wallet,
+		Address: a.Bech32,
+		Signer:  a.Wallet,
 	}
 
 	tx, err := CallFor(&contract, transition, params, false, amount)

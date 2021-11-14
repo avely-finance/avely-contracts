@@ -1,12 +1,16 @@
 package transitions
 
-func (t *Testing) DelegateStake() {
+import (
+	// "log"
+)
+
+func (t *Testing) DelegateStakeSuccess() {
 	t.LogStart("DelegateStake")
 
 	// deploy smart contract
 	stubStakingContract, aZilContract, bufferContract := t.DeployAndUpgrade()
-	stubStakingContract.LogContractStateJson()
-	aZilContract.LogContractStateJson()
+	// stubStakingContract.LogContractStateJson()
+
 	bufferContract.LogContractStateJson()
 	// unpause
 	// proxy.Unpause()
@@ -16,9 +20,31 @@ func (t *Testing) DelegateStake() {
 	// delegMin := "50000"
 	// proxy.UpdateStakingParameters(min,delegMin)
 
-	// // add ssn
-	// proxy.AddSSN("0x"+addr2,"xiaohuo")
-	// ssnlist.LogContractStateJson()
+	// add ssn
+	stubStakingContract.AddSSN(aZilSSNAddress)
+
+	_, err := aZilContract.DelegateStake(tenzil)
+	if err != nil {
+		t.LogError("DelegateStake",err)
+	}
+
+	// receipt := t.GetReceiptString(txn)
+	// log.Println(receipt)
+
+	stubStakingState := stubStakingContract.LogContractStateJson()
+	t.AssertContain(stubStakingState, "_balance\":\"" + tenzil)
+	t.AssertContain(stubStakingState, "buff_deposit_deleg\":{\"" + "0x" + bufferContract.Addr + "\":{\"" + aZilSSNAddress + "\":{\"1\":\"" + tenzil)
+
+	aZilState := aZilContract.LogContractStateJson()
+	t.AssertContain(stubStakingState, "_balance\":\"0")
+	t.AssertContain(stubStakingState, "balances\":\"" + )
+
+
+	"balances": {
+		"0x381f4008505e940ad7681ec3468a719060caf796": "10000000000000"
+ },
+
+
 
 	// // use add1 to deposit less than delegMin
 	// txn,err0 := proxy.DelegateStake("0x"+addr2,"10")
