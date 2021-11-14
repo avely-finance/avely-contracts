@@ -4,8 +4,9 @@ func (t *Testing) DelegateStake() {
 	t.LogStart("DelegateStake")
 
 	// deploy smart contract
-	_, stubStakingContract := t.DeployAndUpgrade()
+	stubStakingContract, bufferContract := t.DeployAndUpgrade()
 	stubStakingContract.LogContractStateJson()
+	bufferContract.LogContractStateJson()
 	// unpause
 	// proxy.Unpause()
 
@@ -24,7 +25,6 @@ func (t *Testing) DelegateStake() {
 	// t.LogPrettyReceipt(txn)
 	// receipt :=  t.GetReceiptString(txn)
 	// t.AssertContain(receipt,"Int32 -15")
-
 
 	// // use addr1 to deposit (should enter direct deposit map)
 	// // ssn becomes active
