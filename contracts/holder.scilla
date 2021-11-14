@@ -52,9 +52,11 @@ procedure ProxyWithdrawStakeAmt(ssnaddr: ByStr20, proxy_staking_contract_addr: B
 end
 
 transition WithdrawStakeAmt(amount: Uint128)
-  (* TODO
   to_ssn <- azil_ssn_address;
   proxy_staking_contract_addr <- proxy_staking_contract_address;
+  ProxyWithdrawStakeAmt ssnaddr proxy_staking_contract_addr amount
+end
 
-  ProxyWithdrawStakeAmt ssnaddr proxy_staking_contract_addr amount *)
+transition WithdrawStakeAmtSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
+  (* We ignore the staking contract callbacks *)
 end
