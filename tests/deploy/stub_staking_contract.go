@@ -8,12 +8,9 @@ import (
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
-	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	// "github.com/Zilliqa/gozilliqa-sdk/keytools"
 	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
-	"github.com/Zilliqa/gozilliqa-sdk/util"
-	"strconv"
 )
 
 type StubStakingContract struct {
@@ -23,7 +20,7 @@ type StubStakingContract struct {
 }
 
 func (s *StubStakingContract) LogContractStateJson() string {
-	provider := provider2.NewProvider("https://zilliqa-isolated-server.zilliqa.com/")
+	provider := provider2.NewProvider("http://zilliqa_server:5555")
 	rsp, _ := provider.GetSmartContractState(s.Addr)
 	j, _ := json.Marshal(rsp)
 	s.LogPrettyStateJson(rsp)
@@ -36,7 +33,7 @@ func (s *StubStakingContract) LogPrettyStateJson(data interface{}) {
 }
 
 func (s *StubStakingContract) GetBalance() string {
-	provider := provider2.NewProvider("https://zilliqa-isolated-server.zilliqa.com/")
+	provider := provider2.NewProvider("http://zilliqa_server:5555")
 	balAndNonce, _ := provider.GetBalance(s.Addr)
 	return balAndNonce.Balance
 }
@@ -90,20 +87,4 @@ func NewStubStakingContract(key string) (*StubStakingContract, error) {
 	} else {
 		return nil, errors.New("deploy failed")
 	}
-}
-
-func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
-	c.Provider = provider2.NewProvider("http://zilliqa_server:5555")
-	gasPrice, err := c.Provider.GetMinimumGasPrice()
-	if err != nil {
-		return nil, err
-	}
-	parameter := contract2.DeployParams{
-		Version:      strconv.FormatInt(int64(util.Pack(222, 1)), 10),
-		Nonce:        "",
-		GasPrice:     gasPrice,
-		GasLimit:     "40000",
-		SenderPubKey: "",
-	}
-	return c.Deploy(parameter)
 }

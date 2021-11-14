@@ -7,7 +7,7 @@ import (
 )
 
 // this is a help function : )
-func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.StubStakingContract) {
+func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.BufferContract) {
 	// log.Println("start to deploy proxy contract")
 	// proxy, err := deploy.NewProxy(key1)
 	// if err != nil {
@@ -21,6 +21,16 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.StubS
 		t.LogError("deploy stubStaking error = ", err1)
 	}
 	log.Println("deploy stubStaking succeed, address = ", stubStaking.Addr)
+
+	bufferContract, err1 := deploy.NewBufferContract(key1)
+	if err1 != nil {
+		t.LogError("deploy buffer error = ", err1)
+	}
+	log.Println("deploy buffer succeed, address = ", bufferContract.Addr)
+
+	if _, err := bufferContract.ChangeProxyStakingContractAddress(stubStaking.Addr); err != nil {
+		t.LogError("failed to change buffer's staking contract address; error = ", err)
+	}
 
 	// log.Println("start to upgrade")
 	// args := []core.ContractValue{
@@ -36,5 +46,5 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.StubS
 	// }
 	// log.Println("upgrade succeed")
 
-	return nil, stubStaking
+	return stubStaking, bufferContract
 }
