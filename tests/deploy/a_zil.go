@@ -1,45 +1,18 @@
 package deploy
 
 import (
-	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	// "github.com/Zilliqa/gozilliqa-sdk/keytools"
-	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 )
 
 type AZil struct {
-	Code   string
-	Init   []core.ContractValue
-	Addr   string
-	Bech32 string
-	Wallet *account.Wallet
-}
-
-func (a *AZil) LogContractStateJson() string {
-	provider := provider2.NewProvider("http://zilliqa_server:5555")
-	rsp, _ := provider.GetSmartContractState(a.Addr)
-	j, _ := json.Marshal(rsp)
-	a.LogPrettyStateJson(rsp)
-	return string(j)
-}
-
-func (a *AZil) LogPrettyStateJson(data interface{}) {
-	j, _ := json.MarshalIndent(data, "", "   ")
-	log.Println(string(j))
-}
-
-func (a *AZil) GetBalance() string {
-	provider := provider2.NewProvider("http://zilliqa_server:5555")
-	balAndNonce, _ := provider.GetBalance(a.Addr)
-	return balAndNonce.Balance
+	Contract
 }
 
 func (a *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, error) {
@@ -50,7 +23,7 @@ func (a *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, e
 			"0x" + new_addr,
 		},
 	}
-	return a.Call("ChangeBufferAddress", args, "0")
+	return a.Contract.Call("ChangeBufferAddress", args, "0")
 }
 
 func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
@@ -59,29 +32,8 @@ func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
 	return a.Call("DelegateStake", args, amount)
 }
 
-func (a *AZil) Call(transition string, params []core.ContractValue, amount string) (*transaction.Transaction, error) {
-	contract := contract2.Contract{
-		Address: a.Bech32,
-		Signer:  a.Wallet,
-	}
-
-	tx, err := CallFor(&contract, transition, params, false, amount)
-	if err != nil {
-		return tx, err
-	}
-	tx.Confirm(tx.ID, 1, 1, contract.Provider)
-	if tx.Status != core.Confirmed {
-		return tx, errors.New("transaction didn't get confirmed")
-	}
-	if !tx.Receipt.Success {
-		return tx, errors.New("transaction failed")
-	}
-	return tx, nil
-}
-
 func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
 	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
-	// adminAddr := keytools.GetAddressFromPrivateKey(util.DecodeHex(key))
 
 	init := []core.ContractValue{
 		{
@@ -123,14 +75,15 @@ func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) 
 	tx.Confirm(tx.ID, 1, 1, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
-
-		return &AZil{
+		contract := Contract{
 			Code:   string(code),
 			Init:   init,
 			Addr:   tx.ContractAddress,
 			Bech32: b32,
 			Wallet: wallet,
-		}, nil
+		}
+
+		return &AZil{Contract: contract}, nil
 	} else {
 		return nil, errors.New("deploy failed")
 	}
