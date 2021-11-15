@@ -75,7 +75,7 @@ let uint32_one = Uint32 1
 (***************************************************)
 
 contract AZil(
-  azil_ssn_address                    : ByStr20,
+  init_azil_ssn_address               : ByStr20,
   init_proxy_staking_contract_address : ByStr20,
   init_buffer_address                 : ByStr20,
   init_holder_address                 : ByStr20
@@ -84,6 +84,7 @@ contract AZil(
 (* (owner     : ByStr20) *)
 
 (* Mutable fields *)
+field azil_ssn_address                : ByStr20 = init_azil_ssn_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
 field buffer_address                  : ByStr20 = init_buffer_address
 field holder_address                  : ByStr20 = init_holder_address
@@ -225,6 +226,7 @@ end
 
 procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   current_token_amount <- balances[initiator];
+  azil_ssn_addr <- azil_ssn_address;
 
   match current_token_amount with
   | Some current_token_amt =>
@@ -252,7 +254,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
       withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
     end;
 
-    e = { _eventname: "Deleg withdraw deposit"; ssn_addr: azil_ssn_address; deleg_address: initiator; withdraw_amount:withdraw_token_amt };
+    e = { _eventname: "Deleg withdraw deposit"; ssn_addr: azil_ssn_addr; deleg_address: initiator; withdraw_amount:withdraw_token_amt };
     event e;
 
     (* Subtract withdrawn amounts from total counters *)
@@ -360,11 +362,13 @@ transition DelegateStake()
 end
 
 transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
+  azil_ssn_addr <- azil_ssn_address;
+
   HolderWithdrawStakeAmt amount;
   WithdrawalStakeAmt initiator amount;
 
   msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
-  ssnaddr : azil_ssn_address; amount : amount};
+  ssnaddr : azil_ssn_addr; amount : amount};
   msg = one_msg msg_to_delegator;
   send msg
 end

@@ -3,7 +3,7 @@ x-app: &app
   build:
     context: .
     dockerfile: ./docker/Dockerfile
-  image: avely-dev:0.0.18
+  image: avely-dev:0.0.20
 
 x-dapp: &dapp
   <<: *app
