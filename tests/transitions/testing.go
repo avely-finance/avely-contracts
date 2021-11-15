@@ -8,6 +8,7 @@ import (
 )
 
 const aZilSSNAddress = "0x166862bdd5d76b3a4775d2494820179d582acac5"
+
 // owner
 const adminKey = "d96e9eb5b782a80ea153c937fa83e5948485fbfc8b7e7c069d7b914dbc350aba"
 const admin = "381f4008505e940ad7681ec3468a719060caf796"
