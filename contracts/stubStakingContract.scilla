@@ -169,6 +169,7 @@ end
 (* Parameters differs from original, because we don't assign rewards here really, we just need to transfer buffered deposits to stake for each SSN *)
 
 transition AssignStakeReward()
+  accept;
   cur_ssn_map <- ssnlist;
   (* ssnlist map to list of pairs *)
   cur_ssn_list = builtin to_list cur_ssn_map;

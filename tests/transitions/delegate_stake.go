@@ -8,12 +8,7 @@ func (t *Testing) DelegateStakeSuccess() {
 	t.LogStart("DelegateStake")
 
 	// deploy smart contract
-	stubStakingContract, aZilContract, bufferContract := t.DeployAndUpgrade()
-
-	bufferContract.LogContractStateJson()
-
-	// add ssn
-	stubStakingContract.AddSSN(aZilSSNAddress)
+	stubStakingContract, aZilContract, bufferContract, _ := t.DeployAndUpgrade()
 
 	_, err := aZilContract.DelegateStake(tenzil)
 	if err != nil {
@@ -26,6 +21,7 @@ func (t *Testing) DelegateStakeSuccess() {
 
 	aZilState := aZilContract.LogContractStateJson()
 	t.AssertContain(aZilState, "_balance\":\"0")
+	t.AssertContain(aZilState, "\"totalstakeamount\":\"" + tenzil+ "\",\"totaltokenamount\":\"" + tenzil+ "\"")
 	t.AssertContain(aZilState, "balances\":{\""+"0x"+admin+"\":\""+tenzil)
 
 	t.LogEnd("DelegateStake")
