@@ -26,10 +26,32 @@ func (a *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, e
 	return a.Contract.Call("ChangeBufferAddress", args, "0")
 }
 
+func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return a.Contract.Call("ChangeHolderAddress", args, "0")
+}
+
 func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 
 	return a.Call("DelegateStake", args, amount)
+}
+
+func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return a.Call("WithdrawStakeAmt", args, "0")
 }
 
 func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {

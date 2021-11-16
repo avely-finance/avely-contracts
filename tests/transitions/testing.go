@@ -5,6 +5,8 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"log"
 	"strings"
+	"strconv"
+	"runtime"
 )
 
 const aZilSSNAddress = "0x166862bdd5d76b3a4775d2494820179d582acac5"
@@ -13,14 +15,19 @@ const aZilSSNAddress = "0x166862bdd5d76b3a4775d2494820179d582acac5"
 const adminKey = "d96e9eb5b782a80ea153c937fa83e5948485fbfc8b7e7c069d7b914dbc350aba"
 const admin = "381f4008505e940ad7681ec3468a719060caf796"
 
-const key2 = "8732034b0c895564d966e3df6968205211c7a2f0140b77c9e13de10c1ce77873"
-const addr2 = "e2cd74983c7a3487af3a133a3bf4e7dd76f5d928"
-const key3 = "70c57a0a1f9a0e2c9192f28279a491bcb30a7d0ada87eab9aa0b6afad3f31c91"
-const addr3 = "8bdc7e9064f3963654967fa28976aac98f002a58"
-const key4 = "243d302e971f7469cb20cc4d37c4629f0c22860667370b4d1130ae4ab1a5f4f9"
-const addr4 = "6e081b8cca40c585d6d69f9643faf1a545d13d63"
+const key1 = "1080d2cca18ace8225354ac021f9977404cee46f1d12e9981af8c36322eac1a4"
+const addr1 = "ac941274c3b6a50203cc5e7939b7dad9f32a0c12"
+const key2 = "254d9924fc1dcdca44ce92d80255c6a0bb690f867abde80e626fbfef4d357004"
+const addr2 = "ec902fe17d90203d0bddd943d97b29576ece3177"
+const key3 = "b8fc4e270594d87d3f728d0873a38fb0896ea83bd6f96b4f3c9ff0a29122efe4"
+const addr3 = "c2035715831ab100ec42e562ce341b834bed1f4c"
+const key4 = "b87f4ba7dcd6e60f2cca8352c89904e3993c5b2b0b608d255002edcda6374de4"
+const addr4 = "6cd3667ba79310837e33f0aecbe13688a6cbca32"
 
-const tenzil = "10000000000000"
+const fivezil =      "5000000000000"
+const tenzil =      "10000000000000"
+const fifteenzil =  "15000000000000"
+const hundredzil = "100000000000000"
 
 type Testing struct {
 }
@@ -45,13 +52,15 @@ func (t *Testing) AssertContain(s1, s2 string) {
 	if !strings.Contains(s1, s2) {
 		log.Println(s1)
 		log.Println(s2)
-		log.Fatal("assert failed")
+		_, file, no, _ := runtime.Caller(1)
+		log.Fatal("ASSERT_CONTAIN FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 }
 
 func (t *Testing) AssertError(err error) {
 	if err == nil {
-		log.Fatal("assert error failed")
+		_, file, no, _ := runtime.Caller(1)
+		log.Fatal("ASSERT_ERROR FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 }
 

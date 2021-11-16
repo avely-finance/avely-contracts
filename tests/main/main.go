@@ -5,4 +5,5 @@ import "Azil/test/transitions"
 func main() {
 	t := transitions.NewTesting()
 	t.DelegateStakeSuccess()
+	t.WithdrawStakeAmount()
 }

@@ -242,7 +242,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     withdrawal_bnum <- & BLOCKNUMBER;
     withdraw_pending_o <- withdrawal_pending[initiator][withdrawal_bnum];
 
-      (* Upsert pending withdrawal *)
+    (* Upsert pending withdrawal *)
     match withdraw_pending_o with
     | Some (Withdrawal token stake) =>
       new_withdraw_token_amt = builtin add token withdraw_token_amt;
@@ -254,7 +254,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
       withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
     end;
 
-    e = { _eventname: "Deleg withdraw deposit"; ssn_addr: azil_ssn_addr; deleg_address: initiator; withdraw_amount:withdraw_token_amt };
+    e = { _eventname: "WithdrawStakeAmt"; ssn_addr: azil_ssn_addr; deleg_address: initiator; withdraw_amount:withdraw_token_amt; withdraw_stake_amount:withdraw_stake_amt };
     event e;
 
     (* Subtract withdrawn amounts from total counters *)
@@ -361,11 +361,13 @@ transition DelegateStake()
   send msg
 end
 
-transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
+transition WithdrawStakeAmt(amount: Uint128)
+  initiator = _sender;
   azil_ssn_addr <- azil_ssn_address;
 
-  HolderWithdrawStakeAmt amount;
+  (* first we do all checks, then call Holder on success *)
   WithdrawalStakeAmt initiator amount;
+  HolderWithdrawStakeAmt amount;
 
   msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
   ssnaddr : azil_ssn_addr; amount : amount};
