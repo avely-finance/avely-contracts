@@ -165,7 +165,7 @@ procedure DecreaseTotalTokenAmt(amt: Uint128)
 end
 
 procedure TruncateDeleg(deleg: ByStr20)
-  delete balances[deleg]
+  delete balances[deleg];
   delete last_buf_deposit_cycle_deleg[deleg]
 end
 
