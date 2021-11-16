@@ -110,6 +110,36 @@ field lastrewardcycle: Uint32 = uint32_one
 (* @dev: Procedures                                         *)
 (************************************************************)
 
+(************************************************************)
+(* @dev: Holder actions                                     *)
+(************************************************************)
+
+procedure HolderWithdrawStakeAmt(amount: Uint128)
+  holder_addr <- holder_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
+  msgs = one_msg msg;
+  send msgs
+end
+
+(************************************************************)
+(* @dev: Buffer actions                                     *)
+(************************************************************)
+
+(* @dev : To delegate the stake to the contract through buffer. *)
+procedure BufferDelegate(amount: Uint128)
+  buffer_addr <- buffer_address;
+
+  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
+  msgs = one_msg msg;
+  send msgs
+end
+
+(************************************************************)
+(* @dev: aZil actions                                     *)
+(************************************************************)
+
 procedure ThrowError(err: Error)
   e = make_error err;
   throw e
@@ -259,7 +289,10 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
 
     (* Subtract withdrawn amounts from total counters *)
     DecreaseTotalStakeAmt withdraw_stake_amt;
-    DecreaseTotalTokenAmt withdraw_token_amt
+    DecreaseTotalTokenAmt withdraw_token_amt;
+
+    (* call Holder contract *)
+    HolderWithdrawStakeAmt withdraw_stake_amt
   | None =>
     e = DelegDoesNotExistAtSSN;
     ThrowError e
@@ -315,33 +348,6 @@ transition UpdateLastRewardCycle(last_reward_cycle: Uint32)
   event e
 end
 
-
-(************************************************************)
-(* @dev: Holder actions                                     *)
-(************************************************************)
-
-procedure HolderWithdrawStakeAmt(amount: Uint128)
-  holder_addr <- holder_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-
-  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
-
-(************************************************************)
-(* @dev: Buffer actions                                     *)
-(************************************************************)
-
-(* @dev : To delegate the stake to the contract through buffer. *)
-procedure BufferDelegate(amount: Uint128)
-  buffer_addr <- buffer_address;
-
-  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
-
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
@@ -361,13 +367,13 @@ transition DelegateStake()
   send msg
 end
 
+(* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
 transition WithdrawStakeAmt(amount: Uint128)
   initiator = _sender;
   azil_ssn_addr <- azil_ssn_address;
 
-  (* first we do all checks, then call Holder on success *)
+  (* first we do all checks, then call Holder on success within procedure*)
   WithdrawalStakeAmt initiator amount;
-  HolderWithdrawStakeAmt amount;
 
   msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
   ssnaddr : azil_ssn_addr; amount : amount};
