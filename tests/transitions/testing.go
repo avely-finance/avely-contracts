@@ -24,10 +24,10 @@ const addr3 = "c2035715831ab100ec42e562ce341b834bed1f4c"
 const key4 = "b87f4ba7dcd6e60f2cca8352c89904e3993c5b2b0b608d255002edcda6374de4"
 const addr4 = "6cd3667ba79310837e33f0aecbe13688a6cbca32"
 
-const fivezil =      "5000000000000"
-const tenzil =      "10000000000000"
-const fifteenzil =  "15000000000000"
-const hundredzil = "100000000000000"
+const unit5 =     "5000000000000"
+const unit10 =   "10000000000000"
+const unit15 =   "15000000000000"
+const unit100 = "100000000000000"
 
 type Testing struct {
 }
