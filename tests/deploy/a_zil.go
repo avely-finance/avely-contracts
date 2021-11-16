@@ -54,6 +54,18 @@ func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error)
 	return a.Call("WithdrawStakeAmt", args, "0")
 }
 
+func (a *AZil) ZilBalanceOf (addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + addr,
+		},
+	}
+	return a.Contract.Call("ZilBalanceOf", args, "0")
+}
+
+
 func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
 	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
 

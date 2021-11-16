@@ -64,12 +64,12 @@ func (t *Testing) AssertError(err error) {
 	}
 }
 
-func (t *Testing) GetReceiptString(tnx *transaction.Transaction) string {
-	receipt, _ := json.Marshal(tnx.Receipt)
+func (t *Testing) GetReceiptString(txn *transaction.Transaction) string {
+	receipt, _ := json.Marshal(txn.Receipt)
 	return string(receipt)
 }
 
-func (t *Testing) LogPrettyReceipt(tnx *transaction.Transaction) {
-	data, _ := json.MarshalIndent(tnx.Receipt, "", "     ")
+func (t *Testing) LogPrettyReceipt(txn *transaction.Transaction) {
+	data, _ := json.MarshalIndent(txn.Receipt, "", "     ")
 	log.Println(string(data))
 }
