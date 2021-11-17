@@ -3,6 +3,7 @@ package deploy
 import (
 	"errors"
 	"io/ioutil"
+	"encoding/json"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -54,7 +55,7 @@ func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error)
 	return a.Call("WithdrawStakeAmt", args, "0")
 }
 
-func (a *AZil) ZilBalanceOf (addr string) (*transaction.Transaction, error) {
+func (a *AZil) ZilBalanceOf (addr string) (string, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -62,7 +63,27 @@ func (a *AZil) ZilBalanceOf (addr string) (*transaction.Transaction, error) {
 			"0x" + addr,
 		},
 	}
-	return a.Contract.Call("ZilBalanceOf", args, "0")
+	tx, err := a.Contract.Call("ZilBalanceOf", args, "0")
+	if (err != nil) {
+		return "", err
+	}
+
+	for _, transition := range tx.Receipt.Transitions {
+		if ("0x" + addr != transition.Msg.Recipient || "ZilBalanceOfCallBack" != transition.Msg.Tag) {
+			continue
+		}
+		for _, param := range transition.Msg.Params {
+			if (param.VName == "balance") {
+				bytearr, err := json.Marshal(param.Value)
+				if (err != nil) {
+					return "", err
+				}
+				return string(bytearr), nil
+			}
+		}
+		break;
+	}
+	return "", errors.New("Balance not found")
 }
 
 
