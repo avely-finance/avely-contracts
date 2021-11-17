@@ -68,7 +68,6 @@ func (t *Testing) WithdrawStakeAmount() {
     }
     t.AssertContain(t.GetReceiptString(txn), "WithdrawStakeAmt")
     newDelegBalanceZil, err := aZilContract.ZilBalanceOf(addr2)
-    println("!!!!!!!!!!!!!!" + newDelegBalanceZil)
     aZilState := aZilContract.LogContractStateJson()
     if (nil != err) {
         t.LogError("WithdrawStakeAmount", err)
