@@ -3,7 +3,7 @@ package deploy
 import (
 	"errors"
 	"io/ioutil"
-	"encoding/json"
+	"fmt"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -74,11 +74,9 @@ func (a *AZil) ZilBalanceOf (addr string) (string, error) {
 		}
 		for _, param := range transition.Msg.Params {
 			if (param.VName == "balance") {
-				bytearr, err := json.Marshal(param.Value)
-				if (err != nil) {
-					return "", err
-				}
-				return string(bytearr), nil
+				//Value interface{} `json:"value"`
+				//https://github.com/Zilliqa/gozilliqa-sdk/blob/7a254f739153c0551a327526009b4aaeeb4c9d87/core/types.go#L150
+				return fmt.Sprintf("%v", param.Value), nil
 			}
 		}
 		break;
