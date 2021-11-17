@@ -24,12 +24,5 @@ func (t *Testing) DelegateStakeSuccess() {
 	t.AssertContain(aZilState, "\"totalstakeamount\":\"" + unit10 + "\",\"totaltokenamount\":\"" + unit10 + "\"")
 	t.AssertContain(aZilState, "balances\":{\""+"0x" + admin + "\":\"" + unit10)
 
-	tx, err := aZilContract.ZilBalanceOf(admin)
-	if err != nil {
-		t.LogError("ZilBalanceOf", err)
-	}
-	t.LogPrettyReceipt(tx)
-
-
 	t.LogEnd("DelegateStake")
 }
