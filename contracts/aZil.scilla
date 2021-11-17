@@ -396,7 +396,10 @@ transition ZilBalanceOf(address: ByStr20)
     | None => uint128_zero
     end;
 
-  msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : _sender; _amount : uint128_zero; balance : balance};
+  e = { _eventname: "ZilBalanceOf"; address: address; balance: balance };
+  event e;
+
+  msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : _sender; _amount : uint128_zero; address: address; balance : balance};
   msgs = one_msg msg_to_sender;
   send msgs
 end
