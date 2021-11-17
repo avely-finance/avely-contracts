@@ -260,7 +260,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
 
   match current_token_amount with
   | Some current_token_amt =>
-    (* TODO: AsseertNoBufferedDeposit ssn initiator; *)
+    (* TODO: AsseertNoBufferedDeposit ssn initiator; fix tests *)
     AdjustDeleg initiator current_token_amt withdraw_token_amt;
 
     (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
