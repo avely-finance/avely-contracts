@@ -41,11 +41,14 @@ func (t *Testing) ZilBalanceOf() {
 
     /*******************************************************************************
      * 4. New user (addr3) delegating stake
-     * He'll get azils by new azil/zil rate, so zilBalanceOf should be equal to the delegated zils amount
+     * He'll get azils by new azil/zil rate, so zilBalanceOf should be equal to the delegated zils amount.
+     * First user's (addr2) zil balance should not be changed.
      *******************************************************************************/
     t.LogStart("================== ZilBalanceOf, step 4 ===================")
     aZilContract.UpdateWallet(key3)
     aZilContract.DelegateStake(zil10)
+    balance2, _ = aZilContract.ZilBalanceOf(addr2)
+    t.AssertEqual(balance2, deploy.StrSum(zil15, zil10))
     balance3, _ := aZilContract.ZilBalanceOf(addr3)
     t.AssertEqual(balance3, zil10)
 
