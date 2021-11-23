@@ -3,6 +3,7 @@ package deploy
 import (
 	"errors"
 	"io/ioutil"
+	"fmt"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -26,11 +27,63 @@ func (a *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, e
 	return a.Contract.Call("ChangeBufferAddress", args, "0")
 }
 
+func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return a.Contract.Call("ChangeHolderAddress", args, "0")
+}
+
 func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 
 	return a.Call("DelegateStake", args, amount)
 }
+
+func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return a.Call("WithdrawStakeAmt", args, "0")
+}
+
+func (a *AZil) ZilBalanceOf (addr string) (string, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + addr,
+		},
+	}
+	tx, err := a.Contract.Call("ZilBalanceOf", args, "0")
+	if (err != nil) {
+		return "", err
+	}
+
+	for _, transition := range tx.Receipt.Transitions {
+		if ("0x" + addr != transition.Msg.Recipient || "ZilBalanceOfCallBack" != transition.Msg.Tag) {
+			continue
+		}
+		for _, param := range transition.Msg.Params {
+			if (param.VName == "balance") {
+				//Value interface{} `json:"value"`
+				//https://github.com/Zilliqa/gozilliqa-sdk/blob/7a254f739153c0551a327526009b4aaeeb4c9d87/core/types.go#L150
+				return fmt.Sprintf("%v", param.Value), nil
+			}
+		}
+		break;
+	}
+	return "", errors.New("Balance not found")
+}
+
 
 func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
 	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
