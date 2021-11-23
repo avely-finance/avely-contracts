@@ -24,11 +24,13 @@ const addr3 = "c2035715831ab100ec42e562ce341b834bed1f4c"
 const key4 = "b87f4ba7dcd6e60f2cca8352c89904e3993c5b2b0b608d255002edcda6374de4"
 const addr4 = "6cd3667ba79310837e33f0aecbe13688a6cbca32"
 
+const azil0 = "0"
 const azil5 = "5000000000000"
 const azil10 = "10000000000000"
 const azil15 = "15000000000000"
 const azil100 = "100000000000000"
 
+const zil0 = "0"
 const zil5 = "5000000000000"
 const zil10 = "10000000000000"
 const zil15 = "15000000000000"
@@ -59,6 +61,15 @@ func (t *Testing) AssertContain(s1, s2 string) {
 		log.Println(s2)
 		_, file, no, _ := runtime.Caller(1)
 		log.Fatal("ASSERT_CONTAIN FAILED, " + file + ":" + strconv.Itoa(no))
+	}
+}
+
+func (t *Testing) AssertEqual(s1, s2 string) {
+	if s1 != s2 {
+		log.Println(s1)
+		log.Println(s2)
+		_, file, no, _ := runtime.Caller(1)
+		log.Fatal("ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 }
 

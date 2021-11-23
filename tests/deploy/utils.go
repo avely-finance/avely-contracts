@@ -41,3 +41,9 @@ func CallFor(c *contract2.Contract, transition string, args []core.ContractValue
 	}
 	return c.Call(transition, args, params, priority)
 }
+
+func StrSum(s1, s2 string) string {
+	x, _ := strconv.Atoi(s1)
+	y, _ := strconv.Atoi(s2)
+	return strconv.Itoa(x + y)
+}
