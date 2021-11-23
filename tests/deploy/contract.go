@@ -39,6 +39,12 @@ func (c *Contract) GetBalance() string {
 	return balAndNonce.Balance
 }
 
+func (c *Contract) UpdateWallet(newKey string) {
+	wallet := account.NewWallet()
+	wallet.AddByPrivateKey(newKey)
+	c.Wallet = wallet
+}
+
 func (c *Contract) Call(transition string, params []core.ContractValue, amount string) (*transaction.Transaction, error) {
 	contract := contract2.Contract{
 		Address: c.Bech32,

@@ -26,6 +26,11 @@ func (s *StubStakingContract) AddSSN(address string) (*transaction.Transaction, 
 	return s.Call("AddSSN", args, "0")
 }
 
+func (s *StubStakingContract) AssignStakeReward() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return s.Call("AssignStakeReward", args, "0")
+}
+
 func NewStubStakingContract(key string) (*StubStakingContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/stubStakingContract.scilla")
 
