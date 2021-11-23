@@ -6,4 +6,5 @@ func main() {
 	t := transitions.NewTesting()
 	t.DelegateStakeSuccess()
 	t.WithdrawStakeAmount()
+	t.ZilBalanceOf()
 }

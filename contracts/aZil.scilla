@@ -324,6 +324,7 @@ transition ChangeProxyContractAddress(address: ByStr20)
 end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
+  (* TODO: should we send ZIL here and accept, or just increase by input parameter? *)
   IncreaseTotalStakeAmt amount;
 
   e = { _eventname: "IncreaseTotalStakeAmount"; amount: amount };
