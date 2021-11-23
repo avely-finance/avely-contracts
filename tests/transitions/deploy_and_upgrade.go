@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil, *deploy.BufferContract,  *deploy.HolderContract) {
+func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil, *deploy.BufferContract, *deploy.HolderContract) {
 	log.Println("start to deploy")
 
 	//deploy stubStakingContract
@@ -36,7 +36,6 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 	}
 	log.Println("deploy holder succeed, address = ", holderContract.Addr)
 
-
 	//upgrade contracts with correct field values
 	log.Println("start to upgrade")
 
@@ -51,8 +50,6 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 	}
 
 	log.Println("upgrade succeed")
-
-
 
 	return stubStakingContract, aZilContract, bufferContract, holderContract
 }
