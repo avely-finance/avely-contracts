@@ -304,14 +304,10 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   end
 end
 
-(************************************************************)
-(* @dev: Admin actions                                      *)
-(************************************************************)
-
 procedure FetchRemoteBnumReq()
   proxy_staking_contract_addr <- proxy_staking_contract_address;
   (* Address type cast *)
-  (* TODO: it's possible to save gas, using type check of transition parameter ? *)
+  (* TODO: seems it's possible to save gas, using type check of transition parameter *)
   (* https://scilla.readthedocs.io/en/latest/scilla-in-depth.html?highlight=remote#dynamic-typecheck-of-addresses *)
   proxyAddrTypeTest <- & proxy_staking_contract_addr as ByStr20 with contract field implementation : ByStr20 end;
   match proxyAddrTypeTest with
@@ -331,6 +327,10 @@ procedure FetchRemoteBnumReq()
     ThrowError e
   end
 end
+
+(************************************************************)
+(* @dev: Admin actions                                      *)
+(************************************************************)
 
 transition ChangeHolderAddress(address: ByStr20)
   holder_address := address;
