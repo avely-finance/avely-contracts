@@ -16,6 +16,8 @@ type Error =
   | InvalidTotalAmt
   | DelegHasNoSufficientAmt
   | DelegStakeNotEnough
+  | CantFetchRemoteImplAddr
+  | CantFetchRemoteBnumReq
 
 let make_error =
   fun (result: Error) =>
@@ -26,6 +28,8 @@ let make_error =
       | DelegStakeNotEnough => Int32 -15
       | InvalidTotalAmt => Int32 -18
       | ReDelegInvalidSSNAddr => Int32 -21
+      | CantFetchRemoteImplAddr => Int32 -101
+      | CantFetchRemoteBnumReq => Int32 -102
       end
     in
     { _exception: "Error"; code: result_code }
@@ -96,6 +100,8 @@ field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
 (* AddressOfDeleg -> BlockNumber -> Deposit *)
 field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
+
+field bnum_req_remote: Uint128 = Uint128 35000
 
 (* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
 (* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
@@ -301,6 +307,30 @@ end
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
+
+procedure FetchRemoteBnumReq()
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  (* Address type cast *)
+  (* TODO: it's possible to save gas, using type check of transition parameter ? *)
+  (* https://scilla.readthedocs.io/en/latest/scilla-in-depth.html?highlight=remote#dynamic-typecheck-of-addresses *)
+  proxyAddrTypeTest <- & proxy_staking_contract_addr as ByStr20 with contract field implementation : ByStr20 end;
+  match proxyAddrTypeTest with
+  | Some v =>
+    implAddr <- & v.implementation;
+    implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128 end;
+    match implAddrTypeTest with
+    | Some z =>
+      bnum_req <- & z.bnum_req;
+      bnum_req_remote := bnum_req
+    | None =>
+        e = CantFetchRemoteBnumReq;
+        ThrowError e
+    end
+  | None =>
+    e = CantFetchRemoteImplAddr;
+    ThrowError e
+  end
+end
 
 transition ChangeHolderAddress(address: ByStr20)
   holder_address := address;
