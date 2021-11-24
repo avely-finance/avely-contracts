@@ -74,6 +74,15 @@ let uint128_zero = Uint128 0
 let uint128_one = Uint128 1
 let uint32_one = Uint32 1
 
+let current_buffer =
+  fun (l : List ByStr20) =>
+  fun (lastrewardcycle : Uint32) =>
+    let flist_length = @list_length ByStr20 in
+    let l_length = flist_length l in
+    let current = builtin rem lastrewardcycle l_length in
+    let flist_nth = @list_nth ByStr20 in
+    flist_nth current l
+
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
@@ -112,6 +121,8 @@ field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
 field mindelegstake: Uint128 = Uint128 10000000000000
 
 field lastrewardcycle: Uint32 = uint32_one
+
+field buffers: List ByStr20 = Nil {ByStr20}
 
 (************************************************************)
 (* @dev: Procedures                                         *)
@@ -354,6 +365,25 @@ transition ChangeProxyContractAddress(address: ByStr20)
 
   e = { _eventname: "ChangeProxyContractAddress"; address: address };
   event e
+end
+
+transition ChangeBuffers(new_buffers: List ByStr20)
+  buffers := new_buffers
+end
+
+transition GetCurrentBuffer()
+  cycle = lastrewardcycle;
+  buffer_addrs <- buffers;
+  current = current_buffer buffer_addrs cycle;
+
+  match current with
+  | None =>
+    ev = {_eventname: "ElementAtPositionFailure"};
+    event ev
+  | Some buffer =>
+    ev = {_eventname: "ElementAtPositionSuccess"; buffer: buffer};
+    event ev
+  end
 end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
