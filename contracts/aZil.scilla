@@ -16,6 +16,8 @@ type Error =
   | InvalidTotalAmt
   | DelegHasNoSufficientAmt
   | DelegStakeNotEnough
+  | CantFetchRemoteImplAddr
+  | CantFetchRemoteBnumReq
 
 let make_error =
   fun (result: Error) =>
@@ -26,6 +28,8 @@ let make_error =
       | DelegStakeNotEnough => Int32 -15
       | InvalidTotalAmt => Int32 -18
       | ReDelegInvalidSSNAddr => Int32 -21
+      | CantFetchRemoteImplAddr => Int32 -101
+      | CantFetchRemoteBnumReq => Int32 -102
       end
     in
     { _exception: "Error"; code: result_code }
@@ -96,6 +100,9 @@ field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
 (* AddressOfDeleg -> BlockNumber -> Deposit *)
 field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
+
+field local_bnum_req: Uint128 = Uint128 35000
+field local_lastrewardcycle: Uint32 = uint32_one
 
 (* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
 (* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
@@ -294,6 +301,32 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     HolderWithdrawStakeAmt withdraw_stake_amt
   | None =>
     e = DelegDoesNotExistAtSSN;
+    ThrowError e
+  end
+end
+
+procedure FetchRemoteZimplFields()
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  (* Address type cast *)
+  (* TODO: seems it's possible to save gas, using type check of transition parameter *)
+  (* https://scilla.readthedocs.io/en/latest/scilla-in-depth.html?highlight=remote#dynamic-typecheck-of-addresses *)
+  proxyAddrTypeTest <- & proxy_staking_contract_addr as ByStr20 with contract field implementation : ByStr20 end;
+  match proxyAddrTypeTest with
+  | Some v =>
+    implAddr <- & v.implementation;
+    implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128, field lastrewardcycle: Uint32 end;
+    match implAddrTypeTest with
+    | Some z =>
+      bnum_req <- & z.bnum_req;
+      local_bnum_req := bnum_req;
+      lrc <- & z.lastrewardcycle;
+      local_lastrewardcycle := lrc
+    | None =>
+        e = CantFetchRemoteBnumReq;
+        ThrowError e
+    end
+  | None =>
+    e = CantFetchRemoteImplAddr;
     ThrowError e
   end
 end
