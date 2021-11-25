@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=zilliqa/scilla:latest
+ARG BASE_IMAGE=zilliqa/scilla:v0.11.0
 
 FROM ${BASE_IMAGE}
 
