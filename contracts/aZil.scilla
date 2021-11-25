@@ -101,7 +101,8 @@ field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 (* AddressOfDeleg -> BlockNumber -> Deposit *)
 field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
 
-field bnum_req_remote: Uint128 = Uint128 35000
+field local_bnum_req: Uint128 = Uint128 35000
+field local_lastrewardcycle: Uint32 = uint32_one
 
 (* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
 (* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
@@ -304,7 +305,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   end
 end
 
-procedure FetchRemoteBnumReq()
+procedure FetchRemoteZimplFields()
   proxy_staking_contract_addr <- proxy_staking_contract_address;
   (* Address type cast *)
   (* TODO: seems it's possible to save gas, using type check of transition parameter *)
@@ -313,11 +314,13 @@ procedure FetchRemoteBnumReq()
   match proxyAddrTypeTest with
   | Some v =>
     implAddr <- & v.implementation;
-    implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128 end;
+    implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128, field lastrewardcycle: Uint32 end;
     match implAddrTypeTest with
     | Some z =>
       bnum_req <- & z.bnum_req;
-      bnum_req_remote := bnum_req
+      local_bnum_req := bnum_req;
+      lrc <- & z.lastrewardcycle;
+      local_lastrewardcycle := lrc
     | None =>
         e = CantFetchRemoteBnumReq;
         ThrowError e
