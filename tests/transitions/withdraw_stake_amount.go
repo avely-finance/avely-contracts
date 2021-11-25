@@ -30,7 +30,7 @@ func (t *Testing) WithdrawStakeAmount() {
     aZilContract.UpdateWallet(key4)
     txn, err := aZilContract.WithdrawStakeAmt(azil10)
     t.AssertError(err)
-    t.LogPrettyReceipt(txn)
+    // t.LogPrettyReceipt(txn)
     t.AssertContain(t.GetReceiptString(txn), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -7))])")
 
     /*******************************************************************************
@@ -40,7 +40,7 @@ func (t *Testing) WithdrawStakeAmount() {
     t.LogStart("================== WithdwarStakeAmount, step 2A ===================")
     txn, err = aZilContract.WithdrawStakeAmt(azil100)
     t.AssertError(err)
-    t.LogPrettyReceipt(txn)
+    // t.LogPrettyReceipt(txn)
     t.AssertContain(t.GetReceiptString(txn), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -13))])")
     t.AssertContain(aZilContract.LogContractStateJson(), "\"totaltokenamount\":\""+azil15+"\"")
 
