@@ -36,6 +36,9 @@ let bool_inactive = False
 
 contract StubStakingContract()
 
+field implementation: ByStr20 = _this_address
+field bnum_req: Uint128 = Uint128 35000
+
 (* Keeps track of SSNS *)
 (* AddressOfSSN -> SSNInfo *)
 field ssnlist: Map ByStr20 Ssn = Emp ByStr20 Ssn
