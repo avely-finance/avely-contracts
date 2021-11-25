@@ -15,11 +15,6 @@ const Contracts = require('../utils/contracts.js');
         value: '0xb2e2c996e6068f4ae11c4cc2c6a189b774819f79'
       },
       {
-        vname: 'init_buffer_address',
-        type: 'ByStr20',
-        value: '0xb2e2c996e6068f4ae11c4cc2c6a189b774819f79'
-      },
-      {
         vname: 'init_holder_address',
         type: 'ByStr20',
         value: '0xb2e2c996e6068f4ae11c4cc2c6a189b774819f79'
