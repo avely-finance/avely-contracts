@@ -26,7 +26,7 @@ func (t *Testing) WithdrawStakeAmount() {
     /*******************************************************************************
      * 1. non delegator(addr4) try to withdraw stake, should fail
      *******************************************************************************/
-    t.LogStart("================== WithdwarStakeAmount, step 1 ===================")
+    t.LogStart("WithdwarStakeAmount, step 1")
     aZilContract.UpdateWallet(key4)
     txn, err := aZilContract.WithdrawStakeAmt(azil10)
     t.AssertError(err)
@@ -37,7 +37,7 @@ func (t *Testing) WithdrawStakeAmount() {
      * 2A. delegator trying to withdraw more than staked, should fail
      *******************************************************************************/
     aZilContract.UpdateWallet(key2)
-    t.LogStart("================== WithdwarStakeAmount, step 2A ===================")
+    t.LogStart("WithdwarStakeAmount, step 2A")
     txn, err = aZilContract.WithdrawStakeAmt(azil100)
     t.AssertError(err)
     // t.LogPrettyReceipt(txn)
@@ -48,7 +48,7 @@ func (t *Testing) WithdrawStakeAmount() {
      * 2B. delegator send withdraw request, but it should fail because mindelegatestake
      * TODO: how to be sure about size of mindelegatestake here?
      *******************************************************************************/
-    t.LogStart("================== WithdwarStakeAmount, step 2B ===================")
+    t.LogStart("WithdwarStakeAmount, step 2B")
     txn, err = aZilContract.WithdrawStakeAmt(azil10)
     t.AssertError(err)
     t.AssertContain(t.GetReceiptString(txn), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -15))])")
@@ -59,7 +59,7 @@ func (t *Testing) WithdrawStakeAmount() {
      * Also check that withdrawal_pending field contains correct information about requested withdrawal
      * balances field should be correct
      *******************************************************************************/
-    t.LogStart("================== WithdwarStakeAmount, step 3A ===================")
+    t.LogStart("WithdwarStakeAmount, step 3A")
     txn, err = aZilContract.WithdrawStakeAmt(azil5)
     if err != nil {
         t.LogError("WithdrawStakeAmount", err)
@@ -83,7 +83,7 @@ func (t *Testing) WithdrawStakeAmount() {
      * Also check that withdrawal_pending field contains correct information about requested withdrawal
      * Balances should be empty
      *******************************************************************************/
-    t.LogStart("================== WithdrawStakeAmount, step 3B ===================")
+    t.LogStart("WithdrawStakeAmount, step 3B")
     txn, err = aZilContract.WithdrawStakeAmt(azil10)
     if err != nil {
         t.LogError("WithdrawStakeAmount", err)
@@ -103,6 +103,4 @@ func (t *Testing) WithdrawStakeAmount() {
        aZilState = myRegexp.ReplaceAllString(aZilState, "{\"" + FakeEpochNum + "\":{\"argtypes\":[],")
        t.AssertContain(aZilState,"\"withdrawal_pending\":{\"" + "0x" + addr2 + "\":{\"" + FakeEpochNum + "\":{\"argtypes\":[],\"arguments\":[\"" + azil15 + "\",\"" + azil15 + "\"]")
     */
-
-    t.LogEnd("WithdrawStakeAmount")
 }
