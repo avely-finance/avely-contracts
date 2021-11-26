@@ -116,7 +116,7 @@ field local_lastrewardcycle: Uint32 = uint32_one
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake: Uint128 = Uint128 10000000000000
 
-field buffers: List ByStr20 = Nil {ByStr20}
+field buffers_addresses: List ByStr20 = Nil {ByStr20}
 
 (************************************************************)
 (* @dev: Procedures                                         *)
@@ -174,7 +174,7 @@ end
 procedure BufferDelegate(amount: Uint128)
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
-  buffer_addrs <- buffers;
+  buffer_addrs <- buffers_addresses;
   buffer = active_buffer buffer_addrs cycle;
 
   match buffer with
@@ -360,13 +360,13 @@ transition ChangeProxyContractAddress(address: ByStr20)
 end
 
 transition ChangeBuffers(new_buffers: List ByStr20)
-  buffers := new_buffers
+  buffers_addresses := new_buffers
 end
 
 transition GetCurrentBuffer()
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
-  buffer_addrs <- buffers;
+  buffer_addrs <- buffers_addresses;
   buffer = active_buffer buffer_addrs cycle;
 
   match buffer with
