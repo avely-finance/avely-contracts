@@ -21,6 +21,7 @@ type Error =
   | CompleteWithdrawalFundsMismatchAtZimpl
   | CompleteWithdrawalFundsZeroAtZimpl
   | CompleteWithdrawalFundsMismatchAimplZimpl
+  | NoActiveBuffer
 
 let make_error =
   fun (result: Error) =>
@@ -33,6 +34,7 @@ let make_error =
       | ReDelegInvalidSSNAddr => Int32 -21
       | CantFetchRemoteImplAddr => Int32 -101
       | CantFetchRemoteBnumReq => Int32 -102
+      | NoActiveBuffer => Int32 -103
       | CompleteWithdrawalFundsMismatchAtZimpl => Int32 -201
       | CompleteWithdrawalFundsZeroAtZimpl => Int32 -201
       | CompleteWithdrawalFundsMismatchAimplZimpl => Int32 -203
@@ -76,7 +78,6 @@ let one_msg =
     let nil_msg = Nil {Message} in
     Cons {Message} msg nil_msg
 
-
 let uint128_zero = Uint128 0
 let uint128_one = Uint128 1
 let uint32_zero = Uint32 0
@@ -90,6 +91,15 @@ let is_block_deposit_map_empty =
 
 let addfunds_tag = "AddFunds"
 
+let active_buffer =
+  fun (l : List ByStr20) =>
+  fun (lastrewardcycle : Uint32) =>
+    let flist_length = @list_length ByStr20 in
+    let l_length = flist_length l in
+    let active = builtin rem lastrewardcycle l_length in
+    let flist_nth = @list_nth ByStr20 in
+    flist_nth active l
+
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
@@ -97,7 +107,6 @@ let addfunds_tag = "AddFunds"
 contract AZil(
   init_azil_ssn_address               : ByStr20,
   init_proxy_staking_contract_address : ByStr20,
-  init_buffer_address                 : ByStr20,
   init_holder_address                 : ByStr20
 )
 (*  Parameters *)
@@ -106,7 +115,6 @@ contract AZil(
 (* Mutable fields *)
 field azil_ssn_address                : ByStr20 = init_azil_ssn_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
-field buffer_address                  : ByStr20 = init_buffer_address
 field holder_address                  : ByStr20 = init_holder_address
 
 field totalstakeamount: Uint128 = uint128_zero
@@ -124,55 +132,13 @@ field tmp_complete_withdrawal_initiator: Option ByStr20 = None {ByStr20}
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
 
-(* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
-(* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
-field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
-
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake: Uint128 = Uint128 10000000000000
 
-field lastrewardcycle: Uint32 = uint32_one
+field buffers_addresses: List ByStr20 = Nil {ByStr20}
 
 (************************************************************)
 (* @dev: Procedures                                         *)
-(************************************************************)
-
-(************************************************************)
-(* @dev: Holder actions                                     *)
-(************************************************************)
-
-procedure HolderWithdrawStakeAmt(amount: Uint128)
-  holder_addr <- holder_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-
-  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
-
-procedure HolderCompleteWithdrawal()
-  holder_addr <- holder_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-  msg = {_tag: "CompleteWithdrawal"; _recipient: holder_addr; _amount: uint128_zero };
-  msgs = one_msg msg;
-  send msgs
-end
-
-(************************************************************)
-(* @dev: Buffer actions                                     *)
-(************************************************************)
-
-(* @dev : To delegate the stake to the contract through buffer. *)
-procedure BufferDelegate(amount: Uint128)
-  buffer_addr <- buffer_address;
-
-  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
-
-(************************************************************)
-(* @dev: aZil actions                                     *)
 (************************************************************)
 
 procedure ThrowError(err: Error)
@@ -211,6 +177,53 @@ procedure FetchRemoteZimplFields()
     ThrowError e
   end
 end
+
+(************************************************************)
+(* @dev: Holder actions                                     *)
+(************************************************************)
+
+procedure HolderWithdrawStakeAmt(amount: Uint128)
+  holder_addr <- holder_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure HolderCompleteWithdrawal()
+  holder_addr <- holder_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  msg = {_tag: "CompleteWithdrawal"; _recipient: holder_addr; _amount: uint128_zero };
+  msgs = one_msg msg;
+  send msgs
+end
+
+(************************************************************)
+(* @dev: Buffer actions                                     *)
+(************************************************************)
+
+(* @dev : To delegate the stake to the contract through buffer. *)
+procedure BufferDelegate(amount: Uint128)
+  FetchRemoteZimplFields;
+  cycle <- local_lastrewardcycle;
+  buffer_addrs <- buffers_addresses;
+  buffer = active_buffer buffer_addrs cycle;
+
+  match buffer with
+  | None =>
+    e = NoActiveBuffer;
+    ThrowError e
+  | Some buffer_addr =>
+    msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
+    msgs = one_msg msg;
+    send msgs
+  end
+end
+
+(************************************************************)
+(* @dev: aZil actions                                     *)
+(************************************************************)
 
 procedure IsDelegstakeSufficient(amount: Uint128)
   mindelegstake_l <- mindelegstake;
@@ -284,16 +297,12 @@ procedure DeletePendingWithdrawal(deleg: ByStr20, withdraw_number: BNum)
 end
 
 procedure TruncateDeleg(deleg: ByStr20)
-  delete balances[deleg];
-  delete last_buf_deposit_cycle_deleg[deleg]
+  delete balances[deleg]
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IsDelegstakeSufficient stake_amt;
-
-  lrc <- lastrewardcycle;
-  last_buf_deposit_cycle_deleg[initiator] := lrc;
 
   total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
@@ -497,18 +506,31 @@ transition ChangeHolderAddress(address: ByStr20)
   event e
 end
 
-transition ChangeBufferAddress(address: ByStr20)
-  buffer_address := address;
-
-  e = { _eventname: "ChangeBufferAddress"; address: address };
-  event e
-end
-
 transition ChangeProxyContractAddress(address: ByStr20)
   proxy_staking_contract_address := address;
 
   e = { _eventname: "ChangeProxyContractAddress"; address: address };
   event e
+end
+
+transition ChangeBuffers(new_buffers: List ByStr20)
+  buffers_addresses := new_buffers
+end
+
+transition GetCurrentBuffer()
+  FetchRemoteZimplFields;
+  cycle <- local_lastrewardcycle;
+  buffer_addrs <- buffers_addresses;
+  buffer = active_buffer buffer_addrs cycle;
+
+  match buffer with
+  | None =>
+    e = {_eventname: "GetCurrentBufferFailure"};
+    event e
+  | Some buffer_addr =>
+    e = {_eventname: "GetCurrentBufferSuccess"; buffer: buffer_addr};
+    event e
+  end
 end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
@@ -525,14 +547,6 @@ transition UpdateStakingParameters(min_deleg_stake: Uint128)
   mindelegstake := min_deleg_stake;
 
   e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };
-  event e
-end
-
-
-transition UpdateLastRewardCycle(last_reward_cycle: Uint32)
-  lastrewardcycle := last_reward_cycle;
-
-  e = { _eventname: "UpdateLastRewardCycle"; last_reward_cycle: last_reward_cycle };
   event e
 end
 

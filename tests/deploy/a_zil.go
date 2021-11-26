@@ -17,15 +17,15 @@ type AZil struct {
 	Contract
 }
 
-func (a *AZil) ChangeBufferAddress(new_addr string) (*transaction.Transaction, error) {
+func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
-			"address",
-			"ByStr20",
-			"0x" + new_addr,
+			"new_buffers",
+			"List ByStr20",
+			new_buffers,
 		},
 	}
-	return a.Contract.Call("ChangeBufferAddress", args, "0")
+	return a.Contract.Call("ChangeBuffers", args, "0")
 }
 
 func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, error) {
@@ -123,10 +123,6 @@ func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) 
 			VName: "init_proxy_staking_contract_address",
 			Type:  "ByStr20",
 			Value: "0x" + stubStakingAddr,
-		}, {
-			VName: "init_buffer_address",
-			Type:  "ByStr20",
-			Value: "0xb2e2c996e6068f4ae11c4cc2c6a189b774819f79",
 		}, {
 			VName: "init_holder_address",
 			Type:  "ByStr20",
