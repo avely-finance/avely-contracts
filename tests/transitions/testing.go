@@ -48,7 +48,7 @@ func (t *Testing) LogStart(tag string) {
 }
 
 func (t *Testing) LogEnd() {
-	log.Printf("🏁 TESTS PASSED SUCCESSFULLY", tag)
+	log.Println("🏁 TESTS PASSED SUCCESSFULLY")
 }
 
 func (t *Testing) LogError(tag string, err error) {

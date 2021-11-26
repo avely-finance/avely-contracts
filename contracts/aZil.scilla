@@ -81,9 +81,9 @@ let active_buffer =
   fun (lastrewardcycle : Uint32) =>
     let flist_length = @list_length ByStr20 in
     let l_length = flist_length l in
-    let current = builtin rem lastrewardcycle l_length in
+    let active = builtin rem lastrewardcycle l_length in
     let flist_nth = @list_nth ByStr20 in
-    flist_nth current l
+    flist_nth active l
 
 (***************************************************)
 (*             The contract definition             *)
@@ -113,14 +113,8 @@ field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map B
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
 
-(* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
-(* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
-field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
-
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake: Uint128 = Uint128 10000000000000
-
-field lastrewardcycle: Uint32 = uint32_one
 
 field buffers: List ByStr20 = Nil {ByStr20}
 
@@ -248,16 +242,12 @@ procedure DecreaseTotalTokenAmt(amt: Uint128)
 end
 
 procedure TruncateDeleg(deleg: ByStr20)
-  delete balances[deleg];
-  delete last_buf_deposit_cycle_deleg[deleg]
+  delete balances[deleg]
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IsDelegstakeSufficient stake_amt;
-
-  lrc <- lastrewardcycle;
-  last_buf_deposit_cycle_deleg[initiator] := lrc;
 
   total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
