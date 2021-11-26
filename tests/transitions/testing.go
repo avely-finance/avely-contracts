@@ -60,7 +60,9 @@ func (t *Testing) AssertContain(s1, s2 string) {
 		log.Println(s1)
 		log.Println(s2)
 		_, file, no, _ := runtime.Caller(1)
-		log.Fatal("ASSERT_CONTAIN FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Fatal("🔴 ASSERT_CONTAIN FAILED, " + file + ":" + strconv.Itoa(no))
+	} else {
+		log.Println("🟢 ASSERT_CONTAIN SUCCESS")
 	}
 }
 
@@ -69,14 +71,18 @@ func (t *Testing) AssertEqual(s1, s2 string) {
 		log.Println(s1)
 		log.Println(s2)
 		_, file, no, _ := runtime.Caller(1)
-		log.Fatal("ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Fatal("🔴 ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
+	} else {
+		log.Println("🟢 ASSERT_EQUAL SUCCESS")
 	}
 }
 
 func (t *Testing) AssertError(err error) {
 	if err == nil {
 		_, file, no, _ := runtime.Caller(1)
-		log.Fatal("ASSERT_ERROR FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Fatal("🔴 ASSERT_ERROR FAILED, " + file + ":" + strconv.Itoa(no))
+	} else {
+		log.Println("🟢 ASSERT_ERROR SUCCESS")
 	}
 }
 
