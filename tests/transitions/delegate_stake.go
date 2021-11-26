@@ -1,7 +1,7 @@
 package transitions
 
 import (
-//"log"
+	//"log"
 	"Azil/test/deploy"
 )
 
@@ -35,7 +35,7 @@ func (t *Testing) DelegateStakeBuffersRotation() {
 		t.LogError("Deploy buffer error = ", err1)
 	}
 
-	new_buffers := []string { "0x" + bufferContract.Addr, "0x" + bufferContract.Addr, "0x" + anotherBufferContract.Addr }
+	new_buffers := []string{"0x" + bufferContract.Addr, "0x" + bufferContract.Addr, "0x" + anotherBufferContract.Addr}
 
 	aZilContract.ChangeBuffers(new_buffers)
 	stubStakingContract.AssignStakeReward() // move to the next cycle
