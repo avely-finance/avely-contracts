@@ -42,7 +42,9 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 	if _, err := stubStakingContract.AddSSN(aZilSSNAddress); err != nil {
 		t.LogError("failed to stubStakingContract.AddSSN(aZilSSNAddress); error = ", err)
 	}
-	if _, err := aZilContract.ChangeBufferAddress(bufferContract.Addr); err != nil {
+
+	new_buffers := []string{"0x" + bufferContract.Addr}
+	if _, err := aZilContract.ChangeBuffers(new_buffers); err != nil {
 		t.LogError("failed to change aZil's buffer contract address; error = ", err)
 	}
 	if _, err := aZilContract.ChangeHolderAddress(holderContract.Addr); err != nil {

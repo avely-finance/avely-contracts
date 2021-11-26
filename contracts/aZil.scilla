@@ -18,6 +18,7 @@ type Error =
   | DelegStakeNotEnough
   | CantFetchRemoteImplAddr
   | CantFetchRemoteBnumReq
+  | NoActiveBuffer
 
 let make_error =
   fun (result: Error) =>
@@ -30,6 +31,7 @@ let make_error =
       | ReDelegInvalidSSNAddr => Int32 -21
       | CantFetchRemoteImplAddr => Int32 -101
       | CantFetchRemoteBnumReq => Int32 -102
+      | NoActiveBuffer => Int32 -103
       end
     in
     { _exception: "Error"; code: result_code }
@@ -74,6 +76,15 @@ let uint128_zero = Uint128 0
 let uint128_one = Uint128 1
 let uint32_one = Uint32 1
 
+let active_buffer =
+  fun (l : List ByStr20) =>
+  fun (lastrewardcycle : Uint32) =>
+    let flist_length = @list_length ByStr20 in
+    let l_length = flist_length l in
+    let active = builtin rem lastrewardcycle l_length in
+    let flist_nth = @list_nth ByStr20 in
+    flist_nth active l
+
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
@@ -81,7 +92,6 @@ let uint32_one = Uint32 1
 contract AZil(
   init_azil_ssn_address               : ByStr20,
   init_proxy_staking_contract_address : ByStr20,
-  init_buffer_address                 : ByStr20,
   init_holder_address                 : ByStr20
 )
 (*  Parameters *)
@@ -90,7 +100,6 @@ contract AZil(
 (* Mutable fields *)
 field azil_ssn_address                : ByStr20 = init_azil_ssn_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
-field buffer_address                  : ByStr20 = init_buffer_address
 field holder_address                  : ByStr20 = init_holder_address
 
 field totalstakeamount: Uint128 = uint128_zero
@@ -104,18 +113,45 @@ field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map B
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
 
-(* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
-(* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
-field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
-
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake: Uint128 = Uint128 10000000000000
 
-field lastrewardcycle: Uint32 = uint32_one
+field buffers_addresses: List ByStr20 = Nil {ByStr20}
 
 (************************************************************)
 (* @dev: Procedures                                         *)
 (************************************************************)
+
+procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
+end
+
+procedure FetchRemoteZimplFields()
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  (* Address type cast *)
+  (* TODO: seems it's possible to save gas, using type check of transition parameter *)
+  (* https://scilla.readthedocs.io/en/latest/scilla-in-depth.html?highlight=remote#dynamic-typecheck-of-addresses *)
+  proxyAddrTypeTest <- & proxy_staking_contract_addr as ByStr20 with contract field implementation : ByStr20 end;
+  match proxyAddrTypeTest with
+  | Some v =>
+    implAddr <- & v.implementation;
+    implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128, field lastrewardcycle: Uint32 end;
+    match implAddrTypeTest with
+    | Some z =>
+      bnum_req <- & z.bnum_req;
+      local_bnum_req := bnum_req;
+      lrc <- & z.lastrewardcycle;
+      local_lastrewardcycle := lrc
+    | None =>
+        e = CantFetchRemoteBnumReq;
+        ThrowError e
+    end
+  | None =>
+    e = CantFetchRemoteImplAddr;
+    ThrowError e
+  end
+end
 
 (************************************************************)
 (* @dev: Holder actions                                     *)
@@ -136,21 +172,25 @@ end
 
 (* @dev : To delegate the stake to the contract through buffer. *)
 procedure BufferDelegate(amount: Uint128)
-  buffer_addr <- buffer_address;
+  FetchRemoteZimplFields;
+  cycle <- local_lastrewardcycle;
+  buffer_addrs <- buffers_addresses;
+  buffer = active_buffer buffer_addrs cycle;
 
-  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
-  msgs = one_msg msg;
-  send msgs
+  match buffer with
+  | None =>
+    e = NoActiveBuffer;
+    ThrowError e
+  | Some buffer_addr =>
+    msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
+    msgs = one_msg msg;
+    send msgs
+  end
 end
 
 (************************************************************)
 (* @dev: aZil actions                                     *)
 (************************************************************)
-
-procedure ThrowError(err: Error)
-  e = make_error err;
-  throw e
-end
 
 procedure IsDelegstakeSufficient(amount: Uint128)
   mindelegstake_l <- mindelegstake;
@@ -202,16 +242,12 @@ procedure DecreaseTotalTokenAmt(amt: Uint128)
 end
 
 procedure TruncateDeleg(deleg: ByStr20)
-  delete balances[deleg];
-  delete last_buf_deposit_cycle_deleg[deleg]
+  delete balances[deleg]
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IsDelegstakeSufficient stake_amt;
-
-  lrc <- lastrewardcycle;
-  last_buf_deposit_cycle_deleg[initiator] := lrc;
 
   total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
@@ -305,32 +341,6 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   end
 end
 
-procedure FetchRemoteZimplFields()
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-  (* Address type cast *)
-  (* TODO: seems it's possible to save gas, using type check of transition parameter *)
-  (* https://scilla.readthedocs.io/en/latest/scilla-in-depth.html?highlight=remote#dynamic-typecheck-of-addresses *)
-  proxyAddrTypeTest <- & proxy_staking_contract_addr as ByStr20 with contract field implementation : ByStr20 end;
-  match proxyAddrTypeTest with
-  | Some v =>
-    implAddr <- & v.implementation;
-    implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128, field lastrewardcycle: Uint32 end;
-    match implAddrTypeTest with
-    | Some z =>
-      bnum_req <- & z.bnum_req;
-      local_bnum_req := bnum_req;
-      lrc <- & z.lastrewardcycle;
-      local_lastrewardcycle := lrc
-    | None =>
-        e = CantFetchRemoteBnumReq;
-        ThrowError e
-    end
-  | None =>
-    e = CantFetchRemoteImplAddr;
-    ThrowError e
-  end
-end
-
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
@@ -342,18 +352,31 @@ transition ChangeHolderAddress(address: ByStr20)
   event e
 end
 
-transition ChangeBufferAddress(address: ByStr20)
-  buffer_address := address;
-
-  e = { _eventname: "ChangeBufferAddress"; address: address };
-  event e
-end
-
 transition ChangeProxyContractAddress(address: ByStr20)
   proxy_staking_contract_address := address;
 
   e = { _eventname: "ChangeProxyContractAddress"; address: address };
   event e
+end
+
+transition ChangeBuffers(new_buffers: List ByStr20)
+  buffers_addresses := new_buffers
+end
+
+transition GetCurrentBuffer()
+  FetchRemoteZimplFields;
+  cycle <- local_lastrewardcycle;
+  buffer_addrs <- buffers_addresses;
+  buffer = active_buffer buffer_addrs cycle;
+
+  match buffer with
+  | None =>
+    e = {_eventname: "GetCurrentBufferFailure"};
+    event e
+  | Some buffer_addr =>
+    e = {_eventname: "GetCurrentBufferSuccess"; buffer: buffer_addr};
+    event e
+  end
 end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
@@ -370,14 +393,6 @@ transition UpdateStakingParameters(min_deleg_stake: Uint128)
   mindelegstake := min_deleg_stake;
 
   e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };
-  event e
-end
-
-
-transition UpdateLastRewardCycle(last_reward_cycle: Uint32)
-  lastrewardcycle := last_reward_cycle;
-
-  e = { _eventname: "UpdateLastRewardCycle"; last_reward_cycle: last_reward_cycle };
   event e
 end
 
