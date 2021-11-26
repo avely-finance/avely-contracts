@@ -481,6 +481,10 @@ transition GetCurrentBuffer()
   end
 end
 
+transition DrainBuffer(buffer_addr: ByStr20)
+
+end
+
 transition IncreaseTotalStakeAmount(amount: Uint128)
   initiator = _sender;
   IsAdmin initiator;
