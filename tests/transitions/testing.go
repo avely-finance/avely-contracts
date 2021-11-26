@@ -44,23 +44,24 @@ func NewTesting() *Testing {
 }
 
 func (t *Testing) LogStart(tag string) {
-	log.Printf("start to test %s\n", tag)
+	log.Printf("⚙️  === Start to test %s === \n", tag)
 }
 
-func (t *Testing) LogEnd(tag string) {
-	log.Printf("end to test %s\n", tag)
+func (t *Testing) LogEnd() {
+	log.Printf("🏁 TESTS PASSED SUCCESSFULLY", tag)
 }
 
 func (t *Testing) LogError(tag string, err error) {
-	log.Fatalf("failed at %s, err = %s\n", tag, err.Error())
+	log.Fatalf("🔴 Failed at %s, err = %s\n", tag, err.Error())
 }
 
 func (t *Testing) AssertContain(s1, s2 string) {
 	if !strings.Contains(s1, s2) {
+		_, file, no, _ := runtime.Caller(1)
+		log.Println("🔴 ASSERT_CONTAIN FAILED, " + file + ":" + strconv.Itoa(no))
 		log.Println(s1)
 		log.Println(s2)
-		_, file, no, _ := runtime.Caller(1)
-		log.Fatal("🔴 ASSERT_CONTAIN FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Fatalf("💔 TESTS ARE FAILED")
 	} else {
 		log.Println("🟢 ASSERT_CONTAIN SUCCESS")
 	}
@@ -68,10 +69,11 @@ func (t *Testing) AssertContain(s1, s2 string) {
 
 func (t *Testing) AssertEqual(s1, s2 string) {
 	if s1 != s2 {
+		_, file, no, _ := runtime.Caller(1)
+		log.Println("🔴 ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
 		log.Println(s1)
 		log.Println(s2)
-		_, file, no, _ := runtime.Caller(1)
-		log.Fatal("🔴 ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Fatalf("💔 TESTS ARE FAILED")
 	} else {
 		log.Println("🟢 ASSERT_EQUAL SUCCESS")
 	}
@@ -80,7 +82,8 @@ func (t *Testing) AssertEqual(s1, s2 string) {
 func (t *Testing) AssertError(err error) {
 	if err == nil {
 		_, file, no, _ := runtime.Caller(1)
-		log.Fatal("🔴 ASSERT_ERROR FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Println("🔴 ASSERT_ERROR FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Fatalf("💔 TESTS ARE FAILED")
 	} else {
 		log.Println("🟢 ASSERT_ERROR SUCCESS")
 	}

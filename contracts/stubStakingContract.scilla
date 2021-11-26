@@ -114,7 +114,7 @@ end
 (* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1036 *)
 procedure WithdrawalStakeAmt(initiator: ByStr20, ssn: ByStr20, withdraw_amount: Uint128)
 
-  (* Do we need to track pending withdrawals? 
+  (* Do we need to track pending withdrawals?
   withdrawal_bnum <- & BLOCKNUMBER;
   withdraw_amt_o <- withdrawal_pending[initiator][withdrawal_bnum];
   withdraw_amt_pending = match withdraw_amt_o with
@@ -176,7 +176,12 @@ transition AssignStakeReward()
   cur_ssn_map <- ssnlist;
   (* ssnlist map to list of pairs *)
   cur_ssn_list = builtin to_list cur_ssn_map;
-  forall cur_ssn_list SsnBufferToStake 
+  forall cur_ssn_list SsnBufferToStake;
+
+  (* move to the next cycle *)
+  lrc <- lastrewardcycle;
+  newLastRewardCycleNum = builtin add uint32_one lrc;
+  lastrewardcycle := newLastRewardCycleNum
 end
 
 (************************************************************)
@@ -213,7 +218,7 @@ end
 transition WithdrawStakeAmt(ssnaddr: ByStr20, amt: Uint128)
   initiator = _sender;
   WithdrawalStakeAmt initiator ssnaddr amt;
-  msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; 
+  msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
   ssnaddr : ssnaddr; amount : amt};
   msg = one_msg msg_to_delegator;
   send msg

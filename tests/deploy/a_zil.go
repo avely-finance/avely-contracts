@@ -17,8 +17,7 @@ type AZil struct {
 	Contract
 }
 
-func (a *AZil) ChangeBuffers(new_buffer string) (*transaction.Transaction, error) {
-	new_buffers := []string { "0x" + new_buffer }
+func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"new_buffers",
