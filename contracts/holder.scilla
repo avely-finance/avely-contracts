@@ -26,37 +26,92 @@ contract Holder(
 field azil_ssn_address                : ByStr20 = init_azil_ssn_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
 
+field tmp_aimpl_address: Option ByStr20 = None {ByStr20}
+field tmp_added_funds: Uint128 = uint128_zero
+
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
 
 transition ChangeAzilSSNAddress(address: ByStr20)
   azil_ssn_address := address;
-
   e = { _eventname: "ChangeAzilSSNAddress"; address: address };
   event e
 end
 
 transition ChangeProxyStakingContractAddress(address: ByStr20)
   proxy_staking_contract_address := address;
-
   e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
   event e
 end
 
-procedure ProxyWithdrawStakeAmt(ssnaddr: ByStr20, proxy_staking_contract_addr: ByStr20, amount: Uint128)
+transition WithdrawStakeAmt(amount: Uint128)
+  ssnaddr <- azil_ssn_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
   msg = {_tag: "WithdrawStakeAmt"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero;
   ssnaddr: ssnaddr; amt: amount};
   msgs = one_msg msg;
   send msgs
 end
 
-transition WithdrawStakeAmt(amount: Uint128)
-  ssnaddr <- azil_ssn_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-  ProxyWithdrawStakeAmt ssnaddr proxy_staking_contract_addr amount
+transition WithdrawStakeAmtSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
+  (* Should we ignore the staking contract callbacks? *)
 end
 
-transition WithdrawStakeAmtSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* We ignore the staking contract callbacks *)
+transition CompleteWithdrawal()
+  (* TODO: IsAimpl; ? *)
+  tmp_added_funds := uint128_zero;
+  c = Some {ByStr20} _sender;
+  tmp_aimpl_address := c;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  msg = {_tag: "CompleteWithdrawal"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero };
+  msgs = one_msg msg;
+  send msgs
 end
+
+(****************************************************)
+(* We assume that Zimpl calls transitions in order: *)
+(* 1. Holder->AddFunds()                            *)
+(* 2. Holder->CompleteWithdrawalSuccessCallBack()   *)
+(*                                                  *)
+(* We should accept funds here, according to ZRC-5  *)
+(****************************************************)
+transition AddFunds()
+  (* TODO: IsZimpl; ? *)
+  accept;
+  tmp_added_funds := _amount;
+  e = { _eventname : "Got funds "; funder: _sender; amount: _amount };
+  event e
+end
+
+transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
+  (* TODO: IsZimpl; ? *)
+  (* send funds and callback to Aimpl *)
+  added_funds <- tmp_added_funds;
+  some_aimpl_address <- tmp_aimpl_address;
+  match some_aimpl_address with
+  | Some aimpl_address =>
+    msg = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : aimpl_address;
+      (* TODO: should we send funds by separate AddFunds() transition ? *)
+      _amount : amount; (* tmp_added_funds==amount *)
+      amountZimplCallback : amount;
+      amountZimplAccepted : added_funds
+    };
+    msgs = one_msg msg;
+    send msgs
+  | None =>
+  end
+end
+
+transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
+  (* TODO: IsZimpl; ? *)
+  some_aimpl_address <- tmp_aimpl_address;
+  match some_aimpl_address with
+  | Some aimpl_address =>
+    msg = {_tag : "CompleteWithdrawalNoUnbondedCallBack"; _recipient : aimpl_address; _amount : amount };
+    msgs = one_msg msg;
+    send msgs
+  | None =>
+  end
+end
+
