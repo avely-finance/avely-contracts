@@ -6,8 +6,19 @@ import (
 	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/util"
+	"github.com/ybbus/jsonrpc"
+	"log"
 	"strconv"
 )
+
+func IncreaseBlocknum(delta int32) {
+	//https://raw.githubusercontent.com/Zilliqa/gozilliqa-sdk/7a254f739153c0551a327526009b4aaeeb4c9d87/provider/provider.go
+	//TODO singleton
+	rpcClient := jsonrpc.NewClient("http://zilliqa_server:5555")
+	params := []interface{}{delta}
+	rpcClient.Call("IncreaseBlocknum", params)
+	log.Printf("🔗  === Blocknumber increased by %d === \n", delta)
+}
 
 func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
 	c.Provider = provider2.NewProvider("http://zilliqa_server:5555")
