@@ -423,24 +423,6 @@ procedure CalculateTotalWithdrawalIteration(withdraw: Pair BNum Withdrawal)
   end
 end
 
-procedure CalculateTotalWithdrawal(withdraw_initiator: ByStr20)
-  FetchRemoteZimplFields;
-  tmp_complete_withdrawal_available := uint128_zero;
-  withdraw_map_o <- withdrawal_pending[withdraw_initiator];
-  match withdraw_map_o with
-  | Some withdraw_map =>
-    withdraw_list = builtin to_list withdraw_map;
-    (* Calculate withdrawal that can be transferred *)
-    c = Some {ByStr20} withdraw_initiator;
-    tmp_current_deleg := c;
-    forall withdraw_list CalculateTotalWithdrawalIteration
-  | None =>
-    e = { _eventname: "NoPendingWithdrawal" };
-    event e
-  end
-end
-
-
 procedure CompleteWithdrawalCallBackProcess(amountZimplCallback: Uint128, amountZimplAccepted: Uint128, status: String)
 
   (* check that Zimpl amount are not zero, it should not go here *)
@@ -612,32 +594,44 @@ transition CompleteWithdrawal()
   (* TODO: IsArbitrage; *)
   initiator = _sender;
 
-  (* go through pending withdrawals, calculate total of those which have unbonding period completed *)
-  CalculateTotalWithdrawal initiator;
+  withdraw_map_o <- withdrawal_pending[initiator];
+  match withdraw_map_o with
+  | Some withdraw_map =>
 
-  withdraw_amt <- tmp_complete_withdrawal_available;
-  zero_withdraw = builtin eq withdraw_amt uint128_zero;
-  match zero_withdraw with
-  | True =>
-    (* There is nothing to withdraw, we don't need to call Zimpl. *)
-    (* Even Zimpl has something to withdraw, we'll get amount mistmatch error. *)
-    (* Se we'll call Zimpl next time when we'll have something to withdraw here. *)
-    e = { _eventname: "NoUnbondedStake" };
-    event e;
-    msg_to_delegator = {_tag : "CompleteWithdrawalNoUnbondedStakeCallBack"; _recipient : initiator; _amount : uint128_zero;
-    amount : uint128_zero};
-    msg = one_msg msg_to_delegator;
-    send msg
-  | False =>
-    e = { _eventname: "CompleteWithdrawal"; amount: withdraw_amt };
-    event e;
-    (* there is something ready to withdraw completely, so we'll start the flow *)
-    (* save initiator of transition to use later in chaincall *)
-    c = Some {ByStr20} initiator;
-    tmp_complete_withdrawal_initiator := c;
-    HolderCompleteWithdrawal
+    FetchRemoteZimplFields;
+
+    (* go through pending withdrawals, calculate total of those which have unbonding period completed *)
+    withdraw_list = builtin to_list withdraw_map;
+    tmp_complete_withdrawal_available := uint128_zero;
+    forall withdraw_list CalculateTotalWithdrawalIteration;
+
+    withdraw_amt <- tmp_complete_withdrawal_available;
+    zero_withdraw = builtin eq withdraw_amt uint128_zero;
+    match zero_withdraw with
+    | True =>
+      (* There is nothing to withdraw, we don't need to call Zimpl. *)
+      (* Even if Zimpl has something to withdraw, we'll get amount mistmatch error. *)
+      (* So we'll call Zimpl next time when we'll have something to withdraw here. *)
+      e = { _eventname: "NoUnbondedStake" };
+      event e;
+      msg_to_delegator = {_tag : "CompleteWithdrawalNoUnbondedStakeCallBack"; _recipient : initiator; _amount : uint128_zero;
+      amount : uint128_zero};
+      msg = one_msg msg_to_delegator;
+      send msg
+    | False =>
+      e = { _eventname: "CompleteWithdrawal"; amount: withdraw_amt };
+      event e;
+      (* there is something ready to withdraw completely, so we'll start the flow *)
+      (* save initiator of transition to use later in chaincall *)
+      c = Some {ByStr20} initiator;
+      tmp_complete_withdrawal_initiator := c;
+      HolderCompleteWithdrawal
+    end
+
+  | None =>
+    e = { _eventname: "NoPendingWithdrawal" };
+    event e
   end
-
 end
 
 transition CompleteWithdrawalSuccessCallBack(amountZimplCallback: Uint128, amountZimplAccepted: Uint128)
