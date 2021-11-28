@@ -58,7 +58,7 @@ func NewHolderContract(key string, aZilSSNAddress string, stubStakingAddr string
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, 1, 1, contract.Provider)
+	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 		contract := Contract{
