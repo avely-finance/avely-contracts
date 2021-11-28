@@ -23,6 +23,44 @@ type Contract struct {
 	Wallet *account.Wallet
 }
 
+type MyEventParamsMap map[string]string
+type MyEventLog struct {
+	EventName string            `json:"_eventname"`
+	Address   string            `json:"address"`
+	Params    []MyContractValue `json:"params"`
+}
+type MyContractValue struct {
+	VName string `json:"vname"`
+	//Type  string      `json:"type"`
+	Value interface{} `json:"value"`
+}
+
+/* @param params String {"foo": "bar", "test" : "123"} */
+func (c *Contract) Event(name string, params string) MyEventLog {
+
+	//string to MyEventParamsMap
+	var pmap MyEventParamsMap
+	err := json.Unmarshal([]byte(params), &pmap)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//transform MyEventParamsMap to array of ContractValue
+	cvarr := []MyContractValue{}
+	for key, val := range pmap {
+		cvarr = append(cvarr, MyContractValue{
+			Value: val,
+			VName: key,
+		})
+	}
+
+	return MyEventLog{
+		EventName: name,
+		Address:   "0x" + c.Addr,
+		Params:    cvarr,
+	}
+}
+
 func (c *Contract) LogContractStateJson() string {
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
 	rsp, _ := provider.GetSmartContractState(c.Addr)

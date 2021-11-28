@@ -1,7 +1,9 @@
 package transitions
 
 import (
+	"Azil/test/deploy"
 	"encoding/json"
+	"fmt"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"log"
 	"runtime"
@@ -97,4 +99,64 @@ func (t *Testing) GetReceiptString(txn *transaction.Transaction) string {
 func (t *Testing) LogPrettyReceipt(txn *transaction.Transaction) {
 	data, _ := json.MarshalIndent(txn.Receipt, "", "     ")
 	log.Println(string(data))
+}
+
+func (t *Testing) AssertEvent(txn *transaction.Transaction, testEvent deploy.MyEventLog) {
+
+	type ContractValue struct {
+		VName string      `json:"vname"`
+		Type  string      `json:"type"`
+		Value interface{} `json:"value"`
+	}
+	type EventLog struct {
+		EventName string          `json:"_eventname"`
+		Address   string          `json:"address"`
+		Params    []ContractValue `json:"params"`
+	}
+
+	if txn.Receipt.EventLogs != nil {
+		els := txn.Receipt.EventLogs
+	mainloop:
+		for _, el := range els {
+			//TODO: correct way to get elog EventLog structure
+			b, err := json.Marshal(el)
+			if err != nil {
+				panic(err)
+			}
+			var elog EventLog
+			err = json.Unmarshal([]byte(b), &elog)
+			if err != nil {
+				log.Fatal(err)
+			}
+			//---
+
+			//address or eventname of transaction event does not match with data of test event
+			if elog.Address != testEvent.Address || elog.EventName != testEvent.EventName {
+				continue mainloop
+			}
+
+			//create map of name-values of transaction event parameters
+			mTxEvent := make(map[string]bool)
+			for _, _map := range elog.Params {
+				mkey := _map.VName + "=====" + fmt.Sprintf("%v", _map.Value)
+				mTxEvent[mkey] = true
+			}
+
+			//all test event parameters should be present, else events are not matching
+			for _, _tmap := range testEvent.Params {
+				mkey := _tmap.VName + "=====" + fmt.Sprintf("%v", _tmap.Value)
+				if !mTxEvent[mkey] {
+					continue mainloop
+				}
+			}
+			log.Println("🟢 ASSERT_EVENT SUCCESS")
+			return
+		}
+	}
+
+	_, file, no, _ := runtime.Caller(1)
+	log.Println("🔴 ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
+	z, _ := json.Marshal(testEvent)
+	log.Println(fmt.Sprintf("%s", z))
+	log.Fatalf("💔 TESTS ARE FAILED")
 }
