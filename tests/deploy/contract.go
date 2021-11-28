@@ -12,6 +12,9 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
+const TxConfirmMaxAttempts = 5
+const TxConfirmInterval = 0
+
 type Contract struct {
 	Code   string
 	Init   []core.ContractValue
@@ -55,7 +58,7 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	if err != nil {
 		return tx, err
 	}
-	tx.Confirm(tx.ID, 1, 1, contract.Provider)
+	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
 	if tx.Status != core.Confirmed {
 		return tx, errors.New("transaction didn't get confirmed")
 	}

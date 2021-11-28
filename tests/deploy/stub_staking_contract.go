@@ -55,7 +55,7 @@ func NewStubStakingContract(key string) (*StubStakingContract, error) {
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, 1, 1, contract.Provider)
+	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 		contract := Contract{
