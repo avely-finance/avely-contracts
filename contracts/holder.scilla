@@ -85,17 +85,44 @@ transition AddFunds()
 end
 
 transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
-  (* TODO: IsZimpl; ? *)
+  (* TODO: IsZimpl; *)
+
   (* send funds and callback to Aimpl *)
   added_funds <- tmp_added_funds;
   some_aimpl_address <- tmp_aimpl_address;
   match some_aimpl_address with
   | Some aimpl_address =>
+
+    (* check that Zimpl amount are not zero, it should not go here *)
+    amount_zero = builtin eq amount uint128_zero;
+    match amount_zero with
+    | True =>
+      e = { _eventname: "CompleteWithdrawalFundsZeroAtZimpl"; amount: amount };
+      event e;
+      msg = {_tag : "CompleteWithdrawalErrorCallBack"; _recipient : aimpl_address; _amount : uint128_zero;
+        status: "CompleteWithdrawalFundsZeroAtZimpl" };
+      msgs = one_msg msg;
+      send msgs
+    | False =>
+    end;
+
+    (* check that Zimpl sent us correct data *)
+    amount_eq = builtin eq added_funds amount;
+    match amount_eq with
+    | False =>
+      e = { _eventname: "CompleteWithdrawalFundsMismatchAtZimpl"; amount: amount; added_funds: added_funds };
+      event e;
+      msg = {_tag : "CompleteWithdrawalErrorCallBack"; _recipient : aimpl_address; _amount : uint128_zero;
+        status: "CompleteWithdrawalFundsMismatchAtZimpl" };
+      msgs = one_msg msg;
+      send msgs
+    | True =>
+    end;
+
     msg = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : aimpl_address;
       (* TODO: should we send funds by separate AddFunds() transition ? *)
-      _amount : amount; (* tmp_added_funds==amount *)
-      amountZimplCallback : amount;
-      amountZimplAccepted : added_funds
+      _amount : amount;
+      amount : amount
     };
     msgs = one_msg msg;
     send msgs
@@ -104,11 +131,12 @@ transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
 end
 
 transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
-  (* TODO: IsZimpl; ? *)
+  (* TODO: IsZimpl; *)
   some_aimpl_address <- tmp_aimpl_address;
   match some_aimpl_address with
   | Some aimpl_address =>
-    msg = {_tag : "CompleteWithdrawalNoUnbondedCallBack"; _recipient : aimpl_address; _amount : amount };
+    msg = {_tag : "CompleteWithdrawalErrorCallBack"; _recipient : aimpl_address; _amount : uint128_zero;
+      status: "CompleteWithdrawalNoUnbonded" };
     msgs = one_msg msg;
     send msgs
   | None =>
