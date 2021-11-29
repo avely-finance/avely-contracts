@@ -20,6 +20,15 @@ func IncreaseBlocknum(delta int32) {
 	log.Printf("🔗  === Blocknumber increased by %d === \n", delta)
 }
 
+func GetBalance(addr string) string {
+	provider := provider2.NewProvider("http://zilliqa_server:5555")
+	balAndNonce, err := provider.GetBalance(addr)
+	if err != nil {
+		panic(err)
+	}
+	return balAndNonce.Balance
+}
+
 func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
 	c.Provider = provider2.NewProvider("http://zilliqa_server:5555")
 	gasPrice, err := c.Provider.GetMinimumGasPrice()

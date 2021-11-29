@@ -19,6 +19,7 @@ func main() {
 	t.DelegateStakeSuccess()
 	t.DelegateStakeBuffersRotation()
 	t.WithdrawStakeAmount()
+	t.CompleteWithdrawalSuccess()
 	t.ZilBalanceOf()
 	t.LogEnd()
 }
