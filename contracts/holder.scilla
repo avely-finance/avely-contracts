@@ -18,15 +18,16 @@ let one_msg =
 
 contract Holder(
   init_azil_ssn_address               : ByStr20,
+  init_aimpl_address                  : ByStr20,
   init_proxy_staking_contract_address : ByStr20
 )
 (*  Parameters *)
 
 (* Mutable fields *)
 field azil_ssn_address                : ByStr20 = init_azil_ssn_address
+field aimpl_address                   : ByStr20 = init_aimpl_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
 
-field tmp_aimpl_address: Option ByStr20 = None {ByStr20}
 field tmp_added_funds: Uint128 = uint128_zero
 
 (************************************************************)
@@ -36,6 +37,12 @@ field tmp_added_funds: Uint128 = uint128_zero
 transition ChangeAzilSSNAddress(address: ByStr20)
   azil_ssn_address := address;
   e = { _eventname: "ChangeAzilSSNAddress"; address: address };
+  event e
+end
+
+transition ChangeAimplAddress(address: ByStr20)
+  aimpl_address := address;
+  e = { _eventname: "ChangeAimplAddress"; address: address };
   event e
 end
 
@@ -61,8 +68,6 @@ end
 transition CompleteWithdrawal()
   (* TODO: IsAimpl; ? *)
   tmp_added_funds := uint128_zero;
-  c = Some {ByStr20} _sender;
-  tmp_aimpl_address := c;
   proxy_staking_contract_addr <- proxy_staking_contract_address;
   msg = {_tag: "CompleteWithdrawal"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero };
   msgs = one_msg msg;
@@ -89,57 +94,45 @@ transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
 
   (* send funds and callback to Aimpl *)
   added_funds <- tmp_added_funds;
-  some_aimpl_address <- tmp_aimpl_address;
-  match some_aimpl_address with
-  | Some aimpl_address =>
+  o_aimpl_address <- aimpl_address;
 
-    (* check that Zimpl amount are not zero, it should not go here *)
-    amount_zero = builtin eq amount uint128_zero;
-    match amount_zero with
-    | True =>
-      e = { _eventname: "CompleteWithdrawalFundsZeroAtZimpl"; amount: amount };
-      event e;
-      msg = {_tag : "CompleteWithdrawalErrorCallBack"; _recipient : aimpl_address; _amount : uint128_zero;
-        status: "CompleteWithdrawalFundsZeroAtZimpl" };
-      msgs = one_msg msg;
-      send msgs
-    | False =>
-    end;
+  (* check that Zimpl amount are not zero, it should not go here *)
+  amount_zero = builtin eq amount uint128_zero;
+  match amount_zero with
+  | True =>
+    e = { _eventname: "CompleteWithdrawalFundsZeroAtZimpl"; amount: amount };
+    event e;
+    e = { _exception: "CompleteWithdrawalFundsZeroAtZimpl" };
+    throw e
+  | False =>
+  end;
 
-    (* check that Zimpl sent us correct data *)
-    amount_eq = builtin eq added_funds amount;
-    match amount_eq with
-    | False =>
-      e = { _eventname: "CompleteWithdrawalFundsMismatchAtZimpl"; amount: amount; added_funds: added_funds };
-      event e;
-      msg = {_tag : "CompleteWithdrawalErrorCallBack"; _recipient : aimpl_address; _amount : uint128_zero;
-        status: "CompleteWithdrawalFundsMismatchAtZimpl" };
-      msgs = one_msg msg;
-      send msgs
-    | True =>
-    end;
+  (* check that Zimpl sent us correct data *)
+  amount_eq = builtin eq added_funds amount;
+  match amount_eq with
+  | False =>
+    e = { _eventname: "CompleteWithdrawalFundsMismatchAtZimpl"; amount: amount; added_funds: added_funds };
+    event e;
+    e = { _exception: "CompleteWithdrawalFundsMismatchAtZimpl" };
+    throw e
+  | True =>
+  end;
 
-    msg = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : aimpl_address;
-      (* TODO: should we send funds by separate AddFunds() transition ? *)
-      _amount : amount;
-      amount : amount
-    };
-    msgs = one_msg msg;
-    send msgs
-  | None =>
-  end
+  msg = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : o_aimpl_address;
+    (* TODO: should we send funds by separate AddFunds() transition ? *)
+    _amount : amount;
+    amount : amount
+  };
+  msgs = one_msg msg;
+  send msgs
 end
 
 transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
   (* TODO: IsZimpl; *)
-  some_aimpl_address <- tmp_aimpl_address;
-  match some_aimpl_address with
-  | Some aimpl_address =>
-    msg = {_tag : "CompleteWithdrawalErrorCallBack"; _recipient : aimpl_address; _amount : uint128_zero;
-      status: "CompleteWithdrawalNoUnbonded" };
-    msgs = one_msg msg;
-    send msgs
-  | None =>
-  end
+  o_aimpl_address <- aimpl_address;
+  msg = {_tag : "CompleteWithdrawalErrorCallBack"; _recipient : o_aimpl_address; _amount : uint128_zero;
+    status: "CompleteWithdrawalNoUnbonded" };
+  msgs = one_msg msg;
+  send msgs
 end
 
