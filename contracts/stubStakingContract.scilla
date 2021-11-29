@@ -158,14 +158,13 @@ end
 (* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1036 *)
 procedure WithdrawalStakeAmt(initiator: ByStr20, ssn: ByStr20, withdraw_amount: Uint128)
 
-  (* Do we need to track pending withdrawals?
   withdrawal_bnum <- & BLOCKNUMBER;
   withdraw_amt_o <- withdrawal_pending[initiator][withdrawal_bnum];
   withdraw_amt_pending = match withdraw_amt_o with
   | Some v => builtin add v withdraw_amount
   | None => withdraw_amount
   end;
-  withdrawal_pending[initiator][withdrawal_bnum] := withdraw_amt_pending; *)
+  withdrawal_pending[initiator][withdrawal_bnum] := withdraw_amt_pending;
 
   e = { _eventname: "Deleg withdraw deposit"; ssn_addr: ssn; deleg_address: initiator; withdraw_amount: withdraw_amount };
   event e;
@@ -272,7 +271,8 @@ transition WithdrawStakeAmt(ssnaddr: ByStr20, amt: Uint128)
   send msg
 end
 
-transition CompleteWithdrawal(initiator: ByStr20)
+transition CompleteWithdrawal()
+  initiator = _sender;
   withdraw_map_o <- withdrawal_pending[initiator];
   match withdraw_map_o with
   | Some withdraw_map =>
