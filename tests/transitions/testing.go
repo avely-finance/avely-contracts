@@ -39,10 +39,13 @@ const zil15 = "15000000000000"
 const zil100 = "100000000000000"
 
 type Testing struct {
+	debug map[string]string
 }
 
 func NewTesting() *Testing {
-	return &Testing{}
+	return &Testing{
+		debug: make(map[string]string),
+	}
 }
 
 func (t *Testing) LogStart(tag string) {
@@ -157,6 +160,21 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, testEvent deploy.MyE
 	_, file, no, _ := runtime.Caller(1)
 	log.Println("🔴 ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
 	z, _ := json.Marshal(testEvent)
-	log.Println(fmt.Sprintf("%s", z))
+	log.Println(fmt.Sprintf("We assert: %s", z))
+	z, _ = json.Marshal(txn.Receipt.EventLogs)
+	log.Println(fmt.Sprintf("We have: %s", z))
+	t.LogDebug()
 	log.Fatalf("💔 TESTS ARE FAILED")
+}
+
+func (t *Testing) AddDebug(key, value string) {
+	t.debug[key] = value
+}
+
+func (t *Testing) LogDebug() {
+	var output string
+	for key, val := range t.debug {
+		output += fmt.Sprintf("% 20s: %s\n", key, val)
+	}
+	log.Println("Debug info\n" + strings.Trim(output, "\n"))
 }

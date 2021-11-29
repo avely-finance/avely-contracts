@@ -53,5 +53,10 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 
 	log.Println("upgrade succeed")
 
+	t.AddDebug("stubStakingContract", "0x"+stubStakingContract.Addr)
+	t.AddDebug("aZilContract", "0x"+aZilContract.Addr)
+	t.AddDebug("bufferContract", "0x"+bufferContract.Addr)
+	t.AddDebug("holderContract", "0x"+holderContract.Addr)
+
 	return stubStakingContract, aZilContract, bufferContract, holderContract
 }

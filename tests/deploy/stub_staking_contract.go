@@ -15,6 +15,12 @@ type StubStakingContract struct {
 	Contract
 }
 
+const bnum_req = 35000
+
+func (s *StubStakingContract) GetBnumReq() int32 {
+	return bnum_req
+}
+
 func (s *StubStakingContract) AddSSN(address string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

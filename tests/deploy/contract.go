@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"runtime"
+	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
@@ -42,6 +44,8 @@ func (c *Contract) Event(name string, params string) MyEventLog {
 	var pmap MyEventParamsMap
 	err := json.Unmarshal([]byte(params), &pmap)
 	if err != nil {
+		_, file, no, _ := runtime.Caller(1)
+		log.Println("Can not parse json: " + params + " at " + file + ":" + strconv.Itoa(no))
 		log.Fatal(err)
 	}
 
@@ -65,7 +69,7 @@ func (c *Contract) LogContractStateJson() string {
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
 	rsp, _ := provider.GetSmartContractState(c.Addr)
 	j, _ := json.Marshal(rsp)
-	// c.LogPrettyStateJson(rsp)
+	c.LogPrettyStateJson(rsp)
 	return string(j)
 }
 
