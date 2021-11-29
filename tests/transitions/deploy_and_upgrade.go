@@ -23,14 +23,14 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 	log.Println("deploy aZil succeed, address = ", aZilContract.Addr)
 
 	//deploy buffer
-	bufferContract, err1 := deploy.NewBufferContract(adminKey, aZilSSNAddress, stubStakingContract.Addr)
+	bufferContract, err1 := deploy.NewBufferContract(adminKey, aZilContract.Addr /*aimpl_address*/, aZilSSNAddress, stubStakingContract.Addr)
 	if err1 != nil {
 		t.LogError("deploy buffer error = ", err1)
 	}
 	log.Println("deploy buffer succeed, address = ", bufferContract.Addr)
 
 	//deploy holder
-	holderContract, err1 := deploy.NewHolderContract(adminKey, aZilSSNAddress, stubStakingContract.Addr)
+	holderContract, err1 := deploy.NewHolderContract(adminKey, aZilContract.Addr /*aimpl_address*/, aZilSSNAddress, stubStakingContract.Addr)
 	if err1 != nil {
 		t.LogError("deploy holder error = ", err1)
 	}

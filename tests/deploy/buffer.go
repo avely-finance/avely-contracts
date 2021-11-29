@@ -26,7 +26,7 @@ func (b *BufferContract) ChangeProxyStakingContractAddress(new_addr string) (*tr
 	return b.Call("ChangeProxyStakingContractAddress", args, "0")
 }
 
-func NewBufferContract(key string, aZilSSNAddress string, stubStakingAddr string) (*BufferContract, error) {
+func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*BufferContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/buffer.scilla")
 
 	init := []core.ContractValue{
@@ -34,6 +34,10 @@ func NewBufferContract(key string, aZilSSNAddress string, stubStakingAddr string
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
+		}, {
+			VName: "init_aimpl_address",
+			Type:  "ByStr20",
+			Value: "0x" + aimplAddress,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",

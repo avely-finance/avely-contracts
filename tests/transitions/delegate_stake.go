@@ -30,7 +30,7 @@ func (t *Testing) DelegateStakeBuffersRotation() {
 
 	stubStakingContract, aZilContract, bufferContract, _ := t.DeployAndUpgrade()
 
-	anotherBufferContract, err1 := deploy.NewBufferContract(adminKey, aZilSSNAddress, stubStakingContract.Addr)
+	anotherBufferContract, err1 := deploy.NewBufferContract(adminKey, aZilContract.Addr, aZilSSNAddress, stubStakingContract.Addr)
 	if err1 != nil {
 		t.LogError("Deploy buffer error = ", err1)
 	}

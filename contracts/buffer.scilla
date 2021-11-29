@@ -18,12 +18,14 @@ let one_msg =
 
 contract Buffer(
   init_azil_ssn_address               : ByStr20,
+  init_aimpl_address                  : ByStr20,
   init_proxy_staking_contract_address : ByStr20
 )
 (*  Parameters *)
 
 (* Mutable fields *)
 field azil_ssn_address                : ByStr20 = init_azil_ssn_address
+field aimpl_address                   : ByStr20 = init_aimpl_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
 
 (************************************************************)
@@ -32,14 +34,18 @@ field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_ad
 
 transition ChangeAzilSSNAddress(address: ByStr20)
   azil_ssn_address := address;
-
   e = { _eventname: "ChangeAzilSSNAddress"; address: address };
+  event e
+end
+
+transition ChangeAimplAddress(address: ByStr20)
+  aimpl_address := address;
+  e = { _eventname: "ChangeAimplAddress"; address: address };
   event e
 end
 
 transition ChangeProxyStakingContractAddress(address: ByStr20)
   proxy_staking_contract_address := address;
-
   e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
   event e
 end
