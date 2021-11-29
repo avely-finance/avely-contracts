@@ -18,8 +18,7 @@ type Error =
   | DelegStakeNotEnough
   | CantFetchRemoteImplAddr
   | CantFetchRemoteBnumReq
-  | CompleteWithdrawalFundsMismatchAtZimpl
-  | CompleteWithdrawalFundsZeroAtZimpl
+  | CompleteWithdrawalHolderError
   | CompleteWithdrawalFundsMismatchAimplZimpl
   | NoActiveBuffer
 
@@ -35,9 +34,8 @@ let make_error =
       | CantFetchRemoteImplAddr => Int32 -101
       | CantFetchRemoteBnumReq => Int32 -102
       | NoActiveBuffer => Int32 -103
-      | CompleteWithdrawalFundsMismatchAtZimpl => Int32 -201
-      | CompleteWithdrawalFundsZeroAtZimpl => Int32 -202
-      | CompleteWithdrawalFundsMismatchAimplZimpl => Int32 -203
+      | CompleteWithdrawalHolderError => Int32 -201
+      | CompleteWithdrawalFundsMismatchAimplZimpl => Int32 -202
       end
     in
     { _exception: "Error"; code: result_code }
@@ -420,36 +418,14 @@ procedure CalculateTotalWithdrawalIteration(withdraw: Pair BNum Withdrawal)
   end
 end
 
-procedure CompleteWithdrawalCallBackProcess(amountZimplCallback: Uint128, amountZimplAccepted: Uint128, status: String)
-
-  (* check that Zimpl amount are not zero, it should not go here *)
-  amount_zero = builtin eq amountZimplCallback uint128_zero;
-  match amount_zero with
-  | True =>
-    e = { _eventname: "CompleteWithdrawalFundsZeroAtZimpl"; amountZimplCallback: amountZimplCallback; amountZimplAccepted: amountZimplAccepted };
-    event e;
-    e = CompleteWithdrawalFundsZeroAtZimpl;
-    ThrowError e
-  | False =>
-  end;
-
-  (* check that Zimpl sent us correct data *)
-  amount_eq = builtin eq amountZimplCallback amountZimplAccepted;
-  match amount_eq with
-  | False =>
-    e = { _eventname: "CompleteWithdrawalFundsMismatchAtZimpl"; amountZimplCallback: amountZimplCallback; amountZimplAccepted: amountZimplAccepted };
-    event e;
-    e = CompleteWithdrawalFundsMismatchAtZimpl;
-    ThrowError e
-  | True =>
-  end;
+procedure CompleteWithdrawalCallBackProcess(amounthZimpl: Uint128)
 
   (* check Aimpl-calculated withdrawal amount against of Zimpl *)
   withdraw_amt <- tmp_complete_withdrawal_available;
-  amount_eq = builtin eq withdraw_amt amountZimplAccepted;
+  amount_eq = builtin eq withdraw_amt amounthZimpl;
   match amount_eq with
   | False =>
-    e = { _eventname: "CompleteWithdrawalFundsMismatchAimplZimpl"; amountAimpl: withdraw_amt; amountZimplAccepted: amountZimplAccepted };
+    e = { _eventname: "CompleteWithdrawalFundsMismatchAimplZimpl"; amountAimpl: withdraw_amt; amounthZimpl: amounthZimpl };
     event e;
     e = CompleteWithdrawalFundsMismatchAimplZimpl;
     ThrowError e
@@ -479,6 +455,7 @@ end
 (************************************************************)
 
 transition ChangeHolderAddress(address: ByStr20)
+  (* TODO: IsAdmin; *)
   holder_address := address;
 
   e = { _eventname: "ChangeHolderAddress"; address: address };
@@ -486,6 +463,7 @@ transition ChangeHolderAddress(address: ByStr20)
 end
 
 transition ChangeProxyContractAddress(address: ByStr20)
+  (* TODO: IsAdmin; *)
   proxy_staking_contract_address := address;
 
   e = { _eventname: "ChangeProxyContractAddress"; address: address };
@@ -493,10 +471,12 @@ transition ChangeProxyContractAddress(address: ByStr20)
 end
 
 transition ChangeBuffers(new_buffers: List ByStr20)
+  (* TODO: IsAdmin; *)
   buffers_addresses := new_buffers
 end
 
 transition GetCurrentBuffer()
+  (* TODO: IsAdmin; *)
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
@@ -513,6 +493,7 @@ transition GetCurrentBuffer()
 end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
+  (* TODO: IsAdmin; *)
   (* TODO: should we send ZIL here and accept, or just increase by input parameter? *)
   IncreaseTotalStakeAmt amount;
 
@@ -533,6 +514,7 @@ end
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
 transition DelegateStake()
+  (* TODO: IsDelegator; *)
   accept;
   stake_amt = _amount;
   initiator = _sender;
@@ -550,6 +532,7 @@ end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
 transition WithdrawStakeAmt(amount: Uint128)
+  (* TODO: IsDelegator; *)
   initiator = _sender;
   azil_ssn_addr <- azil_ssn_address;
 
@@ -577,10 +560,10 @@ end
 (*                                                                              *)
 (* In case of (3c):                                                             *)
 (*                                                                              *)
-(* 1) Holder calls Azil->CompleteWithdrawalCallBack("success", _amount, amount) *)
+(* 1) Holder calls Azil->CompleteWithdrawalSuccessCallBack(_amount, amount)     *)
 (* 2) Azil in this callback do all checks, then if                              *)
 (*   a) OK => Azil calls Initiator->callbackOK(funds),                          *)
-(*   b) ERROR => Azil calls Initiator->callbackError(zero)                      *)
+(*   b) ERROR => Azil event + exception                                         *)
 (*                                                                              *)
 (* Completely successful chaincall will looks like                              *)
 (* Arbitrage->Aproxy->Aimpl->Holder->Zproxy->Zimpl->Holder->Aimpl->Arbitrage    *)
@@ -588,7 +571,7 @@ end
 (********************************************************************************)
 
 transition CompleteWithdrawal()
-  (* TODO: IsArbitrage; *)
+  (* TODO: IsDelegator; *)
   initiator = _sender;
 
   withdraw_map_o <- withdrawal_pending[initiator];
@@ -621,9 +604,6 @@ transition CompleteWithdrawal()
       e = { _eventname: "CompleteWithdrawal"; amount: withdraw_stake_amt };
       event e;
       (* there is something ready to withdraw completely, so we'll start the flow *)
-      (* save initiator of transition to use later in chaincall *)
-      c = Some {ByStr20} initiator;
-      tmp_complete_withdrawal_initiator := c;
       HolderCompleteWithdrawal
     end
 
@@ -633,16 +613,18 @@ transition CompleteWithdrawal()
   end
 end
 
-transition CompleteWithdrawalSuccessCallBack(amountZimplCallback: Uint128, amountZimplAccepted: Uint128)
-  status = "Success";
-  CompleteWithdrawalCallBackProcess amountZimplCallback amountZimplAccepted status
+transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
+  (* IsHolder; *)
+  CompleteWithdrawalCallBackProcess amount
 end
 
-transition CompleteWithdrawalNoUnbondedCallBack(amount: Uint128)
-  (* If we got this callback from <-Holder<-Zimpl, it means that something goes wrong *)
-  (* Because we don't call ->Holder->Zproxy->Zimpl in case we have no unbonded withdrawals here in Aimpl *)
-  status = "NoUnbonded";
-  CompleteWithdrawalCallBackProcess amount amount status
+transition CompleteWithdrawalErrorCallBack(status: String)
+  (* IsHolder; *)
+  (* Something went wrong, because we should not get this callback from Holder *)
+  e = { _eventname: "CompleteWithdrawalErrorCallBack"; status: status };
+  event e;
+  e = CompleteWithdrawalHolderError;
+  ThrowError e
 end
 
 (************************************************************)
