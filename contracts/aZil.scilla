@@ -36,7 +36,7 @@ let make_error =
       | CantFetchRemoteBnumReq => Int32 -102
       | NoActiveBuffer => Int32 -103
       | CompleteWithdrawalFundsMismatchAtZimpl => Int32 -201
-      | CompleteWithdrawalFundsZeroAtZimpl => Int32 -201
+      | CompleteWithdrawalFundsZeroAtZimpl => Int32 -202
       | CompleteWithdrawalFundsMismatchAimplZimpl => Int32 -203
       end
     in
@@ -184,8 +184,6 @@ end
 
 procedure HolderWithdrawStakeAmt(amount: Uint128)
   holder_addr <- holder_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-
   msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
   msgs = one_msg msg;
   send msgs
@@ -193,7 +191,6 @@ end
 
 procedure HolderCompleteWithdrawal()
   holder_addr <- holder_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
   msg = {_tag: "CompleteWithdrawal"; _recipient: holder_addr; _amount: uint128_zero };
   msgs = one_msg msg;
   send msgs
@@ -428,12 +425,12 @@ procedure CompleteWithdrawalCallBackProcess(amountZimplCallback: Uint128, amount
   (* check that Zimpl amount are not zero, it should not go here *)
   amount_zero = builtin eq amountZimplCallback uint128_zero;
   match amount_zero with
-  | False =>
+  | True =>
     e = { _eventname: "CompleteWithdrawalFundsZeroAtZimpl"; amountZimplCallback: amountZimplCallback; amountZimplAccepted: amountZimplAccepted };
     event e;
     e = CompleteWithdrawalFundsZeroAtZimpl;
     ThrowError e
-  | True =>
+  | False =>
   end;
 
   (* check that Zimpl sent us correct data *)
@@ -603,10 +600,12 @@ transition CompleteWithdrawal()
     (* go through pending withdrawals, calculate total of those which have unbonding period completed *)
     withdraw_list = builtin to_list withdraw_map;
     tmp_complete_withdrawal_available := uint128_zero;
+    c = Some {ByStr20} initiator;
+    tmp_current_deleg := c;
     forall withdraw_list CalculateTotalWithdrawalIteration;
 
-    withdraw_amt <- tmp_complete_withdrawal_available;
-    zero_withdraw = builtin eq withdraw_amt uint128_zero;
+    withdraw_stake_amt <- tmp_complete_withdrawal_available;
+    zero_withdraw = builtin eq withdraw_stake_amt uint128_zero;
     match zero_withdraw with
     | True =>
       (* There is nothing to withdraw, we don't need to call Zimpl. *)
@@ -619,7 +618,7 @@ transition CompleteWithdrawal()
       msg = one_msg msg_to_delegator;
       send msg
     | False =>
-      e = { _eventname: "CompleteWithdrawal"; amount: withdraw_amt };
+      e = { _eventname: "CompleteWithdrawal"; amount: withdraw_stake_amt };
       event e;
       (* there is something ready to withdraw completely, so we'll start the flow *)
       (* save initiator of transition to use later in chaincall *)
