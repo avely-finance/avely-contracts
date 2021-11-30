@@ -18,8 +18,7 @@ type Error =
   | DelegStakeNotEnough
   | CantFetchRemoteImplAddr
   | CantFetchRemoteBnumReq
-  | CompleteWithdrawalHolderError
-  | CompleteWithdrawalFundsMismatchAimplZimpl
+  | CompleteWithdrawalFundsMismatch
   | NoActiveBuffer
 
 let make_error =
@@ -34,8 +33,7 @@ let make_error =
       | CantFetchRemoteImplAddr => Int32 -101
       | CantFetchRemoteBnumReq => Int32 -102
       | NoActiveBuffer => Int32 -103
-      | CompleteWithdrawalHolderError => Int32 -201
-      | CompleteWithdrawalFundsMismatchAimplZimpl => Int32 -202
+      | CompleteWithdrawalFundsMismatch => Int32 -104
       end
     in
     { _exception: "Error"; code: result_code }
@@ -125,7 +123,6 @@ field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map B
 
 field tmp_current_deleg: Option ByStr20 = None {ByStr20}
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
-field tmp_complete_withdrawal_initiator: Option ByStr20 = None {ByStr20}
 
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
@@ -425,23 +422,20 @@ procedure CompleteWithdrawalCallBackProcess(amounthZimpl: Uint128)
   amount_eq = builtin eq withdraw_amt amounthZimpl;
   match amount_eq with
   | False =>
-    e = { _eventname: "CompleteWithdrawalFundsMismatchAimplZimpl"; amountAimpl: withdraw_amt; amounthZimpl: amounthZimpl };
+    e = { _eventname: "CompleteWithdrawalFundsMismatch"; amountAimpl: withdraw_amt; amounthZimpl: amounthZimpl };
     event e;
-    e = CompleteWithdrawalFundsMismatchAimplZimpl;
+    e = CompleteWithdrawalFundsMismatch;
     ThrowError e
   | True =>
   end;
 
-  (* if no exception thrown till here, we can accept funds *)
-  accept;
-
-  option_withdrawal_initiator <- tmp_complete_withdrawal_initiator;
-  match option_withdrawal_initiator with
-  | Some withdrawal_initiator =>
+  o_current_deleg <- tmp_current_deleg;
+  match o_current_deleg with
+  | Some deleg =>
     e = { _eventname: "CompleteWithdrawal"; amount: withdraw_amt };
     event e;
-    TransferFunds addfunds_tag withdraw_amt withdrawal_initiator;
-    msg_to_delegator = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : withdrawal_initiator; _amount : uint128_zero;
+    TransferFunds addfunds_tag withdraw_amt deleg;
+    msg_to_delegator = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : deleg; _amount : uint128_zero;
     amount : withdraw_amt};
     msg = one_msg msg_to_delegator;
     send msg
@@ -566,7 +560,7 @@ end
 (*   b) ERROR => Azil event + exception                                         *)
 (*                                                                              *)
 (* Completely successful chaincall will looks like                              *)
-(* Arbitrage->Aproxy->Aimpl->Holder->Zproxy->Zimpl->Holder->Aimpl->Arbitrage    *)
+(* Delegator->Aproxy->Aimpl->Holder->Zproxy->Zimpl->Holder->Aimpl->Delegator    *)
 (*                                                                              *)
 (********************************************************************************)
 
@@ -583,6 +577,7 @@ transition CompleteWithdrawal()
     (* go through pending withdrawals, calculate total of those which have unbonding period completed *)
     withdraw_list = builtin to_list withdraw_map;
     tmp_complete_withdrawal_available := uint128_zero;
+    (* save initiator of transition to use later in chaincall *)
     c = Some {ByStr20} initiator;
     tmp_current_deleg := c;
     forall withdraw_list CalculateTotalWithdrawalIteration;
@@ -613,18 +608,11 @@ transition CompleteWithdrawal()
   end
 end
 
-transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
+transition CompleteWithdrawalSuccessCallBack()
   (* IsHolder; *)
+  accept;
+  amount = _amount;
   CompleteWithdrawalCallBackProcess amount
-end
-
-transition CompleteWithdrawalErrorCallBack(status: String)
-  (* IsHolder; *)
-  (* Something went wrong, because we should not get this callback from Holder *)
-  e = { _eventname: "CompleteWithdrawalErrorCallBack"; status: status };
-  event e;
-  e = CompleteWithdrawalHolderError;
-  ThrowError e
 end
 
 (************************************************************)

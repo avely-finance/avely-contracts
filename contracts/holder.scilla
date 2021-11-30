@@ -12,6 +12,22 @@ let one_msg =
     let nil_msg = Nil {Message} in
     Cons {Message} msg nil_msg
 
+type Error =
+  | CompleteWithdrawalHolderFundsMismatch
+  | CompleteWithdrawalHolderFundsZero
+  | CompleteWithdrawalHolderNoUnbondedStake
+
+let make_error =
+  fun (result: Error) =>
+    let result_code =
+      match result with
+      | CompleteWithdrawalHolderFundsMismatch => Int32 -301
+      | CompleteWithdrawalHolderFundsZero => Int32 -302
+      | CompleteWithdrawalHolderNoUnbondedStake => Int32 -303
+      end
+    in
+    { _exception: "Error"; code: result_code }
+
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
@@ -29,6 +45,15 @@ field aimpl_address                   : ByStr20 = init_aimpl_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
 
 field tmp_added_funds: Uint128 = uint128_zero
+
+(************************************************************)
+(* @dev: Procedures                                         *)
+(************************************************************)
+
+procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
+end
 
 (************************************************************)
 (* @dev: Admin actions                                      *)
@@ -100,10 +125,10 @@ transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
   amount_zero = builtin eq amount uint128_zero;
   match amount_zero with
   | True =>
-    e = { _eventname: "CompleteWithdrawalFundsZeroAtZimpl"; amount: amount };
+    e = { _eventname: "CompleteWithdrawalHolderFundsZero" };
     event e;
-    e = { _exception: "CompleteWithdrawalFundsZeroAtZimpl" };
-    throw e
+    e = CompleteWithdrawalHolderFundsZero;
+    ThrowError e
   | False =>
   end;
 
@@ -111,17 +136,16 @@ transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
   amount_eq = builtin eq added_funds amount;
   match amount_eq with
   | False =>
-    e = { _eventname: "CompleteWithdrawalFundsMismatchAtZimpl"; amount: amount; added_funds: added_funds };
+    e = { _eventname: "CompleteWithdrawalHolderFundsMismatch"; amount: amount; added_funds: added_funds };
     event e;
-    e = { _exception: "CompleteWithdrawalFundsMismatchAtZimpl" };
-    throw e
+    e = CompleteWithdrawalHolderFundsMismatch;
+    ThrowError e
   | True =>
   end;
 
+  (* transfer funds *)
   msg = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : o_aimpl_address;
-    (* TODO: should we send funds by separate AddFunds() transition ? *)
-    _amount : amount;
-    amount : amount
+    _amount : amount
   };
   msgs = one_msg msg;
   send msgs
@@ -129,10 +153,9 @@ end
 
 transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
   (* TODO: IsZimpl; *)
-  o_aimpl_address <- aimpl_address;
-  msg = {_tag : "CompleteWithdrawalErrorCallBack"; _recipient : o_aimpl_address; _amount : uint128_zero;
-    status: "CompleteWithdrawalNoUnbonded" };
-  msgs = one_msg msg;
-  send msgs
+  e = { _eventname: "CompleteWithdrawalHolderNoUnbondedStake" };
+  event e;
+  e = CompleteWithdrawalHolderNoUnbondedStake;
+  ThrowError e
 end
 
