@@ -47,23 +47,6 @@ type EventLog struct {
 	Params    []core.ContractValue `json:"params"`
 }
 
-func (c *Contract) Event111(name string, pmap ParamsMap) EventLog {
-	//transform ParamsMap to array of ContractValue
-	cvarr := []core.ContractValue{}
-	for key, val := range pmap {
-		cvarr = append(cvarr, core.ContractValue{
-			Value: val,
-			Type:  "foo",
-			VName: key,
-		})
-	}
-	return EventLog{
-		EventName: name,
-		Address:   "0x" + c.Addr,
-		Params:    cvarr,
-	}
-}
-
 func (c *Contract) LogContractStateJson() string {
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
 	rsp, _ := provider.GetSmartContractState(c.Addr)
