@@ -3,7 +3,6 @@ package transitions
 import (
 	//"log"
 	"Azil/test/deploy"
-	"fmt"
 	//"math/big"
 )
 
@@ -11,7 +10,7 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 
 	t.LogStart("CompleteWithdrawal - success")
 
-	stubStakingContract, aZilContract, _, _ := t.DeployAndUpgrade()
+	stubStakingContract, aZilContract, _, holderContract := t.DeployAndUpgrade()
 	t.AddDebug("addr1", "0x"+addr1)
 	t.AddDebug("addr2", "0x"+addr2)
 
@@ -20,11 +19,11 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	stubStakingContract.AssignStakeReward()
 	aZilContract.WithdrawStakeAmt(azil10)
 	tx, _ := aZilContract.CompleteWithdrawal()
-	t.AssertEvent(tx, aZilContract.Event("NoUnbondedStake", `{}`))
+	t.AssertEvent(tx, deploy.Event{aZilContract.Addr, "NoUnbondedStake", deploy.ParamsMap{}})
 
 	aZilContract.UpdateWallet(key2)
 	tx, _ = aZilContract.CompleteWithdrawal()
-	t.AssertEvent(tx, aZilContract.Event("NoPendingWithdrawal", `{}`))
+	t.AssertEvent(tx, deploy.Event{aZilContract.Addr, "NoPendingWithdrawal", deploy.ParamsMap{}})
 
 	deploy.IncreaseBlocknum(stubStakingContract.GetBnumReq() + 1)
 	stubStakingContract.AssignStakeReward()
@@ -32,16 +31,36 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	aZilContract.UpdateWallet(key1)
 	//balance1_before := deploy.GetBalance(addr1)
 	tx, _ = aZilContract.CompleteWithdrawal()
-	t.AssertEvent(tx, aZilContract.Event("CompleteWithdrawal", fmt.Sprintf(`{"amount": "%s"}`, zil10)))
+	t.AssertEvent(tx, deploy.Event{aZilContract.Addr, "CompleteWithdrawal", deploy.ParamsMap{"amount": zil10}})
+
+	t.AssertTransition(tx, deploy.Transition{
+		aZilContract.Addr,    //sender
+		"CompleteWithdrawal", //tag
+		holderContract.Addr,  //recipient
+		"0",                  //amount
+		deploy.ParamsMap{},
+	})
+	t.AssertTransition(tx, deploy.Transition{
+		aZilContract.Addr,
+		"CompleteWithdrawalSuccessCallBack",
+		addr1,
+		"0",
+		deploy.ParamsMap{"amount": zil10},
+	})
+
 	/*
-		//https://github.com/Zilliqa/gozilliqa-sdk/blob/dd0ecada1be6987976b9f3b557dbb4de305ecf5b/account/wallet.go#L225
-		balance1_after := deploy.GetBalance(addr1)
-		after, _ := new(big.Int).SetString(balance1_after, 10)
+		before, _ := new(big.Int).SetString(balance1_before, 10)
+		after, _ := new(big.Int).SetString(deploy.GetBalance(addr1), 10)
 		gasPrice, _ := new(big.Int).SetString(tx.GasPrice, 10)
-		gasLimit, _ := new(big.Int).SetString(tx.GasLimit, 10)
-		gasFee := new(big.Int).Mul(gasPrice, gasLimit)
-		needed := new(big.Int).Add(gasFee, after)
-		t.AssertEqual(balance1_before, fmt.Sprintf("%s", needed))*/
+		gasUsed, _ := new(big.Int).SetString(tx.Receipt.CumulativeGas, 10)
+		gasFee := new(big.Int).Mul(gasPrice, gasUsed)
+		withdrawed, _ := new(big.Int).SetString(zil10, 10)
+		result := new(big.Int).Sub(before, gasFee)
+		result = result.Add(result, withdrawed)
+		result = result.Sub(result, after)
+		println(fmt.Sprintf("====%s====", result))
+		t.LogDebug()
+		//t.AssertEqual(balance1_before, fmt.Sprintf("%s", needed))*/
 
 	/*
 	 3) stub->changeBNUMreq(1), wait(5sec), completewithdr()

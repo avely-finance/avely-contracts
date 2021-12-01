@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"runtime"
-	"strconv"
+	//"runtime"
+	//"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
@@ -25,40 +25,39 @@ type Contract struct {
 	Wallet *account.Wallet
 }
 
-type MyEventParamsMap map[string]string
-type MyEventLog struct {
-	EventName string            `json:"_eventname"`
-	Address   string            `json:"address"`
-	Params    []MyContractValue `json:"params"`
+type ParamsMap map[string]string
+type Transition struct {
+	Sender    string
+	Tag       string
+	Recipient string
+	Amount    string
+	Params    ParamsMap
 }
-type MyContractValue struct {
-	VName string `json:"vname"`
-	//Type  string      `json:"type"`
-	Value interface{} `json:"value"`
+type Event struct {
+	Sender    string
+	EventName string
+	Params    ParamsMap
 }
 
-/* @param params String {"foo": "bar", "test" : "123"} */
-func (c *Contract) Event(name string, params string) MyEventLog {
+//replacement for core.EventLog, because of strange "undefined type" error
+//we have https://github.com/Zilliqa/gozilliqa-sdk/blob/master/core/types.go#L107
+type EventLog struct {
+	EventName string               `json:"_eventname"`
+	Address   string               `json:"address"`
+	Params    []core.ContractValue `json:"params"`
+}
 
-	//string to MyEventParamsMap
-	var pmap MyEventParamsMap
-	err := json.Unmarshal([]byte(params), &pmap)
-	if err != nil {
-		_, file, no, _ := runtime.Caller(1)
-		log.Println("Can not parse json: " + params + " at " + file + ":" + strconv.Itoa(no))
-		log.Fatal(err)
-	}
-
-	//transform MyEventParamsMap to array of ContractValue
-	cvarr := []MyContractValue{}
+func (c *Contract) Event111(name string, pmap ParamsMap) EventLog {
+	//transform ParamsMap to array of ContractValue
+	cvarr := []core.ContractValue{}
 	for key, val := range pmap {
-		cvarr = append(cvarr, MyContractValue{
+		cvarr = append(cvarr, core.ContractValue{
 			Value: val,
+			Type:  "foo",
 			VName: key,
 		})
 	}
-
-	return MyEventLog{
+	return EventLog{
 		EventName: name,
 		Address:   "0x" + c.Addr,
 		Params:    cvarr,
