@@ -26,7 +26,7 @@ func (b *HolderContract) ChangeProxyStakingContractAddress(new_addr string) (*tr
 	return b.Call("ChangeProxyStakingContractAddress", args, "0")
 }
 
-func NewHolderContract(key string, aZilSSNAddress string, stubStakingAddr string) (*HolderContract, error) {
+func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*HolderContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/holder.scilla")
 
 	init := []core.ContractValue{
@@ -34,6 +34,10 @@ func NewHolderContract(key string, aZilSSNAddress string, stubStakingAddr string
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
+		}, {
+			VName: "init_aimpl_address",
+			Type:  "ByStr20",
+			Value: "0x" + aimplAddress,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
@@ -58,7 +62,7 @@ func NewHolderContract(key string, aZilSSNAddress string, stubStakingAddr string
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, 1, 1, contract.Provider)
+	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 		contract := Contract{

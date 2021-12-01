@@ -15,6 +15,12 @@ type StubStakingContract struct {
 	Contract
 }
 
+const bnum_req = 35000
+
+func (s *StubStakingContract) GetBnumReq() int32 {
+	return bnum_req
+}
+
 func (s *StubStakingContract) AddSSN(address string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -55,7 +61,7 @@ func NewStubStakingContract(key string) (*StubStakingContract, error) {
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, 1, 1, contract.Provider)
+	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 		contract := Contract{

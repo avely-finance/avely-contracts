@@ -68,6 +68,11 @@ func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error)
 	return a.Call("WithdrawStakeAmt", args, "0")
 }
 
+func (a *AZil) CompleteWithdrawal() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("CompleteWithdrawal", args, "0")
+}
+
 func (a *AZil) ZilBalanceOf(addr string) (string, error) {
 	args := []core.ContractValue{
 		{
@@ -143,7 +148,7 @@ func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) 
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, 1, 1, contract.Provider)
+	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 		contract := Contract{

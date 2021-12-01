@@ -29,6 +29,7 @@ let uint128_zero = Uint128 0
 let uint32_one = Uint32 1
 let bool_active = True
 let bool_inactive = False
+let addfunds_tag = "AddFunds"
 
 (***************************************************)
 (*             The contract definition             *)
@@ -42,6 +43,12 @@ field bnum_req: Uint128 = Uint128 35000
 (* Keeps track of SSNS *)
 (* AddressOfSSN -> SSNInfo *)
 field ssnlist: Map ByStr20 Ssn = Emp ByStr20 Ssn
+
+(* AddressOfDeleg -> BlockNumber -> Deposit *)
+field withdrawal_pending: Map ByStr20 (Map BNum Uint128) = Emp ByStr20 (Map BNum Uint128)
+
+field available_withdrawal: Uint128 = uint128_zero
+field current_deleg: Option ByStr20 = None {ByStr20}
 
 field lastrewardcycle: Uint32 = uint32_one
 field totalstakeamount: Uint128 = uint128_zero
@@ -72,6 +79,43 @@ procedure DecreaseTotalStakeAmt(amt: Uint128)
   current_amt <- totalstakeamount;
   new_amt = builtin sub current_amt amt;
   totalstakeamount := new_amt
+end
+
+procedure TransferFunds(tag: String, amt: Uint128, recipient: ByStr20)
+    msg = {_tag: tag; _recipient: recipient; _amount: amt};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* delete the blk num and any other external keys if the inner map is empty *)
+(* for use in replace of normal delete operation to erase empty nested maps *)
+procedure DeletePendingWithdrawal(deleg: ByStr20, withdraw_number: BNum)
+  delete withdrawal_pending[deleg][withdraw_number]
+  (* CleanPendingWithdrawalDelegAddr deleg *)
+end
+
+(* current_block > withdraw_number + bnum_req *)
+procedure CalculateTotalWithdrawal(withdraw: Pair BNum Uint128)
+  current_deleg_o <- current_deleg;
+  match current_deleg_o with
+  | Some deleg =>
+    match withdraw with
+    | Pair withdraw_number amt =>
+      current_bnum <- & BLOCKNUMBER;
+      current_bnum_req <- bnum_req;
+      bnum = builtin badd withdraw_number current_bnum_req;
+      can_withdraw = builtin blt bnum current_bnum;
+      match can_withdraw with
+      | True =>
+          DeletePendingWithdrawal deleg withdraw_number;
+          current_amt <- available_withdrawal;
+          current_amt = builtin add current_amt amt;
+          available_withdrawal := current_amt
+      | False =>
+      end
+    end
+  | None => (* Won't reach *)
+  end
 end
 
 procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
@@ -114,14 +158,13 @@ end
 (* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1036 *)
 procedure WithdrawalStakeAmt(initiator: ByStr20, ssn: ByStr20, withdraw_amount: Uint128)
 
-  (* Do we need to track pending withdrawals?
   withdrawal_bnum <- & BLOCKNUMBER;
   withdraw_amt_o <- withdrawal_pending[initiator][withdrawal_bnum];
   withdraw_amt_pending = match withdraw_amt_o with
   | Some v => builtin add v withdraw_amount
   | None => withdraw_amount
   end;
-  withdrawal_pending[initiator][withdrawal_bnum] := withdraw_amt_pending; *)
+  withdrawal_pending[initiator][withdrawal_bnum] := withdraw_amt_pending;
 
   e = { _eventname: "Deleg withdraw deposit"; ssn_addr: ssn; deleg_address: initiator; withdraw_amount: withdraw_amount };
   event e;
@@ -162,6 +205,10 @@ transition AddSSN(ssnaddr: ByStr20)
   AddsSSN ssnaddr status buff_deposit;
   e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
   event e
+end
+
+transition ChangeBNumReq(input_bnum_req: Uint128)
+  bnum_req := input_bnum_req
 end
 
 (************************************************************)
@@ -222,4 +269,43 @@ transition WithdrawStakeAmt(ssnaddr: ByStr20, amt: Uint128)
   ssnaddr : ssnaddr; amount : amt};
   msg = one_msg msg_to_delegator;
   send msg
+end
+
+transition CompleteWithdrawal()
+  initiator = _sender;
+  withdraw_map_o <- withdrawal_pending[initiator];
+  match withdraw_map_o with
+  | Some withdraw_map =>
+    withdraw_list = builtin to_list withdraw_map;
+    (* To init tmp fields *)
+    withdrawal_zero = uint128_zero;
+    available_withdrawal := withdrawal_zero;
+    c = Some {ByStr20} initiator;
+    current_deleg := c;
+
+    (* Calculate withdrawal that can be transferred *)
+    forall withdraw_list CalculateTotalWithdrawal;
+    withdraw_amt <- available_withdrawal;
+    transfer = builtin eq withdraw_amt uint128_zero;
+    match transfer with
+    | True =>
+      e = { _eventname: "NoUnbondedStake"; ssnaddr: initiator };
+      event e;
+      msg_to_delegator = {_tag : "CompleteWithdrawalNoUnbondedStakeCallBack"; _recipient : initiator; _amount : uint128_zero;
+      amount : uint128_zero};
+      msg = one_msg msg_to_delegator;
+      send msg
+    | False =>
+      e = { _eventname: "CompleteWithdrawal"; ssnaddr: initiator; amount: withdraw_amt };
+      event e;
+      TransferFunds addfunds_tag withdraw_amt initiator;
+      msg_to_delegator = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
+      amount : withdraw_amt};
+      msg = one_msg msg_to_delegator;
+      send msg
+    end
+  | None =>
+    e = { _eventname: "NoPendingWithdrawal"; ssnaddr: initiator };
+    event e
+  end
 end
