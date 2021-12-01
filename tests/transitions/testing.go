@@ -211,16 +211,17 @@ func convertParams(pmap deploy.ParamsMap) []core.ContractValue {
 }
 
 func compareParams(all, wanted []core.ContractValue) bool {
+	makeKey := func(cv core.ContractValue) string {
+		return cv.VName + "=====" + fmt.Sprintf("%v", cv.Value)
+	}
 	allMap := make(map[string]bool)
 	for _, _map := range all {
-		mkey := _map.VName + "=====" + fmt.Sprintf("%v", _map.Value)
-		allMap[mkey] = true
+		allMap[makeKey(_map)] = true
 	}
 
 	//all test event parameters should be present, else events are not matching
 	for _, _tmap := range wanted {
-		mkey := _tmap.VName + "=====" + fmt.Sprintf("%v", _tmap.Value)
-		if !allMap[mkey] {
+		if !allMap[makeKey(_tmap)] {
 			return false
 		}
 	}
