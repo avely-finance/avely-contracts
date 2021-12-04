@@ -51,7 +51,7 @@ func (c *Contract) LogContractStateJson() string {
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
 	rsp, _ := provider.GetSmartContractState(c.Addr)
 	j, _ := json.Marshal(rsp)
-	c.LogPrettyStateJson(rsp)
+	//c.LogPrettyStateJson(rsp)
 	return string(j)
 }
 

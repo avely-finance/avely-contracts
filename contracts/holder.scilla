@@ -110,7 +110,7 @@ transition AddFunds()
   (* TODO: IsZimpl; ? *)
   accept;
   tmp_added_funds := _amount;
-  e = { _eventname : "Got funds "; funder: _sender; amount: _amount };
+  e = { _eventname : "AddFunds"; funder: _sender; amount: _amount };
   event e
 end
 
