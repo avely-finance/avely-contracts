@@ -26,6 +26,11 @@ func (b *BufferContract) ChangeProxyStakingContractAddress(new_addr string) (*tr
 	return b.Call("ChangeProxyStakingContractAddress", args, "0")
 }
 
+func (b *BufferContract) DelegateStake() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("DelegateStake", args, "0")
+}
+
 func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*BufferContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/buffer.scilla")
 
