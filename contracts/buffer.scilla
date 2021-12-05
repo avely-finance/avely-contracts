@@ -12,11 +12,24 @@ let one_msg =
     let nil_msg = Nil {Message} in
     Cons {Message} msg nil_msg
 
+type Error =
+  | AdminValidationFailed
+
+let make_error =
+  fun (result: Error) =>
+    let result_code =
+      match result with
+      | AdminValidationFailed => Int32 -405
+      end
+    in
+    { _exception: "Error"; code: result_code }
+
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
 
 contract Buffer(
+  init_admin_address                  : ByStr20,
   init_azil_ssn_address               : ByStr20,
   init_aimpl_address                  : ByStr20,
   init_proxy_staking_contract_address : ByStr20
@@ -24,30 +37,29 @@ contract Buffer(
 (*  Parameters *)
 
 (* Mutable fields *)
+field contractadmin_address           : ByStr20 = init_admin_address
 field azil_ssn_address                : ByStr20 = init_azil_ssn_address
 field aimpl_address                   : ByStr20 = init_aimpl_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
 
 (************************************************************)
-(* @dev: Admin actions                                      *)
+(* @dev: Procedures                                         *)
 (************************************************************)
 
-transition ChangeAzilSSNAddress(address: ByStr20)
-  azil_ssn_address := address;
-  e = { _eventname: "ChangeAzilSSNAddress"; address: address };
-  event e
+procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
 end
 
-transition ChangeAimplAddress(address: ByStr20)
-  aimpl_address := address;
-  e = { _eventname: "ChangeAimplAddress"; address: address };
-  event e
-end
-
-transition ChangeProxyStakingContractAddress(address: ByStr20)
-  proxy_staking_contract_address := address;
-  e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
-  event e
+procedure IsAdmin(initiator: ByStr20)
+  contractadmin_tmp <- contractadmin_address;
+  is_admin = builtin eq initiator contractadmin_tmp;
+  match is_admin with
+  | True  =>
+  | False =>
+    e = AdminValidationFailed;
+    ThrowError e
+  end
 end
 
 (* @dev : To delegate the stake to the contract. *)
@@ -56,6 +68,34 @@ procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: 
   msg = {_tag: "DelegateStake"; _recipient: proxy_contract_addr; _amount: amount; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
+end
+
+(************************************************************)
+(* @dev: Admin actions                                      *)
+(************************************************************)
+
+transition ChangeAzilSSNAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
+  azil_ssn_address := address;
+  e = { _eventname: "ChangeAzilSSNAddress"; address: address };
+  event e
+end
+
+transition ChangeAimplAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
+  aimpl_address := address;
+  e = { _eventname: "ChangeAimplAddress"; address: address };
+  event e
+end
+
+transition ChangeProxyStakingContractAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
+  proxy_staking_contract_address := address;
+  e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
+  event e
 end
 
 (************************************************************)

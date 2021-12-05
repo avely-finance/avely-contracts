@@ -3,6 +3,7 @@ package deploy
 import (
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	"github.com/Zilliqa/gozilliqa-sdk/keytools"
 	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/util"
@@ -27,6 +28,12 @@ func GetBalance(addr string) string {
 		panic(err)
 	}
 	return balAndNonce.Balance
+}
+
+func getAddressFromPrivateKey(privateKey string) string {
+	publicKey := keytools.GetPublicKeyFromPrivateKey(util.DecodeHex(privateKey), true)
+	address := keytools.GetAddressFromPublic(publicKey)
+	return address
 }
 
 func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {

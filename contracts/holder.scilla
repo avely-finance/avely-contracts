@@ -16,6 +16,7 @@ type Error =
   | CompleteWithdrawalHolderFundsMismatch
   | CompleteWithdrawalHolderFundsZero
   | CompleteWithdrawalHolderNoUnbondedStake
+  | AdminValidationFailed
 
 let make_error =
   fun (result: Error) =>
@@ -24,6 +25,7 @@ let make_error =
       | CompleteWithdrawalHolderFundsMismatch => Int32 -301
       | CompleteWithdrawalHolderFundsZero => Int32 -302
       | CompleteWithdrawalHolderNoUnbondedStake => Int32 -303
+      | AdminValidationFailed => Int32 -305
       end
     in
     { _exception: "Error"; code: result_code }
@@ -33,6 +35,7 @@ let make_error =
 (***************************************************)
 
 contract Holder(
+  init_admin_address                  : ByStr20,
   init_azil_ssn_address               : ByStr20,
   init_aimpl_address                  : ByStr20,
   init_proxy_staking_contract_address : ByStr20
@@ -40,6 +43,7 @@ contract Holder(
 (*  Parameters *)
 
 (* Mutable fields *)
+field contractadmin_address           : ByStr20 = init_admin_address
 field azil_ssn_address                : ByStr20 = init_azil_ssn_address
 field aimpl_address                   : ByStr20 = init_aimpl_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
@@ -55,27 +59,48 @@ procedure ThrowError(err: Error)
   throw e
 end
 
+procedure IsAdmin(initiator: ByStr20)
+  contractadmin_tmp <- contractadmin_address;
+  is_admin = builtin eq initiator contractadmin_tmp;
+  match is_admin with
+  | True  =>
+  | False =>
+    e = AdminValidationFailed;
+    ThrowError e
+  end
+end
+
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
 
 transition ChangeAzilSSNAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
   azil_ssn_address := address;
   e = { _eventname: "ChangeAzilSSNAddress"; address: address };
   event e
 end
 
 transition ChangeAimplAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
   aimpl_address := address;
   e = { _eventname: "ChangeAimplAddress"; address: address };
   event e
 end
 
 transition ChangeProxyStakingContractAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
   proxy_staking_contract_address := address;
   e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
   event e
 end
+
+(************************************************************)
+(* @dev: Aimpl actions                                      *)
+(************************************************************)
 
 transition WithdrawStakeAmt(amount: Uint128)
   ssnaddr <- azil_ssn_address;
