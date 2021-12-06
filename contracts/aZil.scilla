@@ -22,6 +22,7 @@ type Error =
   | CompleteWithdrawalFundsMismatch
   | ClaimWithdrawalNoUnbonded
   | AdminValidationFailed
+  | UnknownBufferAddr
 
 let make_error =
   fun (result: Error) =>
@@ -38,9 +39,15 @@ let make_error =
       | CompleteWithdrawalFundsMismatch => Int32 -104
       | ClaimWithdrawalNoUnbonded => Int32 -105
       | AdminValidationFailed => Int32 -106
+      | UnknownBufferAddr => Int32 -107
       end
     in
     { _exception: "Error"; code: result_code }
+
+let bystr20_eq : ByStr20 -> ByStr20 -> Bool =
+  fun (x : ByStr20) =>
+  fun (y : ByStr20) =>
+    builtin eq x y
 
 let uint128_to_uint256 : Uint128 -> Uint256 =
   fun (x : Uint128) =>
@@ -85,7 +92,7 @@ let uint32_one = Uint32 1
 
 let addfunds_tag = "AddFunds"
 
-let active_buffer =
+let get_active_buffer_addr =
   fun (l : List ByStr20) =>
   fun (lastrewardcycle : Uint32) =>
     let flist_length = @list_length ByStr20 in
@@ -105,6 +112,12 @@ let leave_unbonded =
     let filterBNum = @list_filter BNum in
     filterBNum is_unbonded blist
 
+let is_buffer_addr =
+  fun(l: List ByStr20) =>
+  fun(addr: ByStr20) =>
+    let feq = bystr20_eq addr in
+    let flist_exists = @list_exists ByStr20 in
+    flist_exists feq l
 
 (***************************************************)
 (*             The contract definition             *)
@@ -167,9 +180,9 @@ procedure IsAdmin(initiator: ByStr20)
 end
 
 procedure TransferFunds(tag: String, amt: Uint128, recipient: ByStr20)
-    msg = {_tag: tag; _recipient: recipient; _amount: amt};
-    msgs = one_msg msg;
-    send msgs
+  msg = {_tag: tag; _recipient: recipient; _amount: amt};
+  msgs = one_msg msg;
+  send msgs
 end
 
 procedure FetchRemoteZimplFields()
@@ -199,7 +212,7 @@ procedure FetchRemoteZimplFields()
 end
 
 (************************************************************)
-(* @dev: Holder actions                                     *)
+(* @dev: Holder & Buffer actions                            *)
 (************************************************************)
 
 procedure HolderWithdrawStakeAmt(amount: Uint128)
@@ -211,21 +224,17 @@ end
 
 procedure HolderCompleteWithdrawal()
   holder_addr <- holder_address;
-  msg = {_tag: "CompleteWithdrawal"; _recipient: holder_addr; _amount: uint128_zero };
+  msg = { _tag: "CompleteWithdrawal"; _recipient: holder_addr; _amount: uint128_zero };
   msgs = one_msg msg;
   send msgs
 end
-
-(************************************************************)
-(* @dev: Buffer actions                                     *)
-(************************************************************)
 
 (* @dev : To delegate the stake to the contract through buffer. *)
 procedure BufferDelegate(amount: Uint128)
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
-  buffer = active_buffer buffer_addrs cycle;
+  buffer = get_active_buffer_addr buffer_addrs cycle;
 
   match buffer with
   | None =>
@@ -238,8 +247,14 @@ procedure BufferDelegate(amount: Uint128)
   end
 end
 
+procedure ClaimRewards(addr: ByStr20)
+  msg = { _tag: "ClaimRewards"; _recipient: addr; _amount: uint128_zero };
+  msgs = one_msg msg;
+  send msgs
+end
+
 (************************************************************)
-(* @dev: aZil actions                                     *)
+(* @dev: aZil actions                                       *)
 (************************************************************)
 
 procedure IsDelegstakeSufficient(amount: Uint128)
@@ -469,7 +484,7 @@ transition GetCurrentBuffer()
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
-  buffer = active_buffer buffer_addrs cycle;
+  buffer = get_active_buffer_addr buffer_addrs cycle;
 
   match buffer with
   | None =>
@@ -482,7 +497,24 @@ transition GetCurrentBuffer()
 end
 
 transition DrainBuffer(buffer_addr: ByStr20)
+  (* TODO: IsAdmin; *)
+  buffers_addrs <- buffers_addresses;
+  is_buffer = is_buffer_addr buffers_addrs buffer_addr;
 
+  match is_buffer with
+  | True =>
+    holder_addr <- holder_address;
+    ClaimRewards buffer_addr
+    (* ClaimRewards(holder_addr) *)
+  | False =>
+    e = UnknownBufferAddr;
+    ThrowError e
+  end
+end
+
+transition ClaimRewardsSuccessCallBack()
+  (* TODO: IsBufferOrHolder; *)
+  accept
 end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
