@@ -55,6 +55,11 @@ func (b *BufferContract) DelegateStake() (*transaction.Transaction, error) {
 	return b.Call("DelegateStake", args, "0")
 }
 
+func (b *BufferContract) ClaimRewards() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("ClaimRewards", args, "0")
+}
+
 func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*BufferContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/buffer.scilla")
 

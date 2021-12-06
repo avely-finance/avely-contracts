@@ -55,6 +55,11 @@ func (b *HolderContract) CompleteWithdrawal() (*transaction.Transaction, error) 
 	return b.Call("CompleteWithdrawal", args, "0")
 }
 
+func (b *HolderContract) ClaimRewards() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("ClaimRewards", args, "0")
+}
+
 func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*HolderContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/holder.scilla")
 

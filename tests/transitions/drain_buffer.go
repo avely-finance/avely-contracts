@@ -19,10 +19,10 @@ func (t *Testing) DrainBuffer() {
 	txn, _ = aZilContract.DrainBuffer(bufferContract.Addr)
 
 	t.AssertTransition(txn, deploy.Transition{
-		aZilContract.Addr,    //sender
-		"ClaimRewards",       //tag
-		bufferContract.Addr,  //recipient
-		"0",                  //amount
+		aZilContract.Addr,   //sender
+		"ClaimRewards",      //tag
+		bufferContract.Addr, //recipient
+		"0",                 //amount
 		deploy.ParamsMap{},
 	})
 
@@ -36,7 +36,7 @@ func (t *Testing) DrainBuffer() {
 	})
 
 	t.AssertTransition(txn, deploy.Transition{
-		stubStakingContract.Addr,  //sender
+		stubStakingContract.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
 		bufferContract.Addr,
 		"0",
@@ -53,7 +53,7 @@ func (t *Testing) DrainBuffer() {
 	})
 
 	t.AssertTransition(txn, deploy.Transition{
-		stubStakingContract.Addr,  //sender
+		stubStakingContract.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
 		holderContract.Addr,
 		"0",

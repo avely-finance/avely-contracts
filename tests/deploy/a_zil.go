@@ -196,7 +196,6 @@ func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string,
 			VName: "init_admin_address",
 			Type:  "ByStr20",
 			Value: "0x" + getAddressFromPrivateKey(key),
-
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
