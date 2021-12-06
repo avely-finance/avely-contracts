@@ -21,6 +21,7 @@ type Error =
   | NoActiveBuffer
   | CompleteWithdrawalFundsMismatch
   | ClaimWithdrawalNoUnbonded
+  | AdminValidationFailed
 
 let make_error =
   fun (result: Error) =>
@@ -36,6 +37,7 @@ let make_error =
       | NoActiveBuffer => Int32 -103
       | CompleteWithdrawalFundsMismatch => Int32 -104
       | ClaimWithdrawalNoUnbonded => Int32 -105
+      | AdminValidationFailed => Int32 -106
       end
     in
     { _exception: "Error"; code: result_code }
@@ -109,6 +111,7 @@ let leave_unbonded =
 (***************************************************)
 
 contract AZil(
+  init_admin_address                  : ByStr20,
   init_azil_ssn_address               : ByStr20,
   init_proxy_staking_contract_address : ByStr20,
   init_holder_address                 : ByStr20
@@ -117,9 +120,10 @@ contract AZil(
 (* (owner     : ByStr20) *)
 
 (* Mutable fields *)
-field azil_ssn_address                : ByStr20 = init_azil_ssn_address
-field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
-field holder_address                  : ByStr20 = init_holder_address
+field contractadmin_address          : ByStr20 = init_admin_address
+field azil_ssn_address               : ByStr20 = init_azil_ssn_address
+field proxy_staking_contract_address : ByStr20 = init_proxy_staking_contract_address
+field holder_address                 : ByStr20 = init_holder_address
 
 field totalstakeamount: Uint128 = uint128_zero
 field totaltokenamount: Uint128 = uint128_zero
@@ -149,6 +153,17 @@ field buffers_addresses: List ByStr20 = Nil {ByStr20}
 procedure ThrowError(err: Error)
   e = make_error err;
   throw e
+end
+
+procedure IsAdmin(initiator: ByStr20)
+  contractadmin_tmp <- contractadmin_address;
+  is_admin = builtin eq initiator contractadmin_tmp;
+  match is_admin with
+  | True  =>
+  | False =>
+    e = AdminValidationFailed;
+    ThrowError e
+  end
 end
 
 procedure TransferFunds(tag: String, amt: Uint128, recipient: ByStr20)
@@ -425,28 +440,32 @@ end
 (************************************************************)
 
 transition ChangeHolderAddress(address: ByStr20)
-  (* TODO: IsAdmin; *)
+  initiator = _sender;
+  IsAdmin initiator;
   holder_address := address;
 
   e = { _eventname: "ChangeHolderAddress"; address: address };
   event e
 end
 
-transition ChangeProxyContractAddress(address: ByStr20)
-  (* TODO: IsAdmin; *)
+transition ChangeProxyStakingContractAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
   proxy_staking_contract_address := address;
 
-  e = { _eventname: "ChangeProxyContractAddress"; address: address };
+  e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
   event e
 end
 
 transition ChangeBuffers(new_buffers: List ByStr20)
-  (* TODO: IsAdmin; *)
+  initiator = _sender;
+  IsAdmin initiator;
   buffers_addresses := new_buffers
 end
 
 transition GetCurrentBuffer()
-  (* TODO: IsAdmin; *)
+  initiator = _sender;
+  IsAdmin initiator;
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
@@ -463,7 +482,8 @@ transition GetCurrentBuffer()
 end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
-  (* TODO: IsAdmin; *)
+  initiator = _sender;
+  IsAdmin initiator;
   (* TODO: should we send ZIL here and accept, or just increase by input parameter? *)
   IncreaseTotalStakeAmt amount;
 
@@ -474,6 +494,8 @@ end
 (* @dev: Set the staking parameters of contract. *)
 (* @param min_deleg_stake: New mindelegstake value *)
 transition UpdateStakingParameters(min_deleg_stake: Uint128)
+  initiator = _sender;
+  IsAdmin initiator;
   mindelegstake := min_deleg_stake;
 
   e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };

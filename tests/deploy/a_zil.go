@@ -19,6 +19,17 @@ type AZil struct {
 	Contract
 }
 
+func (b *AZil) ChangeProxyStakingContractAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeProxyStakingContractAddress", args, "0")
+}
+
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -66,8 +77,18 @@ func (a *AZil) IncreaseTotalStakeAmount(amount string) (*transaction.Transaction
 			amount,
 		},
 	}
-
 	return a.Call("IncreaseTotalStakeAmount", args, "0")
+}
+
+func (a *AZil) UpdateStakingParameters(min_deleg_stake string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"min_deleg_stake",
+			"Uint128",
+			min_deleg_stake,
+		},
+	}
+	return a.Call("UpdateStakingParameters", args, "0")
 }
 
 func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
@@ -160,6 +181,11 @@ func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string,
 					Arguments:   ars,
 				},
 			},
+		}, {
+			VName: "init_admin_address",
+			Type:  "ByStr20",
+			Value: "0x" + getAddressFromPrivateKey(key),
+
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",

@@ -28,6 +28,28 @@ func (b *BufferContract) ChangeProxyStakingContractAddress(new_addr string) (*tr
 	return b.Call("ChangeProxyStakingContractAddress", args, "0")
 }
 
+func (b *BufferContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeAzilSSNAddress", args, "0")
+}
+
+func (b *BufferContract) ChangeAimplAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeAimplAddress", args, "0")
+}
+
 func (b *BufferContract) DelegateStake() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return b.Call("DelegateStake", args, "0")
@@ -41,6 +63,10 @@ func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, s
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
+		}, {
+			VName: "init_admin_address",
+			Type:  "ByStr20",
+			Value: "0x" + getAddressFromPrivateKey(key),
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
