@@ -7,24 +7,26 @@ library Buffer
 
 let uint128_zero = Uint128 0
 
-let one_msg =
-  fun (msg : Message) =>
-    let nil_msg = Nil {Message} in
-    Cons {Message} msg nil_msg
-
 type Error =
   | AimplValidationFailed
   | AdminValidationFailed
+  | ClaimRewardsHolderFundsMismatch
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
       | AimplValidationFailed => Int32 -401
-      | AdminValidationFailed => Int32 -405
+      | AdminValidationFailed => Int32 -402
+      | ClaimRewardsHolderFundsMismatch => Int32 -403
       end
     in
     { _exception: "Error"; code: result_code }
+
+let one_msg =
+  fun (msg : Message) =>
+    let nil_msg = Nil {Message} in
+    Cons {Message} msg nil_msg
 
 (***************************************************)
 (*             The contract definition             *)
@@ -43,6 +45,8 @@ field contractadmin_address           : ByStr20 = init_admin_address
 field azil_ssn_address                : ByStr20 = init_azil_ssn_address
 field aimpl_address                   : ByStr20 = init_aimpl_address
 field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
+
+field tmp_added_funds: Uint128 = uint128_zero
 
 (************************************************************)
 (* @dev: Procedures                                         *)
@@ -76,11 +80,18 @@ procedure IsAdmin(initiator: ByStr20)
   end
 end
 
-
 (* @dev : To delegate the stake to the contract. *)
 (* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
 procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: Uint128)
   msg = {_tag: "DelegateStake"; _recipient: proxy_contract_addr; _amount: amount; ssnaddr: ssnaddr};
+  msgs = one_msg msg;
+  send msgs
+end
+
+(* @dev : To claim rewards *)
+(* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
+procedure ProxyWithdrawStakeRewards(ssnaddr: ByStr20, proxy_contract_addr: ByStr20)
+  msg = {_tag: "WithdrawStakeRewards"; _recipient: proxy_contract_addr; _amount: uint128_zero; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
 end
@@ -114,6 +125,16 @@ transition ChangeProxyStakingContractAddress(address: ByStr20)
 end
 
 (************************************************************)
+(* @dev: IsZimpl actions                                    *)
+(************************************************************)
+
+transition AddFunds()
+  (* TODO: IsZimpl; ? *)
+  accept;
+  tmp_added_funds := _amount
+end
+
+(************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
 transition DelegateStake()
@@ -129,4 +150,33 @@ end
 
 transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
   (* We ignore the staking contract callbacks *)
+end
+
+transition ClaimRewards()
+  (* TODO: IsAimpl *)
+  tmp_added_funds := uint128_zero;
+
+  ssnaddr <- azil_ssn_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  ProxyWithdrawStakeRewards ssnaddr proxy_staking_contract_addr
+end
+
+transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint128)
+  (* TODO: IsZimpl; ? *)
+  added_funds <- tmp_added_funds;
+
+  (* check that Zimpl sent us correct data *)
+  amount_eq = builtin eq added_funds rewards;
+  match amount_eq with
+  | False =>
+    e = ClaimRewardsHolderFundsMismatch;
+    ThrowError e
+  | True =>
+    o_aimpl_address <- aimpl_address;
+
+    msg = { _tag : "ClaimRewardsSuccessCallBack"; _recipient : o_aimpl_address; _amount : rewards };
+    msgs = one_msg msg;
+    send msgs
+  end
 end

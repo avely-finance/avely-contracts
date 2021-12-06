@@ -23,5 +23,6 @@ func main() {
 	t.ZilBalanceOf()
 	t.IsAdmin()
 	t.IsAimpl()
+	t.DrainBuffer()
 	t.LogEnd()
 }
