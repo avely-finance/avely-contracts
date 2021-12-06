@@ -1,0 +1,143 @@
+scilla_version 0
+
+import ListUtils AzilUtils
+
+library Fetcher
+
+let uint128_zero = Uint128 0
+let uint128_one = Uint128 1
+let uint32_zero = Uint32 0
+let uint32_one = Uint32 1
+
+contract Fetcher(
+  init_aimpl_address                  : ByStr20,
+  init_proxy_staking_contract_address : ByStr20
+)
+(*  Parameters *)
+
+(* Mutable fields *)
+field aimpl_address                   : ByStr20 = init_aimpl_address
+field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
+
+procedure EventBalance(balance_deleg: Pair ByStr20 Uint128)
+    match balance_deleg with
+    | Pair address token =>
+        e = { _eventname: "AimplStateBalance";
+          address: address;
+          token: token
+        };
+      event e
+    end
+end
+
+transition ZimplState()
+  proxy_staking_contract_address <- proxy_staking_contract_address;
+  addrTest <- & proxy_staking_contract_address as ByStr20 with contract
+    field totalstakeamount: Uint128
+  end;
+  match addrTest with
+  | Some c =>
+    totalstakeamount <- & c.totalstakeamount;
+    e = { _eventname: "ZimplState";
+      totalstakeamount: totalstakeamount
+    };
+    event e
+  | None =>
+    e = { _eventname: "ZimplStateError"; address: proxy_staking_contract_address; error: "address type not matched" };
+    event e
+  end
+end
+
+transition AimplState()
+  aimpl_address <- aimpl_address;
+  addrTest <- & aimpl_address as ByStr20 with contract
+    field mindelegstake : Uint128,
+    field totalstakeamount: Uint128,
+    field totaltokenamount: Uint128,
+    field balances: Map ByStr20 Uint128,
+    field withdrawal_pending: Map BNum (Map ByStr20 Withdrawal),
+    field withdrawal_unbonded: Map ByStr20 Withdrawal,
+    field tmp_complete_withdrawal_available: Uint128
+  end;
+  match addrTest with
+  | Some c =>
+    mindelegstake <- & c.mindelegstake;
+    totalstakeamount <- & c.totalstakeamount;
+    totaltokenamount <- & c.totaltokenamount;
+    tmp_complete_withdrawal_available <- & c.tmp_complete_withdrawal_available;
+
+    balances_map <- & c.balances;
+    balances_list = builtin to_list balances_map;
+    llen = @list_length (Pair ByStr20 Uint128);
+    len = llen balances_list;
+    lempty = builtin eq len uint32_zero;
+    balances = "empty";
+    match lempty with
+    | True =>
+    | False =>
+      balances = "map";
+      forall balances_list EventBalance
+    end;
+
+    withdrawal_pending_map <- & c.withdrawal_pending;
+    withdrawal_pending_list = builtin to_list withdrawal_pending_map;
+    llen = @list_length (Pair BNum (Map ByStr20 Withdrawal));
+    len = llen withdrawal_pending_list;
+    lempty = builtin eq len uint32_zero;
+    withdrawal_pending = "empty";
+    match lempty with
+    | True =>
+    | False =>
+      withdrawal_pending = "map"
+    end;
+
+    withdrawal_unbonded_map <- & c.withdrawal_unbonded;
+    withdrawal_unbonded_list = builtin to_list withdrawal_unbonded_map;
+    llen = @list_length (Pair ByStr20 Withdrawal);
+    len = llen withdrawal_unbonded_list;
+    lempty = builtin eq len uint32_zero;
+    withdrawal_unbonded = "empty";
+    match lempty with
+    | True =>
+    | False =>
+      withdrawal_unbonded = "map"
+    end;
+
+    e = { _eventname: "AimplState";
+      mindelegstake: mindelegstake;
+      balances: balances;
+      withdrawal_unbonded: withdrawal_unbonded;
+      withdrawal_pending: withdrawal_pending;
+      totalstakeamount: totalstakeamount;
+      totaltokenamount: totaltokenamount;
+      tmp_complete_withdrawal_available: tmp_complete_withdrawal_available
+    };
+    event e
+
+  | None =>
+    e = { _eventname: "AimplStateError"; address: aimpl_address; error: "address type not matched" };
+    event e
+  end
+end
+
+
+transition AimplWithdrawalPending(bnum: BNum, delegator: ByStr20)
+  aimpl_address <- aimpl_address;
+  addrTest <- & aimpl_address as ByStr20 with contract field withdrawal_pending: Map BNum (Map ByStr20 Withdrawal)
+  end;
+  match addrTest with
+  | Some c =>
+    wu <- & c.withdrawal_pending[bnum][delegator];
+    match wu with
+    | Some (Withdrawal wtoken wstake) =>
+      e = { _eventname: "AimplWithdrawalPending"; token: wtoken; stake: wstake};
+      event e
+    | None =>
+      e = { _eventname: "AimplWithdrawalPendingError"; error: "pending withdrawal not found"};
+      event e
+    end
+  | None =>
+    e = { _eventname: "AimplWithdrawalPendingError"; error: "address type not matched"};
+    event e
+  end
+end

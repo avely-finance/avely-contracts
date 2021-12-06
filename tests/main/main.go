@@ -22,5 +22,6 @@ func main() {
 	t.CompleteWithdrawalSuccess()
 	t.ZilBalanceOf()
 	t.IsAdmin()
+	t.IsAimpl()
 	t.LogEnd()
 }

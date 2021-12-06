@@ -13,12 +13,14 @@ let one_msg =
     Cons {Message} msg nil_msg
 
 type Error =
+  | AimplValidationFailed
   | AdminValidationFailed
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
+      | AimplValidationFailed => Int32 -401
       | AdminValidationFailed => Int32 -405
       end
     in
@@ -51,6 +53,18 @@ procedure ThrowError(err: Error)
   throw e
 end
 
+(* Check if the caller is the azil implementation contract*)
+procedure IsAimpl()
+  var_aimpl_address <- aimpl_address;
+  is_aimpl = builtin eq _sender var_aimpl_address;
+  match is_aimpl with
+  | True  =>
+  | False =>
+    e = AimplValidationFailed;
+    ThrowError e
+  end
+end
+
 procedure IsAdmin(initiator: ByStr20)
   contractadmin_tmp <- contractadmin_address;
   is_admin = builtin eq initiator contractadmin_tmp;
@@ -61,6 +75,7 @@ procedure IsAdmin(initiator: ByStr20)
     ThrowError e
   end
 end
+
 
 (* @dev : To delegate the stake to the contract. *)
 (* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
@@ -102,6 +117,7 @@ end
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
 transition DelegateStake()
+  IsAimpl;
   accept;
   stake_amt = _amount;
 

@@ -1,8 +1,10 @@
 package deploy
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"log"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -74,6 +76,8 @@ func NewStubStakingContract(key string) (*StubStakingContract, error) {
 
 		return &StubStakingContract{Contract: contract}, nil
 	} else {
+		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
+		log.Println(string(data))
 		return nil, errors.New("deploy failed")
 	}
 }

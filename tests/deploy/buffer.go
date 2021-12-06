@@ -1,8 +1,10 @@
 package deploy
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"log"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -46,6 +48,11 @@ func (b *BufferContract) ChangeAimplAddress(new_addr string) (*transaction.Trans
 		},
 	}
 	return b.Call("ChangeAimplAddress", args, "0")
+}
+
+func (b *BufferContract) DelegateStake() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("DelegateStake", args, "0")
 }
 
 func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*BufferContract, error) {
@@ -100,6 +107,8 @@ func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, s
 		}
 		return &BufferContract{Contract: contract}, nil
 	} else {
+		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
+		log.Println(string(data))
 		return nil, errors.New("deploy failed")
 	}
 }
