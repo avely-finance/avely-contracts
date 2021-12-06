@@ -77,7 +77,8 @@ func (t *Testing) LogPrettyReceipt(txn *transaction.Transaction) {
 }
 
 func (t *Testing) AssertContain(s1, s2 string) {
-	t.AssertContainRaw("ASSERT_CONTAIN", s1, s2)
+	_, file, no, _ := runtime.Caller(1)
+	t.AssertContainRaw("ASSERT_CONTAIN", s1, s2, file, no)
 }
 
 func (t *Testing) AssertEqual(s1, s2 string) {
@@ -93,20 +94,20 @@ func (t *Testing) AssertEqual(s1, s2 string) {
 }
 
 func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int) {
+	_, file, no, _ := runtime.Caller(1)
+
 	if err == nil {
-		_, file, no, _ := runtime.Caller(1)
 		log.Println("🔴 ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
 	}
 
 	tx := t.GetReceiptString(txn)
 	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
 
-	t.AssertContainRaw("ASSERT_ERROR", tx, errorMessage)
+	t.AssertContainRaw("ASSERT_ERROR", tx, errorMessage, file, no)
 }
 
-func (t *Testing) AssertContainRaw(code, s1, s2 string) {
+func (t *Testing) AssertContainRaw(code, s1, s2, file string, no int) {
 	if !strings.Contains(s1, s2) {
-		_, file, no, _ := runtime.Caller(1)
 		log.Println("🔴 " + code + " FAILED, " + file + ":" + strconv.Itoa(no))
 		log.Println(s1)
 		log.Println(s2)

@@ -10,32 +10,38 @@ func (t *Testing) IsAdmin() {
 
 	_, aZilContract, bufferContract, holderContract := t.DeployAndUpgrade()
 
+	// Use non-admin user for Buffer
 	bufferContract.UpdateWallet(key3)
-	tx, _ := bufferContract.ChangeAzilSSNAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -402))])")
-	tx, _ = bufferContract.ChangeAimplAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -402))])")
-	tx, _ = bufferContract.ChangeProxyStakingContractAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -402))])")
 
+	tx, err := bufferContract.ChangeAzilSSNAddress(addr3)
+	t.AssertError(tx, err, -402)
+	tx, err = bufferContract.ChangeAimplAddress(addr3)
+	t.AssertError(tx, err, -402)
+	tx, err = bufferContract.ChangeProxyStakingContractAddress(addr3)
+	t.AssertError(tx, err, -402)
+
+	// Use non-admin user for Holder
 	holderContract.UpdateWallet(key2)
-	tx, _ = holderContract.ChangeAzilSSNAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -305))])")
-	tx, _ = holderContract.ChangeAimplAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -305))])")
-	tx, _ = holderContract.ChangeProxyStakingContractAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -305))])")
 
+	tx, err = holderContract.ChangeAzilSSNAddress(addr3)
+	t.AssertError(tx, err, -305)
+	tx, err = holderContract.ChangeAimplAddress(addr3)
+	t.AssertError(tx, err, -305)
+	tx, err = holderContract.ChangeProxyStakingContractAddress(addr3)
+	t.AssertError(tx, err, -305)
+
+	// Use non-admin user for aZilContract
 	aZilContract.UpdateWallet(key2)
-	tx, _ = aZilContract.ChangeProxyStakingContractAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -106))])")
-	tx, _ = aZilContract.ChangeHolderAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -106))])")
+
+	tx, err = aZilContract.ChangeProxyStakingContractAddress(addr3)
+	t.AssertError(tx, err, -106)
+	tx, err = aZilContract.ChangeHolderAddress(addr3)
+	t.AssertError(tx, err, -106)
 	new_buffers := []string{"0x" + bufferContract.Addr, "0x" + bufferContract.Addr}
-	aZilContract.ChangeBuffers(new_buffers)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -106))])")
-	tx, _ = aZilContract.IncreaseTotalStakeAmount(zil100)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -106))])")
-	tx, _ = aZilContract.UpdateStakingParameters(zil100)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -106))])")
+	tx, err = aZilContract.ChangeBuffers(new_buffers)
+	t.AssertError(tx, err, -106)
+	tx, err = aZilContract.IncreaseTotalStakeAmount(zil100)
+	t.AssertError(tx, err, -106)
+	tx, err = aZilContract.UpdateStakingParameters(zil100)
+	t.AssertError(tx, err, -106)
 }
