@@ -12,11 +12,11 @@ func (t *Testing) IsAdmin() {
 
 	bufferContract.UpdateWallet(key3)
 	tx, _ := bufferContract.ChangeAzilSSNAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -405))])")
+	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -402))])")
 	tx, _ = bufferContract.ChangeAimplAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -405))])")
+	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -402))])")
 	tx, _ = bufferContract.ChangeProxyStakingContractAddress(addr3)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -405))])")
+	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -402))])")
 
 	holderContract.UpdateWallet(key2)
 	tx, _ = holderContract.ChangeAzilSSNAddress(addr3)
