@@ -14,7 +14,7 @@ func (t *Testing) DrainBuffer() {
 	aZilContract.DelegateStake(zil10)
 
 	txn, err := aZilContract.DrainBuffer(aZilContract.Addr)
-	t.AssertError(txn, err, -106)
+	t.AssertError(txn, err, -107)
 
 	txn, _ = aZilContract.DrainBuffer(bufferContract.Addr)
 
