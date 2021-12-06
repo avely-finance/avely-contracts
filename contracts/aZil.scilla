@@ -504,8 +504,8 @@ transition DrainBuffer(buffer_addr: ByStr20)
   match is_buffer with
   | True =>
     holder_addr <- holder_address;
-    ClaimRewards buffer_addr
-    (* ClaimRewards(holder_addr) *)
+    ClaimRewards buffer_addr;
+    ClaimRewards holder_addr
   | False =>
     e = UnknownBufferAddr;
     ThrowError e
