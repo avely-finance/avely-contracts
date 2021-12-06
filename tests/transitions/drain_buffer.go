@@ -13,13 +13,12 @@ func (t *Testing) DrainBuffer() {
 
 	aZilContract.DelegateStake(zil10)
 
-	tx, _ := aZilContract.DrainBuffer(aZilContract.Addr)
-	t.AssertError(tx, -106)
+	txn, err := aZilContract.DrainBuffer(aZilContract.Addr)
+	t.AssertError(txn, err, -106)
 
-	tx, err := aZilContract.DrainBuffer(bufferContract.Addr)
-	t.AssertSuccessCall(err)
+	txn, _ = aZilContract.DrainBuffer(bufferContract.Addr)
 
-	t.AssertTransition(tx, deploy.Transition{
+	t.AssertTransition(txn, deploy.Transition{
 		aZilContract.Addr,    //sender
 		"ClaimRewards",       //tag
 		bufferContract.Addr,  //recipient
@@ -28,7 +27,7 @@ func (t *Testing) DrainBuffer() {
 	})
 
 	// Send funds and call a callback
-	t.AssertTransition(tx, deploy.Transition{
+	t.AssertTransition(txn, deploy.Transition{
 		stubStakingContract.Addr, //sender
 		"AddFunds",
 		bufferContract.Addr,
@@ -36,7 +35,7 @@ func (t *Testing) DrainBuffer() {
 		deploy.ParamsMap{},
 	})
 
-	t.AssertTransition(tx, deploy.Transition{
+	t.AssertTransition(txn, deploy.Transition{
 		stubStakingContract.Addr,  //sender
 		"WithdrawStakeRewardsSuccessCallBack",
 		bufferContract.Addr,
