@@ -9,7 +9,7 @@ import (
 func (t *Testing) DrainBuffer() {
 	t.LogStart("CompleteWithdrawal - success")
 
-	stubStakingContract, aZilContract, bufferContract, _ := t.DeployAndUpgrade()
+	stubStakingContract, aZilContract, bufferContract, holderContract := t.DeployAndUpgrade()
 
 	aZilContract.DelegateStake(zil10)
 
@@ -26,7 +26,7 @@ func (t *Testing) DrainBuffer() {
 		deploy.ParamsMap{},
 	})
 
-	// Send funds and call a callback
+	// Send funds and call a callback via Buffer
 	t.AssertTransition(txn, deploy.Transition{
 		stubStakingContract.Addr, //sender
 		"AddFunds",
@@ -40,10 +40,29 @@ func (t *Testing) DrainBuffer() {
 		"WithdrawStakeRewardsSuccessCallBack",
 		bufferContract.Addr,
 		"0",
-		deploy.ParamsMap{"rewards": zil1},
+		deploy.ParamsMap{"rewards": zil(1)},
+	})
+
+	// Send funds and call a callback via Holder
+	t.AssertTransition(txn, deploy.Transition{
+		stubStakingContract.Addr, //sender
+		"AddFunds",
+		holderContract.Addr,
+		"1000000000000", // 1 ZIL
+		deploy.ParamsMap{},
+	})
+
+	t.AssertTransition(txn, deploy.Transition{
+		stubStakingContract.Addr,  //sender
+		"WithdrawStakeRewardsSuccessCallBack",
+		holderContract.Addr,
+		"0",
+		deploy.ParamsMap{"rewards": zil(1)},
 	})
 
 	// Check aZIL balance
 	aZilContractState := aZilContract.LogContractStateJson()
-	t.AssertContain(aZilContractState, "_balance\":\""+zil1)
+
+	// 1 ZIL from Buffer + 1 ZIL from Holder
+	t.AssertContain(aZilContractState, "_balance\":\""+zil(2))
 }

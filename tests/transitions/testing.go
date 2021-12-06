@@ -34,11 +34,15 @@ const azil15 = "15000000000000"
 const azil100 = "100000000000000"
 
 const zil0 = "0"
-const zil1 = "1000000000000"
+const qa = "000000000000"
 const zil5 = "5000000000000"
 const zil10 = "10000000000000"
 const zil15 = "15000000000000"
 const zil100 = "100000000000000"
+
+func zil(amount int) string {
+	return fmt.Sprintf("%d%s", amount, qa)
+}
 
 type Testing struct {
 	debug map[string]string

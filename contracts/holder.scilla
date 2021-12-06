@@ -18,6 +18,7 @@ type Error =
   | CompleteWithdrawalHolderFundsZero
   | CompleteWithdrawalHolderNoUnbondedStake
   | AdminValidationFailed
+  | ClaimRewardsHolderFundsMismatch
 
 let make_error =
   fun (result: Error) =>
@@ -28,6 +29,7 @@ let make_error =
       | CompleteWithdrawalHolderFundsZero => Int32 -303
       | CompleteWithdrawalHolderNoUnbondedStake => Int32 -304
       | AdminValidationFailed => Int32 -305
+      | ClaimRewardsHolderFundsMismatch => Int32 -306
       end
     in
     { _exception: "Error"; code: result_code }
@@ -198,3 +200,33 @@ transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
   ThrowError e
 end
 
+transition ClaimRewards()
+  IsAimpl;
+  tmp_added_funds := uint128_zero;
+
+  ssnaddr <- azil_ssn_address;
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  msg = {_tag: "WithdrawStakeRewards"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero; ssnaddr: ssnaddr};
+  msgs = one_msg msg;
+  send msgs
+end
+
+transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint128)
+  (* TODO: IsZimpl; ? *)
+  added_funds <- tmp_added_funds;
+
+  (* check that Zimpl sent us correct data *)
+  amount_eq = builtin eq added_funds rewards;
+  match amount_eq with
+  | False =>
+    e = ClaimRewardsHolderFundsMismatch;
+    ThrowError e
+  | True =>
+    o_aimpl_address <- aimpl_address;
+
+    msg = { _tag : "ClaimRewardsSuccessCallBack"; _recipient : o_aimpl_address; _amount : rewards };
+    msgs = one_msg msg;
+    send msgs
+  end
+end
