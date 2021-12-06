@@ -28,6 +28,28 @@ func (b *HolderContract) ChangeProxyStakingContractAddress(new_addr string) (*tr
 	return b.Call("ChangeProxyStakingContractAddress", args, "0")
 }
 
+func (b *HolderContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeAzilSSNAddress", args, "0")
+}
+
+func (b *HolderContract) ChangeAimplAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeAimplAddress", args, "0")
+}
+
 func (b *HolderContract) CompleteWithdrawal() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return b.Call("CompleteWithdrawal", args, "0")
@@ -41,6 +63,10 @@ func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, s
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
+		}, {
+			VName: "init_admin_address",
+			Type:  "ByStr20",
+			Value: "0x" + getAddressFromPrivateKey(key),
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
