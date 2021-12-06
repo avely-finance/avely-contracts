@@ -13,6 +13,7 @@ let one_msg =
     Cons {Message} msg nil_msg
 
 type Error =
+  | AimplValidationFailed
   | CompleteWithdrawalHolderFundsMismatch
   | CompleteWithdrawalHolderFundsZero
   | CompleteWithdrawalHolderNoUnbondedStake
@@ -22,9 +23,10 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | CompleteWithdrawalHolderFundsMismatch => Int32 -301
-      | CompleteWithdrawalHolderFundsZero => Int32 -302
-      | CompleteWithdrawalHolderNoUnbondedStake => Int32 -303
+      | AimplValidationFailed => Int32 -301
+      | CompleteWithdrawalHolderFundsMismatch => Int32 -302
+      | CompleteWithdrawalHolderFundsZero => Int32 -303
+      | CompleteWithdrawalHolderNoUnbondedStake => Int32 -304
       | AdminValidationFailed => Int32 -305
       end
     in
@@ -57,6 +59,18 @@ field tmp_added_funds: Uint128 = uint128_zero
 procedure ThrowError(err: Error)
   e = make_error err;
   throw e
+end
+
+(* Check if the caller is the azil implementation contract*)
+procedure IsAimpl()
+  var_aimpl_address <- aimpl_address;
+  is_aimpl = builtin eq _sender var_aimpl_address;
+  match is_aimpl with
+  | True  =>
+  | False =>
+    e = AimplValidationFailed;
+    ThrowError e
+  end
 end
 
 procedure IsAdmin(initiator: ByStr20)
@@ -112,11 +126,11 @@ transition WithdrawStakeAmt(amount: Uint128)
 end
 
 transition WithdrawStakeAmtSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* Should we ignore the staking contract callbacks? *)
+  (* TODO: Should we ignore the staking contract callbacks? *)
 end
 
 transition CompleteWithdrawal()
-  (* TODO: IsAimpl; ? *)
+  IsAimpl;
   tmp_added_funds := uint128_zero;
   proxy_staking_contract_addr <- proxy_staking_contract_address;
   msg = {_tag: "CompleteWithdrawal"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero };
@@ -135,7 +149,7 @@ transition AddFunds()
   (* TODO: IsZimpl; ? *)
   accept;
   tmp_added_funds := _amount;
-  e = { _eventname : "Got funds "; funder: _sender; amount: _amount };
+  e = { _eventname : "AddFunds"; funder: _sender; amount: _amount };
   event e
 end
 

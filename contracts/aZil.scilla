@@ -18,9 +18,9 @@ type Error =
   | DelegStakeNotEnough
   | CantFetchRemoteImplAddr
   | CantFetchRemoteBnumReq
-  | CompleteWithdrawalFundsMismatch
-  | CompleteWithdrawalUnknownInitiator
   | NoActiveBuffer
+  | CompleteWithdrawalFundsMismatch
+  | ClaimWithdrawalNoUnbonded
   | AdminValidationFailed
 
 let make_error =
@@ -36,7 +36,7 @@ let make_error =
       | CantFetchRemoteBnumReq => Int32 -102
       | NoActiveBuffer => Int32 -103
       | CompleteWithdrawalFundsMismatch => Int32 -104
-      | CompleteWithdrawalUnknownInitiator => Int32 -105
+      | ClaimWithdrawalNoUnbonded => Int32 -105
       | AdminValidationFailed => Int32 -106
       end
     in
@@ -83,12 +83,6 @@ let uint128_one = Uint128 1
 let uint32_zero = Uint32 0
 let uint32_one = Uint32 1
 
-(* check if withdrawal_pending[deleg] is empty *)
-let is_block_deposit_map_empty =
-  fun(m : Map BNum Withdrawal) =>
-    let map_size = builtin size m in
-    builtin eq map_size uint32_zero
-
 let addfunds_tag = "AddFunds"
 
 let active_buffer =
@@ -99,6 +93,18 @@ let active_buffer =
     let active = builtin rem lastrewardcycle l_length in
     let flist_nth = @list_nth ByStr20 in
     flist_nth active l
+
+let leave_unbonded =
+  fun (current_bnum: BNum) =>
+  fun (bnum_req_delta: Uint128) =>
+  fun (blist: List BNum) =>
+    let is_unbonded =
+      fun (withdraw_inited_bnum: BNum) =>
+        let btest = builtin badd withdraw_inited_bnum bnum_req_delta in
+        builtin blt btest current_bnum in
+    let filterBNum = @list_filter BNum in
+    filterBNum is_unbonded blist
+
 
 (***************************************************)
 (*             The contract definition             *)
@@ -124,10 +130,12 @@ field totaltokenamount: Uint128 = uint128_zero
 
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
-(* AddressOfDeleg -> BlockNumber -> Deposit *)
-field withdrawal_pending: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
+(* BlockNumber -> AddressOfDeleg ->  Withdrawal of Token:Uint128 Stake:Uint128 *)
+field withdrawal_pending: Map BNum (Map ByStr20 Withdrawal) = Emp BNum (Map ByStr20 Withdrawal)
 
-field tmp_current_deleg: Option ByStr20 = None {ByStr20}
+(* AddressOfDeleg ->  Deposit *)
+field withdrawal_unbonded: Map ByStr20 Withdrawal = Emp ByStr20 Withdrawal
+
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
 
 field local_bnum_req: Uint128 = Uint128 35000
@@ -283,28 +291,6 @@ procedure DecreaseTotalTokenAmt(amt: Uint128)
   end
 end
 
-(* to erase withdrawal_pending outer keys  *)
-procedure CleanPendingWithdrawalDelegAddr(deleg: ByStr20)
-  block_deposit_map <- withdrawal_pending[deleg];
-  match block_deposit_map with
-  | Some block_deposit_entry =>
-    is_map_empty = is_block_deposit_map_empty block_deposit_entry;
-    match is_map_empty with
-    | True => (* empty map *)
-      delete withdrawal_pending[deleg]
-    | False => (* contains other records *)
-    end
-  | None => (* nothing to delete *)
-  end
-end
-
-(* delete the blk num and any other external keys if the inner map is empty *)
-(* for use in replace of normal delete operation to erase empty nested maps *)
-procedure DeletePendingWithdrawal(deleg: ByStr20, withdraw_number: BNum)
-  delete withdrawal_pending[deleg][withdraw_number];
-  CleanPendingWithdrawalDelegAddr deleg
-end
-
 procedure TruncateDeleg(deleg: ByStr20)
   delete balances[deleg]
 end
@@ -376,7 +362,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_token_amt;
 
     withdrawal_bnum <- & BLOCKNUMBER;
-    withdraw_pending_o <- withdrawal_pending[initiator][withdrawal_bnum];
+    withdraw_pending_o <- withdrawal_pending[withdrawal_bnum][initiator];
 
     (* Upsert pending withdrawal *)
     match withdraw_pending_o with
@@ -384,10 +370,10 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
       new_withdraw_token_amt = builtin add token withdraw_token_amt;
       new_withdraw_stake_amt = builtin add stake withdraw_stake_amt;
       pending_withdrawal = Withdrawal new_withdraw_token_amt new_withdraw_stake_amt;
-      withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
+      withdrawal_pending[withdrawal_bnum][initiator] := pending_withdrawal
     | None =>
       pending_withdrawal = Withdrawal withdraw_token_amt withdraw_stake_amt;
-      withdrawal_pending[initiator][withdrawal_bnum] := pending_withdrawal
+      withdrawal_pending[withdrawal_bnum][initiator] := pending_withdrawal
     end;
 
     e = { _eventname: "WithdrawStakeAmt"; ssn_addr: azil_ssn_addr; deleg_address: initiator; withdraw_amount:withdraw_token_amt; withdraw_stake_amount:withdraw_stake_amt };
@@ -405,63 +391,48 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   end
 end
 
-(* current_block > withdraw_number + bnum_req *)
-procedure CalculateTotalWithdrawalIteration(withdraw: Pair BNum Withdrawal)
-  current_deleg <- tmp_current_deleg;
-  match current_deleg with
-  | Some deleg =>
-    match withdraw with
-    | Pair withdraw_number withdrawal_token_stake =>
-      match withdrawal_token_stake with
-      | Withdrawal token_amt stake_amt =>
-        current_bnum <- & BLOCKNUMBER;
-        current_bnum_req <- local_bnum_req; (* local value is fetched from Zimpl *)
-        bnum = builtin badd withdraw_number current_bnum_req;
-        can_withdraw = builtin blt bnum current_bnum;
-        match can_withdraw with
-        | True =>
-            DeletePendingWithdrawal deleg withdraw_number;
-            current_amt <- tmp_complete_withdrawal_available;
-            current_amt = builtin add current_amt stake_amt;
-            tmp_complete_withdrawal_available := current_amt
-        | False =>
-        end
+(*
+  tmp_complete_withdrawal_available += Withdrawal.stake
+  withdrawal_unbonded[delegator] += Withdrawal; //create if none
+*)
+procedure CalculateTotalWithdrawalBlock(deleg_withdrawal: Pair ByStr20 Withdrawal)
+  match deleg_withdrawal with
+  | Pair delegator withdrawal =>
+    match withdrawal with
+    | Withdrawal withdraw_token_amt withdraw_stake_amt =>
+      (* update total stake withdraw amount *)
+      current_amt <- tmp_complete_withdrawal_available;
+      current_amt = builtin add current_amt withdraw_stake_amt;
+      tmp_complete_withdrawal_available := current_amt;
+      (* upsert unbonded withdrawal for delegator *)
+      withdrawal_unbonded_o <- withdrawal_unbonded[delegator];
+      match withdrawal_unbonded_o with
+      | Some (Withdrawal token stake) =>
+        updated_token = builtin add token withdraw_token_amt;
+        updated_stake = builtin add stake withdraw_stake_amt;
+        unbonded_withdrawal = Withdrawal updated_token updated_stake;
+        withdrawal_unbonded[delegator] := unbonded_withdrawal
+      | None =>
+        unbonded_withdrawal = Withdrawal withdraw_token_amt withdraw_stake_amt;
+        withdrawal_unbonded[delegator] := unbonded_withdrawal
       end
     end
-  | None => (* Won't reach *)
   end
 end
 
-procedure CompleteWithdrawalCallBackProcess(amounthZimpl: Uint128)
-
-  (* check Aimpl-calculated withdrawal amount against of Zimpl *)
-  withdraw_amt <- tmp_complete_withdrawal_available;
-  amount_eq = builtin eq withdraw_amt amounthZimpl;
-  match amount_eq with
-  | False =>
-    e = { _eventname: "CompleteWithdrawalFundsMismatch"; amountAimpl: withdraw_amt; amounthZimpl: amounthZimpl };
-    event e;
-    e = CompleteWithdrawalFundsMismatch;
-    ThrowError e
-  | True =>
-  end;
-
-  o_current_deleg <- tmp_current_deleg;
-  match o_current_deleg with
-  | Some deleg =>
-    e = { _eventname: "CompleteWithdrawal"; amount: withdraw_amt };
-    event e;
-    TransferFunds addfunds_tag withdraw_amt deleg;
-    msg_to_delegator = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : deleg; _amount : uint128_zero;
-    amount : withdraw_amt};
-    msg = one_msg msg_to_delegator;
-    send msg
+(*
+  foreach withdrawal_pending[bnum] as Pair deleg Withdrawal
+  then delete withdrawal_pending[bnum]
+*)
+procedure CalculateTotalWithdrawal(bnum: BNum)
+  map_deleg_amount_o <- withdrawal_pending[bnum];
+  match map_deleg_amount_o with
+  | Some map_deleg_amount =>
+    list_deleg_amount = builtin to_list map_deleg_amount;
+    forall list_deleg_amount CalculateTotalWithdrawalBlock
   | None =>
-  (* won't reach, because tmp_current_deleg is defined at CompleteWithdrawal start, but still: *)
-    e = CompleteWithdrawalUnknownInitiator;
-    ThrowError e
-  end
-
+  end;
+  delete withdrawal_pending[bnum]
 end
 
 (************************************************************)
@@ -551,6 +522,53 @@ transition DelegateStake()
   send msg
 end
 
+(********************************************************************************)
+(*                    ClaimWithdrawal Flow                                      *)
+(*                                                                              *)
+(* 1) Offchain worker calls Aimpl->ClaimWithdrawal()                            *)
+(* 1) Aimpl calls Holder->CompleteWithdrawal()                                  *)
+(* 2) Holder calls Zproxy->CompleteWithdrawal()                                 *)
+(* 3) Zimpl do its work, then few options are possible:                         *)
+(*   a) it issues NoPendingWithdrawal event                                     *)
+(*   b) it calls back Holder->CompleteWithdrawalNoUnbondedStakeCallBack()       *)
+(*   c) it calls subsequentally:                                                *)
+(*     * Holder->AddFunds(_amount), Holder should accept it                     *)
+(*     * Holder->CompleteWithdrawalSuccessCallBack(amount),                     *)
+(* In case of (3c):                                                             *)
+(*                                                                              *)
+(* 1) Holder calls Azil->CompleteWithdrawalSuccessCallBack(_amount)             *)
+(* 2) Azil accepts; then check _amount with tmp_complete_withdrawal_available   *)
+(*   a) OK => workflow finished                                                 *)
+(*   b) ERROR => exception                                                      *)
+(*                                                                              *)
+(* Completely successful chaincall will looks like                              *)
+(* Worker->Aimpl->Holder->Zproxy->Zimpl->Holder->Aimpl                          *)
+(*                                                                              *)
+(********************************************************************************)
+
+transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
+  (* TODO: IsAdmin; *)
+  FetchRemoteZimplFields;
+
+  current_bnum <- & BLOCKNUMBER;
+  current_bnum_req <- local_bnum_req;
+  unbonded = leave_unbonded current_bnum current_bnum_req blocks_to_withdraw;
+
+  tmp_complete_withdrawal_available := uint128_zero;
+  forall unbonded CalculateTotalWithdrawal;
+
+  withdraw_stake_amt <- tmp_complete_withdrawal_available;
+  zero_withdraw = builtin eq withdraw_stake_amt uint128_zero;
+  match zero_withdraw with
+  | True =>
+    e = ClaimWithdrawalNoUnbonded;
+    ThrowError e
+  | False =>
+    (* there is something ready to withdraw completely, so we'll start the flow *)
+    HolderCompleteWithdrawal
+  end
+end
+
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
 transition WithdrawStakeAmt(amount: Uint128)
   (* TODO: IsDelegator; *)
@@ -567,70 +585,26 @@ transition WithdrawStakeAmt(amount: Uint128)
   send msg
 end
 
-(********************************************************************************)
-(*                    CompleteWithdrawal Flow                                   *)
-(*                                                                              *)
-(* 1) Azil implemetattion calls Holder->CompleteWithdrawal()                    *)
-(* 2) Holder calls Zproxy->CompleteWithdrawal()                                 *)
-(* 3) Zimpl do its work, then few options are possible:                         *)
-(*   a) it issues NoPendingWithdrawal event                                     *)
-(*   b) it calls back Holder->CompleteWithdrawalNoUnbondedStakeCallBack()       *)
-(*   c) it calls subsequentally:                                                *)
-(*     * Holder->AddFunds(_amount), Holder should accept it                     *)
-(*     * Holder->CompleteWithdrawalSuccessCallBack(amount),                     *)
-(*                                                                              *)
-(* In case of (3c):                                                             *)
-(*                                                                              *)
-(* 1) Holder calls Azil->CompleteWithdrawalSuccessCallBack(_amount, amount)     *)
-(* 2) Azil in this callback do all checks, then if                              *)
-(*   a) OK => Azil calls Initiator->callbackOK(funds),                          *)
-(*   b) ERROR => Azil event + exception                                         *)
-(*                                                                              *)
-(* Completely successful chaincall will looks like                              *)
-(* Delegator->Aproxy->Aimpl->Holder->Zproxy->Zimpl->Holder->Aimpl->Delegator    *)
-(*                                                                              *)
-(********************************************************************************)
-
 transition CompleteWithdrawal()
   (* TODO: IsDelegator; *)
   initiator = _sender;
-
-  withdraw_map_o <- withdrawal_pending[initiator];
-  match withdraw_map_o with
-  | Some withdraw_map =>
-
-    FetchRemoteZimplFields;
-
-    (* go through pending withdrawals, calculate total of those which have unbonding period completed *)
-    withdraw_list = builtin to_list withdraw_map;
-    tmp_complete_withdrawal_available := uint128_zero;
-    (* save initiator of transition to use later in chaincall *)
-    c = Some {ByStr20} initiator;
-    tmp_current_deleg := c;
-    forall withdraw_list CalculateTotalWithdrawalIteration;
-
-    withdraw_stake_amt <- tmp_complete_withdrawal_available;
-    zero_withdraw = builtin eq withdraw_stake_amt uint128_zero;
-    match zero_withdraw with
-    | True =>
-      (* There is nothing to withdraw, we don't need to call Zimpl. *)
-      (* Even if Zimpl has something to withdraw, we'll get amount mistmatch error. *)
-      (* So we'll call Zimpl next time when we'll have something to withdraw here. *)
-      e = { _eventname: "NoUnbondedStake" };
-      event e;
-      msg_to_delegator = {_tag : "CompleteWithdrawalNoUnbondedStakeCallBack"; _recipient : initiator; _amount : uint128_zero;
-      amount : uint128_zero};
-      msg = one_msg msg_to_delegator;
-      send msg
-    | False =>
-      e = { _eventname: "CompleteWithdrawal"; amount: withdraw_stake_amt };
-      event e;
-      (* there is something ready to withdraw completely, so we'll start the flow *)
-      HolderCompleteWithdrawal
-    end
-
+  wu <- withdrawal_unbonded[initiator];
+  match wu with
+  | Some (Withdrawal wtoken wstake) =>
+    delete withdrawal_unbonded[initiator];
+    e = { _eventname: "CompleteWithdrawal"; delegator: initiator; amount: wstake };
+    event e;
+    TransferFunds addfunds_tag wstake initiator;
+    msg_to_delegator = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
+      amount : wstake};
+    msg = one_msg msg_to_delegator;
+    send msg
   | None =>
-    e = { _eventname: "NoPendingWithdrawal" };
+    msg_to_delegator = {_tag : "CompleteWithdrawalNoUnbondedStakeCallBack"; _recipient : initiator; _amount : uint128_zero;
+    amount : uint128_zero};
+    msg = one_msg msg_to_delegator;
+    send msg;
+    e = { _eventname: "NoUnbondedStake" };
     event e
   end
 end
@@ -639,7 +613,21 @@ transition CompleteWithdrawalSuccessCallBack()
   (* IsHolder; *)
   accept;
   amount = _amount;
-  CompleteWithdrawalCallBackProcess amount
+
+  (* check Aimpl-calculated withdrawal amount against of Zimpl *)
+  withdraw_amt <- tmp_complete_withdrawal_available;
+  amount_eq = builtin eq withdraw_amt amount;
+  match amount_eq with
+  | False =>
+    e = { _eventname: "CompleteWithdrawalFundsMismatch"; amountAimpl: withdraw_amt; amounthZimpl: amount };
+    event e;
+    e = CompleteWithdrawalFundsMismatch;
+    ThrowError e
+  | True =>
+  end;
+
+  tmp_complete_withdrawal_available := uint128_zero
+
 end
 
 (************************************************************)
