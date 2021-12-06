@@ -30,8 +30,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	aZilContract.UpdateWallet(key4)
 	txn, err := aZilContract.WithdrawStakeAmt(azil10)
 
-	t.AssertSuccessCall(err)
-	t.AssertContain(t.GetReceiptString(txn), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -7))])")
+	t.AssertError(txn, err, -7)
 
 	/*******************************************************************************
 	 * 2A. delegator trying to withdraw more than staked, should fail
@@ -39,9 +38,8 @@ func (t *Testing) WithdrawStakeAmount() {
 	aZilContract.UpdateWallet(key2)
 	t.LogStart("WithdwarStakeAmount, step 2A")
 	txn, err = aZilContract.WithdrawStakeAmt(azil100)
-	t.AssertSuccessCall(err)
-	// t.LogPrettyReceipt(txn)
-	t.AssertContain(t.GetReceiptString(txn), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -13))])")
+
+	t.AssertError(txn, err, -13)
 	t.AssertState("AimplState", deploy.ParamsMap{"totaltokenamount": azil15})
 
 	/*******************************************************************************
@@ -50,8 +48,8 @@ func (t *Testing) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	t.LogStart("WithdwarStakeAmount, step 2B")
 	txn, err = aZilContract.WithdrawStakeAmt(azil10)
-	t.AssertSuccessCall(err)
-	t.AssertContain(t.GetReceiptString(txn), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -15))])")
+
+	t.AssertError(txn, err, -15)
 	t.AssertState("AimplState", deploy.ParamsMap{"totaltokenamount": azil15})
 
 	/*******************************************************************************

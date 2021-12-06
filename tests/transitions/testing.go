@@ -88,17 +88,12 @@ func (t *Testing) AssertEqual(s1, s2 string) {
 	}
 }
 
-func (t *Testing) AssertSuccessCall(err error) {
-	if err != nil {
+func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int) {
+	if err == nil {
 		_, file, no, _ := runtime.Caller(1)
-		log.Println("🔴 ASSERT_ERROR FAILED, " + file + ":" + strconv.Itoa(no))
-		log.Fatalf("💔 TESTS ARE FAILED. Error: %e", err)
-	} else {
-		log.Println("🟢 ASSERT_ERROR SUCCESS")
+		log.Println("🔴 ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
 	}
-}
 
-func (t *Testing) AssertError(txn *transaction.Transaction, code int) {
 	tx := t.GetReceiptString(txn)
 	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
 
