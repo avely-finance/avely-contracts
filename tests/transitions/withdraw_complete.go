@@ -28,8 +28,7 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 
 	readyBlocks = append(readyBlocks, block1)
 	tx, err = aZilContract.ClaimWithdrawal(readyBlocks)
-	t.AssertError(err)
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -105))])")
+	t.AssertError(tx, err, -105)
 
 	deploy.IncreaseBlocknum(stubStakingContract.GetBnumReq() + 1)
 	stubStakingContract.AssignStakeReward()

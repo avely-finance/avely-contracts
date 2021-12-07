@@ -10,11 +10,19 @@ func (t *Testing) IsAimpl() {
 
 	_, _, bufferContract, holderContract := t.DeployAndUpgrade()
 
+	// Use non-admin user for Buffer
 	bufferContract.UpdateWallet(key2)
-	tx, _ := bufferContract.DelegateStake()
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -401))])")
 
+	tx, err := bufferContract.DelegateStake()
+	t.AssertError(tx, err, -401)
+	tx, err = bufferContract.ClaimRewards()
+	t.AssertError(tx, err, -401)
+
+	// Use non-admin user for Holder
 	holderContract.UpdateWallet(key2)
-	tx, _ = holderContract.CompleteWithdrawal()
-	t.AssertContain(t.GetReceiptString(tx), "Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 -301))])")
+
+	tx, err = holderContract.CompleteWithdrawal()
+	t.AssertError(tx, err, -301)
+	tx, err = holderContract.ClaimRewards()
+	t.AssertError(tx, err, -301)
 }
