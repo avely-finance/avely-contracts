@@ -11,7 +11,7 @@ func (t *Testing) DrainBuffer() {
 
 	stubStakingContract, aZilContract, bufferContract, holderContract := t.DeployAndUpgrade()
 
-	aZilContract.DelegateStake(zil10)
+	aZilContract.DelegateStake(zil(10))
 
 	txn, err := aZilContract.DrainBuffer(aZilContract.Addr)
 	t.AssertError(txn, err, -107)
@@ -31,7 +31,7 @@ func (t *Testing) DrainBuffer() {
 		stubStakingContract.Addr, //sender
 		"AddFunds",
 		bufferContract.Addr,
-		"1000000000000", // 1 ZIL
+		zil(1),
 		deploy.ParamsMap{},
 	})
 
@@ -48,7 +48,7 @@ func (t *Testing) DrainBuffer() {
 		stubStakingContract.Addr, //sender
 		"AddFunds",
 		holderContract.Addr,
-		"1000000000000", // 1 ZIL
+		zil(1),
 		deploy.ParamsMap{},
 	})
 

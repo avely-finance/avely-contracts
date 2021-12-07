@@ -162,6 +162,9 @@ transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
   added_funds <- tmp_added_funds;
   o_aimpl_address <- aimpl_address;
 
+  (* reset tmp variable *)
+  tmp_added_funds := uint128_zero;
+
   (* check that Zimpl amount are not zero, it should not go here *)
   amount_zero = builtin eq amount uint128_zero;
   match amount_zero with
@@ -215,6 +218,8 @@ end
 transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint128)
   (* TODO: IsZimpl; ? *)
   added_funds <- tmp_added_funds;
+  (* reset tmp variable *)
+  tmp_added_funds := uint128_zero;
 
   (* check that Zimpl sent us correct data *)
   amount_eq = builtin eq added_funds rewards;

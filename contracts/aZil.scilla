@@ -497,7 +497,8 @@ transition GetCurrentBuffer()
 end
 
 transition DrainBuffer(buffer_addr: ByStr20)
-  (* TODO: IsAdmin; *)
+  initiator = _sender;
+  IsAdmin initiator;
   buffers_addrs <- buffers_addresses;
   is_buffer = is_buffer_addr buffers_addrs buffer_addr;
 

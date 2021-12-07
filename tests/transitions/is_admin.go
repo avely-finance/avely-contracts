@@ -44,4 +44,6 @@ func (t *Testing) IsAdmin() {
 	t.AssertError(tx, err, -106)
 	tx, err = aZilContract.UpdateStakingParameters(zil100)
 	t.AssertError(tx, err, -106)
+	tx, err = aZilContract.DrainBuffer(bufferContract.Addr)
+	t.AssertError(tx, err, -106)
 }
