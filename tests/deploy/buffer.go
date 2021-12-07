@@ -60,6 +60,17 @@ func (b *BufferContract) ClaimRewards() (*transaction.Transaction, error) {
 	return b.Call("ClaimRewards", args, "0")
 }
 
+func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_deleg_addr",
+			"ByStr20",
+			"0x" + new_deleg_addr,
+		},
+	}
+	return b.Call("RequestDelegatorSwap", args, "0")
+}
+
 func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*BufferContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/buffer.scilla")
 
