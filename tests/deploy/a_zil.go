@@ -6,17 +6,28 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"reflect"
 	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
+type Withdrawal struct {
+	Argtypes    interface{} `json:"argtypes"`
+	Arguments   []string    `json:"arguments"`
+	Constructor string      `json:"constructor"`
+}
+
+type StateMap map[string]interface{}
+
 type AZil struct {
 	Contract
+	StateMap StateMap
 }
 
 func (b *AZil) ChangeProxyStakingContractAddress(new_addr string) (*transaction.Transaction, error) {
@@ -155,6 +166,73 @@ func (a *AZil) ZilBalanceOf(addr string) (string, error) {
 		break
 	}
 	return "", errors.New("Balance not found")
+}
+
+func (a *AZil) StateField(key ...string) string {
+	//TODO: we should not parse state each function call
+	a.stateParse()
+	src := a.StateMap
+	for _, v := range key {
+		val, ok := src[v]
+		if !ok {
+			return ""
+		} else if reflect.String == reflect.ValueOf(val).Kind() {
+			return val.(string)
+		}
+		src = val.(map[string]interface{})
+	}
+	return ""
+}
+
+func (a *AZil) stateParse() {
+	provider := provider2.NewProvider("http://zilliqa_server:5555")
+	rsp, _ := provider.GetSmartContractState(a.Contract.Addr)
+	result, _ := json.MarshalIndent(rsp.Result, "", "   ")
+	state := string(result)
+
+	var statemap StateMap
+	json.Unmarshal([]byte(state), &statemap)
+	for k, v := range statemap {
+		switch k {
+		case "balances":
+			tmp, _ := json.Marshal(v)
+			var field map[string]interface{}
+			json.Unmarshal([]byte(tmp), &field)
+			statemap["balances"] = field
+		case "buffers_addresses":
+			tmp, _ := json.Marshal(v)
+			var field []string
+			json.Unmarshal([]byte(tmp), &field)
+			statemap["buffers_addresses"] = field
+		case "withdrawal_pending":
+			tmp, _ := json.Marshal(v)
+			var field map[string](map[string]Withdrawal)
+			json.Unmarshal([]byte(tmp), &field)
+			res := make(map[string]interface{})
+			for i, w := range field {
+				tmpmap := make(map[string]interface{})
+				for ii, ww := range w {
+					tmpmap[string(ii)] = ww.Arguments[1] //0=>token,1=>stake
+				}
+				res[string(i)] = tmpmap
+			}
+			statemap["withdrawal_pending"] = res
+
+		case "withdrawal_unbonded":
+			tmp, _ := json.Marshal(v)
+			var field map[string]Withdrawal
+			json.Unmarshal([]byte(tmp), &field)
+			res := make(map[string]interface{})
+			for i, w := range field {
+				res[string(i)] = w.Arguments[1] //0=>token,1=>stake
+			}
+			statemap["withdrawal_unbonded"] = res
+			break
+		default:
+			statemap[k] = v.(string)
+		}
+	}
+	a.StateMap = statemap
 }
 
 func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
