@@ -166,6 +166,9 @@ transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint12
   (* TODO: IsZimpl; ? *)
   added_funds <- tmp_added_funds;
 
+  (* reset tmp variable *)
+  tmp_added_funds := uint128_zero;
+
   (* check that Zimpl sent us correct data *)
   amount_eq = builtin eq added_funds rewards;
   match amount_eq with
