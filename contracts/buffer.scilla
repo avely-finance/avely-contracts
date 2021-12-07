@@ -96,6 +96,14 @@ procedure ProxyWithdrawStakeRewards(ssnaddr: ByStr20, proxy_contract_addr: ByStr
   send msgs
 end
 
+(* @dev : To request delegator swap rewards *)
+(* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
+procedure ProxyRequestDelegatorSwap(proxy_contract_addr: ByStr20, new_deleg_addr: ByStr20)
+  msg = {_tag: "RequestDelegatorSwap"; _recipient: proxy_contract_addr; _amount: uint128_zero; new_deleg_addr: new_deleg_addr};
+  msgs = one_msg msg;
+  send msgs
+end
+
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
@@ -169,7 +177,7 @@ transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint12
   (* reset tmp variable *)
   tmp_added_funds := uint128_zero;
 
-  (* check that Zimpl sent us correct data *)
+  (* check if Zimpl sends correct data *)
   amount_eq = builtin eq added_funds rewards;
   match amount_eq with
   | False =>
@@ -182,4 +190,12 @@ transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint12
     msgs = one_msg msg;
     send msgs
   end
+end
+
+transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
+  IsAimpl;
+
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  ProxyRequestDelegatorSwap proxy_staking_contract_addr new_deleg_addr
 end
