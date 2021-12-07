@@ -157,7 +157,6 @@ end
 
 (* https://github.com/Zilliqa/staking-contract/blob/82fad745a04eedefb1a0cd16e5316626c3736c13/contracts/ssnlist.scilla#L1036 *)
 procedure WithdrawalStakeAmt(initiator: ByStr20, ssn: ByStr20, withdraw_amount: Uint128)
-
   withdrawal_bnum <- & BLOCKNUMBER;
   withdraw_amt_o <- withdrawal_pending[initiator][withdrawal_bnum];
   withdraw_amt_pending = match withdraw_amt_o with
@@ -308,4 +307,17 @@ transition CompleteWithdrawal()
     e = { _eventname: "NoPendingWithdrawal"; ssnaddr: initiator };
     event e
   end
+end
+
+transition WithdrawStakeRewards(ssnaddr: ByStr20)
+  initiator = _sender;
+
+  (* Staticly withdraw 1 ZIL *)
+  reward = Uint128 1000000000000;
+  TransferFunds addfunds_tag reward initiator;
+
+  msg_to_delegator = {_tag : "WithdrawStakeRewardsSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
+  ssnaddr : ssnaddr; rewards : reward};
+  msg = one_msg msg_to_delegator;
+  send msg
 end
