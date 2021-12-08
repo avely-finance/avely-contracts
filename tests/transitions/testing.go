@@ -27,20 +27,19 @@ const addr3 = "c2035715831ab100ec42e562ce341b834bed1f4c"
 const key4 = "b87f4ba7dcd6e60f2cca8352c89904e3993c5b2b0b608d255002edcda6374de4"
 const addr4 = "6cd3667ba79310837e33f0aecbe13688a6cbca32"
 
-const azil0 = "0"
-const azil5 = "5000000000000"
-const azil10 = "10000000000000"
-const azil15 = "15000000000000"
-const azil100 = "100000000000000"
-
-const zil0 = "0"
 const qa = "000000000000"
-const zil5 = "5000000000000"
-const zil10 = "10000000000000"
-const zil15 = "15000000000000"
-const zil100 = "100000000000000"
 
 func zil(amount int) string {
+	if amount == 0 {
+		return "0"
+	}
+	return fmt.Sprintf("%d%s", amount, qa)
+}
+
+func azil(amount int) string {
+	if amount == 0 {
+		return "0"
+	}
 	return fmt.Sprintf("%d%s", amount, qa)
 }
 
