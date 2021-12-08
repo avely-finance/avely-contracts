@@ -19,7 +19,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	 * we need to move buffered deposits to main stake
 	 *******************************************************************************/
 	aZilContract.UpdateWallet(key2)
-	aZilContract.DelegateStake(zil15)
+	aZilContract.DelegateStake(zil(15))
 	// TODO: if delegator have buffered deposits, withdrawal should fail
 	stubStakingContract.AssignStakeReward()
 
@@ -28,7 +28,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	t.LogStart("WithdwarStakeAmount, step 1")
 	aZilContract.UpdateWallet(key4)
-	txn, err := aZilContract.WithdrawStakeAmt(azil10)
+	txn, err := aZilContract.WithdrawStakeAmt(azil(10))
 
 	t.AssertError(txn, err, -7)
 
@@ -37,20 +37,20 @@ func (t *Testing) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	aZilContract.UpdateWallet(key2)
 	t.LogStart("WithdwarStakeAmount, step 2A")
-	txn, err = aZilContract.WithdrawStakeAmt(azil100)
+	txn, err = aZilContract.WithdrawStakeAmt(azil(100))
 
 	t.AssertError(txn, err, -13)
-	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil15)
+	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(15))
 
 	/*******************************************************************************
 	 * 2B. delegator send withdraw request, but it should fail because mindelegatestake
 	 * TODO: how to be sure about size of mindelegatestake here?
 	 *******************************************************************************/
 	t.LogStart("WithdwarStakeAmount, step 2B")
-	txn, err = aZilContract.WithdrawStakeAmt(azil10)
+	txn, err = aZilContract.WithdrawStakeAmt(azil(10))
 
 	t.AssertError(txn, err, -15)
-	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil15)
+	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(15))
 
 	/*******************************************************************************
 	 * 3A. delegator withdrawing part of his deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -59,23 +59,23 @@ func (t *Testing) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	t.LogStart("WithdwarStakeAmount, step 3A")
 
-	txn, err = aZilContract.WithdrawStakeAmt(azil5)
+	txn, err = aZilContract.WithdrawStakeAmt(azil(5))
 	t.AssertTransition(txn, deploy.Transition{
 		aZilContract.Addr,
 		"WithdrawStakeAmt",
 		holderContract.Addr,
 		"0",
-		deploy.ParamsMap{"amount": zil5},
+		deploy.ParamsMap{"amount": zil(5)},
 	})
 	withdrawBlockNum := txn.Receipt.EpochNum
 
 	newDelegBalanceZil, err := aZilContract.ZilBalanceOf(addr2)
 	t.AssertEqual(stubStakingContract.StateField("totalstakeamount"), newDelegBalanceZil)
 	t.AssertEqual(aZilContract.StateField("totalstakeamount"), newDelegBalanceZil)
-	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil10)
-	t.AssertEqual(aZilContract.StateField("balances", "0x"+addr2), azil10)
-	t.AssertEqual(aZilContract.StateField("withdrawal_pending", withdrawBlockNum, "0x"+addr2, "0"), azil5)
-	t.AssertEqual(aZilContract.StateField("withdrawal_pending", withdrawBlockNum, "0x"+addr2, "1"), zil5)
+	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(10))
+	t.AssertEqual(aZilContract.StateField("balances", "0x"+addr2), azil(10))
+	t.AssertEqual(aZilContract.StateField("withdrawal_pending", withdrawBlockNum, "0x"+addr2, "0"), azil(5))
+	t.AssertEqual(aZilContract.StateField("withdrawal_pending", withdrawBlockNum, "0x"+addr2, "1"), zil(5))
 
 	/*******************************************************************************
 	 * 3B. delegator withdrawing all remaining deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -83,9 +83,9 @@ func (t *Testing) WithdrawStakeAmount() {
 	 * Balances should be empty
 	 *******************************************************************************/
 	t.LogStart("WithdrawStakeAmount, step 3B")
-	txn, _ = aZilContract.WithdrawStakeAmt(azil10)
+	txn, _ = aZilContract.WithdrawStakeAmt(azil(10))
 	t.AssertEvent(txn, deploy.Event{aZilContract.Addr, "WithdrawStakeAmt",
-		deploy.ParamsMap{"withdraw_amount": azil10, "withdraw_stake_amount": zil10}})
+		deploy.ParamsMap{"withdraw_amount": azil(10), "withdraw_stake_amount": zil(10)}})
 	t.AssertEqual(aZilContract.StateField("totalstakeamount"), "0")
 	t.AssertEqual(aZilContract.StateField("totaltokenamount"), "0")
 	t.AssertEqual(aZilContract.StateField("balances"), "empty")
@@ -95,6 +95,6 @@ func (t *Testing) WithdrawStakeAmount() {
 	   //replace epoch number with fake
 	   myRegexp = regexp.MustCompile(`\{\"(\d){1,10}\"\:\{\"argtypes\":\[\],`)
 	   aZilState = myRegexp.ReplaceAllString(aZilState, "{\"" + FakeEpochNum + "\":{\"argtypes\":[],")
-	   t.AssertContain(aZilState,"\"withdrawal_pending\":{\"" + "0x" + addr2 + "\":{\"" + FakeEpochNum + "\":{\"argtypes\":[],\"arguments\":[\"" + azil15 + "\",\"" + azil15 + "\"]")
+	   t.AssertContain(aZilState,"\"withdrawal_pending\":{\"" + "0x" + addr2 + "\":{\"" + FakeEpochNum + "\":{\"argtypes\":[],\"arguments\":[\"" + azil(15) + "\",\"" + azil(15) + "\"]")
 	*/
 }
