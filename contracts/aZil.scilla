@@ -253,6 +253,18 @@ procedure ClaimRewards(addr: ByStr20)
   send msgs
 end
 
+procedure RequestDelegatorSwap(from: ByStr20, to: ByStr20)
+  msg = { _tag: "RequestDelegatorSwap"; _recipient: from; _amount: uint128_zero; new_deleg_addr: to};
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure ConfirmDelegatorSwap(from: ByStr20, to: ByStr20)
+  msg = { _tag: "ConfirmDelegatorSwap"; _recipient: to; _amount: uint128_zero; requestor: from};
+  msgs = one_msg msg;
+  send msgs
+end
+
 (************************************************************)
 (* @dev: aZil actions                                       *)
 (************************************************************)
@@ -505,8 +517,12 @@ transition DrainBuffer(buffer_addr: ByStr20)
   match is_buffer with
   | True =>
     holder_addr <- holder_address;
+
     ClaimRewards buffer_addr;
-    ClaimRewards holder_addr
+    ClaimRewards holder_addr;
+
+    RequestDelegatorSwap buffer_addr holder_addr;
+    ConfirmDelegatorSwap buffer_addr holder_addr
   | False =>
     e = UnknownBufferAddr;
     ThrowError e
@@ -515,6 +531,7 @@ end
 
 transition ClaimRewardsSuccessCallBack()
   (* TODO: IsBufferOrHolder; *)
+  (* TODO: save as restaking money *)
   accept
 end
 

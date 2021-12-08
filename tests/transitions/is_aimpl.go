@@ -17,6 +17,8 @@ func (t *Testing) IsAimpl() {
 	t.AssertError(tx, err, -401)
 	tx, err = bufferContract.ClaimRewards()
 	t.AssertError(tx, err, -401)
+	tx, err = bufferContract.RequestDelegatorSwap(holderContract.Addr)
+	t.AssertError(tx, err, -401)
 
 	// Use non-admin user for Holder
 	holderContract.UpdateWallet(key2)
@@ -24,5 +26,7 @@ func (t *Testing) IsAimpl() {
 	tx, err = holderContract.CompleteWithdrawal()
 	t.AssertError(tx, err, -301)
 	tx, err = holderContract.ClaimRewards()
+	t.AssertError(tx, err, -301)
+	tx, err = holderContract.ConfirmDelegatorSwap(bufferContract.Addr)
 	t.AssertError(tx, err, -301)
 }

@@ -60,6 +60,17 @@ func (b *HolderContract) ClaimRewards() (*transaction.Transaction, error) {
 	return b.Call("ClaimRewards", args, "0")
 }
 
+func (b *HolderContract) ConfirmDelegatorSwap(requestor string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"requestor",
+			"ByStr20",
+			"0x" + requestor,
+		},
+	}
+	return b.Call("ConfirmDelegatorSwap", args, "0")
+}
+
 func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*HolderContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/holder.scilla")
 

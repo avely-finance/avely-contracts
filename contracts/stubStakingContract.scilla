@@ -19,6 +19,17 @@ library StubStakingContract
 type Ssn =
 | Ssn of Bool Uint128
 
+type Error =
+  | InvalidSwapAddr
+
+let make_error =
+  fun (result: Error) =>
+    let result_code =
+      match result with
+      | InvalidSwapAddr => Int32 -1
+      end
+    in
+    { _exception: "Error"; code: result_code }
 
 let one_msg =
   fun (msg : Message) =>
@@ -60,9 +71,18 @@ field totalstakeamount: Uint128 = uint128_zero
 (* so we don't touch it during Verifier->AssignStakeReward *)
 field buff_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
 
+(* AddressOfInitialDeleg -> AddressOfNewDeleg *)
+(* used to transfer all stakes and pending withdrawal of deleg_A -> deleg_B *)
+(* see RequestDelegatorSwap *)
+field deleg_swap_request: Map ByStr20 ByStr20 = Emp ByStr20 ByStr20
 (***************************************************)
 (*              Procedures                         *)
 (***************************************************)
+
+procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
+end
 
 procedure AddsSSN(ssnaddr: ByStr20, status: Bool, buff_deposit: Uint128)
   s = Ssn status buff_deposit;
@@ -320,4 +340,24 @@ transition WithdrawStakeRewards(ssnaddr: ByStr20)
   ssnaddr : ssnaddr; rewards : reward};
   msg = one_msg msg_to_delegator;
   send msg
+end
+
+transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
+  initiator = _sender;
+
+  deleg_swap_request[initiator] := new_deleg_addr
+end
+
+transition ConfirmDelegatorSwap(requestor: ByStr20)
+  initiator = _sender;
+
+  swap_addr <- deleg_swap_request[requestor];
+  match swap_addr with
+  | Some requestor_swap_addr =>
+  | None => (* throw error *)
+    e = InvalidSwapAddr;
+    ThrowError e
+  end;
+
+  delete deleg_swap_request[requestor]
 end

@@ -235,3 +235,13 @@ transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint12
     send msgs
   end
 end
+
+transition ConfirmDelegatorSwap(requestor: ByStr20)
+  IsAimpl;
+
+  proxy_staking_contract_addr <- proxy_staking_contract_address;
+
+  msg = {_tag: "ConfirmDelegatorSwap"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero; requestor: requestor};
+  msgs = one_msg msg;
+  send msgs
+end
