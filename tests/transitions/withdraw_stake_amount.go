@@ -40,7 +40,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	txn, err = aZilContract.WithdrawStakeAmt(azil(100))
 
 	t.AssertError(txn, err, -13)
-	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(15))
+	t.AssertEqual(aZilContract.Field("totaltokenamount"), azil(15))
 
 	/*******************************************************************************
 	 * 2B. delegator send withdraw request, but it should fail because mindelegatestake
@@ -50,7 +50,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	txn, err = aZilContract.WithdrawStakeAmt(azil(10))
 
 	t.AssertError(txn, err, -15)
-	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(15))
+	t.AssertEqual(aZilContract.Field("totaltokenamount"), azil(15))
 
 	/*******************************************************************************
 	 * 3A. delegator withdrawing part of his deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -70,12 +70,12 @@ func (t *Testing) WithdrawStakeAmount() {
 	bnum1 := txn.Receipt.EpochNum
 
 	newDelegBalanceZil, err := aZilContract.ZilBalanceOf(addr2)
-	t.AssertEqual(stubStakingContract.StateField("totalstakeamount"), newDelegBalanceZil)
-	t.AssertEqual(aZilContract.StateField("totalstakeamount"), newDelegBalanceZil)
-	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(10))
-	t.AssertEqual(aZilContract.StateField("balances", "0x"+addr2), azil(10))
-	t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(5))
-	t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(5))
+	t.AssertEqual(stubStakingContract.Field("totalstakeamount"), newDelegBalanceZil)
+	t.AssertEqual(aZilContract.Field("totalstakeamount"), newDelegBalanceZil)
+	t.AssertEqual(aZilContract.Field("totaltokenamount"), azil(10))
+	t.AssertEqual(aZilContract.Field("balances", "0x"+addr2), azil(10))
+	t.AssertEqual(aZilContract.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(5))
+	t.AssertEqual(aZilContract.Field("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(5))
 
 	/*******************************************************************************
 	 * 3B. delegator withdrawing all remaining deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -87,16 +87,16 @@ func (t *Testing) WithdrawStakeAmount() {
 	bnum2 := txn.Receipt.EpochNum
 	t.AssertEvent(txn, deploy.Event{aZilContract.Addr, "WithdrawStakeAmt",
 		deploy.ParamsMap{"withdraw_amount": azil(10), "withdraw_stake_amount": zil(10)}})
-	t.AssertEqual(aZilContract.StateField("totalstakeamount"), "0")
-	t.AssertEqual(aZilContract.StateField("totaltokenamount"), "0")
-	t.AssertEqual(aZilContract.StateField("balances"), "empty")
-	t.AssertEqual(stubStakingContract.StateField("totalstakeamount"), "0")
+	t.AssertEqual(aZilContract.Field("totalstakeamount"), "0")
+	t.AssertEqual(aZilContract.Field("totaltokenamount"), "0")
+	t.AssertEqual(aZilContract.Field("balances"), "empty")
+	t.AssertEqual(stubStakingContract.Field("totalstakeamount"), "0")
 	if bnum1 == bnum2 {
-		t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(15))
-		t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(15))
+		t.AssertEqual(aZilContract.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(15))
+		t.AssertEqual(aZilContract.Field("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(15))
 	} else {
 		//second withdrawal happened in next block
-		t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum2, "0x"+addr2, "0"), azil(10))
-		t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum2, "0x"+addr2, "1"), zil(10))
+		t.AssertEqual(aZilContract.Field("withdrawal_pending", bnum2, "0x"+addr2, "0"), azil(10))
+		t.AssertEqual(aZilContract.Field("withdrawal_pending", bnum2, "0x"+addr2, "1"), zil(10))
 	}
 }

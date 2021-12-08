@@ -70,11 +70,11 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 		deploy.ParamsMap{},
 	})
 
-	t.AssertEqual("0", aZilContract.StateField("totalstakeamount"))
-	t.AssertEqual("0", aZilContract.StateField("totaltokenamount"))
-	t.AssertEqual("0", aZilContract.StateField("tmp_complete_withdrawal_available"))
-	t.AssertEqual("empty", aZilContract.StateField("balances"))
-	t.AssertEqual("empty", aZilContract.StateField("withdrawal_unbonded"))
-	t.AssertEqual("empty", aZilContract.StateField("withdrawal_pending"))
+	t.AssertEqual("0", aZilContract.Field("totalstakeamount"))
+	t.AssertEqual("0", aZilContract.Field("totaltokenamount"))
+	t.AssertEqual("0", aZilContract.Field("tmp_complete_withdrawal_available"))
+	t.AssertEqual("empty", aZilContract.Field("balances"))
+	t.AssertEqual("empty", aZilContract.Field("withdrawal_unbonded"))
+	t.AssertEqual("empty", aZilContract.Field("withdrawal_pending"))
 
 }

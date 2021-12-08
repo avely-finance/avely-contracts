@@ -15,13 +15,13 @@ func (t *Testing) DelegateStakeSuccess() {
 		t.LogError("DelegateStake", err)
 	}
 
-	t.AssertEqual(stubStakingContract.StateField("_balance"), zil(10))
-	t.AssertEqual(stubStakingContract.StateField("buff_deposit_deleg", "0x"+bufferContract.Addr, aZilSSNAddress, "1"), zil(10))
+	t.AssertEqual(stubStakingContract.Field("_balance"), zil(10))
+	t.AssertEqual(stubStakingContract.Field("buff_deposit_deleg", "0x"+bufferContract.Addr, aZilSSNAddress, "1"), zil(10))
 
-	t.AssertEqual(aZilContract.StateField("_balance"), "0")
-	t.AssertEqual(aZilContract.StateField("totalstakeamount"), zil(10))
-	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(10))
-	t.AssertEqual(aZilContract.StateField("balances", "0x"+admin), azil(10))
+	t.AssertEqual(aZilContract.Field("_balance"), "0")
+	t.AssertEqual(aZilContract.Field("totalstakeamount"), zil(10))
+	t.AssertEqual(aZilContract.Field("totaltokenamount"), azil(10))
+	t.AssertEqual(aZilContract.Field("balances", "0x"+admin), azil(10))
 }
 
 func (t *Testing) DelegateStakeBuffersRotation() {
@@ -44,8 +44,8 @@ func (t *Testing) DelegateStakeBuffersRotation() {
 		t.LogError("DelegateStake", err)
 	}
 
-	t.AssertEqual(stubStakingContract.StateField("_balance"), zil(10))
+	t.AssertEqual(stubStakingContract.Field("_balance"), zil(10))
 	// lastrewardcycly = 2; buffers has 3 elements
 	// => active buffer = buffers[ 2 % 3 ] = buffers[2] = anotherBufferConract
-	t.AssertEqual(stubStakingContract.StateField("buff_deposit_deleg", "0x"+anotherBufferContract.Addr, aZilSSNAddress, "2"), zil(10))
+	t.AssertEqual(stubStakingContract.Field("buff_deposit_deleg", "0x"+anotherBufferContract.Addr, aZilSSNAddress, "2"), zil(10))
 }

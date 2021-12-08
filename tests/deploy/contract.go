@@ -71,7 +71,7 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	return tx, nil
 }
 
-func (c *Contract) StateField(key ...string) string {
+func (c *Contract) Field(key ...string) string {
 	c.stateParse()
 	src := c.StateMap
 	for _, v := range key {
