@@ -175,13 +175,16 @@ func (a *AZil) StateField(key ...string) string {
 	for _, v := range key {
 		val, ok := src[v]
 		if !ok {
+			//key not found in map
 			return ""
 		} else if reflect.String == reflect.ValueOf(val).Kind() {
 			return val.(string)
+		} else if reflect.Map == reflect.ValueOf(val).Kind() && 0 == len(val.(map[string]interface{})) {
+			//empty map
+			return "empty"
 		}
-		src = val.(map[string]interface{})
 	}
-	return ""
+	return "map"
 }
 
 func (a *AZil) stateParse() {
