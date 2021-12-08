@@ -99,14 +99,16 @@ func NewFetcherContract(key string, azilUtilsAddress string, aimplAddress string
 	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
+		stateFieldTypes := make(StateFieldTypes)
 		contract := Contract{
-			Code:     string(code),
-			Init:     init,
-			Addr:     tx.ContractAddress,
-			Bech32:   b32,
-			Wallet:   wallet,
-			TxIdLast: tx.ID,
+			Code:            string(code),
+			Init:            init,
+			Addr:            tx.ContractAddress,
+			Bech32:          b32,
+			Wallet:          wallet,
+			StateFieldTypes: stateFieldTypes,
 		}
+		TxIdLast = tx.ID
 		return &FetcherContract{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")

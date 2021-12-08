@@ -40,7 +40,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	txn, err = aZilContract.WithdrawStakeAmt(azil100)
 
 	t.AssertError(txn, err, -13)
-	t.AssertState("AimplState", deploy.ParamsMap{"totaltokenamount": azil15})
+	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil15)
 
 	/*******************************************************************************
 	 * 2B. delegator send withdraw request, but it should fail because mindelegatestake
@@ -50,7 +50,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	txn, err = aZilContract.WithdrawStakeAmt(azil10)
 
 	t.AssertError(txn, err, -15)
-	t.AssertState("AimplState", deploy.ParamsMap{"totaltokenamount": azil15})
+	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil15)
 
 	/*******************************************************************************
 	 * 3A. delegator withdrawing part of his deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -70,10 +70,10 @@ func (t *Testing) WithdrawStakeAmount() {
 	withdrawBlockNum := txn.Receipt.EpochNum
 
 	newDelegBalanceZil, err := aZilContract.ZilBalanceOf(addr2)
-
-	t.AssertState("ZimplState", deploy.ParamsMap{"totalstakeamount": newDelegBalanceZil})
-	t.AssertState("AimplState", deploy.ParamsMap{"totalstakeamount": newDelegBalanceZil, "totaltokenamount": azil10})
-	t.AssertState("AimplStateBalance", deploy.ParamsMap{"address": "0x" + addr2, "token": azil10})
+	t.AssertEqual(stubStakingContract.StateField("totalstakeamount"), newDelegBalanceZil)
+	t.AssertEqual(aZilContract.StateField("totalstakeamount"), newDelegBalanceZil)
+	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil10)
+	t.AssertEqual(aZilContract.StateField("balances", "0x"+addr2), azil10)
 	txn, err = FetcherContract.AimplWithdrawalPending(withdrawBlockNum, "0x"+addr2)
 	t.AssertEvent(txn, deploy.Event{FetcherContract.Addr, "AimplWithdrawalPending", deploy.ParamsMap{"token": azil5, "stake": zil5}})
 
@@ -86,8 +86,10 @@ func (t *Testing) WithdrawStakeAmount() {
 	txn, _ = aZilContract.WithdrawStakeAmt(azil10)
 	t.AssertEvent(txn, deploy.Event{aZilContract.Addr, "WithdrawStakeAmt",
 		deploy.ParamsMap{"withdraw_amount": azil10, "withdraw_stake_amount": zil10}})
-	t.AssertState("AimplState", deploy.ParamsMap{"totalstakeamount": "0", "totaltokenamount": "0", "balances": "empty"})
-	t.AssertState("ZimplState", deploy.ParamsMap{"totalstakeamount": "0"})
+	t.AssertEqual(aZilContract.StateField("totalstakeamount"), "0")
+	t.AssertEqual(aZilContract.StateField("totaltokenamount"), "0")
+	t.AssertEqual(aZilContract.StateField("balances"), "empty")
+	t.AssertEqual(stubStakingContract.StateField("totalstakeamount"), "0")
 	/* this assertion is commented, because subsequent withdrawals may go to different block, so it's not trivial to check total withdrawals amount
 	   * seems it's enough that we check withdrawal_pending at previous tests and zero-total here
 	   //replace epoch number with fake

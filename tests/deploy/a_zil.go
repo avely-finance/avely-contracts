@@ -246,10 +246,9 @@ func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string,
 			Addr:            tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          wallet,
-			TxIdLast:        tx.ID,
 			StateFieldTypes: stateFieldTypes,
 		}
-
+		TxIdLast = tx.ID
 		return &AZil{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	//"runtime"
 	"reflect"
 	"strconv"
 
@@ -18,6 +17,8 @@ import (
 const TxConfirmMaxAttempts = 5
 const TxConfirmInterval = 0
 
+var TxIdLast = ""
+
 type StateMap map[string]interface{}
 
 type StateFieldTypes map[string]string
@@ -28,7 +29,6 @@ type Contract struct {
 	Addr            string
 	Bech32          string
 	Wallet          *account.Wallet
-	TxIdLast        string
 	TxIdStateParsed string
 	StateMap        StateMap
 	StateFieldTypes StateFieldTypes
@@ -88,7 +88,7 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	}
 
 	tx, err := CallFor(&contract, transition, params, false, amount)
-	c.TxIdLast = tx.ID
+	TxIdLast = tx.ID
 	if err != nil {
 		return tx, err
 	}
@@ -122,7 +122,7 @@ func (c *Contract) StateField(key ...string) string {
 }
 
 func (c *Contract) stateParse() {
-	if c.TxIdStateParsed == c.TxIdLast {
+	if c.TxIdStateParsed == TxIdLast {
 		return
 	}
 	provider := provider2.NewProvider("http://zilliqa_server:5555")
@@ -135,7 +135,11 @@ func (c *Contract) stateParse() {
 	for k, v := range statemap {
 		typ, ok := c.StateFieldTypes[k]
 		if !ok {
-			statemap[k] = v.(string)
+			if reflect.String == reflect.ValueOf(v).Kind() {
+				statemap[k] = v.(string)
+			} else {
+				statemap[k] = "not_parsed"
+			}
 		} else {
 			switch typ {
 			case "StateFieldMap":
@@ -155,9 +159,9 @@ func (c *Contract) stateParse() {
 			}
 		}
 	}
-	log.Println("State parsed after txid=" + c.TxIdLast)
+	log.Println("State parsed after txid=" + TxIdLast)
 	c.StateMap = statemap
-	c.TxIdStateParsed = c.TxIdLast
+	c.TxIdStateParsed = TxIdLast
 }
 
 func stateFieldArray(v interface{}) map[string]interface{} {
