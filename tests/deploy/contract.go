@@ -114,6 +114,9 @@ func (c *Contract) stateParse() {
 			case "StateFieldMap":
 				statemap[k] = stateFieldMap(v)
 				break
+			case "StateFieldMapMapMap":
+				statemap[k] = stateFieldMapMapMap(v)
+				break
 			case "StateFieldArray":
 				statemap[k] = stateFieldArray(v)
 				break
@@ -179,6 +182,25 @@ func stateFieldMapMapWithdrawal(v interface{}) map[string]interface{} {
 			tmpmap[string(ii)] = inner
 		}
 		res[string(i)] = tmpmap
+	}
+	return res
+}
+
+func stateFieldMapMapMap(v interface{}) map[string]interface{} {
+	tmp, _ := json.Marshal(v)
+	var field map[string](map[string](map[string]interface{}))
+	json.Unmarshal([]byte(tmp), &field)
+	res := make(map[string]interface{})
+	for i, w := range field {
+		mapi := make(map[string]interface{})
+		for ii, ww := range w {
+			mapii := make(map[string]interface{})
+			for iii, www := range ww {
+				mapii[string(iii)] = www
+			}
+			mapi[string(ii)] = ww
+		}
+		res[string(i)] = mapi
 	}
 	return res
 }

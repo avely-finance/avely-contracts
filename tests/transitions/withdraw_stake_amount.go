@@ -67,15 +67,15 @@ func (t *Testing) WithdrawStakeAmount() {
 		"0",
 		deploy.ParamsMap{"amount": zil(5)},
 	})
-	withdrawBlockNum := txn.Receipt.EpochNum
+	bnum1 := txn.Receipt.EpochNum
 
 	newDelegBalanceZil, err := aZilContract.ZilBalanceOf(addr2)
 	t.AssertEqual(stubStakingContract.StateField("totalstakeamount"), newDelegBalanceZil)
 	t.AssertEqual(aZilContract.StateField("totalstakeamount"), newDelegBalanceZil)
 	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(10))
 	t.AssertEqual(aZilContract.StateField("balances", "0x"+addr2), azil(10))
-	t.AssertEqual(aZilContract.StateField("withdrawal_pending", withdrawBlockNum, "0x"+addr2, "0"), azil(5))
-	t.AssertEqual(aZilContract.StateField("withdrawal_pending", withdrawBlockNum, "0x"+addr2, "1"), zil(5))
+	t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(5))
+	t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(5))
 
 	/*******************************************************************************
 	 * 3B. delegator withdrawing all remaining deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -84,17 +84,19 @@ func (t *Testing) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	t.LogStart("WithdrawStakeAmount, step 3B")
 	txn, _ = aZilContract.WithdrawStakeAmt(azil(10))
+	bnum2 := txn.Receipt.EpochNum
 	t.AssertEvent(txn, deploy.Event{aZilContract.Addr, "WithdrawStakeAmt",
 		deploy.ParamsMap{"withdraw_amount": azil(10), "withdraw_stake_amount": zil(10)}})
 	t.AssertEqual(aZilContract.StateField("totalstakeamount"), "0")
 	t.AssertEqual(aZilContract.StateField("totaltokenamount"), "0")
 	t.AssertEqual(aZilContract.StateField("balances"), "empty")
 	t.AssertEqual(stubStakingContract.StateField("totalstakeamount"), "0")
-	/* this assertion is commented, because subsequent withdrawals may go to different block, so it's not trivial to check total withdrawals amount
-	   * seems it's enough that we check withdrawal_pending at previous tests and zero-total here
-	   //replace epoch number with fake
-	   myRegexp = regexp.MustCompile(`\{\"(\d){1,10}\"\:\{\"argtypes\":\[\],`)
-	   aZilState = myRegexp.ReplaceAllString(aZilState, "{\"" + FakeEpochNum + "\":{\"argtypes\":[],")
-	   t.AssertContain(aZilState,"\"withdrawal_pending\":{\"" + "0x" + addr2 + "\":{\"" + FakeEpochNum + "\":{\"argtypes\":[],\"arguments\":[\"" + azil(15) + "\",\"" + azil(15) + "\"]")
-	*/
+	if bnum1 == bnum2 {
+		t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(15))
+		t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(15))
+	} else {
+		//second withdrawal happened in next block
+		t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum2, "0x"+addr2, "0"), azil(10))
+		t.AssertEqual(aZilContract.StateField("withdrawal_pending", bnum2, "0x"+addr2, "1"), zil(10))
+	}
 }
