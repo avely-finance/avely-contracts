@@ -189,60 +189,6 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, wantedEvent deploy.E
 	}
 }
 
-func (t *Testing) AssertState(state string, wanted deploy.ParamsMap) {
-	//TODO use reflect package
-
-	var txn *transaction.Transaction
-	var err error
-	switch state {
-	case "AimplState":
-		txn, err = FetcherContract.AimplState()
-		break
-	case "AimplStateBalance":
-		txn, err = FetcherContract.AimplState()
-		break
-	/* TODO how to pass parameters?
-	case "AimplWithdrawalPending":
-		txn, err = FetcherContract.AimplWithdrawalPending()
-		break*/
-	case "ZimplState":
-		txn, err = FetcherContract.ZimplState()
-		break
-	default:
-		log.Fatalf("🔴 Failed at Testing.AssertState(), unknown state=%s", state)
-		break
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	found := false
-	if txn.Receipt.EventLogs != nil {
-		for _, el := range txn.Receipt.EventLogs {
-			txEvent := convertEventLog(el)
-			if txEvent.Address == "0x"+FetcherContract.Addr &&
-				txEvent.EventName == state &&
-				compareParams(txEvent.Params, convertParams(wanted)) {
-				found = true
-				break
-			}
-		}
-	}
-	if found {
-		log.Println("🟢 ASSERT_STATE SUCCESS")
-	} else {
-		_, file, no, _ := runtime.Caller(1)
-		log.Println("🔴 ASSERT_STATE FAILED, " + file + ":" + strconv.Itoa(no))
-		z, _ := json.Marshal(wanted)
-		log.Println(fmt.Sprintf("We assert state=%s, params=%s", state, z))
-		z, _ = json.Marshal(txn.Receipt.EventLogs)
-		log.Println(fmt.Sprintf("We have: %s", z))
-		t.LogDebug()
-		log.Fatalf("💔 TESTS ARE FAILED")
-	}
-
-}
-
 func (t *Testing) AddDebug(key, value string) {
 	t.debug[key] = value
 }
