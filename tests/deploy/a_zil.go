@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -163,41 +162,13 @@ func (a *AZil) ZilBalanceOf(addr string) (string, error) {
 	return "", errors.New("Balance not found")
 }
 
-func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
+func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
 	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
-	//we need to use type AzilUtils.Withdrawal for testing, in order to share the type with Fetcher contract
-	codeFixed := string(code)
-	codeFixed = strings.Replace(codeFixed, "Withdrawal =\n  | Withdrawal of Uint128 Uint128", "WithdrawalTmp =\n  | WithdrawalTmp of Uint128 Uint128", 1)
-	codeFixed = strings.Replace(codeFixed, "import ListUtils IntUtils", "import ListUtils AzilUtils IntUtils", 1)
-
-	type Constructor struct {
-		Constructor string   `json:"constructor"`
-		ArgTypes    []string `json:"argtypes"`
-		Arguments   []string `json:"arguments"`
-	}
-	ats := []string{
-		"String",
-		"ByStr20",
-	}
-	ars := []string{
-		"AzilUtils",
-		"0x" + azilUtilsAddress,
-	}
 	init := []core.ContractValue{
 		{
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
-		}, {
-			VName: "_extlibs",
-			Type:  "List(Pair String ByStr20)",
-			Value: []Constructor{
-				{
-					Constructor: "Pair",
-					ArgTypes:    ats,
-					Arguments:   ars,
-				},
-			},
 		}, {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
@@ -221,7 +192,7 @@ func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string,
 	wallet.AddByPrivateKey(key)
 
 	contract := contract2.Contract{
-		Code:   codeFixed,
+		Code:   string(code),
 		Init:   init,
 		Signer: wallet,
 	}
@@ -241,7 +212,7 @@ func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string,
 		stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapWithdrawal"
 
 		contract := Contract{
-			Code:            codeFixed,
+			Code:            string(code),
 			Init:            init,
 			Addr:            tx.ContractAddress,
 			Bech32:          b32,

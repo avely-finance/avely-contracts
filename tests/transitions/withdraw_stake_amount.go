@@ -74,8 +74,8 @@ func (t *Testing) WithdrawStakeAmount() {
 	t.AssertEqual(aZilContract.StateField("totalstakeamount"), newDelegBalanceZil)
 	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil10)
 	t.AssertEqual(aZilContract.StateField("balances", "0x"+addr2), azil10)
-	txn, err = FetcherContract.AimplWithdrawalPending(withdrawBlockNum, "0x"+addr2)
-	t.AssertEvent(txn, deploy.Event{FetcherContract.Addr, "AimplWithdrawalPending", deploy.ParamsMap{"token": azil5, "stake": zil5}})
+	t.AssertEqual(aZilContract.StateField("withdrawal_pending", withdrawBlockNum, "0x"+addr2, "0"), azil5)
+	t.AssertEqual(aZilContract.StateField("withdrawal_pending", withdrawBlockNum, "0x"+addr2, "1"), zil5)
 
 	/*******************************************************************************
 	 * 3B. delegator withdrawing all remaining deposit, it should success with "_eventname": "WithdrawStakeAmt"
