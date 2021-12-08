@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"reflect"
 	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
@@ -165,57 +163,6 @@ func (a *AZil) ZilBalanceOf(addr string) (string, error) {
 	return "", errors.New("Balance not found")
 }
 
-func (a *AZil) StateField(key ...string) string {
-	//TODO: we should not parse state each function call
-	a.stateParse()
-	src := a.Contract.StateMap
-	for _, v := range key {
-		val, ok := src[v]
-		if !ok {
-			//key not found in map
-			return ""
-		} else if reflect.String == reflect.ValueOf(val).Kind() {
-			return val.(string)
-		} else if reflect.Map == reflect.ValueOf(val).Kind() && 0 == len(val.(map[string]interface{})) {
-			//empty map
-			return "empty"
-		}
-		src = val.(map[string]interface{})
-	}
-	return "map"
-}
-
-func (a *AZil) stateParse() {
-	if a.Contract.TxIdStateParsed == a.Contract.TxIdLast {
-		return
-	}
-	provider := provider2.NewProvider("http://zilliqa_server:5555")
-	rsp, _ := provider.GetSmartContractState(a.Contract.Addr)
-	result, _ := json.Marshal(rsp.Result)
-	state := string(result)
-
-	var statemap StateMap
-	json.Unmarshal([]byte(state), &statemap)
-	for k, v := range statemap {
-		switch k {
-		case "balances":
-			statemap["balances"] = a.Contract.StateFieldMap(v)
-		case "buffers_addresses":
-			statemap["buffers_addresses"] = a.Contract.StateFieldArray(v)
-		case "withdrawal_pending":
-			statemap["withdrawal_pending"] = a.Contract.StateFieldMapMapWithdrawal(v)
-		case "withdrawal_unbonded":
-			statemap["withdrawal_unbonded"] = a.Contract.StateFieldMapWithdrawal(v)
-			break
-		default:
-			statemap[k] = v.(string)
-		}
-	}
-	log.Println("State parsed after txid=" + a.Contract.TxIdLast)
-	a.Contract.StateMap = statemap
-	a.Contract.TxIdStateParsed = a.Contract.TxIdLast
-}
-
 func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
 	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
 	//we need to use type AzilUtils.Withdrawal for testing, in order to share the type with Fetcher contract
@@ -286,13 +233,21 @@ func NewAZilContract(key string, azilUtilsAddress string, aZilSSNAddress string,
 	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
+
+		stateFieldTypes := make(StateFieldTypes)
+		stateFieldTypes["balances"] = "StateFieldMap"
+		stateFieldTypes["buffers_addresses"] = "StateFieldArray"
+		stateFieldTypes["withdrawal_pending"] = "StateFieldMapMapWithdrawal"
+		stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapWithdrawal"
+
 		contract := Contract{
-			Code:     codeFixed,
-			Init:     init,
-			Addr:     tx.ContractAddress,
-			Bech32:   b32,
-			Wallet:   wallet,
-			TxIdLast: tx.ID,
+			Code:            codeFixed,
+			Init:            init,
+			Addr:            tx.ContractAddress,
+			Bech32:          b32,
+			Wallet:          wallet,
+			TxIdLast:        tx.ID,
+			StateFieldTypes: stateFieldTypes,
 		}
 
 		return &AZil{Contract: contract}, nil
