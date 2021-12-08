@@ -100,11 +100,12 @@ func NewFetcherContract(key string, azilUtilsAddress string, aimplAddress string
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 		contract := Contract{
-			Code:   string(code),
-			Init:   init,
-			Addr:   tx.ContractAddress,
-			Bech32: b32,
-			Wallet: wallet,
+			Code:     string(code),
+			Init:     init,
+			Addr:     tx.ContractAddress,
+			Bech32:   b32,
+			Wallet:   wallet,
+			TxIdLast: tx.ID,
 		}
 		return &FetcherContract{Contract: contract}, nil
 	} else {
