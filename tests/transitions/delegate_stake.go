@@ -15,14 +15,13 @@ func (t *Testing) DelegateStakeSuccess() {
 		t.LogError("DelegateStake", err)
 	}
 
-	stubStakingState := stubStakingContract.LogContractStateJson()
-	t.AssertContain(stubStakingState, "_balance\":\""+zil(10))
-	t.AssertContain(stubStakingState, "buff_deposit_deleg\":{\""+"0x"+bufferContract.Addr+"\":{\""+aZilSSNAddress+"\":{\"1\":\""+zil(10))
+	t.AssertEqual(stubStakingContract.StateField("_balance"), zil(10))
+	t.AssertEqual(stubStakingContract.StateField("buff_deposit_deleg", "0x"+bufferContract.Addr, aZilSSNAddress, "1"), zil(10))
 
-	aZilState := aZilContract.LogContractStateJson()
-	t.AssertContain(aZilState, "_balance\":\"0")
-	t.AssertContain(aZilState, "\"totalstakeamount\":\""+zil(10)+"\",\"totaltokenamount\":\""+azil(10)+"\"")
-	t.AssertContain(aZilState, "balances\":{\""+"0x"+admin+"\":\""+azil(10))
+	t.AssertEqual(aZilContract.StateField("_balance"), "0")
+	t.AssertEqual(aZilContract.StateField("totalstakeamount"), zil(10))
+	t.AssertEqual(aZilContract.StateField("totaltokenamount"), azil(10))
+	t.AssertEqual(aZilContract.StateField("balances", "0x"+admin), azil(10))
 }
 
 func (t *Testing) DelegateStakeBuffersRotation() {
@@ -45,10 +44,8 @@ func (t *Testing) DelegateStakeBuffersRotation() {
 		t.LogError("DelegateStake", err)
 	}
 
-	stubStakingState := stubStakingContract.LogContractStateJson()
-	t.AssertContain(stubStakingState, "_balance\":\""+zil(10))
-
+	t.AssertEqual(stubStakingContract.StateField("_balance"), zil(10))
 	// lastrewardcycly = 2; buffers has 3 elements
 	// => active buffer = buffers[ 2 % 3 ] = buffers[2] = anotherBufferConract
-	t.AssertContain(stubStakingState, "buff_deposit_deleg\":{\""+"0x"+anotherBufferContract.Addr+"\":{\""+aZilSSNAddress+"\":{\"2\":\""+zil(10))
+	t.AssertEqual(stubStakingContract.StateField("buff_deposit_deleg", "0x"+anotherBufferContract.Addr, aZilSSNAddress, "2"), zil(10))
 }
