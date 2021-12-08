@@ -14,12 +14,6 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
-type Withdrawal struct {
-	Argtypes    interface{} `json:"argtypes"`
-	Arguments   []string    `json:"arguments"`
-	Constructor string      `json:"constructor"`
-}
-
 type AZil struct {
 	Contract
 }
@@ -201,7 +195,7 @@ func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) 
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
+	tx.Confirm(tx.ID, TX_CONFIRM_MAX_ATTEMPTS, TX_CONFIRM_INTERVAL_SEC, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
