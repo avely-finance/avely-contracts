@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 	//"runtime"
-	//"strconv"
+	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
@@ -17,12 +17,17 @@ import (
 const TxConfirmMaxAttempts = 5
 const TxConfirmInterval = 0
 
+type StateMap map[string]interface{}
+
 type Contract struct {
-	Code   string
-	Init   []core.ContractValue
-	Addr   string
-	Bech32 string
-	Wallet *account.Wallet
+	Code            string
+	Init            []core.ContractValue
+	Addr            string
+	Bech32          string
+	Wallet          *account.Wallet
+	TxIdLast        string
+	TxIdStateParsed string
+	StateMap        StateMap
 }
 
 type ParamsMap map[string]string
@@ -79,6 +84,7 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	}
 
 	tx, err := CallFor(&contract, transition, params, false, amount)
+	c.TxIdLast = tx.ID
 	if err != nil {
 		return tx, err
 	}
@@ -90,4 +96,48 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 		return tx, errors.New("transaction failed")
 	}
 	return tx, nil
+}
+
+func (c *Contract) StateFieldArray(v interface{}) map[string]interface{} {
+	tmp, _ := json.Marshal(v)
+	var field []string
+	json.Unmarshal([]byte(tmp), &field)
+	res := make(map[string]interface{})
+	for i, w := range field {
+		res[strconv.Itoa(i)] = w
+	}
+	return res
+}
+
+func (c *Contract) StateFieldMap(v interface{}) map[string]interface{} {
+	tmp, _ := json.Marshal(v)
+	var field map[string]interface{}
+	json.Unmarshal([]byte(tmp), &field)
+	return field
+}
+
+func (c *Contract) StateFieldMapWithdrawal(v interface{}) map[string]interface{} {
+	tmp, _ := json.Marshal(v)
+	var field map[string]Withdrawal
+	json.Unmarshal([]byte(tmp), &field)
+	res := make(map[string]interface{})
+	for i, w := range field {
+		res[string(i)] = w.Arguments[1] //0=>token,1=>stake
+	}
+	return res
+}
+
+func (c *Contract) StateFieldMapMapWithdrawal(v interface{}) map[string]interface{} {
+	tmp, _ := json.Marshal(v)
+	var field map[string](map[string]Withdrawal)
+	json.Unmarshal([]byte(tmp), &field)
+	res := make(map[string]interface{})
+	for i, w := range field {
+		tmpmap := make(map[string]interface{})
+		for ii, ww := range w {
+			tmpmap[string(ii)] = ww.Arguments[1] //0=>token,1=>stake
+		}
+		res[string(i)] = tmpmap
+	}
+	return res
 }
