@@ -17,15 +17,15 @@ func (t *Testing) ZilBalanceOf() {
 	t.LogStart("ZilBalanceOf, step 1")
 	aZilContract.UpdateWallet(key2)
 	balance2, _ := aZilContract.ZilBalanceOf(addr2)
-	t.AssertEqual(balance2, zil0)
+	t.AssertEqual(balance2, zil(0))
 
 	/*******************************************************************************
 	 * 2. After delegate (addr2) should have its balance updated
 	 *******************************************************************************/
 	t.LogStart("ZilBalanceOf, step 2")
-	aZilContract.DelegateStake(zil15)
+	aZilContract.DelegateStake(zil(15))
 	balance2, _ = aZilContract.ZilBalanceOf(addr2)
-	t.AssertEqual(balance2, zil15)
+	t.AssertEqual(balance2, zil(15))
 
 	/*******************************************************************************
 	 * 3. After IncreaseTotalStakeAmount admin transition user balance in zil should be updated
@@ -35,9 +35,9 @@ func (t *Testing) ZilBalanceOf() {
 	 *******************************************************************************/
 	t.LogStart("ZilBalanceOf, step 3")
 	aZilContract.UpdateWallet(adminKey)
-	aZilContract.IncreaseTotalStakeAmount(zil10)
+	aZilContract.IncreaseTotalStakeAmount(zil(10))
 	balance2, _ = aZilContract.ZilBalanceOf(addr2)
-	t.AssertEqual(balance2, deploy.StrSum(zil15, zil10))
+	t.AssertEqual(balance2, deploy.StrSum(zil(15), zil(10)))
 
 	/*******************************************************************************
 	 * 4. New user (addr3) delegating stake
@@ -46,9 +46,9 @@ func (t *Testing) ZilBalanceOf() {
 	 *******************************************************************************/
 	t.LogStart("ZilBalanceOf, step 4")
 	aZilContract.UpdateWallet(key3)
-	aZilContract.DelegateStake(zil10)
+	aZilContract.DelegateStake(zil(10))
 	balance2, _ = aZilContract.ZilBalanceOf(addr2)
-	t.AssertEqual(balance2, deploy.StrSum(zil15, zil10))
+	t.AssertEqual(balance2, deploy.StrSum(zil(15), zil(10)))
 	balance3, _ := aZilContract.ZilBalanceOf(addr3)
-	t.AssertEqual(balance3, zil10)
+	t.AssertEqual(balance3, zil(10))
 }

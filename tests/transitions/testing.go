@@ -27,20 +27,19 @@ const addr3 = "c2035715831ab100ec42e562ce341b834bed1f4c"
 const key4 = "b87f4ba7dcd6e60f2cca8352c89904e3993c5b2b0b608d255002edcda6374de4"
 const addr4 = "6cd3667ba79310837e33f0aecbe13688a6cbca32"
 
-const azil0 = "0"
-const azil5 = "5000000000000"
-const azil10 = "10000000000000"
-const azil15 = "15000000000000"
-const azil100 = "100000000000000"
-
-const zil0 = "0"
 const qa = "000000000000"
-const zil5 = "5000000000000"
-const zil10 = "10000000000000"
-const zil15 = "15000000000000"
-const zil100 = "100000000000000"
 
 func zil(amount int) string {
+	if amount == 0 {
+		return "0"
+	}
+	return fmt.Sprintf("%d%s", amount, qa)
+}
+
+func azil(amount int) string {
+	if amount == 0 {
+		return "0"
+	}
 	return fmt.Sprintf("%d%s", amount, qa)
 }
 
@@ -187,60 +186,6 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, wantedEvent deploy.E
 		t.LogDebug()
 		log.Fatalf("💔 TESTS ARE FAILED")
 	}
-}
-
-func (t *Testing) AssertState(state string, wanted deploy.ParamsMap) {
-	//TODO use reflect package
-
-	var txn *transaction.Transaction
-	var err error
-	switch state {
-	case "AimplState":
-		txn, err = FetcherContract.AimplState()
-		break
-	case "AimplStateBalance":
-		txn, err = FetcherContract.AimplState()
-		break
-	/* TODO how to pass parameters?
-	case "AimplWithdrawalPending":
-		txn, err = FetcherContract.AimplWithdrawalPending()
-		break*/
-	case "ZimplState":
-		txn, err = FetcherContract.ZimplState()
-		break
-	default:
-		log.Fatalf("🔴 Failed at Testing.AssertState(), unknown state=%s", state)
-		break
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	found := false
-	if txn.Receipt.EventLogs != nil {
-		for _, el := range txn.Receipt.EventLogs {
-			txEvent := convertEventLog(el)
-			if txEvent.Address == "0x"+FetcherContract.Addr &&
-				txEvent.EventName == state &&
-				compareParams(txEvent.Params, convertParams(wanted)) {
-				found = true
-				break
-			}
-		}
-	}
-	if found {
-		log.Println("🟢 ASSERT_STATE SUCCESS")
-	} else {
-		_, file, no, _ := runtime.Caller(1)
-		log.Println("🔴 ASSERT_STATE FAILED, " + file + ":" + strconv.Itoa(no))
-		z, _ := json.Marshal(wanted)
-		log.Println(fmt.Sprintf("We assert state=%s, params=%s", state, z))
-		z, _ = json.Marshal(txn.Receipt.EventLogs)
-		log.Println(fmt.Sprintf("We have: %s", z))
-		t.LogDebug()
-		log.Fatalf("💔 TESTS ARE FAILED")
-	}
-
 }
 
 func (t *Testing) AddDebug(key, value string) {

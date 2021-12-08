@@ -111,16 +111,19 @@ func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, s
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
+	tx.Confirm(tx.ID, TX_CONFIRM_MAX_ATTEMPTS, TX_CONFIRM_INTERVAL_SEC, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
+		stateFieldTypes := make(StateFieldTypes)
 		contract := Contract{
-			Code:   string(code),
-			Init:   init,
-			Addr:   tx.ContractAddress,
-			Bech32: b32,
-			Wallet: wallet,
+			Code:            string(code),
+			Init:            init,
+			Addr:            tx.ContractAddress,
+			Bech32:          b32,
+			Wallet:          wallet,
+			StateFieldTypes: stateFieldTypes,
 		}
+		TxIdLast = tx.ID
 		return &BufferContract{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")

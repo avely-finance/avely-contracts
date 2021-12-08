@@ -15,14 +15,14 @@ import (
 func IncreaseBlocknum(delta int32) {
 	//https://raw.githubusercontent.com/Zilliqa/gozilliqa-sdk/7a254f739153c0551a327526009b4aaeeb4c9d87/provider/provider.go
 	//TODO singleton
-	rpcClient := jsonrpc.NewClient("http://zilliqa_server:5555")
+	rpcClient := jsonrpc.NewClient(API_PROVIDER)
 	params := []interface{}{delta}
 	rpcClient.Call("IncreaseBlocknum", params)
 	log.Printf("🔗  === Blocknumber increased by %d === \n", delta)
 }
 
 func GetBalance(addr string) string {
-	provider := provider2.NewProvider("http://zilliqa_server:5555")
+	provider := provider2.NewProvider(API_PROVIDER)
 	balAndNonce, err := provider.GetBalance(addr)
 	if err != nil {
 		panic(err)
@@ -37,7 +37,7 @@ func getAddressFromPrivateKey(privateKey string) string {
 }
 
 func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
-	c.Provider = provider2.NewProvider("http://zilliqa_server:5555")
+	c.Provider = provider2.NewProvider(API_PROVIDER)
 	gasPrice, err := c.Provider.GetMinimumGasPrice()
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
 }
 
 func CallFor(c *contract2.Contract, transition string, args []core.ContractValue, priority bool, amount string) (*transaction2.Transaction, error) {
-	c.Provider = provider2.NewProvider("http://zilliqa_server:5555")
+	c.Provider = provider2.NewProvider(API_PROVIDER)
 	gasPrice, err := c.Provider.GetMinimumGasPrice()
 	if err != nil {
 		return nil, err

@@ -1,6 +1,0 @@
-scilla_version 0
-
-library AzilUtils
-
-type Withdrawal =
-  | Withdrawal of Uint128 Uint128
