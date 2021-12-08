@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	//"runtime"
+	"reflect"
 	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
@@ -19,6 +20,8 @@ const TxConfirmInterval = 0
 
 type StateMap map[string]interface{}
 
+type StateFieldTypes map[string]string
+
 type Contract struct {
 	Code            string
 	Init            []core.ContractValue
@@ -28,6 +31,7 @@ type Contract struct {
 	TxIdLast        string
 	TxIdStateParsed string
 	StateMap        StateMap
+	StateFieldTypes StateFieldTypes
 }
 
 type ParamsMap map[string]string
@@ -98,7 +102,65 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	return tx, nil
 }
 
-func (c *Contract) StateFieldArray(v interface{}) map[string]interface{} {
+func (c *Contract) StateField(key ...string) string {
+	c.stateParse()
+	src := c.StateMap
+	for _, v := range key {
+		val, ok := src[v]
+		if !ok {
+			//key not found in map
+			return ""
+		} else if reflect.String == reflect.ValueOf(val).Kind() {
+			return val.(string)
+		} else if reflect.Map == reflect.ValueOf(val).Kind() && 0 == len(val.(map[string]interface{})) {
+			//empty map
+			return "empty"
+		}
+		src = val.(map[string]interface{})
+	}
+	return "map"
+}
+
+func (c *Contract) stateParse() {
+	if c.TxIdStateParsed == c.TxIdLast {
+		return
+	}
+	provider := provider2.NewProvider("http://zilliqa_server:5555")
+	rsp, _ := provider.GetSmartContractState(c.Addr)
+	result, _ := json.Marshal(rsp.Result)
+	state := string(result)
+
+	var statemap StateMap
+	json.Unmarshal([]byte(state), &statemap)
+	for k, v := range statemap {
+		typ, ok := c.StateFieldTypes[k]
+		if !ok {
+			statemap[k] = v.(string)
+		} else {
+			switch typ {
+			case "StateFieldMap":
+				statemap[k] = stateFieldMap(v)
+				break
+			case "StateFieldArray":
+				statemap[k] = stateFieldArray(v)
+				break
+			case "StateFieldMapMapWithdrawal":
+				statemap[k] = stateFieldMapMapWithdrawal(v)
+				break
+			case "StateFieldMapWithdrawal":
+				statemap[k] = stateFieldMapWithdrawal(v)
+				break
+			default:
+				panic("State field type not found: " + typ)
+			}
+		}
+	}
+	log.Println("State parsed after txid=" + c.TxIdLast)
+	c.StateMap = statemap
+	c.TxIdStateParsed = c.TxIdLast
+}
+
+func stateFieldArray(v interface{}) map[string]interface{} {
 	tmp, _ := json.Marshal(v)
 	var field []string
 	json.Unmarshal([]byte(tmp), &field)
@@ -109,14 +171,14 @@ func (c *Contract) StateFieldArray(v interface{}) map[string]interface{} {
 	return res
 }
 
-func (c *Contract) StateFieldMap(v interface{}) map[string]interface{} {
+func stateFieldMap(v interface{}) map[string]interface{} {
 	tmp, _ := json.Marshal(v)
 	var field map[string]interface{}
 	json.Unmarshal([]byte(tmp), &field)
 	return field
 }
 
-func (c *Contract) StateFieldMapWithdrawal(v interface{}) map[string]interface{} {
+func stateFieldMapWithdrawal(v interface{}) map[string]interface{} {
 	tmp, _ := json.Marshal(v)
 	var field map[string]Withdrawal
 	json.Unmarshal([]byte(tmp), &field)
@@ -127,7 +189,7 @@ func (c *Contract) StateFieldMapWithdrawal(v interface{}) map[string]interface{}
 	return res
 }
 
-func (c *Contract) StateFieldMapMapWithdrawal(v interface{}) map[string]interface{} {
+func stateFieldMapMapWithdrawal(v interface{}) map[string]interface{} {
 	tmp, _ := json.Marshal(v)
 	var field map[string](map[string]Withdrawal)
 	json.Unmarshal([]byte(tmp), &field)
