@@ -188,7 +188,10 @@ func stateFieldMapWithdrawal(v interface{}) map[string]interface{} {
 	json.Unmarshal([]byte(tmp), &field)
 	res := make(map[string]interface{})
 	for i, w := range field {
-		res[string(i)] = w.Arguments[1] //0=>token,1=>stake
+		inner := make(map[string]interface{})
+		inner["0"] = w.Arguments[0] //token
+		inner["1"] = w.Arguments[1] //stake
+		res[string(i)] = inner
 	}
 	return res
 }
@@ -201,7 +204,10 @@ func stateFieldMapMapWithdrawal(v interface{}) map[string]interface{} {
 	for i, w := range field {
 		tmpmap := make(map[string]interface{})
 		for ii, ww := range w {
-			tmpmap[string(ii)] = ww.Arguments[1] //0=>token,1=>stake
+			inner := make(map[string]interface{})
+			inner["0"] = ww.Arguments[0] //token
+			inner["1"] = ww.Arguments[1] //stake
+			tmpmap[string(ii)] = inner
 		}
 		res[string(i)] = tmpmap
 	}
