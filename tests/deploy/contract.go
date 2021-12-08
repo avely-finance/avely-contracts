@@ -14,15 +14,6 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
-const TxConfirmMaxAttempts = 5
-const TxConfirmInterval = 0
-
-var TxIdLast = ""
-
-type StateMap map[string]interface{}
-
-type StateFieldTypes map[string]string
-
 type Contract struct {
 	Code            string
 	Init            []core.ContractValue
@@ -34,30 +25,8 @@ type Contract struct {
 	StateFieldTypes StateFieldTypes
 }
 
-type ParamsMap map[string]string
-type Transition struct {
-	Sender    string
-	Tag       string
-	Recipient string
-	Amount    string
-	Params    ParamsMap
-}
-type Event struct {
-	Sender    string
-	EventName string
-	Params    ParamsMap
-}
-
-//replacement for core.EventLog, because of strange "undefined type" error
-//we have https://github.com/Zilliqa/gozilliqa-sdk/blob/master/core/types.go#L107
-type EventLog struct {
-	EventName string               `json:"_eventname"`
-	Address   string               `json:"address"`
-	Params    []core.ContractValue `json:"params"`
-}
-
 func (c *Contract) LogContractStateJson() string {
-	provider := provider2.NewProvider("http://zilliqa_server:5555")
+	provider := provider2.NewProvider(API_PROVIDER)
 	rsp, _ := provider.GetSmartContractState(c.Addr)
 	j, _ := json.Marshal(rsp)
 	//c.LogPrettyStateJson(rsp)
@@ -70,7 +39,7 @@ func (c *Contract) LogPrettyStateJson(data interface{}) {
 }
 
 func (c *Contract) GetBalance() string {
-	provider := provider2.NewProvider("http://zilliqa_server:5555")
+	provider := provider2.NewProvider(API_PROVIDER)
 	balAndNonce, _ := provider.GetBalance(c.Addr)
 	return balAndNonce.Balance
 }
@@ -92,7 +61,7 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	if err != nil {
 		return tx, err
 	}
-	tx.Confirm(tx.ID, TxConfirmMaxAttempts, TxConfirmInterval, contract.Provider)
+	tx.Confirm(tx.ID, TX_CONFIRM_MAX_ATTEMPTS, TX_CONFIRM_INTERVAL_SEC, contract.Provider)
 	if tx.Status != core.Confirmed {
 		return tx, errors.New("transaction didn't get confirmed")
 	}
@@ -125,7 +94,7 @@ func (c *Contract) stateParse() {
 	if c.TxIdStateParsed == TxIdLast {
 		return
 	}
-	provider := provider2.NewProvider("http://zilliqa_server:5555")
+	provider := provider2.NewProvider(API_PROVIDER)
 	rsp, _ := provider.GetSmartContractState(c.Addr)
 	result, _ := json.Marshal(rsp.Result)
 	state := string(result)
