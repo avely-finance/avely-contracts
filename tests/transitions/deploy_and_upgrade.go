@@ -5,17 +5,8 @@ import (
 	"log"
 )
 
-var FetcherContract deploy.FetcherContract
-
 func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil, *deploy.BufferContract, *deploy.HolderContract) {
 	log.Println("start to deploy")
-
-	//deploy AzilLib
-	azilUtils, err1 := deploy.NewAzilUtilsContract(adminKey)
-	if err1 != nil {
-		t.LogError("deploy AzilUtils error = ", err1)
-	}
-	log.Println("deploy AzilUtils succeed, address = ", azilUtils.Addr)
 
 	//deploy stubStakingContract
 	stubStakingContract, err1 := deploy.NewStubStakingContract(adminKey)
@@ -25,7 +16,7 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 	log.Println("deploy stubStaking succeed, address = ", stubStakingContract.Addr)
 
 	//deploy azil
-	aZilContract, err1 := deploy.NewAZilContract(adminKey, azilUtils.Addr, aZilSSNAddress, stubStakingContract.Addr)
+	aZilContract, err1 := deploy.NewAZilContract(adminKey, aZilSSNAddress, stubStakingContract.Addr)
 	if err1 != nil {
 		t.LogError("deploy aZil error = ", err1)
 	}
@@ -44,14 +35,6 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 		t.LogError("deploy holder error = ", err1)
 	}
 	log.Println("deploy holder succeed, address = ", holderContract.Addr)
-
-	//deploy fetcher
-	fetcherContract, err1 := deploy.NewFetcherContract(adminKey, azilUtils.Addr, aZilContract.Addr, stubStakingContract.Addr)
-	FetcherContract = *fetcherContract
-	if err1 != nil {
-		t.LogError("deploy fetcher error = ", err1)
-	}
-	log.Println("deploy fetcher succeed, address = ", fetcherContract.Addr)
 
 	//upgrade contracts with correct field values
 	log.Println("start to upgrade")
@@ -74,8 +57,6 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 	t.AddDebug("aZilContract", "0x"+aZilContract.Addr)
 	t.AddDebug("bufferContract", "0x"+bufferContract.Addr)
 	t.AddDebug("holderContract", "0x"+holderContract.Addr)
-	t.AddDebug("fetcherContract", "0x"+FetcherContract.Addr)
-	t.AddDebug("azilUtilsContract", "0x"+azilUtils.Addr)
 
 	return stubStakingContract, aZilContract, bufferContract, holderContract
 }

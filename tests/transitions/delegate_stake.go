@@ -10,19 +10,18 @@ func (t *Testing) DelegateStakeSuccess() {
 
 	stubStakingContract, aZilContract, bufferContract, _ := t.DeployAndUpgrade()
 
-	_, err := aZilContract.DelegateStake(zil10)
+	_, err := aZilContract.DelegateStake(zil(10))
 	if err != nil {
 		t.LogError("DelegateStake", err)
 	}
 
-	stubStakingState := stubStakingContract.LogContractStateJson()
-	t.AssertContain(stubStakingState, "_balance\":\""+zil10)
-	t.AssertContain(stubStakingState, "buff_deposit_deleg\":{\""+"0x"+bufferContract.Addr+"\":{\""+aZilSSNAddress+"\":{\"1\":\""+zil10)
+	t.AssertEqual(stubStakingContract.Field("_balance"), zil(10))
+	t.AssertEqual(stubStakingContract.Field("buff_deposit_deleg", "0x"+bufferContract.Addr, aZilSSNAddress, "1"), zil(10))
 
-	aZilState := aZilContract.LogContractStateJson()
-	t.AssertContain(aZilState, "_balance\":\"0")
-	t.AssertContain(aZilState, "\"totalstakeamount\":\""+zil10+"\",\"totaltokenamount\":\""+azil10+"\"")
-	t.AssertContain(aZilState, "balances\":{\""+"0x"+admin+"\":\""+azil10)
+	t.AssertEqual(aZilContract.Field("_balance"), "0")
+	t.AssertEqual(aZilContract.Field("totalstakeamount"), zil(10))
+	t.AssertEqual(aZilContract.Field("totaltokenamount"), azil(10))
+	t.AssertEqual(aZilContract.Field("balances", "0x"+admin), azil(10))
 }
 
 func (t *Testing) DelegateStakeBuffersRotation() {
@@ -40,15 +39,13 @@ func (t *Testing) DelegateStakeBuffersRotation() {
 	aZilContract.ChangeBuffers(new_buffers)
 	stubStakingContract.AssignStakeReward() // move to the next cycle
 
-	_, err := aZilContract.DelegateStake(zil10)
+	_, err := aZilContract.DelegateStake(zil(10))
 	if err != nil {
 		t.LogError("DelegateStake", err)
 	}
 
-	stubStakingState := stubStakingContract.LogContractStateJson()
-	t.AssertContain(stubStakingState, "_balance\":\""+zil10)
-
+	t.AssertEqual(stubStakingContract.Field("_balance"), zil(10))
 	// lastrewardcycly = 2; buffers has 3 elements
 	// => active buffer = buffers[ 2 % 3 ] = buffers[2] = anotherBufferConract
-	t.AssertContain(stubStakingState, "buff_deposit_deleg\":{\""+"0x"+anotherBufferContract.Addr+"\":{\""+aZilSSNAddress+"\":{\"2\":\""+zil10)
+	t.AssertEqual(stubStakingContract.Field("buff_deposit_deleg", "0x"+anotherBufferContract.Addr, aZilSSNAddress, "2"), zil(10))
 }
