@@ -19,6 +19,7 @@ type Error =
   | CompleteWithdrawalHolderNoUnbondedStake
   | AdminValidationFailed
   | ClaimRewardsHolderFundsMismatch
+  | ZimplValidationFailed
 
 let make_error =
   fun (result: Error) =>
@@ -30,6 +31,7 @@ let make_error =
       | CompleteWithdrawalHolderNoUnbondedStake => Int32 -304
       | AdminValidationFailed => Int32 -305
       | ClaimRewardsHolderFundsMismatch => Int32 -306
+      | ZimplValidationFailed => Int32 -307
       end
     in
     { _exception: "Error"; code: result_code }
@@ -39,18 +41,20 @@ let make_error =
 (***************************************************)
 
 contract Holder(
-  init_admin_address                  : ByStr20,
-  init_azil_ssn_address               : ByStr20,
-  init_aimpl_address                  : ByStr20,
-  init_proxy_staking_contract_address : ByStr20
+  init_admin_address        : ByStr20,
+  init_azil_ssn_address     : ByStr20,
+  init_aimpl_address        : ByStr20,
+  init_zproxy_address       : ByStr20,
+  init_zimpl_address        : ByStr20
 )
 (*  Parameters *)
 
 (* Mutable fields *)
-field contractadmin_address           : ByStr20 = init_admin_address
-field azil_ssn_address                : ByStr20 = init_azil_ssn_address
-field aimpl_address                   : ByStr20 = init_aimpl_address
-field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
+field contractadmin_address : ByStr20 = init_admin_address
+field azil_ssn_address      : ByStr20 = init_azil_ssn_address
+field aimpl_address         : ByStr20 = init_aimpl_address
+field zproxy_address        : ByStr20 = init_zproxy_address
+field zimpl_address         : ByStr20 = init_zimpl_address
 
 field tmp_added_funds: Uint128 = uint128_zero
 
@@ -63,7 +67,6 @@ procedure ThrowError(err: Error)
   throw e
 end
 
-(* Check if the caller is the azil implementation contract*)
 procedure IsAimpl()
   var_aimpl_address <- aimpl_address;
   is_aimpl = builtin eq _sender var_aimpl_address;
@@ -71,6 +74,17 @@ procedure IsAimpl()
   | True  =>
   | False =>
     e = AimplValidationFailed;
+    ThrowError e
+  end
+end
+
+procedure IsZimpl()
+  var_zimpl_address <- zimpl_address;
+  is_zimpl = builtin eq _sender var_zimpl_address;
+  match is_zimpl with
+  | True  =>
+  | False =>
+    e = ZimplValidationFailed;
     ThrowError e
   end
 end
@@ -106,11 +120,19 @@ transition ChangeAimplAddress(address: ByStr20)
   event e
 end
 
-transition ChangeProxyStakingContractAddress(address: ByStr20)
+transition ChangeZimplAddress(address: ByStr20)
   initiator = _sender;
   IsAdmin initiator;
-  proxy_staking_contract_address := address;
-  e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
+  zimpl_address := address;
+  e = { _eventname: "ChangeZimplAddress"; address: address };
+  event e
+end
+
+transition ChangeZproxyAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
+  zproxy_address := address;
+  e = { _eventname: "ChangeZproxyAddress"; address: address };
   event e
 end
 
@@ -120,22 +142,23 @@ end
 
 transition WithdrawStakeAmt(amount: Uint128)
   ssnaddr <- azil_ssn_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-  msg = {_tag: "WithdrawStakeAmt"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero;
+  var_zproxy_address <- zproxy_address;
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: var_zproxy_address; _amount: uint128_zero;
   ssnaddr: ssnaddr; amt: amount};
   msgs = one_msg msg;
   send msgs
 end
 
 transition WithdrawStakeAmtSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* TODO: Should we ignore the staking contract callbacks? *)
+  IsZimpl
+  (* nop *)
 end
 
 transition CompleteWithdrawal()
   IsAimpl;
   tmp_added_funds := uint128_zero;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
-  msg = {_tag: "CompleteWithdrawal"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero };
+  var_zproxy_address <- zproxy_address;
+  msg = {_tag: "CompleteWithdrawal"; _recipient: var_zproxy_address; _amount: uint128_zero };
   msgs = one_msg msg;
   send msgs
 end
@@ -148,7 +171,7 @@ end
 (* We should accept funds here, according to ZRC-5  *)
 (****************************************************)
 transition AddFunds()
-  (* TODO: IsZimpl; ? *)
+  IsZimpl;
   accept;
   tmp_added_funds := _amount;
   e = { _eventname : "AddFunds"; funder: _sender; amount: _amount };
@@ -156,7 +179,7 @@ transition AddFunds()
 end
 
 transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
-  (* TODO: IsZimpl; *)
+  IsZimpl;
 
   (* send funds and callback to Aimpl *)
   added_funds <- tmp_added_funds;
@@ -196,7 +219,7 @@ transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
 end
 
 transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
-  (* TODO: IsZimpl; *)
+  IsZimpl;
   e = { _eventname: "CompleteWithdrawalHolderNoUnbondedStake" };
   event e;
   e = CompleteWithdrawalHolderNoUnbondedStake;
@@ -208,15 +231,15 @@ transition ClaimRewards()
   tmp_added_funds := uint128_zero;
 
   ssnaddr <- azil_ssn_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  var_zproxy_address <- zproxy_address;
 
-  msg = {_tag: "WithdrawStakeRewards"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero; ssnaddr: ssnaddr};
+  msg = {_tag: "WithdrawStakeRewards"; _recipient: var_zproxy_address; _amount: uint128_zero; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
 end
 
 transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint128)
-  (* TODO: IsZimpl; ? *)
+  IsZimpl;
   added_funds <- tmp_added_funds;
   (* reset tmp variable *)
   tmp_added_funds := uint128_zero;
@@ -239,9 +262,9 @@ end
 transition ConfirmDelegatorSwap(requestor: ByStr20)
   IsAimpl;
 
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  var_zproxy_address <- zproxy_address;
 
-  msg = {_tag: "ConfirmDelegatorSwap"; _recipient: proxy_staking_contract_addr; _amount: uint128_zero; requestor: requestor};
+  msg = {_tag: "ConfirmDelegatorSwap"; _recipient: var_zproxy_address; _amount: uint128_zero; requestor: requestor};
   msgs = one_msg msg;
   send msgs
 end
