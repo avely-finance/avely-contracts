@@ -37,7 +37,7 @@ func (t *Testing) IsAdmin() {
 	// Use non-admin user for aZilContract
 	aZilContract.UpdateWallet(key2)
 
-	tx, err = aZilContract.ChangeProxyStakingContractAddress(addr3)
+	tx, err = aZilContract.ChangeZproxyAddress(addr3)
 	t.AssertError(tx, err, -106)
 	tx, err = aZilContract.ChangeHolderAddress(addr3)
 	t.AssertError(tx, err, -106)

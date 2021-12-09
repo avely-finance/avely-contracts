@@ -124,19 +124,19 @@ let is_buffer_addr =
 (***************************************************)
 
 contract AZil(
-  init_admin_address                  : ByStr20,
-  init_azil_ssn_address               : ByStr20,
-  init_proxy_staking_contract_address : ByStr20,
-  init_holder_address                 : ByStr20
+  init_admin_address        : ByStr20,
+  init_azil_ssn_address     : ByStr20,
+  init_zproxy_address       : ByStr20,
+  init_holder_address       : ByStr20
 )
 (*  Parameters *)
 (* (owner     : ByStr20) *)
 
 (* Mutable fields *)
-field contractadmin_address          : ByStr20 = init_admin_address
-field azil_ssn_address               : ByStr20 = init_azil_ssn_address
-field proxy_staking_contract_address : ByStr20 = init_proxy_staking_contract_address
-field holder_address                 : ByStr20 = init_holder_address
+field contractadmin_address : ByStr20 = init_admin_address
+field azil_ssn_address      : ByStr20 = init_azil_ssn_address
+field zproxy_address        : ByStr20 = init_zproxy_address
+field holder_address        : ByStr20 = init_holder_address
 
 field totalstakeamount: Uint128 = uint128_zero
 field totaltokenamount: Uint128 = uint128_zero
@@ -186,11 +186,11 @@ procedure TransferFunds(tag: String, amt: Uint128, recipient: ByStr20)
 end
 
 procedure FetchRemoteZimplFields()
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  var_zproxy_address <- zproxy_address;
   (* Address type cast *)
   (* TODO: seems it's possible to save gas, using type check of transition parameter *)
   (* https://scilla.readthedocs.io/en/latest/scilla-in-depth.html?highlight=remote#dynamic-typecheck-of-addresses *)
-  proxyAddrTypeTest <- & proxy_staking_contract_addr as ByStr20 with contract field implementation : ByStr20 end;
+  proxyAddrTypeTest <- & var_zproxy_address as ByStr20 with contract field implementation : ByStr20 end;
   match proxyAddrTypeTest with
   | Some v =>
     implAddr <- & v.implementation;
@@ -475,12 +475,12 @@ transition ChangeHolderAddress(address: ByStr20)
   event e
 end
 
-transition ChangeProxyStakingContractAddress(address: ByStr20)
+transition ChangeZproxyAddress(address: ByStr20)
   initiator = _sender;
   IsAdmin initiator;
-  proxy_staking_contract_address := address;
+  zproxy_address := address;
 
-  e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
+  e = { _eventname: "ChangeZproxyAddress"; address: address };
   event e
 end
 
