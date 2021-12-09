@@ -17,7 +17,9 @@ func (t *Testing) IsAdmin() {
 	t.AssertError(tx, err, -402)
 	tx, err = bufferContract.ChangeAimplAddress(addr3)
 	t.AssertError(tx, err, -402)
-	tx, err = bufferContract.ChangeProxyStakingContractAddress(addr3)
+	tx, err = bufferContract.ChangeZproxyAddress(addr3)
+	t.AssertError(tx, err, -402)
+	tx, err = bufferContract.ChangeZimplAddress(addr3)
 	t.AssertError(tx, err, -402)
 
 	// Use non-admin user for Holder
