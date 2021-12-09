@@ -17,6 +17,65 @@ type HolderContract struct {
 	Contract
 }
 
+func (b *HolderContract) AddFunds(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("AddFunds", args, amount)
+}
+
+func (b *HolderContract) CompleteWithdrawalNoUnbondedStakeCallBack(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("CompleteWithdrawalNoUnbondedStakeCallBack", args, "0")
+}
+
+func (b *HolderContract) CompleteWithdrawalSuccessCallBack(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("CompleteWithdrawalSuccessCallBack", args, "0")
+}
+
+func (b *HolderContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			"0x" + ssnaddr,
+		},
+		{
+			"rewards",
+			"Uint128",
+			rewards,
+		},
+	}
+	return b.Call("WithdrawStakeRewardsSuccessCallBack", args, "0")
+}
+
+func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			"0x" + ssnaddr,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("WithdrawStakeAmtSuccessCallBack", args, "0")
+}
+
 func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
