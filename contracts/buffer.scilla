@@ -10,7 +10,7 @@ let uint128_zero = Uint128 0
 type Error =
   | AimplValidationFailed
   | AdminValidationFailed
-  | ClaimRewardsHolderFundsMismatch
+  | ClaimRewardsBufferFundsMismatch
 
 let make_error =
   fun (result: Error) =>
@@ -18,7 +18,7 @@ let make_error =
       match result with
       | AimplValidationFailed => Int32 -401
       | AdminValidationFailed => Int32 -402
-      | ClaimRewardsHolderFundsMismatch => Int32 -403
+      | ClaimRewardsBufferFundsMismatch => Int32 -403
       end
     in
     { _exception: "Error"; code: result_code }
@@ -181,7 +181,7 @@ transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint12
   amount_eq = builtin eq added_funds rewards;
   match amount_eq with
   | False =>
-    e = ClaimRewardsHolderFundsMismatch;
+    e = ClaimRewardsBufferFundsMismatch;
     ThrowError e
   | True =>
     o_aimpl_address <- aimpl_address;
