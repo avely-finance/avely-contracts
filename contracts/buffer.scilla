@@ -11,6 +11,7 @@ type Error =
   | AimplValidationFailed
   | AdminValidationFailed
   | ClaimRewardsHolderFundsMismatch
+  | ZimplValidationFailed
 
 let make_error =
   fun (result: Error) =>
@@ -19,6 +20,7 @@ let make_error =
       | AimplValidationFailed => Int32 -401
       | AdminValidationFailed => Int32 -402
       | ClaimRewardsHolderFundsMismatch => Int32 -403
+      | ZimplValidationFailed => Int32 -407
       end
     in
     { _exception: "Error"; code: result_code }
@@ -33,18 +35,20 @@ let one_msg =
 (***************************************************)
 
 contract Buffer(
-  init_admin_address                  : ByStr20,
-  init_azil_ssn_address               : ByStr20,
-  init_aimpl_address                  : ByStr20,
-  init_proxy_staking_contract_address : ByStr20
+  init_admin_address        : ByStr20,
+  init_azil_ssn_address     : ByStr20,
+  init_aimpl_address        : ByStr20,
+  init_zproxy_address       : ByStr20,
+  init_zimpl_address        : ByStr20
 )
 (*  Parameters *)
 
 (* Mutable fields *)
-field contractadmin_address           : ByStr20 = init_admin_address
-field azil_ssn_address                : ByStr20 = init_azil_ssn_address
-field aimpl_address                   : ByStr20 = init_aimpl_address
-field proxy_staking_contract_address  : ByStr20 = init_proxy_staking_contract_address
+field contractadmin_address : ByStr20 = init_admin_address
+field azil_ssn_address      : ByStr20 = init_azil_ssn_address
+field aimpl_address         : ByStr20 = init_aimpl_address
+field zproxy_address        : ByStr20 = init_zproxy_address
+field zimpl_address         : ByStr20 = init_zimpl_address
 
 field tmp_added_funds: Uint128 = uint128_zero
 
@@ -57,7 +61,6 @@ procedure ThrowError(err: Error)
   throw e
 end
 
-(* Check if the caller is the azil implementation contract*)
 procedure IsAimpl()
   var_aimpl_address <- aimpl_address;
   is_aimpl = builtin eq _sender var_aimpl_address;
@@ -65,6 +68,17 @@ procedure IsAimpl()
   | True  =>
   | False =>
     e = AimplValidationFailed;
+    ThrowError e
+  end
+end
+
+procedure IsZimpl()
+  var_zimpl_address <- zimpl_address;
+  is_zimpl = builtin eq _sender var_zimpl_address;
+  match is_zimpl with
+  | True  =>
+  | False =>
+    e = ZimplValidationFailed;
     ThrowError e
   end
 end
@@ -124,11 +138,19 @@ transition ChangeAimplAddress(address: ByStr20)
   event e
 end
 
-transition ChangeProxyStakingContractAddress(address: ByStr20)
+transition ChangeZimplAddress(address: ByStr20)
   initiator = _sender;
   IsAdmin initiator;
-  proxy_staking_contract_address := address;
-  e = { _eventname: "ChangeProxyStakingContractAddress"; address: address };
+  zimpl_address := address;
+  e = { _eventname: "ChangeZimplAddress"; address: address };
+  event e
+end
+
+transition ChangeZproxyAddress(address: ByStr20)
+  initiator = _sender;
+  IsAdmin initiator;
+  zproxy_address := address;
+  e = { _eventname: "ChangeZproxyAddress"; address: address };
   event e
 end
 
@@ -137,7 +159,7 @@ end
 (************************************************************)
 
 transition AddFunds()
-  (* TODO: IsZimpl; ? *)
+  IsZimpl;
   accept;
   tmp_added_funds := _amount
 end
@@ -151,13 +173,14 @@ transition DelegateStake()
   stake_amt = _amount;
 
   ssnaddr <- azil_ssn_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  var_zproxy_address <- zproxy_address;
 
-  ProxyDelegate ssnaddr proxy_staking_contract_addr stake_amt
+  ProxyDelegate ssnaddr var_zproxy_address stake_amt
 end
 
 transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  (* We ignore the staking contract callbacks *)
+  IsZimpl
+  (* nop *)
 end
 
 transition ClaimRewards()
@@ -165,13 +188,13 @@ transition ClaimRewards()
   tmp_added_funds := uint128_zero;
 
   ssnaddr <- azil_ssn_address;
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  var_zproxy_address <- zproxy_address;
 
-  ProxyWithdrawStakeRewards ssnaddr proxy_staking_contract_addr
+  ProxyWithdrawStakeRewards ssnaddr var_zproxy_address
 end
 
 transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint128)
-  (* TODO: IsZimpl; ? *)
+  IsZimpl;
   added_funds <- tmp_added_funds;
 
   (* reset tmp variable *)
@@ -195,7 +218,7 @@ end
 transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
   IsAimpl;
 
-  proxy_staking_contract_addr <- proxy_staking_contract_address;
+  var_zproxy_address <- zproxy_address;
 
-  ProxyRequestDelegatorSwap proxy_staking_contract_addr new_deleg_addr
+  ProxyRequestDelegatorSwap var_zproxy_address new_deleg_addr
 end

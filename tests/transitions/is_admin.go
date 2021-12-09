@@ -17,7 +17,9 @@ func (t *Testing) IsAdmin() {
 	t.AssertError(tx, err, -402)
 	tx, err = bufferContract.ChangeAimplAddress(addr3)
 	t.AssertError(tx, err, -402)
-	tx, err = bufferContract.ChangeProxyStakingContractAddress(addr3)
+	tx, err = bufferContract.ChangeZproxyAddress(addr3)
+	t.AssertError(tx, err, -402)
+	tx, err = bufferContract.ChangeZimplAddress(addr3)
 	t.AssertError(tx, err, -402)
 
 	// Use non-admin user for Holder
@@ -27,13 +29,15 @@ func (t *Testing) IsAdmin() {
 	t.AssertError(tx, err, -305)
 	tx, err = holderContract.ChangeAimplAddress(addr3)
 	t.AssertError(tx, err, -305)
-	tx, err = holderContract.ChangeProxyStakingContractAddress(addr3)
+	tx, err = holderContract.ChangeZproxyAddress(addr3)
+	t.AssertError(tx, err, -305)
+	tx, err = holderContract.ChangeZimplAddress(addr3)
 	t.AssertError(tx, err, -305)
 
 	// Use non-admin user for aZilContract
 	aZilContract.UpdateWallet(key2)
 
-	tx, err = aZilContract.ChangeProxyStakingContractAddress(addr3)
+	tx, err = aZilContract.ChangeZproxyAddress(addr3)
 	t.AssertError(tx, err, -106)
 	tx, err = aZilContract.ChangeHolderAddress(addr3)
 	t.AssertError(tx, err, -106)

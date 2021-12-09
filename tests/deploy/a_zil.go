@@ -18,7 +18,7 @@ type AZil struct {
 	Contract
 }
 
-func (b *AZil) ChangeProxyStakingContractAddress(new_addr string) (*transaction.Transaction, error) {
+func (b *AZil) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -26,7 +26,7 @@ func (b *AZil) ChangeProxyStakingContractAddress(new_addr string) (*transaction.
 			"0x" + new_addr,
 		},
 	}
-	return b.Call("ChangeProxyStakingContractAddress", args, "0")
+	return b.Call("ChangeZproxyAddress", args, "0")
 }
 
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
@@ -172,7 +172,7 @@ func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) 
 			Type:  "ByStr20",
 			Value: aZilSSNAddress,
 		}, {
-			VName: "init_proxy_staking_contract_address",
+			VName: "init_zproxy_address",
 			Type:  "ByStr20",
 			Value: "0x" + stubStakingAddr,
 		}, {
