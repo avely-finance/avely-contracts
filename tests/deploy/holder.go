@@ -17,7 +17,66 @@ type HolderContract struct {
 	Contract
 }
 
-func (b *HolderContract) ChangeProxyStakingContractAddress(new_addr string) (*transaction.Transaction, error) {
+func (b *HolderContract) AddFunds(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("AddFunds", args, amount)
+}
+
+func (b *HolderContract) CompleteWithdrawalNoUnbondedStakeCallBack(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("CompleteWithdrawalNoUnbondedStakeCallBack", args, "0")
+}
+
+func (b *HolderContract) CompleteWithdrawalSuccessCallBack(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("CompleteWithdrawalSuccessCallBack", args, "0")
+}
+
+func (b *HolderContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			"0x" + ssnaddr,
+		},
+		{
+			"rewards",
+			"Uint128",
+			rewards,
+		},
+	}
+	return b.Call("WithdrawStakeRewardsSuccessCallBack", args, "0")
+}
+
+func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			"0x" + ssnaddr,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("WithdrawStakeAmtSuccessCallBack", args, "0")
+}
+
+func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -25,7 +84,18 @@ func (b *HolderContract) ChangeProxyStakingContractAddress(new_addr string) (*tr
 			"0x" + new_addr,
 		},
 	}
-	return b.Call("ChangeProxyStakingContractAddress", args, "0")
+	return b.Call("ChangeZproxyAddress", args, "0")
+}
+
+func (b *HolderContract) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeZimplAddress", args, "0")
 }
 
 func (b *HolderContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
@@ -92,7 +162,11 @@ func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, s
 			Type:  "ByStr20",
 			Value: aZilSSNAddress,
 		}, {
-			VName: "init_proxy_staking_contract_address",
+			VName: "init_zproxy_address",
+			Type:  "ByStr20",
+			Value: "0x" + stubStakingAddr,
+		}, {
+			VName: "init_zimpl_address",
 			Type:  "ByStr20",
 			Value: "0x" + stubStakingAddr,
 		},

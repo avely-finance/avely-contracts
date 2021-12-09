@@ -17,7 +17,44 @@ type BufferContract struct {
 	Contract
 }
 
-func (b *BufferContract) ChangeProxyStakingContractAddress(new_addr string) (*transaction.Transaction, error) {
+func (b *BufferContract) AddFunds(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("AddFunds", args, amount)
+}
+
+func (b *BufferContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			"0x" + ssnaddr,
+		},
+		{
+			"rewards",
+			"Uint128",
+			rewards,
+		},
+	}
+	return b.Call("WithdrawStakeRewardsSuccessCallBack", args, "0")
+}
+
+func (b *BufferContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			"0x" + ssnaddr,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("DelegateStakeSuccessCallBack", args, "0")
+}
+
+func (b *BufferContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -25,7 +62,18 @@ func (b *BufferContract) ChangeProxyStakingContractAddress(new_addr string) (*tr
 			"0x" + new_addr,
 		},
 	}
-	return b.Call("ChangeProxyStakingContractAddress", args, "0")
+	return b.Call("ChangeZproxyAddress", args, "0")
+}
+
+func (b *BufferContract) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeZimplAddress", args, "0")
 }
 
 func (b *BufferContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
@@ -92,7 +140,11 @@ func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, s
 			Type:  "ByStr20",
 			Value: aZilSSNAddress,
 		}, {
-			VName: "init_proxy_staking_contract_address",
+			VName: "init_zproxy_address",
+			Type:  "ByStr20",
+			Value: "0x" + stubStakingAddr,
+		}, {
+			VName: "init_zimpl_address",
 			Type:  "ByStr20",
 			Value: "0x" + stubStakingAddr,
 		},
