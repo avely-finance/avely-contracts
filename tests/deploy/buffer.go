@@ -17,6 +17,43 @@ type BufferContract struct {
 	Contract
 }
 
+func (b *BufferContract) AddFunds(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("AddFunds", args, amount)
+}
+
+func (b *BufferContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			"0x" + ssnaddr,
+		},
+		{
+			"rewards",
+			"Uint128",
+			rewards,
+		},
+	}
+	return b.Call("WithdrawStakeRewardsSuccessCallBack", args, "0")
+}
+
+func (b *BufferContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			"0x" + ssnaddr,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("DelegateStakeSuccessCallBack", args, "0")
+}
+
 func (b *BufferContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
