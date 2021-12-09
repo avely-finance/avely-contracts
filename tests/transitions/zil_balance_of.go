@@ -28,14 +28,15 @@ func (t *Testing) ZilBalanceOf() {
 	t.AssertEqual(balance2, zil(15))
 
 	/*******************************************************************************
-	 * 3. After IncreaseTotalStakeAmount admin transition user balance in zil should be updated
+	 * 3. User balance in zil should be updated after restaking rewards
 	 * because contract got more zils w/o azil minting
 	 * so azil/zil exchange rate changed, azil now costs more zils than before
 	 * so balance of addr2 in zil should be more
 	 *******************************************************************************/
 	t.LogStart("ZilBalanceOf, step 3")
 	aZilContract.UpdateWallet(adminKey)
-	aZilContract.IncreaseTotalStakeAmount(zil(10))
+	aZilContract.IncreaseAutoRestakeAmount(zil(10))
+	aZilContract.PerformAutoRestake()
 	balance2, _ = aZilContract.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, deploy.StrSum(zil(15), zil(10)))
 
