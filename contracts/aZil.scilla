@@ -542,13 +542,31 @@ transition ClaimRewardsSuccessCallBack()
   IncreaseAutoRestakeAmt _amount
 end
 
-transition IncreaseTotalStakeAmount(amount: Uint128)
+transition PerformAutoRestake()
   initiator = _sender;
   IsAdmin initiator;
-  (* TODO: should we send ZIL here and accept, or just increase by input parameter? *)
-  IncreaseTotalStakeAmt amount;
 
-  e = { _eventname: "IncreaseTotalStakeAmount"; amount: amount };
+  auto_restake_amt <- autorestakeamount;
+
+  is_zero = builtin eq auto_restake_amt uint128_zero;
+  match is_zero with
+  | True =>
+  | False =>
+    BufferDelegate auto_restake_amt;
+    (* TOOD: should be called in the Delegate callback *)
+    IncreaseTotalStakeAmt auto_restake_amt
+  end
+end
+
+transition IncreaseAutoRestakeAmount()
+  initiator = _sender;
+  IsAdmin initiator;
+  accept;
+  amount = _amount;
+
+  IncreaseAutoRestakeAmt amount;
+
+  e = { _eventname: "IncreaseAutoRestakeAmount"; amount: amount };
   event e
 end
 

@@ -44,7 +44,9 @@ func (t *Testing) IsAdmin() {
 	new_buffers := []string{"0x" + bufferContract.Addr, "0x" + bufferContract.Addr}
 	tx, err = aZilContract.ChangeBuffers(new_buffers)
 	t.AssertError(tx, err, -106)
-	tx, err = aZilContract.IncreaseTotalStakeAmount(zil(100))
+	tx, err = aZilContract.IncreaseAutoRestakeAmount(zil(1))
+	t.AssertError(tx, err, -106)
+	tx, err = aZilContract.PerformAutoRestake()
 	t.AssertError(tx, err, -106)
 	tx, err = aZilContract.UpdateStakingParameters(zil(100))
 	t.AssertError(tx, err, -106)
