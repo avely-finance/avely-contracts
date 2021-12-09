@@ -138,8 +138,9 @@ field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field zproxy_address        : ByStr20 = init_zproxy_address
 field holder_address        : ByStr20 = init_holder_address
 
-field totalstakeamount: Uint128 = uint128_zero
-field totaltokenamount: Uint128 = uint128_zero
+field totalstakeamount:  Uint128 = uint128_zero
+field totaltokenamount:  Uint128 = uint128_zero
+field autorestakeamount: Uint128 = uint128_zero
 
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
@@ -290,6 +291,12 @@ procedure IncreaseTotalTokenAmt(amt: Uint128)
   total_token_amt <- totaltokenamount;
   new_total_amt = builtin add total_token_amt amt;
   totaltokenamount := new_total_amt
+end
+
+procedure IncreaseAutoRestakeAmt(amt: Uint128)
+  auto_restake_amt <- autorestakeamount;
+  new_total_amt = builtin add auto_restake_amt amt;
+  autorestakeamount := new_total_amt
 end
 
 procedure DecreaseTotalStakeAmt(amt: Uint128)
@@ -531,8 +538,8 @@ end
 
 transition ClaimRewardsSuccessCallBack()
   (* TODO: IsBufferOrHolder; *)
-  (* TODO: save as restaking money *)
-  accept
+  accept;
+  IncreaseAutoRestakeAmt _amount
 end
 
 transition IncreaseTotalStakeAmount(amount: Uint128)
