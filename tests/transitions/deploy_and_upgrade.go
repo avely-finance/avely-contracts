@@ -6,6 +6,7 @@ import (
 )
 
 var Gzil deploy.Gzil
+var Zproxy deploy.Zproxy
 
 func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil, *deploy.BufferContract, *deploy.HolderContract) {
 	log.Println("start to deploy")
@@ -17,6 +18,14 @@ func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil,
 		t.LogError("deploy Gzil error = ", err1)
 	}
 	log.Println("deploy Gzil succeed, address = ", Gzil.Addr)
+
+	//deploy zproxy
+	zproxy, err1 := deploy.NewZproxy(adminKey)
+	Zproxy = *zproxy
+	if err1 != nil {
+		t.LogError("deploy Zproxy error = ", err1)
+	}
+	log.Println("deploy Zproxy succeed, address = ", Zproxy.Addr)
 
 	//deploy stubStakingContract
 	stubStakingContract, err1 := deploy.NewStubStakingContract(adminKey)
