@@ -554,7 +554,8 @@ transition PerformAutoRestake()
   | False =>
     BufferDelegate auto_restake_amt;
     (* TOOD: should be called in the Delegate callback *)
-    IncreaseTotalStakeAmt auto_restake_amt
+    IncreaseTotalStakeAmt auto_restake_amt;
+    autorestakeamount := uint128_zero
   end
 end
 
