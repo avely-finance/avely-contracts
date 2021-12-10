@@ -5,8 +5,18 @@ import (
 	"log"
 )
 
+var Gzil deploy.Gzil
+
 func (t *Testing) DeployAndUpgrade() (*deploy.StubStakingContract, *deploy.AZil, *deploy.BufferContract, *deploy.HolderContract) {
 	log.Println("start to deploy")
+
+	//deploy gzil
+	gzil, err1 := deploy.NewGzil(adminKey)
+	Gzil = *gzil
+	if err1 != nil {
+		t.LogError("deploy Gzil error = ", err1)
+	}
+	log.Println("deploy Gzil succeed, address = ", Gzil.Addr)
 
 	//deploy stubStakingContract
 	stubStakingContract, err1 := deploy.NewStubStakingContract(adminKey)
