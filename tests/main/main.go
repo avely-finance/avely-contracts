@@ -25,5 +25,6 @@ func main() {
 	t.IsAimpl()
 	t.IsZimpl()
 	t.DrainBuffer()
+	t.PerformAuoRestake()
 	t.LogEnd()
 }
