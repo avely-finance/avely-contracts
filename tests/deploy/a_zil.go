@@ -68,15 +68,14 @@ func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
 	return a.Call("DelegateStake", args, amount)
 }
 
-func (a *AZil) IncreaseTotalStakeAmount(amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"amount",
-			"Uint128",
-			amount,
-		},
-	}
-	return a.Call("IncreaseTotalStakeAmount", args, "0")
+func (a *AZil) IncreaseAutoRestakeAmount(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("IncreaseAutoRestakeAmount", args, amount)
+}
+
+func (a *AZil) PerformAutoRestake() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("PerformAutoRestake", args, "0")
 }
 
 func (a *AZil) UpdateStakingParameters(min_deleg_stake string) (*transaction.Transaction, error) {

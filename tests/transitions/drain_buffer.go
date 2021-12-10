@@ -63,6 +63,7 @@ func (t *Testing) DrainBuffer() {
 	// Check aZIL balance
 	// 1 ZIL from Buffer + 1 ZIL from Holder
 	t.AssertEqual(aZilContract.Field("_balance"), zil(2))
+	t.AssertEqual(aZilContract.Field("autorestakeamount"), zil(2))
 
 	// Send Swap transactions
 	t.AssertTransition(txn, deploy.Transition{
