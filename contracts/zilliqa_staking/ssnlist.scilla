@@ -4,59 +4,16 @@ import ListUtils IntUtils PairUtils
 
 library SSNList
 
-(* A non-custodial staking contract with admin privileges *)
-(* SSN Data Type *)
-(* Each SSN has the following fields: *)
-
-(* ActiveStatus      : Bool *)
-(*                     Represents whether the SSN has the minnimum stake amount and therefore ready to participate in staking and receive rewards. *)
-(* StakeAmount       : Uint128 *)
-(*                     Total stake that can be used for reward calculation. *)
-(* StakeRewards      : Uint128 *)
-(*                     (Unwithdrawn) Reward accumulated so far across all cycles. It only includes the reward that the SSN can distribute to its delegators. *)
-(*                     It does not include SSN's own commission. *)
-(* Name              : String *)
-(*                     A human-readable name for this SSN. *)
-(* URLRaw            : String *)
-(*                     Represents "ip:port" of the SSN serving raw API requests. *)
-(* URLApi            : String *)
-(*                     Representing URL exposed by SSN serving public API requests. *)
-(* BufferedDeposit   : Uint128 *)
-(*                     Stake deposit that cannot be counted as a part of reward calculation for the ongoing reward cycle. But, to be considered *)
-(*                     for the next one. *)
-(* Commission        : Uint128 *)
-(*                     Percentage of incoming rewards that the SSN takes as commission. If the commission is 10.5%, then it is multiplied by 10^7 and then the resulting integer is set as commission. The assumption is that the percentage is up to 7 decimal places. *)
-(* CommissionRewards : Uint128 *)
-(*                     Number of ZILs earned as commission by the SSN. *)
-(* ReceivingAddress   : ByStr20 *)
-(*                     Address that will be used to receive commission. *)
-(* Invariant : ActiveStatus = (Minstake < StakeAmount)  *)
-
 type Ssn =
 | Ssn of Bool Uint128 Uint128 String String String Uint128 Uint128 Uint128 ByStr20
 
-(*  SSNAddress        : ByStr20 *)
-(*                      Address of the SSN. *)
-(*  CycleReward       : Uint128 *)
-(*                      Integer representation of reward assigned by the verifier to this SSN for this cycle. *)
-(*  TotalStakeAmount  : Uint128 *)
-(*                      Total stake amount at a specific cycle.                                               *)
 type SsnStakeRewardShare = 
 | SsnStakeRewardShare of ByStr20 Uint128 Uint128
 
-(* SSNCycleInfo Data Type *)
-
-(*   Each SSNCycleInfo has the following fields: *)
-(*    TotalStakeDuringTheCycle            : Uint128 *)
-(*                                          Represents the amount staked during this cycle for the given SSN. *)
-(*    TotalRewardEarnedDuringTheCycle    : Uint128 *)
-(*                                         Represents the total reward earned during this cycle for the given SSN. . *)
 
 type SSNCycleInfo =
 | SSNCycleInfo of Uint128 Uint128
 
-(* Used in order to be able to iterate over the procedure CalcStakeRewards *)
-(* deleg, ssn_operator, reward_cycle *)
 
 type TmpArg =
 | TmpArg of ByStr20 ByStr20 Uint32
@@ -167,7 +124,6 @@ let uint128_to_uint256 : Uint128 -> Uint256 =
       | Some x256 => x256
       end
 
-(* Compute "(x * y) / z" with protection against integer overflows *)
 let muldiv : Uint128 -> Uint128 -> Uint128 -> Uint128 =
     fun (x : Uint128) =>
     fun (y : Uint128) =>
@@ -195,37 +151,26 @@ let map_to_stake_rewards =
     | Pair ssnaddr cycle_reward => SsnStakeRewardShare ssnaddr cycle_reward total_stake 
     end
 
-(* check if last_withdraw_cycle_deleg[deleg] is empty *)
 let is_ssn_cycle_map_empty =
   fun(m : Map ByStr20 Uint32) =>
     let map_size = builtin size m in
     builtin eq map_size uint32_zero
 
-(* check if deposit_amt_deleg[deleg] is empty *)
 let is_ssn_deposit_map_empty =
   fun(m : Map ByStr20 Uint128) =>
     let map_size = builtin size m in
     builtin eq map_size uint32_zero
 
-(* check if withdrawal_pending[deleg] is empty *)
 let is_block_deposit_map_empty =
   fun(m : Map BNum Uint128) =>
     let map_size = builtin size m in
     builtin eq map_size uint32_zero
 
-(* check if nested maps are empty *)
-(* buff_deposit_deleg[deleg] *)
-(* direct_deposit_deleg[deleg] *)
-(* deleg_stake_per_cycle[deleg] *)
 let is_ssn_cycle_deposit_map_empty =
   fun(m : Map ByStr20 (Map Uint32 Uint128)) =>
     let map_size = builtin size m in
     builtin eq map_size uint32_zero
 
-(* check if final inner map is empty *)
-(* buff_deposit_deleg[deleg][ssn] *)
-(* direct_deposit_deleg[deleg][ssn] *)
-(* deleg_stake_per_cycle[deleg][ssn] *)
 let is_cycle_deposit_map_empty =
   fun(m : Map Uint32 Uint128) =>
     let map_size = builtin size m in
@@ -235,7 +180,6 @@ let bool_active = True
 let bool_inactive = False
 let addfunds_tag = "AddFunds"
 
-(* for SwapDelegator *)
 let reset_addr = 0x0000000000000000000000000000000000000000
 
 type Error =
@@ -298,7 +242,6 @@ let make_error =
     in
     { _exception: "Error"; code: result_code }
 
-(* Utility used for migration *)
 let list_map_to_pair_with_constant : forall 'A. forall 'B. List 'A -> 'B -> List (Pair 'A 'B) =
   tfun 'A =>
   tfun 'B => 
@@ -308,95 +251,56 @@ let list_map_to_pair_with_constant : forall 'A. forall 'B. List 'A -> 'B -> List
     let mapper = @list_map 'A (Pair 'A 'B) in
     mapper f list
     
-(***************************************************)
-(*             The contract definition             *)
-(***************************************************)
 contract SSNList(
   init_admin: ByStr20,
   init_proxy_address: ByStr20,
   init_gzil_address: ByStr20
 )
 
-(* Keeps track of SSNS *)
-(* AddressOfSSN -> SSNInfo *)
 field ssnlist: Map ByStr20 Ssn = Emp ByStr20 Ssn
 
-(* Record commission for SSN for each reward cycle *)
-(* AddressofSSN -> (RewardCycle -> commission ) *)
 field comm_for_ssn: Map ByStr20 (Map Uint32 Uint128) = Emp ByStr20 (Map Uint32 Uint128)
 
-(* Following data structure helps to calculate rewards for delegators *)
-(* Keeps track of stakes deposited at SSNs *)
-(* Record deposit amount for every deleg for every ssn *)
-(* AddressofDeleg -> (AddressofSSN -> StakeAmount) *)
 field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128) = Emp ByStr20 (Map ByStr20 Uint128)
 
-(* AddressofSSN -> (AddressofDeleg -> StakeAmount) *)
-(* Used by offchain services like wallets *)
 field ssn_deleg_amt: Map ByStr20 (Map ByStr20 Uint128) = Emp ByStr20 (Map ByStr20 Uint128)
 
-(* Keeps track of buffered deposit for a delegator *)
-(* AddressOfDeleg -> (AddressofSSN -> (RewardCycleNumber -> BufferedStakeAmountDuringTheCycle)) *)
-(* The BufferedStakeAmount will only be truely delegated at next cycle *)
 field buff_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
 
-(* Keeps track of stake deposits for a delegator that can be considered for reward calcuation *)
-(* AddressofDeleg -> (AddressofSSN -> (RewardCycleNumber -> StakeAmount)) *)
 field direct_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
 
-(* Keeps track of the cycle number when a deleg last withdrew its rewards *)
-(* AddressOfDeleg -> ( AddressOfSSN -> CycleNumberWhenLastWithdrawn) *)
-(* notice here, the last withdraw cycle also indicated the earlist deposit cycle this round *)
-(* this will help reduce some calculation for DistributeStakeRewards, also can avoid some corner cases *)
 field last_withdraw_cycle_deleg: Map ByStr20 (Map ByStr20 Uint32) = Emp ByStr20 (Map ByStr20 Uint32)
 
-(* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
-(* AddressOfDeleg -> ( AddressOfSSN -> CycleNumberWhenLastDeposit) *)
 field last_buf_deposit_cycle_deleg: Map ByStr20 (Map ByStr20 Uint32) = Emp ByStr20 (Map ByStr20 Uint32)
 
-(* AddressOfSSN -> (RewardCycleNumber -> Pair (TotalStakeDuringTheCycleForSSN, TotalRewardEarnedDuringTheCycle) *)
 field stake_ssn_per_cycle: Map ByStr20 (Map Uint32 SSNCycleInfo) = Emp ByStr20 (Map Uint32 SSNCycleInfo)
 
-(* AddressOfDeleg -> AddressOfSSN -> EffectCycleNum -> Deposit *)
 field deleg_stake_per_cycle: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128)) = Emp ByStr20 (Map ByStr20 (Map Uint32 Uint128))
 
-(* AddressOfDeleg -> BlockNumber -> Deposit *)
 field withdrawal_pending: Map ByStr20 (Map BNum Uint128) = Emp ByStr20 (Map BNum Uint128)
 
-(* AddressOfInitialDeleg -> AddressOfNewDeleg *)
-(* used to transfer all stakes and pending withdrawal of deleg_A -> deleg_B *)
-(* see RequestDelegatorSwap *)
 field deleg_swap_request: Map ByStr20 ByStr20 = Emp ByStr20 ByStr20
 
 field bnum_req: Uint128 = Uint128 35000
 
-(* Temporary storage maps *)
 field cycle_rewards_deleg: Uint128 = uint128_zero
 
-(* Used during AssignStakeReward *)
-(* Record the latest rewards earned by verifier *)
 field verifier_reward: Uint128 = uint128_zero
 
 field available_withdrawal: Uint128 = uint128_zero
 
 field current_deleg: Option ByStr20 = None {ByStr20}
 
-(* Used during SwapDelegator *)
-(* Keeps tracks of the ssn address to pass to other procedures in forall calls *)
 field current_ssn: Option ByStr20 = None {ByStr20}
 
-(* Used during SwapDelegator *)
-(* Keeps tracks of the new deleg address to pass to other procedures*)
 field new_deleg: Option ByStr20 = None {ByStr20}
 
 field verifier: Option ByStr20 = None {ByStr20}
 
 field verifier_receiving_addr: Option ByStr20 = None {ByStr20}
 
-(* 10 mil ZIL expressed in Qa where 1 ZIL = 10^12 Qa *)
 field minstake: Uint128 = Uint128 10000000000000000000
 
-(* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake: Uint128 = Uint128 10000000000000
 
 field contractadmin: ByStr20  = init_admin
@@ -405,18 +309,12 @@ field gziladdr: ByStr20 = init_gzil_address
 field lastrewardcycle: Uint32 = uint32_one
 field paused: Bool = True
 
-(* 1% *)
 field maxcommchangerate: Uint128 = uint128_one
 
-(* 100% expressed as an integer multipled by 10^7 *)
 field maxcommrate: Uint128 = Uint128 1000000000
 field totalstakeamount: Uint128 = uint128_zero
 
-(* Procedures *)
-(* Internal functions, used like Solidity modifiers *)
 
-(* to erase buff_deposit_deleg outer keys *)
-(* see CleanBuffDeposit *)
 procedure CleanBuffDepositDelegAddr(deleg: ByStr20)
   buff_deposit_deleg_map <- buff_deposit_deleg[deleg];
   match buff_deposit_deleg_map with
@@ -431,8 +329,6 @@ procedure CleanBuffDepositDelegAddr(deleg: ByStr20)
   end
 end
 
-(* to erase buff_deposit_deleg inner keys *)
-(* see CleanBuffDeposit *)
 procedure CleanBuffDepositSSNAddr(deleg_ssn_pair: Pair ByStr20 ByStr20)
   match deleg_ssn_pair with
   | Pair deleg ssn =>
@@ -450,7 +346,6 @@ procedure CleanBuffDepositSSNAddr(deleg_ssn_pair: Pair ByStr20 ByStr20)
   end
 end
 
-(* to erase direct_deposit_deleg inner keys  *)
 procedure CleanDirectDepositSSNAddr(deleg_ssn_pair: Pair ByStr20 ByStr20)
   match deleg_ssn_pair with
   | Pair deleg ssn =>
@@ -468,7 +363,6 @@ procedure CleanDirectDepositSSNAddr(deleg_ssn_pair: Pair ByStr20 ByStr20)
   end
 end
 
-(* to erase direct_deposit_deleg outer keys  *)
 procedure CleanDirectDepositDelegAddr(deleg: ByStr20)
   direct_deposit_deleg_map <- direct_deposit_deleg[deleg];
   match direct_deposit_deleg_map with
@@ -483,7 +377,6 @@ procedure CleanDirectDepositDelegAddr(deleg: ByStr20)
   end
 end
 
-(* to erase deleg_stake_per_cycle inner keys  *)
 procedure CleanDelegStakePerCycleSSNAddr(deleg_ssn_pair: Pair ByStr20 ByStr20)
   match deleg_ssn_pair with
   | Pair deleg ssn =>
@@ -501,7 +394,6 @@ procedure CleanDelegStakePerCycleSSNAddr(deleg_ssn_pair: Pair ByStr20 ByStr20)
   end
 end
 
-(* to erase deleg_stake_per_cycle outer keys  *)
 procedure CleanDelegStakePerCycleDelegAddr(deleg: ByStr20)
   deleg_stake_per_cycle_map <- deleg_stake_per_cycle[deleg];
   match deleg_stake_per_cycle_map with
@@ -516,7 +408,6 @@ procedure CleanDelegStakePerCycleDelegAddr(deleg: ByStr20)
   end
 end
 
-(* to erase deposit_amt_deleg outer keys  *)
 procedure CleanDepositAmtDelegAddr(deleg: ByStr20)
   ssn_deposit_map <- deposit_amt_deleg[deleg];
   match ssn_deposit_map with
@@ -531,7 +422,6 @@ procedure CleanDepositAmtDelegAddr(deleg: ByStr20)
   end
 end
 
-(* to erase last_withdraw_cycle_deleg outer keys  *)
 procedure CleanLastWithdrawCycleDelegAddr(deleg: ByStr20)
   ssn_cycle_map <- last_withdraw_cycle_deleg[deleg];
   match ssn_cycle_map with
@@ -546,7 +436,6 @@ procedure CleanLastWithdrawCycleDelegAddr(deleg: ByStr20)
   end
 end
 
-(* to erase last_buf_deposit_cycle_deleg outer keys  *)
 procedure CleanLastBuffDepositCycleDelegAddr(deleg: ByStr20)
   ssn_cycle_map <- last_buf_deposit_cycle_deleg[deleg];
   match ssn_cycle_map with
@@ -561,7 +450,6 @@ procedure CleanLastBuffDepositCycleDelegAddr(deleg: ByStr20)
   end
 end
 
-(* to erase withdrawal_pending outer keys  *)
 procedure CleanPendingWithdrawalDelegAddr(deleg: ByStr20)
   block_deposit_map <- withdrawal_pending[deleg];
   match block_deposit_map with
@@ -576,8 +464,6 @@ procedure CleanPendingWithdrawalDelegAddr(deleg: ByStr20)
   end
 end
 
-(* delete the cycle key and any other external keys if the inner map is empty *)
-(* for use in replace of normal delete operation to erase empty nested maps *)
 procedure DeleteBuffDeposit(deleg: ByStr20, ssnaddr: ByStr20, cycle: Uint32)
   delete buff_deposit_deleg[deleg][ssnaddr][cycle];
   deleg_ssn_pair = Pair {ByStr20 ByStr20} deleg ssnaddr;
@@ -585,8 +471,6 @@ procedure DeleteBuffDeposit(deleg: ByStr20, ssnaddr: ByStr20, cycle: Uint32)
   CleanBuffDepositDelegAddr deleg
 end
 
-(* delete the cycle key and any other external keys if the inner map is empty *)
-(* for use in replace of normal delete operation to erase empty nested maps *)
 procedure DeleteDirectDeposit(deleg: ByStr20, ssnaddr: ByStr20, cycle: Uint32)
   delete direct_deposit_deleg[deleg][ssnaddr][cycle];
   deleg_ssn_pair = Pair {ByStr20 ByStr20} deleg ssnaddr;
@@ -594,8 +478,6 @@ procedure DeleteDirectDeposit(deleg: ByStr20, ssnaddr: ByStr20, cycle: Uint32)
   CleanDirectDepositDelegAddr deleg
 end
 
-(* delete the blk num and any other external keys if the inner map is empty *)
-(* for use in replace of normal delete operation to erase empty nested maps *)
 procedure DeletePendingWithdrawal(deleg: ByStr20, withdraw_number: BNum)
   delete withdrawal_pending[deleg][withdraw_number];
   CleanPendingWithdrawalDelegAddr deleg
@@ -687,7 +569,6 @@ procedure DecreaseTotalStakeAmtOnStatus(amt: Uint128, status: Bool)
   end
 end
 
-(* Check if the initiator is verifier *)
 procedure CallerIsVerifier(initiator: ByStr20)
   verifier_tmp <- verifier;
   match verifier_tmp with
@@ -705,7 +586,6 @@ procedure CallerIsVerifier(initiator: ByStr20)
   end
 end
 
-(* Check if the initiator is admin *)
 procedure IsAdmin(initiator: ByStr20)
   contractadmin_tmp <- contractadmin;
   is_admin = builtin eq initiator contractadmin_tmp;
@@ -717,7 +597,6 @@ procedure IsAdmin(initiator: ByStr20)
   end
 end
 
-(* Check if the caller is the proxy *)
 procedure IsProxy()
   is_proxy = builtin eq _sender init_proxy_address;
   match is_proxy with
@@ -728,7 +607,6 @@ procedure IsProxy()
   end
 end
 
-(* Check if the contract is not paused *)
 procedure IsNotPaused()
   paused_tmp <- paused;
   match paused_tmp with
@@ -739,7 +617,6 @@ procedure IsNotPaused()
   end
 end
 
-(* Check if the contract is paused *)
 procedure IsPaused()
   paused_tmp <- paused;
   match paused_tmp with
@@ -756,7 +633,6 @@ procedure TransferFunds(tag: String, amt: Uint128, recipient: ByStr20)
     send msgs
 end
 
-(* current_block > withdraw_number + bnum_req *)
 procedure CalculateTotalWithdrawal(withdraw: Pair BNum Uint128)
   current_deleg_o <- current_deleg;
   match current_deleg_o with
@@ -836,7 +712,6 @@ procedure UpdateStakeReward(entry: SsnStakeRewardShare)
   end
 end
 
-(* this procedure is to send rewards to deleg *)
 procedure SendDelegRewards(addr: ByStr20, amt: Uint128)
   to_send = builtin eq amt uint128_zero;
   match to_send with
@@ -848,7 +723,6 @@ procedure SendDelegRewards(addr: ByStr20, amt: Uint128)
   end
 end
 
-(* Check if a delegs exists for a given SSN *)
 procedure DelegExists(ssnaddr: ByStr20, deleg: ByStr20)
   if_exists <- exists deposit_amt_deleg[deleg][ssnaddr];
   match if_exists with
@@ -940,7 +814,6 @@ procedure AsseertNoBufferedDeposit(ssnaddr: ByStr20, deleg: ByStr20)
   end
 end
 
-(* corner case check for swap request process in which there is buff_deposit but zero reward after assign rewards *)
 procedure AssertNoBufferedDepositLessOneCycle(ssnaddr: ByStr20, deleg: ByStr20)
   lrc <- lastrewardcycle;
   last_reward_cycle = builtin sub lrc uint32_one;
@@ -1229,33 +1102,20 @@ procedure Delegate(ssnaddr: ByStr20, initiator: ByStr20, amount: Uint128)
   end  
 end
 
-(***************************************************)
-(*                  Transition                     *)
-(***************************************************)
 
-(***************************************************)
-(*            House keeping transition             *)
-(***************************************************)
 
-(* @dev: pause the contract. Used by admin only. *)
-(* @param initiator: The original caller who called the proxy. *)
 transition Pause(initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
   paused := bool_active
 end
 
-(* @dev: unpause/unfreeze the contract. Used by admin only. *)
-(* @param initiator: The original caller who called the proxy. *)
 transition UnPause(initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
   paused := bool_inactive
 end
 
-(* @dev: Start a proposal for new contract admin. Used by admin only. *)
-(* @param admin: New admin value *)
-(* @param initiator: The original caller who called the proxy. *)
 transition UpdateAdmin(admin: ByStr20, initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
@@ -1263,8 +1123,6 @@ transition UpdateAdmin(admin: ByStr20, initiator: ByStr20)
   stagingcontractadmin := staging_admin
 end
 
-(* @dev: Claim to be the new admin of contract. *)
-(* @param initiator: The original caller who called the proxy. *)
 transition ClaimAdmin(initiator: ByStr20)
   IsProxy;
   staging_admin <- stagingcontractadmin;
@@ -1288,9 +1146,6 @@ transition ClaimAdmin(initiator: ByStr20)
   end
 end
 
-(* @dev: Set the verifier of the contract. Used by admin only. *)
-(* @param verif: New verifier value *)
-(* @param initiator: The original caller who called the proxy *)
 transition UpdateVerifier(verif: ByStr20, initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
@@ -1298,9 +1153,6 @@ transition UpdateVerifier(verif: ByStr20, initiator: ByStr20)
   verifier := newverifier
 end
 
-(* @dev: Set the verifier receiving address of the contract. Used by admin only. *)
-(* @param addr: New verifier receiving address *)
-(* @param initiator: The original caller who called the proxy *)
 transition UpdateVerifierRewardAddr(addr: ByStr20, initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
@@ -1308,10 +1160,6 @@ transition UpdateVerifierRewardAddr(addr: ByStr20, initiator: ByStr20)
   verifier_receiving_addr := newAddr
 end
 
-(* @dev: Set the staking parameters of contract. Used by admin only. *)
-(* @param min_stake: New minstake value *)
-(* @param min_deleg_stake: New mindelegstake value *)
-(* @param initiator: The original caller who called the proxy *)
 transition UpdateStakingParameters(min_stake: Uint128, min_deleg_stake: Uint128, max_comm_change_rate: Uint128, initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
@@ -1372,10 +1220,6 @@ transition UpdateSSN(ssnaddr: ByStr20, new_name: String, new_urlraw: String, new
   end
 end
 
-(* @dev: delete empty maps {} for buff_deposit_deleg  *)
-(* invoked by staking-tool purge script *)
-(* @param deleg_addr_list: the list of deleg address to be deleted (1st layer map); buff_deposit_deleg[deleg] *)
-(* @param ssn_addr_list: the list of ssn address to be deleted (2nd layer map); buff_deposit_deleg[deleg][ssn] *)
 transition CleanBuffDeposit(deleg_addr_list: List ByStr20, ssn_addr_list: List (Pair ByStr20 ByStr20), initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
@@ -1384,10 +1228,6 @@ transition CleanBuffDeposit(deleg_addr_list: List ByStr20, ssn_addr_list: List (
   forall deleg_addr_list CleanBuffDepositDelegAddr
 end
 
-(* @dev: delete empty maps {} for direct_deposit_deleg  *)
-(* invoked by staking-tool purge script *)
-(* @param deleg_addr_list: the list of deleg address to be deleted (1st layer map); direct_deposit_deleg[deleg] *)
-(* @param ssn_addr_list: the list of ssn address to be deleted (2nd layer map); direct_deposit_deleg[deleg][ssn] *)
 transition CleanDirectDeposit(deleg_addr_list: List ByStr20, ssn_addr_list: List (Pair ByStr20 ByStr20), initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
@@ -1396,10 +1236,6 @@ transition CleanDirectDeposit(deleg_addr_list: List ByStr20, ssn_addr_list: List
   forall deleg_addr_list CleanDirectDepositDelegAddr
 end
 
-(* @dev: delete empty maps {} for deleg_stake_per_cycle  *)
-(* invoked by staking-tool purge script *)
-(* @param deleg_addr_list: the list of deleg address to be deleted (1st layer map); deleg_stake_per_cycle[deleg] *)
-(* @param ssn_addr_list: the list of ssn address to be deleted (2nd layer map); deleg_stake_per_cycle[deleg][ssn] *)
 transition CleanDelegStakePerCycle(deleg_addr_list: List ByStr20, ssn_addr_list: List (Pair ByStr20 ByStr20), initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
@@ -1408,51 +1244,31 @@ transition CleanDelegStakePerCycle(deleg_addr_list: List ByStr20, ssn_addr_list:
   forall deleg_addr_list CleanDelegStakePerCycleDelegAddr
 end
 
-(* @dev: delete empty maps {} for deposit_amt_deleg *)
-(* invoked by staking-tool purge script *)
-(* @param deleg_addr_list: the list of deleg address to be deleted (1st layer map); deposit_amt_deleg[deleg] *)
 transition CleanDepositAmt(deleg_addr_list: List ByStr20, initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
   forall deleg_addr_list CleanDepositAmtDelegAddr
 end
 
-(* @dev: delete empty maps {} for withdrawal_pending *)
-(* invoked by staking-tool purge script *)
-(* @param deleg_addr_list: the list of deleg address to be deleted (1st layer map); withdrawal_pending[deleg] *)
 transition CleanPendingWithdrawal(deleg_addr_list: List ByStr20, initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
   forall deleg_addr_list CleanPendingWithdrawalDelegAddr
 end
 
-(* @dev: delete empty maps {} for last_withdraw_cycle_deleg *)
-(* invoked by staking-tool purge script *)
-(* @param deleg_addr_list: the list of deleg address to be deleted (1st layer map); last_withdraw_cycle_deleg[deleg] *)
 transition CleanLastWithdrawCycle(deleg_addr_list: List ByStr20, initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
   forall deleg_addr_list CleanLastWithdrawCycleDelegAddr
 end
 
-(* @dev: delete empty maps {} for last_buf_deposit_cycle_deleg *)
-(* invoked by staking-tool purge script *)
-(* @param deleg_addr_list: the list of deleg address to be deleted (1st layer map); last_buf_deposit_cycle_deleg[deleg] *)
 transition CleanLastBuffDepositCycle(deleg_addr_list: List ByStr20, initiator: ByStr20)
   IsProxy;
   IsAdmin initiator;
   forall deleg_addr_list CleanLastBuffDepositCycleDelegAddr
 end
 
-(***************************************************)
-(*             SSN operator transition             *)
-(***************************************************)
 
-(* @dev : To update the commision rate for a given SSN *)
-(* @param new_rate: The new commision rate *)
-(* @param initiator: The original caller who called the proxy *)
-(* If the percentage is 5.2%, then, the value of this field will be 5.2 x 10^7 represented as an integer *)
-(* The max rate is 100%, so the max new rate will be 100 x 10^7 which is 10^9 *)
 transition UpdateComm(new_rate: Uint128, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1480,8 +1296,6 @@ transition UpdateComm(new_rate: Uint128, initiator: ByStr20)
   end
 end
 
-(* @dev: Withdraw comm. Can be called by a ssn operator. *)
-(* @param initiator: The original caller who called the proxy *)
 transition WithdrawComm(initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1506,9 +1320,6 @@ transition WithdrawComm(initiator: ByStr20)
   end
 end
 
-(* @dev : To update the received address for a given SSN *)
-(* @param new_addr: The new received address *)
-(* @param initiator: The original caller who called the proxy. This is SSN address. *)
 transition UpdateReceivingAddr(new_addr: ByStr20, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1525,13 +1336,7 @@ transition UpdateReceivingAddr(new_addr: ByStr20, initiator: ByStr20)
   end
 end
 
-(***************************************************)
-(*                Delegator transition             *)
-(***************************************************)
 
-(* @dev : To delegate the stake to the contract. *)
-(* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
-(* @param initiator: The original caller who called the proxy aka the deleg. *)
 transition DelegateStake(ssnaddr: ByStr20, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1547,9 +1352,6 @@ transition DelegateStake(ssnaddr: ByStr20, initiator: ByStr20)
   send msg
 end
 
-(* @dev: Withdraw stake reward. Can be called by a deleg. *)
-(* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
-(* @param initiator: The original caller who called the proxy *)
 transition WithdrawStakeRewards(ssnaddr: ByStr20, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1557,10 +1359,6 @@ transition WithdrawStakeRewards(ssnaddr: ByStr20, initiator: ByStr20)
   WithdrawalStakeRewards initiator ssnaddr
 end
 
-(* @dev: Intitiate the process of unbonding of ZIL for withdrawal purpose. Used by delegs. *)
-(* @param ssnaddr: Address of the SSN to which stake had been delegated. *)
-(* @param amt: The amount which the delegators want to unbond*)
-(* @param initiator: The original caller who called the proxy. *)
 transition WithdrawStakeAmt(ssnaddr: ByStr20, amt: Uint128, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1571,8 +1369,6 @@ transition WithdrawStakeAmt(ssnaddr: ByStr20, amt: Uint128, initiator: ByStr20)
   send msg
 end
 
-(* @dev: Withdrawal of all unbonded stake. Used by delegs. *)
-(* @param initiator: The original caller who called the proxy. *)
 transition CompleteWithdrawal(initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1613,11 +1409,6 @@ transition CompleteWithdrawal(initiator: ByStr20)
   end
 end
 
-(* @dev: Transfer stake deposit from one SSN to another. Used by delegs. *)
-(* @param ssnaddr: SSN from where the stake deposit will be withdrawn for transfer purpose. *)
-(* @param to_ssn: SSN that will receive the withdrawn stake deposit. *)
-(* @param amount: The amount of stake deposit to transfer. *)
-(* @param initiator: The original caller who called the proxy. *)
 transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1639,18 +1430,8 @@ transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128, i
   
 end
 
-(***************************************************)
-(*                 Verifier transition             *)
-(***************************************************)
 
-(* @dev: Assign stake reward to all ssn from ssnlist. Used by verifier only. *)
-(* @param ssnrewardlist: List of SSN address and cycle rewards in Qa *)
-(*  CycleReward       : Uint128 *)
-(*                      Integer representation of reward assigned by the verifier to this SSN for this cycle. *)
-(*                      It's floor(NumberOfDSEpochsInCurrentCycle * 110,000 * VerificationPassed) *)
-(* https://github.com/Zilliqa/ZIP/blob/master/zips/zip-11.md#verifier *)
 
-(* @param initiator: The original caller who called the proxy *)
 transition AssignStakeReward(ssnreward_list: List (Pair ByStr20 Uint128), initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -1685,12 +1466,7 @@ transition AssignStakeReward(ssnreward_list: List (Pair ByStr20 Uint128), initia
 
 end
 
-(***************************************************)
-(*                  Generic transition             *)
-(***************************************************)
 
-(* @dev: Move funds from initiator to recipient, i.e., contract address. *)
-(* @param initiator: The original caller who called the proxy. *)
 transition AddFunds(initiator: ByStr20)
   IsProxy;
   accept;
@@ -1698,483 +1474,8 @@ transition AddFunds(initiator: ByStr20)
   event e
 end
 
-(***************************************************)
-(*         Contract upgrade transition             *)
-(***************************************************)
-
-(* @dev   Adds new ssn to ssnlist. Used by admin only. *)
-(* @param ssnaddr: Address of the ssn to be added *)
-(* @param stake_amt: Stake amount of ssn *)
-(* @param rewards: Rewards of the ssn to be added *)
-(* @param name: Human readable name *)
-(* @param urlraw: string representing "ip:port" of the ssn serving raw api request *)
-(* @param urlapi: string representing url exposed by ssn serving public api request *)
-(* @param buffered_deposit: Any buffered stake deposit *)
-(* @param comm: Percentage of incoming rewards that the SSN takes *)
-(* @param comm_rewards: Number of ZILs earned as comm *)
-(* @param min_delegate_amt: Minimum nb. of ZILs required for delegation *)
-(* @param rec_addr: Address that will be used to receive comm *)
-(* @param initiator: The original caller who called the proxy *)
-transition AddSSNAfterUpgrade(ssnaddr: ByStr20, stake_amt: Uint128, rewards: Uint128, name: String, urlraw: String, urlapi: String, buff_deposit: Uint128,  comm: Uint128, comm_rewards: Uint128, rec_addr: ByStr20, initiator: ByStr20)
-  IsProxy;
-  IsAdmin initiator;
-  already_exists <- exists ssnlist[ssnaddr];
-  match already_exists with
-  | True  =>
-    e = { _eventname: "SSN already exists"; ssn_addr: ssnaddr };
-    event e
-  | False =>
-    minstake_tmp <- minstake;
-    status = uint128_le minstake_tmp stake_amt;
-    s = Ssn status stake_amt rewards name urlraw urlapi buff_deposit comm comm_rewards rec_addr;
-    ssnlist[ssnaddr] := s;
-    e = { _eventname: "SSN added"; ssn_addr: ssnaddr };
-    event e
-  end
-end
-
-(* @dev: Adds or deletes a new deleg. Used by admin only during contract upgrade. *)
-(* @param ssnaddr: Address of the ssn *)
-(* @param deleg: Address of the deleg *)
-(* @param stake_amt: Stake amount *)
-(* @param initiator: The original caller who called the proxy *)
-(* Its very crucial that after this operation, we should restore direct and buffered map, as well as *)
-(* lastrewardcycle last_withdraw_cycle_deleg last_buf_deposit_cycle_deleg totalstakeamount *)
-transition UpdateDeleg(ssnaddr: ByStr20, deleg: ByStr20, stake_amt: Uint128, initiator: ByStr20)
-  IsProxy;
-  IsAdmin initiator;
-  ssn_o <- ssnlist[ssnaddr];
-  minstake_tmp <- minstake;
-  match ssn_o with
-  | Some (Ssn active_status staking_amt deleg_reward name urlraw urlapi buffdeposit comm comm_rewards rec_addr) =>
-    is_delete = builtin eq stake_amt uint128_zero;
-    match is_delete with
-    | True =>
-      alr_deleg_amt_o <- deposit_amt_deleg[deleg][ssnaddr];
-      match alr_deleg_amt_o with
-      | Some alr_deleg =>
-        TruncateDeleg deleg ssnaddr;
-        new_stake_amt = builtin sub staking_amt alr_deleg;
-        status = uint128_le minstake_tmp new_stake_amt;
-        ssn = Ssn status new_stake_amt deleg_reward name urlraw urlapi buffdeposit comm comm_rewards rec_addr;
-        ssnlist[ssnaddr] := ssn;
-        e = { _eventname: "Deleg deleted"; ssn_addr: ssnaddr; deleg_address: deleg };
-        event e;
-        TransferFunds addfunds_tag alr_deleg deleg 
-      | None =>
-      end
-    | False =>
-      FillInDepositDelegAmt ssnaddr deleg stake_amt;
-      new_stake_amt = builtin add stake_amt staking_amt;
-      status = uint128_le minstake_tmp new_stake_amt;
-      ssn = Ssn status new_stake_amt deleg_reward name urlraw urlapi buffdeposit comm comm_rewards rec_addr;
-      ssnlist[ssnaddr] := ssn;
-      e = { _eventname: "Deleg added"; ssn_addr: ssnaddr; deleg_address: deleg };
-      event e
-    end
-  | None =>
-    e = SSNNotExist;
-    ThrowError e
-  end
-end
-
-transition PopulateStakeSSNPerCycle(ssn_addr: ByStr20, cycle: Uint32, totalAmt: Uint128, rewards: Uint128, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  info = SSNCycleInfo totalAmt rewards;
-  stake_ssn_per_cycle[ssn_addr][cycle] := info
-end
-
-transition PopulateLastWithdrawCycleForDeleg(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32, initiator: ByStr20)
-  IsPaused;  
-  IsProxy;
-  IsAdmin initiator;
-  last_withdraw_cycle_deleg[deleg_addr][ssn_addr] := cycle
-end
-
-transition PopulateLastBufDepositCycleDeleg(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32, initiator: ByStr20)
-  IsPaused;  
-  IsProxy;
-  IsAdmin initiator;
-  last_buf_deposit_cycle_deleg[deleg_addr][ssn_addr] := cycle
-end
-
-transition PopulateBuffDeposit(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32, amt: Uint128, initiator: ByStr20)
-  IsPaused;  
-  IsProxy;
-  IsAdmin initiator;
-  buff_deposit_deleg[deleg_addr][ssn_addr][cycle] := amt
-end
-
-transition PopulateDirectDeposit(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32, amt: Uint128, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  direct_deposit_deleg[deleg_addr][ssn_addr][cycle] := amt
-end
-
-transition PopulateDepositAmtDeleg(deleg_addr: ByStr20, ssn_addr: ByStr20, amt: Uint128, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  deposit_amt_deleg[deleg_addr][ssn_addr] := amt;
-  ssn_deleg_amt[ssn_addr][deleg_addr] := amt
-end
 
 
-transition PopulateDelegStakePerCycle(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32, amt: Uint128, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  deleg_stake_per_cycle[deleg_addr][ssn_addr][cycle] := amt
-end
-
-transition PopulateLastRewardCycle(cycle: Uint32, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  lastrewardcycle := cycle
-end
-
-transition PopulateCommForSSN(ssn_addr: ByStr20, cycle: Uint32, comm: Uint128, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  comm_for_ssn[ssn_addr][cycle] := comm
-end
-
-transition PopulateTotalStakeAmt(amt: Uint128, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  totalstakeamount := amt
-end
-
-transition PopulatePendingWithdrawal(ssn_addr: ByStr20, block_number: BNum, stake: Uint128, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  withdrawal_pending[ssn_addr][block_number] := stake
-end
-
-transition PopulateDelegSwapRequest(requestor: ByStr20, new_deleg_addr: ByStr20, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  deleg_swap_request[requestor] := new_deleg_addr
-end
-
-(* @dev:  Drain the contract's balance. Used by current admin only *)
-(*        in event of contract upgrade or emergency. *)
-(* @param initiator: The original caller who called the proxy *)
-(* @param amt: The amount (Qa) to be drained from the contract back to the admin address *)
-transition DrainContractBalance(amt: Uint128, initiator: ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator;
-  bal <- _balance;
-  less_than = builtin lt bal amt;
-  match less_than with
-  | True => throw
-  | False =>
-    TransferFunds addfunds_tag amt initiator
-  end
-end
-
-(***************************************************)
-(*           Contract state migration              *)
-(***************************************************)
-
-(* Common validation procedure for all migration transitions *)
-procedure ValidateMigration (initiator : ByStr20)
-  IsPaused;
-  IsProxy;
-  IsAdmin initiator
-end
-
-(***************************************************)
-
-procedure MigrateCommForSsnByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field comm_for_ssn: Map ByStr20 (Map Uint32 Uint128)
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.comm_for_ssn[key];
-    match old_val_opt with
-    | Some old_val =>
-      comm_for_ssn[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateCommForSsn (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field comm_for_ssn: Map ByStr20 (Map Uint32 Uint128)
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field comm_for_ssn: Map ByStr20 (Map Uint32 Uint128)
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateCommForSsnByKey
-end
-
-(***************************************************)
-
-procedure MigrateDepositAmtDelegByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128)
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.deposit_amt_deleg[key];
-    match old_val_opt with
-    | Some old_val =>
-      deposit_amt_deleg[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateDepositAmtDeleg (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128)
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128)
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateDepositAmtDelegByKey
-end
-
-(***************************************************)
-
-procedure MigrateSsnDelegAmtByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field ssn_deleg_amt: Map ByStr20 (Map ByStr20 Uint128)
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.ssn_deleg_amt[key];
-    match old_val_opt with
-    | Some old_val =>
-      ssn_deleg_amt[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateSsnDelegAmt (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field ssn_deleg_amt: Map ByStr20 (Map ByStr20 Uint128)
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field ssn_deleg_amt: Map ByStr20 (Map ByStr20 Uint128)
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateSsnDelegAmtByKey
-end
-
-(***************************************************)
-
-procedure MigrateBuffDepositDelegByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field buff_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.buff_deposit_deleg[key];
-    match old_val_opt with
-    | Some old_val =>
-      buff_deposit_deleg[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateBuffDepositDeleg (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field buff_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field buff_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateBuffDepositDelegByKey
-end
-
-(***************************************************)
-
-procedure MigrateDirectDepositDelegByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field direct_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.direct_deposit_deleg[key];
-    match old_val_opt with
-    | Some old_val =>
-      direct_deposit_deleg[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateDirectDepositDeleg (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field direct_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field direct_deposit_deleg: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateDirectDepositDelegByKey
-end
-
-(***************************************************)
-
-procedure MigrateLastWithdrawCycleDelegByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field last_withdraw_cycle_deleg: Map ByStr20 (Map ByStr20 Uint32)
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.last_withdraw_cycle_deleg[key];
-    match old_val_opt with
-    | Some old_val =>
-      last_withdraw_cycle_deleg[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateLastWithdrawCycleDeleg (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field last_withdraw_cycle_deleg: Map ByStr20 (Map ByStr20 Uint32)
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field last_withdraw_cycle_deleg: Map ByStr20 (Map ByStr20 Uint32)
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateLastWithdrawCycleDelegByKey
-end
-
-(***************************************************)
-
-procedure MigrateLastBufDepositCycleDelegByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field last_buf_deposit_cycle_deleg: Map ByStr20 (Map ByStr20 Uint32)
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.last_buf_deposit_cycle_deleg[key];
-    match old_val_opt with
-    | Some old_val =>
-      last_buf_deposit_cycle_deleg[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateLastBufDepositCycleDeleg (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field last_buf_deposit_cycle_deleg: Map ByStr20 (Map ByStr20 Uint32)
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field last_buf_deposit_cycle_deleg: Map ByStr20 (Map ByStr20 Uint32)
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateLastBufDepositCycleDelegByKey
-end
-
-(***************************************************)
-
-procedure MigrateDelegStakePerCycleByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field deleg_stake_per_cycle: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.deleg_stake_per_cycle[key];
-    match old_val_opt with
-    | Some old_val =>
-      deleg_stake_per_cycle[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateDelegStakePerCycle (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field deleg_stake_per_cycle: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field deleg_stake_per_cycle: Map ByStr20 (Map ByStr20 (Map Uint32 Uint128))
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateDelegStakePerCycleByKey
-end
-
-(***************************************************)
-
-procedure MigrateWithdrawalPendingByKey (
-  arg : Pair ByStr20 (ByStr20 with contract
-                                     field withdrawal_pending: Map ByStr20 (Map BNum Uint128)
-                              end))
-  match arg with
-  | Pair key old_contract =>                          
-    old_val_opt <-& old_contract.withdrawal_pending[key];
-    match old_val_opt with
-    | Some old_val =>
-      withdrawal_pending[key] := old_val
-    | None => (* Nothing to migrate *)
-    end
-  end
-end
-
-transition MigrateWithdrawalPending (
-  initiator : ByStr20,
-  keys : List ByStr20,
-  old_contract : ByStr20 with contract
-                                field withdrawal_pending: Map ByStr20 (Map BNum Uint128)
-                         end)
-  ValidateMigration initiator;
-  mapper = @list_map_to_pair_with_constant ByStr20 (ByStr20 with contract
-                                                                   field withdrawal_pending: Map ByStr20 (Map BNum Uint128)
-                                                            end);
-  paired_list = mapper keys old_contract;
-  forall paired_list MigrateWithdrawalPendingByKey
-end
-
-(***************************************************)
-(*                  Swap transition                *)
-(***************************************************)
 
 procedure ActualSwapDirectDeposit(direct_deposit_cycle: Pair Uint32 Uint128)
   current_ssn_o <- current_ssn;
@@ -2218,8 +1519,6 @@ procedure ActualSwapDirectDeposit(direct_deposit_cycle: Pair Uint32 Uint128)
   end
 end
 
-(* @dev Swap deleg address from current_deleg -> new_deleg in direct_deposit_deleg *)
-(* @see ActualSwapDirectDeposit *)
 procedure SwapDirectDeposit(ssndeposit: Pair ByStr20 Uint128)
   fst = @fst ByStr20 Uint128;
   ssn_address = fst ssndeposit;
@@ -2284,8 +1583,6 @@ procedure ActualSwapDelegStakePerCycle(deleg_stake_cycle: Pair Uint32 Uint128)
   end
 end
 
-(* @dev Swap deleg address from current_deleg -> new_deleg in deleg_stake_cycle *)
-(* @see ActualSwapDelegStakePerCycle *)
 procedure SwapDelegStakePerCycle(ssndeposit: Pair ByStr20 Uint128)
   fst = @fst ByStr20 Uint128;
   ssn_address = fst ssndeposit;
@@ -2308,7 +1605,6 @@ procedure SwapDelegStakePerCycle(ssndeposit: Pair ByStr20 Uint128)
   end
 end
 
-(* @dev Swap deleg address from current_deleg -> new_deleg in deposit_amt_deleg *)
 procedure SwapDepositAmtDeleg(ssndeposit: Pair ByStr20 Uint128)
   fst = @fst ByStr20 Uint128;
   ssn_address = fst ssndeposit;
@@ -2347,7 +1643,6 @@ procedure SwapDepositAmtDeleg(ssndeposit: Pair ByStr20 Uint128)
   end
 end
 
-(* @dev Swap deleg address from current_deleg -> new_deleg in ssn_deleg_amt *)
 procedure SwapSSNDelegAmt(ssndeposit: Pair ByStr20 Uint128)
   fst = @fst ByStr20 Uint128;
   ssn_address = fst ssndeposit;
@@ -2385,9 +1680,6 @@ procedure SwapSSNDelegAmt(ssndeposit: Pair ByStr20 Uint128)
   end
 end
 
-(* @dev Swap deleg address from current_deleg -> new_deleg in last_withdraw_cycle_deleg *)
-(* Both parties have been asserted to have no buffered deposits or rewards; lwcd should be identical or one-off lrc *)
-(* If current_deleg and new_deleg has same ssn, don't replace new_deleg entry *)
 procedure SwapLastWithdrawCycleDeleg(ssndeposit: Pair ByStr20 Uint128)
   fst = @fst ByStr20 Uint128;
   ssn_address = fst ssndeposit;
@@ -2425,9 +1717,6 @@ procedure SwapLastWithdrawCycleDeleg(ssndeposit: Pair ByStr20 Uint128)
   end
 end
 
-(* @dev Swap deleg address from current_deleg -> new_deleg in last_buf_deposit_cycle_deleg *)
-(* Both parties have been asserted to have no buffered deposits or rewards; lbdc should be identical or one-off lrc *)
-(* If current_deleg and new_deleg has same ssn, don't replace new_deleg entry *)
 procedure SwapLastBuffDepositCycleDeleg(ssndeposit: Pair ByStr20 Uint128)
   fst = @fst ByStr20 Uint128;
   ssn_address = fst ssndeposit;
@@ -2464,7 +1753,6 @@ procedure SwapLastBuffDepositCycleDeleg(ssndeposit: Pair ByStr20 Uint128)
   end
 end
 
-(* @dev Swap deleg address from current_deleg -> new_deleg in withdrawal_pending *)
 procedure SwapPendingWithdrawal(blk_deposit_cycle: Pair BNum Uint128)
   current_deleg_o <- current_deleg;
   new_deleg_o <- new_deleg;
@@ -2493,7 +1781,6 @@ procedure SwapPendingWithdrawal(blk_deposit_cycle: Pair BNum Uint128)
   end
 end
 
-(* @dev Clears the mutable addresses after use *)
 procedure SwapCleanUp()
   r = Some {ByStr20} reset_addr;
   current_deleg := r;
@@ -2501,8 +1788,6 @@ procedure SwapCleanUp()
   new_deleg := r
 end
 
-(* @dev Change a delegator's stake from initiator -> new_deleg_addr. *)
-(* not swapping buff_deposit_deleg because there is pre-assertion that requestor has no buff deposits *)
 procedure SwapDelegator(requestor: ByStr20, new_deleg_addr: ByStr20)
   c = Some {ByStr20} requestor;
   current_deleg := c;
@@ -2539,11 +1824,6 @@ procedure SwapDelegator(requestor: ByStr20, new_deleg_addr: ByStr20)
   end
 end
 
-(* checks if there exists A -> B to prevent B -> A due to potential cyclic swap issue *)
-(* if there is A -> B, and B -> A, then a cyclic swap issue may occur deppending on who accepts first *)
-(* A -> (B) -> A, A is final inheritor *)
-(* B -> (A) -> B, B is final inheritor *)
-(* to prevent this scenario, prevent B -A from happening *)
 procedure IsNotCyclicSwap(initiator: ByStr20, new_deleg_addr: ByStr20)
  cyclic_initiator <- deleg_swap_request[new_deleg_addr];
  match cyclic_initiator with
@@ -2560,7 +1840,6 @@ procedure IsNotCyclicSwap(initiator: ByStr20, new_deleg_addr: ByStr20)
  end
 end
 
-(* check for A -> A request *)
 procedure IsNotSelfSwap(initiator: ByStr20, new_deleg_addr: ByStr20)
   is_identical_addr = builtin eq initiator new_deleg_addr;
   match is_identical_addr with
@@ -2571,7 +1850,6 @@ procedure IsNotSelfSwap(initiator: ByStr20, new_deleg_addr: ByStr20)
   end
 end
 
-(* checks if new delegator matches that of stored request *)
 procedure IsValidSwapAddr(requestor: ByStr20, new_deleg_addr: ByStr20)
   swap_addr <- deleg_swap_request[requestor];
   match swap_addr with
@@ -2609,7 +1887,6 @@ procedure AssertSwapNoBufferedAndRewards(ssndeposit: Pair ByStr20 Uint128)
   end
 end
 
-(* checks if the requestor has buffered deposit or rewards *)
 procedure AssertNoBufferedAndRewards(requestor : ByStr20)
   c = Some {ByStr20} requestor;
   current_deleg := c;
@@ -2623,10 +1900,6 @@ procedure AssertNoBufferedAndRewards(requestor : ByStr20)
   end
 end
 
-(* @dev: Creates a request to another delegator to indicate interest in transferring all stakes, rewards etc to the delegator *)
-(* @param new_deleg_addr: Address of the new deleg that will be receiving all the stakes from requestor *)
-(* @param initiator: Address of the requestor; the one who call the proxy *)
-(* requestor can override the new deleg address by sending a new request *)
 transition RequestDelegatorSwap(new_deleg_addr: ByStr20, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -2640,11 +1913,6 @@ transition RequestDelegatorSwap(new_deleg_addr: ByStr20, initiator: ByStr20)
   event e
 end
 
-(* @dev: Accepts a swap request from a requestor. *)
-(* Once confirmed, everything which was under the requestor would be transferred over to the new deleg *)
-(* @param requestor: Address of the one that creates the swap request *)
-(* @param initiator: Address of the new_deleg confirming the request *)
-(* Transfer cannot be reverted once confirmed *)
 transition ConfirmDelegatorSwap(requestor: ByStr20, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -2665,9 +1933,6 @@ transition ConfirmDelegatorSwap(requestor: ByStr20, initiator: ByStr20)
   event e
 end
 
-(* @dev: Revokes a swap request. *)
-(* for requestor use *)
-(* @param initiator: Address of requestor who wants to revoke the swap process *)
 transition RevokeDelegatorSwap(initiator: ByStr20)
   IsNotPaused;
   IsProxy;
@@ -2683,11 +1948,6 @@ transition RevokeDelegatorSwap(initiator: ByStr20)
   end
 end
 
-(* @dev: Rejects a swap request from a requestor. *)
-(* for swap recipient use *)
-(* Once rejected, requestor must create swap request again *)
-(* @param requestor: Address of the one that creates the swap request *)
-(* @param initiator: Address of the new_deleg rejecting the request *)
 transition RejectDelegatorSwap(requestor: ByStr20, initiator: ByStr20)
   IsNotPaused;
   IsProxy;
