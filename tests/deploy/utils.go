@@ -46,7 +46,7 @@ func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
 		Version:      strconv.FormatInt(int64(util.Pack(222, 1)), 10),
 		Nonce:        "",
 		GasPrice:     gasPrice,
-		GasLimit:     "40000",
+		GasLimit:     "75000",
 		SenderPubKey: "",
 	}
 	return c.Deploy(parameter)
