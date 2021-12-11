@@ -64,7 +64,7 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	}
 
 	/********************************************************************
-	* Upgrade Zproxy
+	* Upgrade Zproxy, make some initial actions
 	********************************************************************/
 	args := []core.ContractValue{
 		{
@@ -90,8 +90,16 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	}
 	t.AssertEqual(Zimpl.Field("direct_deposit_deleg", "0x"+Buffer.Addr, AZIL_SSN_ADDRESS, "1"), zil(1000))
 
+	//we need to delegate something from Holder, in order to make Zimpl know holder's address
+	_, err = Holder.DelegateStake(zil(HOLDER_INITIAL_DELEGATE_ZIL))
+	if err != nil {
+		t.LogError("failed to delegate initial Holder's stake; error = ", err)
+	}
+
 	//SSN will become active on next cycle
 	Zproxy.UpdateWallet(verifierKey)
+	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
+	deploy.IncreaseBlocknum(10)
 	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 
 	log.Println("upgrade succeed")

@@ -79,7 +79,7 @@ func NewGzil(key string) (*Gzil, error) {
 		{
 			VName: "num_minting_blocks",
 			Type:  "Uint128",
-			Value: "620500",
+			Value: "0", //was 620500. Minting is over, so we don't need to assume it in tests
 		},
 	}
 
