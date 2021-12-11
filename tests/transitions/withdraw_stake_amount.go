@@ -70,9 +70,11 @@ func (t *Testing) WithdrawStakeAmount() {
 	bnum1 := txn.Receipt.EpochNum
 
 	newDelegBalanceZil, err := Aimpl.ZilBalanceOf(addr2)
-	t.AssertEqual(Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
-	t.AssertEqual(Aimpl.Field("totalstakeamount"), newDelegBalanceZil)
-	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(10))
+	//TODO: we can check this only in local testing environment,
+	//and even in this case we need to monitor all incoming balances, including Holder initial delegate
+	//t.AssertEqual(Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
+	t.AssertEqual(Aimpl.Field("totalstakeamount"), deploy.StrSum(zil(1000), newDelegBalanceZil))
+	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1010))
 	t.AssertEqual(Aimpl.Field("balances", "0x"+addr2), azil(10))
 	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(5))
 	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(5))
@@ -87,10 +89,12 @@ func (t *Testing) WithdrawStakeAmount() {
 	bnum2 := txn.Receipt.EpochNum
 	t.AssertEvent(txn, deploy.Event{Aimpl.Addr, "WithdrawStakeAmt",
 		deploy.ParamsMap{"withdraw_amount": azil(10), "withdraw_stake_amount": zil(10)}})
-	t.AssertEqual(Aimpl.Field("totalstakeamount"), "0")
-	t.AssertEqual(Aimpl.Field("totaltokenamount"), "0")
-	t.AssertEqual(Aimpl.Field("balances"), "empty")
-	t.AssertEqual(Zproxy.Field("totalstakeamount"), "0")
+	t.AssertEqual(Aimpl.Field("totalstakeamount"), zil(1000))  //0
+	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1000)) //0
+	//t.AssertEqual(Aimpl.Field("balances"), "empty")
+	t.AssertEqual(Aimpl.Field("balances", "0x"+admin), azil(1000))
+	//there is holder's initial stake
+	//t.AssertEqual(Zproxy.Field("totalstakeamount"), "0")
 	if bnum1 == bnum2 {
 		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(15))
 		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(15))
