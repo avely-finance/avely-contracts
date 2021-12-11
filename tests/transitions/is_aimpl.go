@@ -23,6 +23,8 @@ func (t *Testing) IsAimpl() {
 	// Use non-admin user for Holder
 	Holder.UpdateWallet(key2)
 
+	tx, err = Holder.WithdrawStakeAmt(zil(1))
+	t.AssertError(tx, err, -301)
 	tx, err = Holder.CompleteWithdrawal()
 	t.AssertError(tx, err, -301)
 	tx, err = Holder.ClaimRewards()

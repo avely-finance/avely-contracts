@@ -25,6 +25,8 @@ func (t *Testing) IsAdmin() {
 	// Use non-admin user for Holder
 	Holder.UpdateWallet(key2)
 
+	tx, err = Holder.DelegateStake(addr3)
+	t.AssertError(tx, err, -305)
 	tx, err = Holder.ChangeAzilSSNAddress(addr3)
 	t.AssertError(tx, err, -305)
 	tx, err = Holder.ChangeAimplAddress(addr3)
