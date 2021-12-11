@@ -9,20 +9,20 @@ import (
 func (t *Testing) DrainBuffer() {
 	t.LogStart("CompleteWithdrawal - success")
 
-	Zproxy, _, aZilContract, bufferContract, holderContract := t.DeployAndUpgrade()
+	Zproxy, _, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
 
-	aZilContract.DelegateStake(zil(10))
+	Aimpl.DelegateStake(zil(10))
 
-	txn, err := aZilContract.DrainBuffer(aZilContract.Addr)
+	txn, err := Aimpl.DrainBuffer(Aimpl.Addr)
 	t.AssertError(txn, err, -107)
 
-	txn, _ = aZilContract.DrainBuffer(bufferContract.Addr)
+	txn, _ = Aimpl.DrainBuffer(Buffer.Addr)
 
 	t.AssertTransition(txn, deploy.Transition{
-		aZilContract.Addr,   //sender
-		"ClaimRewards",      //tag
-		bufferContract.Addr, //recipient
-		"0",                 //amount
+		Aimpl.Addr,     //sender
+		"ClaimRewards", //tag
+		Buffer.Addr,    //recipient
+		"0",            //amount
 		deploy.ParamsMap{},
 	})
 
@@ -30,7 +30,7 @@ func (t *Testing) DrainBuffer() {
 	t.AssertTransition(txn, deploy.Transition{
 		Zproxy.Addr, //sender
 		"AddFunds",
-		bufferContract.Addr,
+		Buffer.Addr,
 		zil(1),
 		deploy.ParamsMap{},
 	})
@@ -38,7 +38,7 @@ func (t *Testing) DrainBuffer() {
 	t.AssertTransition(txn, deploy.Transition{
 		Zproxy.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
-		bufferContract.Addr,
+		Buffer.Addr,
 		"0",
 		deploy.ParamsMap{"rewards": zil(1)},
 	})
@@ -47,7 +47,7 @@ func (t *Testing) DrainBuffer() {
 	t.AssertTransition(txn, deploy.Transition{
 		Zproxy.Addr, //sender
 		"AddFunds",
-		holderContract.Addr,
+		Holder.Addr,
 		zil(1),
 		deploy.ParamsMap{},
 	})
@@ -55,30 +55,31 @@ func (t *Testing) DrainBuffer() {
 	t.AssertTransition(txn, deploy.Transition{
 		Zproxy.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
-		holderContract.Addr,
+		Holder.Addr,
 		"0",
 		deploy.ParamsMap{"rewards": zil(1)},
 	})
 
 	// Check aZIL balance
 	// 1 ZIL from Buffer + 1 ZIL from Holder
-	t.AssertEqual(aZilContract.Field("_balance"), zil(2))
-	t.AssertEqual(aZilContract.Field("autorestakeamount"), zil(2))
+	t.AssertEqual(Aimpl.Field("_balance"), zil(2))
+        t.AssertEqual(Aimpl.Field("autorestakeamount"), zil(2))
+
 
 	// Send Swap transactions
 	t.AssertTransition(txn, deploy.Transition{
-		bufferContract.Addr, //sender
+		Buffer.Addr, //sender
 		"RequestDelegatorSwap",
 		Zproxy.Addr,
 		"0",
-		deploy.ParamsMap{"new_deleg_addr": "0x" + holderContract.Addr},
+		deploy.ParamsMap{"new_deleg_addr": "0x" + Holder.Addr},
 	})
 
 	t.AssertTransition(txn, deploy.Transition{
-		holderContract.Addr, //sender
+		Holder.Addr, //sender
 		"ConfirmDelegatorSwap",
 		Zproxy.Addr,
 		"0",
-		deploy.ParamsMap{"requestor": "0x" + bufferContract.Addr},
+		deploy.ParamsMap{"requestor": "0x" + Buffer.Addr},
 	})
 }
