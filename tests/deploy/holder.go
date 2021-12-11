@@ -76,6 +76,17 @@ func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string)
 	return b.Call("WithdrawStakeAmtSuccessCallBack", args, "0")
 }
 
+func (b *HolderContract) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("WithdrawStakeAmt", args, "0")
+}
+
 func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -139,6 +150,11 @@ func (b *HolderContract) ConfirmDelegatorSwap(requestor string) (*transaction.Tr
 		},
 	}
 	return b.Call("ConfirmDelegatorSwap", args, "0")
+}
+
+func (b *HolderContract) DelegateStake(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("DelegateStake", args, amount)
 }
 
 func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string) (*HolderContract, error) {
