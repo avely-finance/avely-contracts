@@ -4,7 +4,7 @@ func (t *Testing) IsZimpl() {
 
 	t.LogStart("IsAimpl")
 
-	_, _, bufferContract, holderContract := t.DeployAndUpgrade()
+	_, _, _, bufferContract, holderContract := t.DeployAndUpgrade()
 
 	// Use random user for Buffer
 	bufferContract.UpdateWallet(key2)

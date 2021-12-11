@@ -8,7 +8,7 @@ func (t *Testing) IsAimpl() {
 
 	t.LogStart("IsAimpl")
 
-	_, _, bufferContract, holderContract := t.DeployAndUpgrade()
+	_, _, _, bufferContract, holderContract := t.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
 	bufferContract.UpdateWallet(key2)

@@ -141,7 +141,7 @@ func (b *HolderContract) ConfirmDelegatorSwap(requestor string) (*transaction.Tr
 	return b.Call("ConfirmDelegatorSwap", args, "0")
 }
 
-func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*HolderContract, error) {
+func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string) (*HolderContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/holder.scilla")
 
 	init := []core.ContractValue{
@@ -156,19 +156,19 @@ func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, s
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + aimplAddress,
+			Value: "0x" + aimplAddr,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
-			Value: aZilSSNAddress,
+			Value: azilSsnAddr,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
-			Value: "0x" + stubStakingAddr,
+			Value: "0x" + zproxyAddr,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + stubStakingAddr,
+			Value: "0x" + zimplAddr,
 		},
 	}
 

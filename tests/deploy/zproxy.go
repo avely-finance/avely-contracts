@@ -17,23 +17,37 @@ type Zproxy struct {
 	Contract
 }
 
-type SSNRewardShare struct {
-	SSNAddress       string
-	RewardPercentage string
-}
-
 func (p *Zproxy) AssignStakeReward(ssn, percent string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{{
-		VName: "ssnreward_list",
-		Type:  "List SsnRewardShare",
-		Value: []core.ParamConstructor{
-			{
-				"SsnRewardShare",
-				make([]interface{}, 0),
-				[]string{ssn, percent},
+
+	type Constructor struct {
+		Constructor string   `json:"constructor"`
+		ArgTypes    []string `json:"argtypes"`
+		Arguments   []string `json:"arguments"`
+	}
+
+	ats := []string{
+		"ByStr20",
+		"Uint128",
+	}
+
+	ars := []string{
+		ssn,
+		percent,
+	}
+
+	args := []core.ContractValue{
+		{
+			VName: "ssnreward_list",
+			Type:  "List (Pair ByStr20 Uint128)",
+			Value: []Constructor{
+				{
+					Constructor: "Pair",
+					ArgTypes:    ats,
+					Arguments:   ars,
+				},
 			},
 		},
-	}}
+	}
 
 	return p.Call("AssignStakeReward", args, percent)
 }
@@ -94,6 +108,25 @@ func (p *Zproxy) UpdateStakingParameters(min, delegmin string) (*transaction.Tra
 		},
 	}
 	return p.Call("UpdateStakingParameters", args, "0")
+}
+
+func (p *Zproxy) UpdateVerifier(addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{{
+		"verif",
+		"ByStr20",
+		addr,
+	}}
+	return p.Call("UpdateVerifier", args, "0")
+
+}
+
+func (p *Zproxy) UpdateVerifierRewardAddr(newAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{{
+		"addr",
+		"ByStr20",
+		newAddr,
+	}}
+	return p.Call("UpdateVerifierRewardAddr", args, "0")
 }
 
 func NewZproxy(key string) (*Zproxy, error) {

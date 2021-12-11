@@ -8,7 +8,7 @@ func (t *Testing) IsAdmin() {
 
 	t.LogStart("IsAdmin")
 
-	_, aZilContract, bufferContract, holderContract := t.DeployAndUpgrade()
+	_, _, aZilContract, bufferContract, holderContract := t.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
 	bufferContract.UpdateWallet(key3)
