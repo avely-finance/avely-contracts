@@ -17,10 +17,6 @@ type StubStakingContract struct {
 	Contract
 }
 
-func (s *StubStakingContract) GetBnumReq() int32 {
-	return STUB_BNUM_REQ
-}
-
 func (s *StubStakingContract) AddSSN(address string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
