@@ -17,20 +17,83 @@ type Zproxy struct {
 	Contract
 }
 
-func (s *Zproxy) AddSSN(address string) (*transaction.Transaction, error) {
+type SSNRewardShare struct {
+	SSNAddress       string
+	RewardPercentage string
+}
+
+func (p *Zproxy) AssignStakeReward(ssn, percent string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{{
+		VName: "ssnreward_list",
+		Type:  "List SsnRewardShare",
+		Value: []core.ParamConstructor{
+			{
+				"SsnRewardShare",
+				make([]interface{}, 0),
+				[]string{ssn, percent},
+			},
+		},
+	}}
+
+	return p.Call("AssignStakeReward", args, percent)
+}
+
+func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"ssnaddr",
 			"ByStr20",
-			address,
+			addr,
+		},
+		{
+			"name",
+			"String",
+			name,
+		},
+		{
+			"urlraw",
+			"String",
+			"fakeurl",
+		},
+		{
+			"urlapi",
+			"String",
+			"fakeapi",
+		},
+		{
+			"comm",
+			"Uint128",
+			"0",
 		},
 	}
-	return s.Call("AddSSN", args, "0")
+
+	return p.Call("AddSSN", args, "0")
 }
 
-func (s *Zproxy) AssignStakeReward() (*transaction.Transaction, error) {
+func (p *Zproxy) Unpause() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
-	return s.Call("AssignStakeReward", args, "0")
+	return p.Call("UnPause", args, "0")
+}
+
+func (p *Zproxy) UpdateStakingParameters(min, delegmin string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"min_stake",
+			"Uint128",
+			min,
+		},
+		{
+			"min_deleg_stake",
+			"Uint128",
+			delegmin,
+		},
+		{
+			"max_comm_change_rate",
+			"Uint128",
+			"20",
+		},
+	}
+	return p.Call("UpdateStakingParameters", args, "0")
 }
 
 func NewZproxy(key string) (*Zproxy, error) {
