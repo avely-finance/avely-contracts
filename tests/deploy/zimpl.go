@@ -59,6 +59,7 @@ func NewZimpl(key, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
 		stateFieldTypes := make(StateFieldTypes)
+		stateFieldTypes["buff_deposit_deleg"] = "StateFieldMapMapMap"
 
 		contract := Contract{
 			Code:            string(code),
