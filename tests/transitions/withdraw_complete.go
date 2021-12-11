@@ -10,7 +10,7 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	t.LogStart("CompleteWithdrawal - success")
 	readyBlocks := []string{}
 
-	Zproxy, _, Aimpl, _, Holder := t.DeployAndUpgrade()
+	Zproxy, Zimpl, Aimpl, _, Holder := t.DeployAndUpgrade()
 	t.AddDebug("addr1", "0x"+addr1)
 
 	Aimpl.UpdateWallet(key1)
@@ -31,7 +31,7 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	tx, err = Aimpl.ClaimWithdrawal(readyBlocks)
 	t.AssertError(tx, err, -105)
 
-	delta, _ := strconv.ParseInt(deploy.StrSum(Zproxy.Field("bnum_req"), "1"), 10, 32)
+	delta, _ := strconv.ParseInt(deploy.StrSum(Zimpl.Field("bnum_req"), "1"), 10, 32)
 	deploy.IncreaseBlocknum(int32(delta))
 	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 
@@ -44,7 +44,7 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 		"0",                  //amount
 		deploy.ParamsMap{},
 	})
-	t.AssertEvent(tx, deploy.Event{Holder.Addr, "AddFunds", deploy.ParamsMap{"funder": "0x" + Zproxy.Addr, "amount": zil(10)}})
+	t.AssertEvent(tx, deploy.Event{Holder.Addr, "AddFunds", deploy.ParamsMap{"funder": "0x" + Zimpl.Addr, "amount": zil(10)}})
 
 	t.AssertTransition(tx, deploy.Transition{
 		Holder.Addr,                         //sender
@@ -72,10 +72,11 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 		deploy.ParamsMap{},
 	})
 
-	t.AssertEqual("0", Aimpl.Field("totalstakeamount"))
-	t.AssertEqual("0", Aimpl.Field("totaltokenamount"))
+	t.AssertEqual(zil(1000), Aimpl.Field("totalstakeamount"))
+	t.AssertEqual(azil(1000), Aimpl.Field("totaltokenamount"))
 	t.AssertEqual("0", Aimpl.Field("tmp_complete_withdrawal_available"))
-	t.AssertEqual("empty", Aimpl.Field("balances"))
+	//t.AssertEqual("empty", Aimpl.Field("balances"))
+	t.AssertEqual(Aimpl.Field("balances", "0x"+admin), azil(1000))
 	t.AssertEqual("empty", Aimpl.Field("withdrawal_unbonded"))
 	t.AssertEqual("empty", Aimpl.Field("withdrawal_pending"))
 
