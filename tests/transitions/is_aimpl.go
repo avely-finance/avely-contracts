@@ -8,25 +8,25 @@ func (t *Testing) IsAimpl() {
 
 	t.LogStart("IsAimpl")
 
-	_, _, _, bufferContract, holderContract := t.DeployAndUpgrade()
+	_, _, _, Buffer, Holder := t.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
-	bufferContract.UpdateWallet(key2)
+	Buffer.UpdateWallet(key2)
 
-	tx, err := bufferContract.DelegateStake()
+	tx, err := Buffer.DelegateStake()
 	t.AssertError(tx, err, -401)
-	tx, err = bufferContract.ClaimRewards()
+	tx, err = Buffer.ClaimRewards()
 	t.AssertError(tx, err, -401)
-	tx, err = bufferContract.RequestDelegatorSwap(holderContract.Addr)
+	tx, err = Buffer.RequestDelegatorSwap(Holder.Addr)
 	t.AssertError(tx, err, -401)
 
 	// Use non-admin user for Holder
-	holderContract.UpdateWallet(key2)
+	Holder.UpdateWallet(key2)
 
-	tx, err = holderContract.CompleteWithdrawal()
+	tx, err = Holder.CompleteWithdrawal()
 	t.AssertError(tx, err, -301)
-	tx, err = holderContract.ClaimRewards()
+	tx, err = Holder.ClaimRewards()
 	t.AssertError(tx, err, -301)
-	tx, err = holderContract.ConfirmDelegatorSwap(bufferContract.Addr)
+	tx, err = Holder.ConfirmDelegatorSwap(Buffer.Addr)
 	t.AssertError(tx, err, -301)
 }

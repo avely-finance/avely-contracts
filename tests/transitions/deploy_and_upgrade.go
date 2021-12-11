@@ -31,35 +31,35 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	log.Println("deploy Zimpl succeed, address = ", Zimpl.Addr)
 
 	//deploy azil
-	aZilContract, err := deploy.NewAZilContract(adminKey, AZIL_SSN_ADDRESS, Zproxy.Addr)
+	Aimpl, err := deploy.NewAZilContract(adminKey, AZIL_SSN_ADDRESS, Zproxy.Addr)
 	if err != nil {
 		t.LogError("deploy aZil error = ", err)
 	}
-	log.Println("deploy aZil succeed, address = ", aZilContract.Addr)
+	log.Println("deploy aZil succeed, address = ", Aimpl.Addr)
 
 	//deploy buffer
-	bufferContract, err := deploy.NewBufferContract(adminKey, aZilContract.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
+	Buffer, err := deploy.NewBufferContract(adminKey, Aimpl.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		t.LogError("deploy buffer error = ", err)
 	}
-	log.Println("deploy buffer succeed, address = ", bufferContract.Addr)
+	log.Println("deploy buffer succeed, address = ", Buffer.Addr)
 
 	//deploy holder
-	holderContract, err := deploy.NewHolderContract(adminKey, aZilContract.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
+	Holder, err := deploy.NewHolderContract(adminKey, Aimpl.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		t.LogError("deploy holder error = ", err)
 	}
-	log.Println("deploy holder succeed, address = ", holderContract.Addr)
+	log.Println("deploy holder succeed, address = ", Holder.Addr)
 
 	log.Println("start to upgrade")
 	/********************************************************************
 	* Upgrade buffer/holder
 	********************************************************************/
-	new_buffers := []string{"0x" + bufferContract.Addr}
-	if _, err := aZilContract.ChangeBuffers(new_buffers); err != nil {
+	new_buffers := []string{"0x" + Buffer.Addr}
+	if _, err := Aimpl.ChangeBuffers(new_buffers); err != nil {
 		t.LogError("failed to change aZil's buffer contract address; error = ", err)
 	}
-	if _, err := aZilContract.ChangeHolderAddress(holderContract.Addr); err != nil {
+	if _, err := Aimpl.ChangeHolderAddress(Holder.Addr); err != nil {
 		t.LogError("failed to change aZil's holder contract address; error = ", err)
 	}
 
@@ -84,11 +84,11 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	Zproxy.Unpause()
 
 	//we need our SSN to be active, so delegating some stake
-	_, err = aZilContract.DelegateStake(zil(1000))
+	_, err = Aimpl.DelegateStake(zil(1000))
 	if err != nil {
 		t.LogError("DelegateStake", err)
 	}
-	t.AssertEqual(Zimpl.Field("direct_deposit_deleg", "0x"+bufferContract.Addr, AZIL_SSN_ADDRESS, "1"), zil(1000))
+	t.AssertEqual(Zimpl.Field("direct_deposit_deleg", "0x"+Buffer.Addr, AZIL_SSN_ADDRESS, "1"), zil(1000))
 
 	//SSN will become active on next cycle
 	Zproxy.UpdateWallet(verifierKey)
@@ -98,9 +98,9 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	t.AddDebug("Zproxy", "0x"+Zproxy.Addr)
 	t.AddDebug("Zimpl", "0x"+Zimpl.Addr)
 	t.AddDebug("Gzil", "0x"+gzil.Addr)
-	t.AddDebug("aZilContract", "0x"+aZilContract.Addr)
-	t.AddDebug("bufferContract", "0x"+bufferContract.Addr)
-	t.AddDebug("holderContract", "0x"+holderContract.Addr)
+	t.AddDebug("Aimpl", "0x"+Aimpl.Addr)
+	t.AddDebug("Buffer", "0x"+Buffer.Addr)
+	t.AddDebug("Holder", "0x"+Holder.Addr)
 
-	return Zproxy, Zimpl, aZilContract, bufferContract, holderContract
+	return Zproxy, Zimpl, Aimpl, Buffer, Holder
 }

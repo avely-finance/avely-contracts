@@ -9,11 +9,11 @@ import (
 func (t *Testing) DelegateStakeSuccess() {
 	t.LogStart("DelegateStake: Stake 10 ZIL")
 
-	_, Zimpl, Aimpl, bufferContract, _ := t.DeployAndUpgrade()
+	_, Zimpl, Aimpl, Buffer, _ := t.DeployAndUpgrade()
 
 	Aimpl.UpdateWallet(key1)
 	Aimpl.DelegateStake(zil(20))
-	t.AssertEqual(Zimpl.Field("buff_deposit_deleg", "0x"+bufferContract.Addr, AZIL_SSN_ADDRESS, Zimpl.Field("lastrewardcycle")), zil(20))
+	t.AssertEqual(Zimpl.Field("buff_deposit_deleg", "0x"+Buffer.Addr, AZIL_SSN_ADDRESS, Zimpl.Field("lastrewardcycle")), zil(20))
 
 	t.AssertEqual(Aimpl.Field("_balance"), "0")
 	t.AssertEqual(Aimpl.Field("totalstakeamount"), zil(1020))
@@ -25,14 +25,14 @@ func (t *Testing) DelegateStakeSuccess() {
 func (t *Testing) DelegateStakeBuffersRotation() {
 	t.LogStart("DelegateStake: Buffers rotation")
 
-	Zproxy, Zimpl, Aimpl, bufferContract, _ := t.DeployAndUpgrade()
+	Zproxy, Zimpl, Aimpl, Buffer, _ := t.DeployAndUpgrade()
 
-	anotherBufferContract, err1 := deploy.NewBufferContract(adminKey, Aimpl.Addr, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
+	anotherBuffer, err1 := deploy.NewBufferContract(adminKey, Aimpl.Addr, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err1 != nil {
 		t.LogError("Deploy buffer error = ", err1)
 	}
 
-	new_buffers := []string{"0x" + bufferContract.Addr, "0x" + bufferContract.Addr, "0x" + anotherBufferContract.Addr}
+	new_buffers := []string{"0x" + Buffer.Addr, "0x" + Buffer.Addr, "0x" + anotherBuffer.Addr}
 
 	Aimpl.ChangeBuffers(new_buffers)
 	Zproxy.UpdateWallet(verifierKey)
