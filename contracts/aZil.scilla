@@ -418,6 +418,8 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     DecreaseTotalTokenAmt withdraw_token_amt;
 
     (* call Holder contract *)
+    holder_addr <- holder_address;
+    ClaimRewards holder_addr;
     HolderWithdrawStakeAmt withdraw_stake_amt
   | None =>
     e = DelegDoesNotExistAtSSN;
@@ -655,7 +657,7 @@ transition WithdrawStakeAmt(amount: Uint128)
   initiator = _sender;
   azil_ssn_addr <- azil_ssn_address;
 
-  (* first we do all checks, then call Holder on success within procedure*)
+  (* first we do all checks, then call Holder on success within procedure *)
   WithdrawalStakeAmt initiator amount;
 
   (* TODO: we sending Azil callback, but ignoring Zimpl callback completely. Should we? *)
