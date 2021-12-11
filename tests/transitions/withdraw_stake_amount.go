@@ -12,7 +12,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	t.LogStart("WithdrawStakeAmount")
 
 	// deploy smart contract
-	stubStakingContract, aZilContract, _, holderContract := t.DeployAndUpgrade()
+	Zproxy, _, aZilContract, _, holderContract := t.DeployAndUpgrade()
 
 	/*******************************************************************************
 	 * 0. delegator (addr2) delegate 15 zil, and it should enter in buffered deposit,
@@ -21,7 +21,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	aZilContract.UpdateWallet(key2)
 	aZilContract.DelegateStake(zil(15))
 	// TODO: if delegator have buffered deposits, withdrawal should fail
-	stubStakingContract.AssignStakeReward()
+	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 
 	/*******************************************************************************
 	 * 1. non delegator(addr4) try to withdraw stake, should fail
@@ -70,7 +70,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	bnum1 := txn.Receipt.EpochNum
 
 	newDelegBalanceZil, err := aZilContract.ZilBalanceOf(addr2)
-	t.AssertEqual(stubStakingContract.Field("totalstakeamount"), newDelegBalanceZil)
+	t.AssertEqual(Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
 	t.AssertEqual(aZilContract.Field("totalstakeamount"), newDelegBalanceZil)
 	t.AssertEqual(aZilContract.Field("totaltokenamount"), azil(10))
 	t.AssertEqual(aZilContract.Field("balances", "0x"+addr2), azil(10))
@@ -90,7 +90,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	t.AssertEqual(aZilContract.Field("totalstakeamount"), "0")
 	t.AssertEqual(aZilContract.Field("totaltokenamount"), "0")
 	t.AssertEqual(aZilContract.Field("balances"), "empty")
-	t.AssertEqual(stubStakingContract.Field("totalstakeamount"), "0")
+	t.AssertEqual(Zproxy.Field("totalstakeamount"), "0")
 	if bnum1 == bnum2 {
 		t.AssertEqual(aZilContract.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(15))
 		t.AssertEqual(aZilContract.Field("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(15))

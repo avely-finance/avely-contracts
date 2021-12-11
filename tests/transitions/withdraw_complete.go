@@ -2,6 +2,7 @@ package transitions
 
 import (
 	"Azil/test/deploy"
+	"strconv"
 )
 
 func (t *Testing) CompleteWithdrawalSuccess() {
@@ -9,13 +10,13 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	t.LogStart("CompleteWithdrawal - success")
 	readyBlocks := []string{}
 
-	stubStakingContract, aZilContract, _, holderContract := t.DeployAndUpgrade()
+	Zproxy, _, aZilContract, _, holderContract := t.DeployAndUpgrade()
 	t.AddDebug("addr1", "0x"+addr1)
 
 	aZilContract.UpdateWallet(key1)
 	aZilContract.DelegateStake(zil(10))
 
-	stubStakingContract.AssignStakeReward()
+	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 
 	tx, err := aZilContract.WithdrawStakeAmt(azil(10))
 	block1 := tx.Receipt.EpochNum
@@ -30,8 +31,9 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	tx, err = aZilContract.ClaimWithdrawal(readyBlocks)
 	t.AssertError(tx, err, -105)
 
-	deploy.IncreaseBlocknum(stubStakingContract.GetBnumReq() + 1)
-	stubStakingContract.AssignStakeReward()
+	delta, _ := strconv.ParseInt(deploy.StrSum(Zproxy.Field("bnum_req"), "1"), 10, 32)
+	deploy.IncreaseBlocknum(int32(delta))
+	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 
 	aZilContract.UpdateWallet(adminKey)
 	tx, err = aZilContract.ClaimWithdrawal(readyBlocks)
@@ -42,7 +44,7 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 		"0",                  //amount
 		deploy.ParamsMap{},
 	})
-	t.AssertEvent(tx, deploy.Event{holderContract.Addr, "AddFunds", deploy.ParamsMap{"funder": "0x" + stubStakingContract.Addr, "amount": zil(10)}})
+	t.AssertEvent(tx, deploy.Event{holderContract.Addr, "AddFunds", deploy.ParamsMap{"funder": "0x" + Zproxy.Addr, "amount": zil(10)}})
 
 	t.AssertTransition(tx, deploy.Transition{
 		holderContract.Addr,                 //sender

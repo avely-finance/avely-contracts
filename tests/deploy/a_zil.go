@@ -155,7 +155,7 @@ func (a *AZil) ZilBalanceOf(addr string) (string, error) {
 	return "", errors.New("Balance not found")
 }
 
-func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) (*AZil, error) {
+func NewAZilContract(key, aZilSSNAddress, zproxyAddr string) (*AZil, error) {
 	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
 	init := []core.ContractValue{
 		{
@@ -173,7 +173,7 @@ func NewAZilContract(key string, aZilSSNAddress string, stubStakingAddr string) 
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
-			Value: "0x" + stubStakingAddr,
+			Value: "0x" + zproxyAddr,
 		}, {
 			VName: "init_holder_address",
 			Type:  "ByStr20",

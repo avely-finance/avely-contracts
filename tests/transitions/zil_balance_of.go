@@ -9,7 +9,7 @@ func (t *Testing) ZilBalanceOf() {
 	t.LogStart("ZilBalanceOf")
 
 	// deploy smart contract
-	_, aZilContract, _, _ := t.DeployAndUpgrade()
+	_, _, aZilContract, _, _ := t.DeployAndUpgrade()
 
 	/*******************************************************************************
 	 * 1. Non-delegator address (addr2) should have empty balance

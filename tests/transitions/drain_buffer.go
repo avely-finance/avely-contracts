@@ -9,7 +9,7 @@ import (
 func (t *Testing) DrainBuffer() {
 	t.LogStart("CompleteWithdrawal - success")
 
-	stubStakingContract, aZilContract, bufferContract, holderContract := t.DeployAndUpgrade()
+	Zproxy, _, aZilContract, bufferContract, holderContract := t.DeployAndUpgrade()
 
 	aZilContract.DelegateStake(zil(10))
 
@@ -28,7 +28,7 @@ func (t *Testing) DrainBuffer() {
 
 	// Send funds and call a callback via Buffer
 	t.AssertTransition(txn, deploy.Transition{
-		stubStakingContract.Addr, //sender
+		Zproxy.Addr, //sender
 		"AddFunds",
 		bufferContract.Addr,
 		zil(1),
@@ -36,7 +36,7 @@ func (t *Testing) DrainBuffer() {
 	})
 
 	t.AssertTransition(txn, deploy.Transition{
-		stubStakingContract.Addr, //sender
+		Zproxy.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
 		bufferContract.Addr,
 		"0",
@@ -45,7 +45,7 @@ func (t *Testing) DrainBuffer() {
 
 	// Send funds and call a callback via Holder
 	t.AssertTransition(txn, deploy.Transition{
-		stubStakingContract.Addr, //sender
+		Zproxy.Addr, //sender
 		"AddFunds",
 		holderContract.Addr,
 		zil(1),
@@ -53,7 +53,7 @@ func (t *Testing) DrainBuffer() {
 	})
 
 	t.AssertTransition(txn, deploy.Transition{
-		stubStakingContract.Addr, //sender
+		Zproxy.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
 		holderContract.Addr,
 		"0",
@@ -69,7 +69,7 @@ func (t *Testing) DrainBuffer() {
 	t.AssertTransition(txn, deploy.Transition{
 		bufferContract.Addr, //sender
 		"RequestDelegatorSwap",
-		stubStakingContract.Addr,
+		Zproxy.Addr,
 		"0",
 		deploy.ParamsMap{"new_deleg_addr": "0x" + holderContract.Addr},
 	})
@@ -77,7 +77,7 @@ func (t *Testing) DrainBuffer() {
 	t.AssertTransition(txn, deploy.Transition{
 		holderContract.Addr, //sender
 		"ConfirmDelegatorSwap",
-		stubStakingContract.Addr,
+		Zproxy.Addr,
 		"0",
 		deploy.ParamsMap{"requestor": "0x" + bufferContract.Addr},
 	})

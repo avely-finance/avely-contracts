@@ -60,6 +60,7 @@ func NewZimpl(key, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 
 		stateFieldTypes := make(StateFieldTypes)
 		stateFieldTypes["buff_deposit_deleg"] = "StateFieldMapMapMap"
+		stateFieldTypes["direct_deposit_deleg"] = "StateFieldMapMapMap"
 
 		contract := Contract{
 			Code:            string(code),
