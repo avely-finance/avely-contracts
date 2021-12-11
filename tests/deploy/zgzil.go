@@ -17,10 +17,6 @@ type Gzil struct {
 	Contract
 }
 
-func (s *Gzil) GetBnumReq() int32 {
-	return STUB_BNUM_REQ
-}
-
 func (s *Gzil) AddSSN(address string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
