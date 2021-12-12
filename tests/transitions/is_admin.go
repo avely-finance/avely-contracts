@@ -46,8 +46,6 @@ func (t *Testing) IsAdmin() {
 	new_buffers := []string{"0x" + Buffer.Addr, "0x" + Buffer.Addr}
 	tx, err = Aimpl.ChangeBuffers(new_buffers)
 	t.AssertError(tx, err, -106)
-	tx, err = Aimpl.IncreaseTotalStakeAmount(zil(100))
-	t.AssertError(tx, err, -106)
 	tx, err = Aimpl.PerformAutoRestake()
 	t.AssertError(tx, err, -106)
 	tx, err = Aimpl.UpdateStakingParameters(zil(100))
