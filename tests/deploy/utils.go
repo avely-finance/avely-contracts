@@ -9,6 +9,7 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/ybbus/jsonrpc"
 	"log"
+	"math/big"
 	"strconv"
 )
 
@@ -73,4 +74,13 @@ func StrSum(s1, s2 string) string {
 	x, _ := strconv.Atoi(s1)
 	y, _ := strconv.Atoi(s2)
 	return strconv.Itoa(x + y)
+}
+
+func MulDiv(a, b, c string) string {
+	A, _ := new(big.Int).SetString(a, 10)
+	B, _ := new(big.Int).SetString(b, 10)
+	C, _ := new(big.Int).SetString(c, 10)
+	result := new(big.Int).Mul(A, B)
+	result = result.Div(result, C)
+	return result.String()
 }
