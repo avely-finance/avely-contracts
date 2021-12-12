@@ -44,6 +44,22 @@ func (b *HolderContract) CompleteWithdrawalSuccessCallBack(amount string) (*tran
 	return b.Call("CompleteWithdrawalSuccessCallBack", args, "0")
 }
 
+func (b *HolderContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("DelegateStakeSuccessCallBack", args, "0")
+}
+
 func (b *HolderContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
