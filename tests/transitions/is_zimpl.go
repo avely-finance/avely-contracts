@@ -20,6 +20,8 @@ func (t *Testing) IsZimpl() {
 	Holder.UpdateWallet(key2)
 	tx, err = Holder.AddFunds(zil(10))
 	t.AssertError(tx, err, -307)
+	tx, err = Holder.DelegateStakeSuccessCallBack(AZIL_SSN_ADDRESS, zil(10))
+	t.AssertError(tx, err, -307)
 	tx, err = Holder.WithdrawStakeAmtSuccessCallBack(addr2, zil(10))
 	t.AssertError(tx, err, -307)
 	tx, err = Holder.WithdrawStakeRewardsSuccessCallBack(addr2, zil(10))
