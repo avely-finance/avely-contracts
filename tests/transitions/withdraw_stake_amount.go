@@ -12,7 +12,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	t.LogStart("WithdrawStakeAmount")
 
 	// deploy smart contract
-	Zproxy, _, Aimpl, _, Holder := t.DeployAndUpgrade()
+	Zproxy, _, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
 
 	/*******************************************************************************
 	 * 0. delegator (addr2) delegate 15 zil, and it should enter in buffered deposit,
@@ -59,6 +59,15 @@ func (t *Testing) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	t.LogStart("WithdwarStakeAmount, step 3A")
 
+	deploy.IncreaseBlocknum(10)
+	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+	Aimpl.UpdateWallet(adminKey)
+	txn, err = Aimpl.DrainBuffer(Buffer.Addr)
+	if err != nil {
+		t.LogError("Aimpl.DrainBuffer(Buffer.Addr) error = ", err)
+	}
+
+	Aimpl.UpdateWallet(key2)
 	txn, err = Aimpl.WithdrawStakeAmt(azil(5))
 	t.AssertTransition(txn, deploy.Transition{
 		Aimpl.Addr,

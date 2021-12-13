@@ -418,8 +418,6 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     DecreaseTotalTokenAmt withdraw_token_amt;
 
     (* call Holder contract *)
-    holder_addr <- holder_address;
-    ClaimRewards holder_addr;
     HolderWithdrawStakeAmt withdraw_stake_amt
   | None =>
     e = DelegDoesNotExistAtSSN;
