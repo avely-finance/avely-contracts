@@ -44,6 +44,22 @@ func (b *HolderContract) CompleteWithdrawalSuccessCallBack(amount string) (*tran
 	return b.Call("CompleteWithdrawalSuccessCallBack", args, "0")
 }
 
+func (b *HolderContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("DelegateStakeSuccessCallBack", args, "0")
+}
+
 func (b *HolderContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -74,6 +90,17 @@ func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string)
 		},
 	}
 	return b.Call("WithdrawStakeAmtSuccessCallBack", args, "0")
+}
+
+func (b *HolderContract) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("WithdrawStakeAmt", args, "0")
 }
 
 func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
@@ -141,7 +168,12 @@ func (b *HolderContract) ConfirmDelegatorSwap(requestor string) (*transaction.Tr
 	return b.Call("ConfirmDelegatorSwap", args, "0")
 }
 
-func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*HolderContract, error) {
+func (b *HolderContract) DelegateStake(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("DelegateStake", args, amount)
+}
+
+func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string) (*HolderContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/holder.scilla")
 
 	init := []core.ContractValue{
@@ -156,19 +188,19 @@ func NewHolderContract(key string, aimplAddress string, aZilSSNAddress string, s
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + aimplAddress,
+			Value: "0x" + aimplAddr,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
-			Value: aZilSSNAddress,
+			Value: azilSsnAddr,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
-			Value: "0x" + stubStakingAddr,
+			Value: "0x" + zproxyAddr,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + stubStakingAddr,
+			Value: "0x" + zimplAddr,
 		},
 	}
 

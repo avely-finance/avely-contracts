@@ -4,28 +4,30 @@ func (t *Testing) IsZimpl() {
 
 	t.LogStart("IsAimpl")
 
-	_, _, bufferContract, holderContract := t.DeployAndUpgrade()
+	_, _, _, Buffer, Holder := t.DeployAndUpgrade()
 
 	// Use random user for Buffer
-	bufferContract.UpdateWallet(key2)
+	Buffer.UpdateWallet(key2)
 
-	tx, err := bufferContract.AddFunds(zil(10))
+	tx, err := Buffer.AddFunds(zil(10))
 	t.AssertError(tx, err, -407)
-	tx, err = bufferContract.WithdrawStakeRewardsSuccessCallBack(addr2, zil(10))
+	tx, err = Buffer.WithdrawStakeRewardsSuccessCallBack(addr2, zil(10))
 	t.AssertError(tx, err, -407)
-	tx, err = bufferContract.DelegateStakeSuccessCallBack(addr2, zil(10))
+	tx, err = Buffer.DelegateStakeSuccessCallBack(addr2, zil(10))
 	t.AssertError(tx, err, -407)
 
 	// Use random user for Buffer
-	holderContract.UpdateWallet(key2)
-	tx, err = holderContract.AddFunds(zil(10))
+	Holder.UpdateWallet(key2)
+	tx, err = Holder.AddFunds(zil(10))
 	t.AssertError(tx, err, -307)
-	tx, err = holderContract.WithdrawStakeAmtSuccessCallBack(addr2, zil(10))
+	tx, err = Holder.DelegateStakeSuccessCallBack(AZIL_SSN_ADDRESS, zil(10))
 	t.AssertError(tx, err, -307)
-	tx, err = holderContract.WithdrawStakeRewardsSuccessCallBack(addr2, zil(10))
+	tx, err = Holder.WithdrawStakeAmtSuccessCallBack(addr2, zil(10))
 	t.AssertError(tx, err, -307)
-	tx, err = holderContract.CompleteWithdrawalSuccessCallBack(zil(10))
+	tx, err = Holder.WithdrawStakeRewardsSuccessCallBack(addr2, zil(10))
 	t.AssertError(tx, err, -307)
-	tx, err = holderContract.CompleteWithdrawalNoUnbondedStakeCallBack(zil(10))
+	tx, err = Holder.CompleteWithdrawalSuccessCallBack(zil(10))
+	t.AssertError(tx, err, -307)
+	tx, err = Holder.CompleteWithdrawalNoUnbondedStakeCallBack(zil(10))
 	t.AssertError(tx, err, -307)
 }

@@ -40,7 +40,6 @@ type EventLog struct {
 const API_PROVIDER string = "http://zilliqa_server:5555"
 const TX_CONFIRM_MAX_ATTEMPTS int = 5
 const TX_CONFIRM_INTERVAL_SEC int = 0
-const STUB_BNUM_REQ int32 = 35000
 
 //GLOBAL VARIABLES
 //TODO: what is best practices for shared variable?

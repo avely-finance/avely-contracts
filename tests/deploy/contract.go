@@ -3,6 +3,7 @@ package deploy
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"reflect"
 	"strconv"
@@ -25,17 +26,11 @@ type Contract struct {
 	StateFieldTypes StateFieldTypes
 }
 
-func (c *Contract) LogContractStateJson() string {
+func (c *Contract) LogState() {
 	provider := provider2.NewProvider(API_PROVIDER)
 	rsp, _ := provider.GetSmartContractState(c.Addr)
-	j, _ := json.Marshal(rsp)
-	//c.LogPrettyStateJson(rsp)
-	return string(j)
-}
-
-func (c *Contract) LogPrettyStateJson(data interface{}) {
-	j, _ := json.MarshalIndent(data, "", "   ")
-	log.Println(string(j))
+	j, _ := json.MarshalIndent(rsp, "  ", "    ")
+	fmt.Println(string(j))
 }
 
 func (c *Contract) GetBalance() string {
