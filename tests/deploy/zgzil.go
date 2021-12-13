@@ -10,27 +10,10 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
 type Gzil struct {
 	Contract
-}
-
-func (s *Gzil) AddSSN(address string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"ssnaddr",
-			"ByStr20",
-			address,
-		},
-	}
-	return s.Call("AddSSN", args, "0")
-}
-
-func (s *Gzil) AssignStakeReward() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return s.Call("AssignStakeReward", args, "0")
 }
 
 func NewGzil(key string) (*Gzil, error) {
