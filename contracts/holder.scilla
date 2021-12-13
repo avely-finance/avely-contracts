@@ -276,7 +276,7 @@ transition ConfirmDelegatorSwap(requestor: ByStr20)
   send msgs
 end
 
-(* Purpose of this transition is one-time min_deleg_stake delegate from Holder to Zproxy/Zimpl after its deploy *)
+(* Purpose of this transition is one-time min_deleg_stake delegate from Holder after its deploy *)
 (* Else Zimpl will not know anything about Holder and will return DelegDoesNotExistAtSSN error *)
 (* Transition should be done by admin *)
 transition DelegateStake()
