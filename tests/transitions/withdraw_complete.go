@@ -10,7 +10,7 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	t.LogStart("CompleteWithdrawal - success")
 	readyBlocks := []string{}
 
-	Zproxy, Zimpl, Aimpl, _, Holder := t.DeployAndUpgrade()
+	Zproxy, Zimpl, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
 	t.AddDebug("addr1", "0x"+addr1)
 
 	Aimpl.UpdateWallet(key1)
@@ -18,7 +18,19 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 
 	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 
-	tx, err := Aimpl.WithdrawStakeAmt(azil(10))
+	deploy.IncreaseBlocknum(10)
+	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+	Aimpl.UpdateWallet(adminKey)
+	tx, err := Aimpl.DrainBuffer(Buffer.Addr)
+	if err != nil {
+		t.LogError("Aimpl.DrainBuffer(Buffer.Addr) error = ", err)
+	}
+
+	Aimpl.UpdateWallet(key1)
+	tx, err = Aimpl.WithdrawStakeAmt(azil(10))
+	if err != nil {
+		t.LogError(" Aimpl.WithdrawStakeAmt() error = ", err)
+	}
 	block1 := tx.Receipt.EpochNum
 	tx, _ = Aimpl.CompleteWithdrawal()
 	t.AssertEvent(tx, deploy.Event{Aimpl.Addr, "NoUnbondedStake", deploy.ParamsMap{}})
