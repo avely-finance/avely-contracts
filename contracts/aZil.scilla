@@ -655,7 +655,7 @@ transition WithdrawStakeAmt(amount: Uint128)
   initiator = _sender;
   azil_ssn_addr <- azil_ssn_address;
 
-  (* first we do all checks, then call Holder on success within procedure*)
+  (* first we do all checks, then call Holder on success within procedure *)
   WithdrawalStakeAmt initiator amount;
 
   (* TODO: we sending Azil callback, but ignoring Zimpl callback completely. Should we? *)

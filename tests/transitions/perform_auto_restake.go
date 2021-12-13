@@ -5,27 +5,27 @@ import (
 )
 
 func (t *Testing) PerformAuoRestake() {
-	stubStakingContract, aZilContract, bufferContract, _ := t.DeployAndUpgrade()
+	Zproxy, _, Aimpl, Buffer, _ := t.DeployAndUpgrade()
 
-	aZilContract.UpdateWallet(adminKey)
+	Aimpl.UpdateWallet(adminKey)
 
-	t.AssertEqual(aZilContract.Field("autorestakeamount"), zil(0))
+	t.AssertEqual(Aimpl.Field("autorestakeamount"), zil(0))
 
 	restakeAmount := zil(100)
-	aZilContract.IncreaseAutoRestakeAmount(restakeAmount)
+	Aimpl.IncreaseAutoRestakeAmount(restakeAmount)
 
 	// increases to 100
-	t.AssertEqual(aZilContract.Field("autorestakeamount"), restakeAmount)
+	t.AssertEqual(Aimpl.Field("autorestakeamount"), restakeAmount)
 
-	txn, _ := aZilContract.PerformAutoRestake()
+	txn, _ := Aimpl.PerformAutoRestake()
 
 	// should return to 0
-	t.AssertEqual(aZilContract.Field("autorestakeamount"), zil(0))
+	t.AssertEqual(Aimpl.Field("autorestakeamount"), zil(0))
 
 	t.AssertTransition(txn, deploy.Transition{
-		bufferContract.Addr, //sender
+		Buffer.Addr, //sender
 		"DelegateStake",
-		stubStakingContract.Addr,
+		Zproxy.Addr,
 		restakeAmount,
 		deploy.ParamsMap{},
 	})

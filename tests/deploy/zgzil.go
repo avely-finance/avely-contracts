@@ -10,37 +10,55 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
-type StubStakingContract struct {
+type Gzil struct {
 	Contract
 }
 
-func (s *StubStakingContract) AddSSN(address string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"ssnaddr",
-			"ByStr20",
-			address,
-		},
-	}
-	return s.Call("AddSSN", args, "0")
-}
-
-func (s *StubStakingContract) AssignStakeReward() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return s.Call("AssignStakeReward", args, "0")
-}
-
-func NewStubStakingContract(key string) (*StubStakingContract, error) {
-	code, _ := ioutil.ReadFile("../contracts/stubStakingContract.scilla")
+func NewGzil(key string) (*Gzil, error) {
+	code, _ := ioutil.ReadFile("../contracts/zilliqa_staking/gzil.scilla")
 
 	init := []core.ContractValue{
 		{
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
+		},
+		{
+			VName: "contract_owner",
+			Type:  "ByStr20",
+			Value: "0x" + getAddressFromPrivateKey(key),
+		},
+		{
+			VName: "init_minter",
+			Type:  "ByStr20",
+			Value: "0x" + getAddressFromPrivateKey(key),
+		},
+		{
+			VName: "name",
+			Type:  "String",
+			Value: "Governance ZIL",
+		},
+		{
+			VName: "symbol",
+			Type:  "String",
+			Value: "gzil",
+		},
+		{
+			VName: "decimals",
+			Type:  "Uint32",
+			Value: "15",
+		},
+		{
+			VName: "init_supply",
+			Type:  "Uint128",
+			Value: "0",
+		},
+		{
+			VName: "num_minting_blocks",
+			Type:  "Uint128",
+			Value: "0", //was 620500. Minting is over, so we don't need to assume it in tests
 		},
 	}
 
@@ -62,7 +80,6 @@ func NewStubStakingContract(key string) (*StubStakingContract, error) {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
 		stateFieldTypes := make(StateFieldTypes)
-		stateFieldTypes["buff_deposit_deleg"] = "StateFieldMapMapMap"
 
 		contract := Contract{
 			Code:            string(code),
@@ -74,7 +91,7 @@ func NewStubStakingContract(key string) (*StubStakingContract, error) {
 		}
 		TxIdLast = tx.ID
 
-		return &StubStakingContract{Contract: contract}, nil
+		return &Gzil{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 		log.Println(string(data))

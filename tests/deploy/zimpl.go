@@ -10,37 +10,34 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	//"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
-type StubStakingContract struct {
+type Zimpl struct {
 	Contract
 }
 
-func (s *StubStakingContract) AddSSN(address string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"ssnaddr",
-			"ByStr20",
-			address,
-		},
-	}
-	return s.Call("AddSSN", args, "0")
-}
-
-func (s *StubStakingContract) AssignStakeReward() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return s.Call("AssignStakeReward", args, "0")
-}
-
-func NewStubStakingContract(key string) (*StubStakingContract, error) {
-	code, _ := ioutil.ReadFile("../contracts/stubStakingContract.scilla")
+func NewZimpl(key, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
+	code, _ := ioutil.ReadFile("../contracts/zilliqa_staking/ssnlist.scilla")
 
 	init := []core.ContractValue{
 		{
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
+		}, {
+			VName: "init_admin",
+			Type:  "ByStr20",
+			Value: "0x" + getAddressFromPrivateKey(key),
+		}, {
+			VName: "init_proxy_address",
+			Type:  "ByStr20",
+			Value: "0x" + ZproxyAddr,
+		},
+		{
+			VName: "init_gzil_address",
+			Type:  "ByStr20",
+			Value: "0x" + GzilAddr,
 		},
 	}
 
@@ -63,6 +60,7 @@ func NewStubStakingContract(key string) (*StubStakingContract, error) {
 
 		stateFieldTypes := make(StateFieldTypes)
 		stateFieldTypes["buff_deposit_deleg"] = "StateFieldMapMapMap"
+		stateFieldTypes["direct_deposit_deleg"] = "StateFieldMapMapMap"
 
 		contract := Contract{
 			Code:            string(code),
@@ -74,7 +72,7 @@ func NewStubStakingContract(key string) (*StubStakingContract, error) {
 		}
 		TxIdLast = tx.ID
 
-		return &StubStakingContract{Contract: contract}, nil
+		return &Zimpl{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 		log.Println(string(data))

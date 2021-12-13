@@ -119,7 +119,7 @@ func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transacti
 	return b.Call("RequestDelegatorSwap", args, "0")
 }
 
-func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, stubStakingAddr string) (*BufferContract, error) {
+func NewBufferContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string) (*BufferContract, error) {
 	code, _ := ioutil.ReadFile("../contracts/buffer.scilla")
 
 	init := []core.ContractValue{
@@ -134,19 +134,19 @@ func NewBufferContract(key string, aimplAddress string, aZilSSNAddress string, s
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + aimplAddress,
+			Value: "0x" + aimplAddr,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
-			Value: aZilSSNAddress,
+			Value: azilSsnAddr,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
-			Value: "0x" + stubStakingAddr,
+			Value: "0x" + zproxyAddr,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + stubStakingAddr,
+			Value: "0x" + zimplAddr,
 		},
 	}
 

@@ -1,0 +1,559 @@
+scilla_version 0
+
+library SSNListProxy
+
+let zero = Uint128 0
+
+let one_msg =
+  fun (m: Message) =>
+    let e = Nil {Message} in
+    Cons {Message} m e
+
+type SSNCycleInfo =
+| SSNCycleInfo of Uint128 Uint128
+(***************************************************)
+(*             The contract definition             *)
+(***************************************************)
+contract SSNListProxy(
+  init_implementation: ByStr20,
+  init_admin: ByStr20
+)
+
+(* Mutable fields *)
+field implementation: ByStr20 = init_implementation
+field admin: ByStr20 = init_admin
+field stagingadmin: Option ByStr20 = None {ByStr20}
+
+(***************************************************)
+(*                  Transition                     *)
+(***************************************************)
+
+(***************************************************)
+(*              Proxy Transition                   *)
+(***************************************************)
+transition UpgradeTo(newImplementation: ByStr20)
+    currentAdmin <- admin;
+    isAdmin = builtin eq currentAdmin _sender;
+    match isAdmin with
+    | True =>
+      implementation := newImplementation;
+      e = {_eventname: "Upgraded"; implementation_address: newImplementation};
+      event e
+    | False =>
+      e = {_eventname: "upgradeTo FailedNotAdmin"; newImplementation: newImplementation};
+      event e
+    end
+end
+
+transition ChangeProxyAdmin(newAdmin: ByStr20)
+    currentAdmin <- admin;
+    isAdmin = builtin eq currentAdmin _sender;
+    match isAdmin with
+    | True =>
+      new_staging_admin = Some {ByStr20} newAdmin;
+      stagingadmin := new_staging_admin;
+      e = {_eventname: "ChangeProxyAdmin"; oldAdmin: currentAdmin; newAdmin: newAdmin};
+      event e
+    | False =>
+      e = {_eventname: "ChangeProxyAdmin FailedNotAdmin"; newAdmin: newAdmin};
+      event e
+    end
+end
+
+transition ClaimProxyAdmin()
+    staging_admin_o <- stagingadmin;
+    match staging_admin_o with
+    | Some staging_admin =>
+      is_stagingadmin = builtin eq staging_admin _sender;
+      match is_stagingadmin with
+      | True =>
+        admin := _sender;
+        tmp_staging_admin = None {ByStr20};
+        stagingadmin := tmp_staging_admin;
+        e = {_eventname: "ClaimProxyAdmin"; newAdmin: _sender};
+        event e
+      | False =>
+        e = {_eventname: "ClaimProxyAdmin FailedNotStagingadmin"; newAdmin: _sender};
+        event e
+      end
+    | None =>
+      e = {_eventname: "ClaimProxyAdmin FailedNoStagingadmin"};
+      event e
+    end
+end
+
+(***************************************************)
+(*            House keeping transition             *)
+(***************************************************)
+
+transition Pause()
+    current_impl <- implementation;
+    msg = {_tag: "Pause"; _recipient: current_impl; _amount: zero; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition UnPause()
+    current_impl <- implementation;
+    msg = {_tag: "UnPause"; _recipient: current_impl; _amount: zero; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition UpdateAdmin(new_admin: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateAdmin"; _recipient: current_impl; _amount: zero; admin: new_admin; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition ClaimAdmin()
+    current_impl <- implementation;
+    msg = {_tag: "ClaimAdmin"; _recipient: current_impl; _amount: zero; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: Set the verifier of contract. Used by admin only. *)
+(* @param verif: New verifier value *)
+transition UpdateVerifier(verif: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateVerifier"; _recipient: current_impl; _amount: zero; verif: verif; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: Set the verifier rewarding address of the contract. Used by admin only. *)
+(* @param addr: New verifier receiving address *)
+transition UpdateVerifierRewardAddr(addr: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateVerifierRewardAddr"; _recipient: current_impl; _amount: zero; addr: addr; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: Set the minstake, maxstake and contract maxstake of contract. Used by admin only. *)
+(* @param min_stake: New min_stake value *)
+(* @param min_deleg_stake: New mindelegstake value *)
+transition UpdateStakingParameters(min_stake: Uint128, min_deleg_stake: Uint128, max_comm_change_rate: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateStakingParameters"; _recipient: current_impl; _amount: zero; min_stake: min_stake; min_deleg_stake: min_deleg_stake; max_comm_change_rate: max_comm_change_rate; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition ChangeBNumReq(input_bnum_req: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "ChangeBNumReq"; _recipient: current_impl; _amount: zero; input_bnum_req: input_bnum_req; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition UpdateGzilAddr(gzil_addr: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateGzilAddr"; _recipient: current_impl; _amount: zero; gzil_addr: gzil_addr; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: Adds new ssn to ssnlist. Used by admin only. *)
+(* @param ssnaddr: Address of the ssn to be added *)
+(* @param name: Name of the ssn to be added *)
+(* @param urlraw: string representing "ip:port" of the ssn serving raw api request *)
+(* @param urlapi: string representing url exposed by ssn serving public api request *)
+(* @param buff_deposit: Any buffered stake deposit *)
+(* @param comm: Percentage of incoming rewards that the SSN takes *)
+transition AddSSN(ssnaddr: ByStr20, name: String, urlraw: String, urlapi: String, comm: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "AddSSN"; _recipient: current_impl; _amount: zero; ssnaddr: ssnaddr; name: name; urlraw: urlraw; urlapi: urlapi; comm: comm; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition UpdateSSN(ssnaddr: ByStr20, new_name: String, new_urlraw: String, new_urlapi: String)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateSSN"; _recipient: current_impl; _amount: zero; ssnaddr: ssnaddr; new_name: new_name; new_urlraw: new_urlraw; new_urlapi: new_urlapi; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: delete empty maps {} for buff_deposit_deleg  *)
+(* to be invoked with staking-tool purge script *)
+transition CleanBuffDeposit(deleg_addr_list: List ByStr20, ssn_addr_list: List (Pair ByStr20 ByStr20))
+    current_impl <- implementation;
+    msg = {_tag: "CleanBuffDeposit"; _recipient: current_impl; _amount: zero; deleg_addr_list: deleg_addr_list; ssn_addr_list: ssn_addr_list; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: delete empty maps {} for direct_deposit_deleg  *)
+(* to be invoked with staking-tool purge script *)
+transition CleanDirectDeposit(deleg_addr_list: List ByStr20, ssn_addr_list: List (Pair ByStr20 ByStr20))
+    current_impl <- implementation;
+    msg = {_tag: "CleanDirectDeposit"; _recipient: current_impl; _amount: zero; deleg_addr_list: deleg_addr_list; ssn_addr_list: ssn_addr_list; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: delete empty maps {} for deleg_stake_per_cycle  *)
+(* to be invoked with staking-tool purge script *)
+transition CleanDelegStakePerCycle(deleg_addr_list: List ByStr20, ssn_addr_list: List (Pair ByStr20 ByStr20))
+    current_impl <- implementation;
+    msg = {_tag: "CleanDelegStakePerCycle"; _recipient: current_impl; _amount: zero; deleg_addr_list: deleg_addr_list; ssn_addr_list: ssn_addr_list; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: delete empty maps {} for deposit_amt_deleg *)
+(* to be invoked with staking-tool purge script *)
+transition CleanDepositAmt(deleg_addr_list: List ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "CleanDepositAmt"; _recipient: current_impl; _amount: zero; deleg_addr_list: deleg_addr_list; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: delete empty maps {} for withdrawal_pending *)
+(* to be invoked with staking-tool purge script *)
+transition CleanPendingWithdrawal(deleg_addr_list: List ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "CleanPendingWithdrawal"; _recipient: current_impl; _amount: zero; deleg_addr_list: deleg_addr_list; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: delete empty maps {} for last_withdraw_cycle_deleg *)
+(* to be invoked with staking-tool purge script *)
+transition CleanLastWithdrawCycle(deleg_addr_list: List ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "CleanLastWithdrawCycle"; _recipient: current_impl; _amount: zero; deleg_addr_list: deleg_addr_list; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: delete empty maps {} for last_buf_deposit_cycle_deleg *)
+(* to be invoked with staking-tool purge script *)
+transition CleanLastBuffDepositCycle(deleg_addr_list: List ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "CleanLastBuffDepositCycle"; _recipient: current_impl; _amount: zero; deleg_addr_list: deleg_addr_list; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(***************************************************)
+(*             SSN operator transition             *)
+(***************************************************)
+
+(* @dev : To update the commision rate for a given SSN *)
+(* @param new_rate: The new commision rate *)
+transition UpdateComm(new_rate: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateComm"; _recipient: current_impl; _amount: zero; new_rate: new_rate; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition WithdrawComm()
+    current_impl <- implementation;
+    msg = {_tag: "WithdrawComm"; _recipient: current_impl; _amount: zero; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev : To update the received address for a given SSN *)
+(* @param new_address: The new received address *)
+transition UpdateReceivingAddr(new_addr: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateReceivingAddr"; _recipient: current_impl; _amount: zero; new_addr: new_addr; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+
+
+(***************************************************)
+(*                Delegator transition             *)
+(***************************************************)
+
+(* @dev : To delegate the stake to the contract. *)
+(* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
+transition DelegateStake(ssnaddr: ByStr20)
+    current_impl <- implementation;
+    accept;
+    msg = {_tag: "DelegateStake"; _recipient: current_impl; _amount: _amount; ssnaddr: ssnaddr; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: Withdraw stake reward. Can be called by a deleg. *)
+transition WithdrawStakeRewards(ssnaddr: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "WithdrawStakeRewards"; _recipient: current_impl; _amount: zero; ssnaddr: ssnaddr; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition WithdrawStakeAmt(ssnaddr: ByStr20, amt: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "WithdrawStakeAmt"; _recipient: current_impl; _amount: zero; ssnaddr: ssnaddr; amt: amt; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition CompleteWithdrawal()
+    current_impl <- implementation;
+    msg = {_tag: "CompleteWithdrawal"; _recipient: current_impl; _amount: zero; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "ReDelegateStake"; _recipient: current_impl; _amount: zero; ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "RequestDelegatorSwap"; _recipient: current_impl; _amount: zero; new_deleg_addr: new_deleg_addr; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition ConfirmDelegatorSwap(requestor: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "ConfirmDelegatorSwap"; _recipient: current_impl; _amount: zero; requestor: requestor; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition RevokeDelegatorSwap()
+    current_impl <- implementation;
+    msg = {_tag: "RevokeDelegatorSwap"; _recipient: current_impl; _amount: zero; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition RejectDelegatorSwap(requestor: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "RejectDelegatorSwap"; _recipient: current_impl; _amount: zero; requestor: requestor; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(***************************************************)
+(*                 Verifier transition             *)
+(***************************************************)
+
+(* @dev: Assign stake reward to all ssn from ssnlist. Used by verifier only. *)
+(* @param ssnrewardlist: List of ssnreward. Each ssnreward is a Pair ssn_address cycle_reward *)
+transition AssignStakeReward(ssnreward_list: List (Pair ByStr20 Uint128))
+    current_impl <- implementation;
+    accept;
+    msg = {_tag: "AssignStakeReward"; _recipient: current_impl; _amount: _amount; ssnreward_list: ssnreward_list; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(***************************************************)
+(*                  Generic transition             *)
+(***************************************************)
+
+(* @dev: Move token amount from _sender to recipient i.e. contract address. *)
+transition AddFunds()
+    current_impl <- implementation;
+    accept;
+    msg = {_tag: "AddFunds"; _recipient: current_impl; _amount: _amount; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition AddSSNAfterUpgrade(ssnaddr: ByStr20, stake_amt: Uint128, rewards: Uint128, name: String, urlraw: String, urlapi: String, buff_deposit: Uint128,  comm: Uint128, comm_rewards: Uint128, rec_addr: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "AddSSNAfterUpgrade"; _recipient: current_impl; _amount: zero; ssnaddr: ssnaddr; stake_amt: stake_amt; rewards: rewards; name: name; urlraw: urlraw; urlapi: urlapi; buff_deposit: buff_deposit; comm: comm; comm_rewards: comm_rewards; rec_addr: rec_addr; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(***************************************************)
+(*         Contract upgrade transition             *)
+(***************************************************)
+
+(* @dev: Adds a new deleg. Used by admin only during contract upgrade. *)
+(* @param ssnaddr: Address of the ssn *)
+(* @param deleg: Address of the deleg *)
+(* @param stake_amount: Stake amount *)
+(* @param rewards: Rewards of the ssn to be added *)
+transition UpdateDeleg(ssnaddr: ByStr20, deleg: ByStr20, stake_amt: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "UpdateDeleg"; _recipient: current_impl; _amount: zero; ssnaddr: ssnaddr; deleg: deleg; stake_amt: stake_amt; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateStakeSSNPerCycle(ssn_addr: ByStr20, cycle: Uint32, totalAmt: Uint128, rewards: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateStakeSSNPerCycle"; _recipient: current_impl; _amount: zero; ssn_addr: ssn_addr; cycle: cycle; totalAmt: totalAmt; rewards: rewards; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateLastWithdrawCycleForDeleg(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateLastWithdrawCycleForDeleg"; _recipient: current_impl; _amount: zero; deleg_addr: deleg_addr; ssn_addr: ssn_addr; cycle: cycle; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateLastBufDepositCycleDeleg(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateLastBufDepositCycleDeleg"; _recipient: current_impl; _amount: zero; deleg_addr: deleg_addr; ssn_addr: ssn_addr; cycle: cycle; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateBuffDeposit(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32, amt: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateBuffDeposit"; _recipient: current_impl; _amount: zero; deleg_addr: deleg_addr; ssn_addr: ssn_addr; cycle: cycle; amt: amt; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateDirectDeposit(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32, amt: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateDirectDeposit"; _recipient: current_impl; _amount: zero; deleg_addr: deleg_addr; ssn_addr: ssn_addr; cycle: cycle; amt: amt; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateDepositAmtDeleg(deleg_addr: ByStr20, ssn_addr: ByStr20, amt: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateDepositAmtDeleg"; _recipient: current_impl; _amount: zero; deleg_addr: deleg_addr; ssn_addr: ssn_addr; amt: amt; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateDelegStakePerCycle(deleg_addr: ByStr20, ssn_addr: ByStr20, cycle: Uint32, amt: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateDelegStakePerCycle"; _recipient: current_impl; _amount: zero; deleg_addr: deleg_addr; ssn_addr: ssn_addr; cycle: cycle; amt: amt; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateLastRewardCycle(cycle: Uint32)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateLastRewardCycle"; _recipient: current_impl; _amount: zero; cycle: cycle; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateCommForSSN(ssn_addr: ByStr20, cycle: Uint32, comm: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateCommForSSN"; _recipient: current_impl; _amount: zero; ssn_addr: ssn_addr; cycle: cycle; comm: comm; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateTotalStakeAmt(amt: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateTotalStakeAmt"; _recipient: current_impl; _amount: zero; amt: amt; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulatePendingWithdrawal(ssn_addr: ByStr20, block_number: BNum, stake: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "PopulatePendingWithdrawal"; _recipient: current_impl; _amount: zero; ssn_addr: ssn_addr; block_number: block_number; stake: stake; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+transition PopulateDelegSwapRequest(requestor: ByStr20, new_deleg_addr: ByStr20)
+    current_impl <- implementation;
+    msg = {_tag: "PopulateDelegSwapRequest"; _recipient: current_impl; _amount: zero; requestor: requestor; new_deleg_addr: new_deleg_addr; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(* @dev: Set the admin of contract. Used by current admin only. *)
+transition DrainContractBalance(amt: Uint128)
+    current_impl <- implementation;
+    msg = {_tag: "DrainContractBalance"; _recipient: current_impl; _amount: zero; amt: amt; initiator: _sender};
+    msgs = one_msg msg;
+    send msgs
+end
+
+(***************************************************)
+(*           Contract state migration              *)
+(***************************************************)
+
+(* Shared logic for all migration transitions *)
+(* The address type of old_contract gets typechecked by ssnlist *)
+procedure Migrate (tag : String, keys : List ByStr20, old_contract : ByStr20, error_event : Event)
+  currentAdmin <- admin;
+  isAdmin = builtin eq currentAdmin _sender;
+  match isAdmin with
+  | True =>
+    current_impl <- implementation;
+    msg = {_tag : tag; _recipient : current_impl; _amount : zero; initiator : _sender; keys : keys; old_contract : old_contract};
+    msgs = one_msg msg;
+    send msgs
+  | False =>
+    event error_event
+  end
+end
+
+transition MigrateCommForSsn (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateCommForSsn";
+  e = {_eventname : "MigrateCommForSsn FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
+
+transition MigrateDepositAmtDeleg (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateDepositAmtDeleg";
+  e = {_eventname : "MigrateDepositAmtDeleg FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
+
+transition MigrateSsnDelegAmt (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateSsnDelegAmt";
+  e = {_eventname : "MigrateSsnDelegAmt FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
+
+transition MigrateBuffDepositDeleg (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateBuffDepositDeleg";
+  e = {_eventname : "MigrateBuffDepositDeleg FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
+
+transition MigrateDirectDepositDeleg (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateDirectDepositDeleg";
+  e = {_eventname : "MigrateDirectDepositDeleg FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
+
+transition MigrateLastWithdrawCycleDeleg (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateLastWithdrawCycleDeleg";
+  e = {_eventname : "MigrateLastWithdrawCycleDeleg FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
+
+transition MigrateLastBufDepositCycleDeleg (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateLastBufDepositCycleDeleg";
+  e = {_eventname : "MigrateLastBufDepositCycleDeleg FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
+
+transition MigrateDelegStakePerCycle (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateDelegStakePerCycle";
+  e = {_eventname : "MigrateDelegStakePerCycle FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
+
+transition MigrateWithdrawalPending (keys : List ByStr20, old_contract : ByStr20)
+  tag = "MigrateWithdrawalPending";
+  e = {_eventname : "MigrateWithdrawalPending FailedNotAdmin"};
+  Migrate tag keys old_contract e
+end
