@@ -179,8 +179,12 @@ transition DelegateStake()
 end
 
 transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  IsZimpl
-  (* nop *)
+  IsZimpl;
+  o_aimpl_address <- aimpl_address;
+
+  msg = { _tag : "DelegateStakeSuccessCallBack"; _recipient : o_aimpl_address; _amount : uint128_zero; amount: amount };
+  msgs = one_msg msg;
+  send msgs
 end
 
 transition ClaimRewards()
