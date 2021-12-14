@@ -431,6 +431,32 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   end
 end
 
+(* We can receive two types of callback: *)
+(*   1. Autorestake. We need to increase internal total ZIL balance. *)
+(*   2. User delegate. We need to change a user balance  *)
+procedure ProcessDelegateStakeSuccessCallBack(delegator: ByStr20, amount: Uint128)
+  is_autorestake = builtin eq delegator _this_address;
+
+  match is_autorestake with
+  | True =>
+    IncreaseTotalStakeAmt amount;
+    autorestakeamount := uint128_zero
+  | False =>
+    (* Update the delegator balance *)
+    Delegate delegator amount;
+
+    (* Reset tmp variables *)
+    tmp_stake_delegate_amount := uint128_zero;
+    reset_delegator = None {ByStr20};
+    tmp_delegator := reset_delegator;
+
+
+    msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : delegator; _amount : uint128_zero; amount : amount};
+    msg = one_msg msg_to_delegator;
+    send msg
+  end
+end
+
 (*
   tmp_complete_withdrawal_available += Withdrawal.stake
   withdrawal_unbonded[delegator] += Withdrawal; //create if none
@@ -558,10 +584,11 @@ transition PerformAutoRestake()
   match is_zero with
   | True =>
   | False =>
-    BufferDelegate auto_restake_amt;
-    (* TOOD: should be called in the Delegate callback *)
-    IncreaseTotalStakeAmt auto_restake_amt;
-    autorestakeamount := uint128_zero
+    tmp_stake_delegate_amount := auto_restake_amt;
+    o_delegator = Some {ByStr20} _this_address;
+    tmp_delegator := o_delegator;
+
+    BufferDelegate auto_restake_amt
   end
 end
 
@@ -616,20 +643,10 @@ transition DelegateStakeSuccessCallBack(amount: Uint128)
   | True =>
     match o_delegator with
     | Some delegator =>
-      (* Update the delegator balance *)
-      Delegate delegator amount;
-
-      (* Reset tmp variables *)
-      tmp_stake_delegate_amount := uint128_zero;
-      reset_delegator = None {ByStr20};
-      tmp_delegator := reset_delegator;
+      ProcessDelegateStakeSuccessCallBack delegator amount;
 
       e = { _eventname: "DelegateStake"; delegator: delegator; amount: amount };
-      event e;
-
-      msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : delegator; _amount : uint128_zero; amount : amount};
-      msg = one_msg msg_to_delegator;
-      send msg
+      event e
     | None =>
       e = UnknownDelegatorAddr;
       ThrowError e
