@@ -109,7 +109,7 @@ func (c *Contract) stateParse() {
 			case "StateFieldMap":
 				statemap[k] = stateFieldMap(v)
 				break
-			case "StateFieldMapMapMap":
+			case "StateFieldMapMap":
 				statemap[k] = stateFieldMapMap(v)
 				break
 			case "StateFieldMapMapMap":
