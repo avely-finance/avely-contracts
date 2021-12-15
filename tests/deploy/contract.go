@@ -110,16 +110,19 @@ func (c *Contract) stateParse() {
 				statemap[k] = stateFieldMap(v)
 				break
 			case "StateFieldMapMapMap":
+				statemap[k] = stateFieldMapMap(v)
+				break
+			case "StateFieldMapMapMap":
 				statemap[k] = stateFieldMapMapMap(v)
 				break
 			case "StateFieldArray":
 				statemap[k] = stateFieldArray(v)
 				break
-			case "StateFieldMapMapWithdrawal":
-				statemap[k] = stateFieldMapMapWithdrawal(v)
+			case "StateFieldMapMapPair":
+				statemap[k] = stateFieldMapMapPair(v)
 				break
-			case "StateFieldMapWithdrawal":
-				statemap[k] = stateFieldMapWithdrawal(v)
+			case "StateFieldMapPair":
+				statemap[k] = stateFieldMapPair(v)
 				break
 			default:
 				panic("State field type not found: " + typ)
@@ -142,16 +145,9 @@ func stateFieldArray(v interface{}) map[string]interface{} {
 	return res
 }
 
-func stateFieldMap(v interface{}) map[string]interface{} {
+func stateFieldMapPair(v interface{}) map[string]interface{} {
 	tmp, _ := json.Marshal(v)
-	var field map[string]interface{}
-	json.Unmarshal([]byte(tmp), &field)
-	return field
-}
-
-func stateFieldMapWithdrawal(v interface{}) map[string]interface{} {
-	tmp, _ := json.Marshal(v)
-	var field map[string]Withdrawal
+	var field map[string]Pair
 	json.Unmarshal([]byte(tmp), &field)
 	res := make(map[string]interface{})
 	for i, w := range field {
@@ -163,9 +159,9 @@ func stateFieldMapWithdrawal(v interface{}) map[string]interface{} {
 	return res
 }
 
-func stateFieldMapMapWithdrawal(v interface{}) map[string]interface{} {
+func stateFieldMapMapPair(v interface{}) map[string]interface{} {
 	tmp, _ := json.Marshal(v)
-	var field map[string](map[string]Withdrawal)
+	var field map[string](map[string]Pair)
 	json.Unmarshal([]byte(tmp), &field)
 	res := make(map[string]interface{})
 	for i, w := range field {
@@ -177,6 +173,28 @@ func stateFieldMapMapWithdrawal(v interface{}) map[string]interface{} {
 			tmpmap[string(ii)] = inner
 		}
 		res[string(i)] = tmpmap
+	}
+	return res
+}
+
+func stateFieldMap(v interface{}) map[string]interface{} {
+	tmp, _ := json.Marshal(v)
+	var field map[string]interface{}
+	json.Unmarshal([]byte(tmp), &field)
+	return field
+}
+
+func stateFieldMapMap(v interface{}) map[string]interface{} {
+	tmp, _ := json.Marshal(v)
+	var field map[string](map[string](map[string]interface{}))
+	json.Unmarshal([]byte(tmp), &field)
+	res := make(map[string]interface{})
+	for i, w := range field {
+		mapi := make(map[string]interface{})
+		for ii, ww := range w {
+			mapi[string(ii)] = ww
+		}
+		res[string(i)] = mapi
 	}
 	return res
 }
