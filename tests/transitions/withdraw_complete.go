@@ -38,7 +38,7 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	tx, err := Aimpl.ClaimWithdrawal(readyBlocks)
 	t.AssertError(tx, err, -105)
 
-	delta, _ := strconv.ParseInt(deploy.StrSum(Zimpl.Field("bnum_req"), "1"), 10, 32)
+	delta, _ := strconv.ParseInt(deploy.StrAdd(Zimpl.Field("bnum_req"), "1"), 10, 32)
 	deploy.IncreaseBlocknum(int32(delta))
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
