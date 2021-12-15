@@ -90,8 +90,8 @@ func (t *Testing) AssertEqual(s1, s2 string) {
 	if s1 != s2 {
 		_, file, no, _ := runtime.Caller(1)
 		log.Println("🔴 ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
-		log.Println(s1)
-		log.Println(s2)
+		log.Println("🔴 EXPECTED: " + s2)
+		log.Println("🔴 ACTUAL: " + s1)
 		log.Fatalf("💔 TESTS ARE FAILED")
 	} else {
 		log.Println("🟢 ASSERT_EQUAL SUCCESS")
