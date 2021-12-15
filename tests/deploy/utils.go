@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"fmt"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/keytools"
@@ -70,13 +71,30 @@ func CallFor(c *contract2.Contract, transition string, args []core.ContractValue
 	return c.Call(transition, args, params, priority)
 }
 
-func StrSum(s1, s2 string) string {
-	x, _ := strconv.Atoi(s1)
-	y, _ := strconv.Atoi(s2)
-	return strconv.Itoa(x + y)
+func StrAdd(arg ...string) string {
+	if len(arg) < 2 {
+		panic("StrAdd needs at least 2 arguments")
+	}
+	result, _ := new(big.Int).SetString("0", 10)
+	for _, v := range arg {
+		vInt, ok := new(big.Int).SetString(v, 10)
+		if !ok {
+			println(v)
+			panic(fmt.Sprintf("StrAdd can't get BigInt from argument ", v))
+		}
+		result = result.Add(result, vInt)
+	}
+	return result.String()
 }
 
-func MulDiv(a, b, c string) string {
+func StrSub(a, b string) string {
+	A, _ := new(big.Int).SetString(a, 10)
+	B, _ := new(big.Int).SetString(b, 10)
+	result := new(big.Int).Sub(A, B)
+	return result.String()
+}
+
+func StrMulDiv(a, b, c string) string {
 	A, _ := new(big.Int).SetString(a, 10)
 	B, _ := new(big.Int).SetString(b, 10)
 	C, _ := new(big.Int).SetString(c, 10)
