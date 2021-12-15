@@ -38,7 +38,7 @@ func (t *Testing) ZilBalanceOf() {
 	Aimpl.IncreaseAutoRestakeAmount(zil(10))
 	Aimpl.PerformAutoRestake()
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)
-	t.AssertEqual(balance2, deploy.MulDiv(
+	t.AssertEqual(balance2, deploy.StrMulDiv(
 		Aimpl.Field("balances", "0x"+addr2),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
@@ -52,12 +52,12 @@ func (t *Testing) ZilBalanceOf() {
 	Aimpl.UpdateWallet(key3)
 	Aimpl.DelegateStake(zil(10))
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)
-	t.AssertEqual(balance2, deploy.MulDiv(
+	t.AssertEqual(balance2, deploy.StrMulDiv(
 		Aimpl.Field("balances", "0x"+addr2),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
 	balance3, _ := Aimpl.ZilBalanceOf(addr3)
-	t.AssertEqual(balance3, deploy.MulDiv(
+	t.AssertEqual(balance3, deploy.StrMulDiv(
 		Aimpl.Field("balances", "0x"+addr3),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
