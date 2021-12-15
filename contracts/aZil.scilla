@@ -23,6 +23,8 @@ type Error =
   | ClaimWithdrawalNoUnbonded
   | AdminValidationFailed
   | UnknownBufferAddr
+  | StakeDelegateFundsMismatch
+  | UnknownDelegatorAddr
 
 let make_error =
   fun (result: Error) =>
@@ -40,6 +42,8 @@ let make_error =
       | ClaimWithdrawalNoUnbonded => Int32 -105
       | AdminValidationFailed => Int32 -106
       | UnknownBufferAddr => Int32 -107
+      | StakeDelegateFundsMismatch => Int32 -108
+      | UnknownDelegatorAddr => Int32 -109
       end
     in
     { _exception: "Error"; code: result_code }
@@ -150,6 +154,8 @@ field withdrawal_pending: Map BNum (Map ByStr20 Withdrawal) = Emp BNum (Map BySt
 (* AddressOfDeleg ->  Deposit *)
 field withdrawal_unbonded: Map ByStr20 Withdrawal = Emp ByStr20 Withdrawal
 
+field tmp_delegator: Option ByStr20 = None {ByStr20}
+field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
 
 field local_bnum_req: Uint128 = Uint128 35000
@@ -425,6 +431,32 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   end
 end
 
+(* We can receive two types of callback: *)
+(*   1. Autorestake. We need to increase internal total ZIL balance. *)
+(*   2. User delegate. We need to change a user balance  *)
+procedure ProcessDelegateStakeSuccessCallBack(delegator: ByStr20, amount: Uint128)
+  is_autorestake = builtin eq delegator _this_address;
+
+  match is_autorestake with
+  | True =>
+    IncreaseTotalStakeAmt amount;
+    autorestakeamount := uint128_zero
+  | False =>
+    (* Update the delegator balance *)
+    Delegate delegator amount;
+
+    (* Reset tmp variables *)
+    tmp_stake_delegate_amount := uint128_zero;
+    reset_delegator = None {ByStr20};
+    tmp_delegator := reset_delegator;
+
+
+    msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : delegator; _amount : uint128_zero; amount : amount};
+    msg = one_msg msg_to_delegator;
+    send msg
+  end
+end
+
 (*
   tmp_complete_withdrawal_available += Withdrawal.stake
   withdrawal_unbonded[delegator] += Withdrawal; //create if none
@@ -552,10 +584,11 @@ transition PerformAutoRestake()
   match is_zero with
   | True =>
   | False =>
-    BufferDelegate auto_restake_amt;
-    (* TOOD: should be called in the Delegate callback *)
-    IncreaseTotalStakeAmt auto_restake_amt;
-    autorestakeamount := uint128_zero
+    tmp_stake_delegate_amount := auto_restake_amt;
+    o_delegator = Some {ByStr20} _this_address;
+    tmp_delegator := o_delegator;
+
+    BufferDelegate auto_restake_amt
   end
 end
 
@@ -586,20 +619,39 @@ end
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
 transition DelegateStake()
-  (* TODO: IsDelegator; *)
   accept;
   stake_amt = _amount;
   initiator = _sender;
 
-  BufferDelegate stake_amt;
-  Delegate initiator stake_amt;
+  tmp_stake_delegate_amount := stake_amt;
+  o_delegator = Some {ByStr20} initiator;
+  tmp_delegator := o_delegator;
 
-  e = { _eventname: "DelegateStake"; delegator: initiator; amount: stake_amt };
-  event e;
+  BufferDelegate stake_amt
+end
 
-  msg_to_delegator = {_tag : "DelegateStakeSuccessCallBack"; _recipient : initiator; _amount : uint128_zero; amount : stake_amt};
-  msg = one_msg msg_to_delegator;
-  send msg
+transition DelegateStakeSuccessCallBack(amount: Uint128)
+  stake_delegate_amt <- tmp_stake_delegate_amount;
+  o_delegator <- tmp_delegator;
+
+  amount_eq = builtin eq amount stake_delegate_amt;
+
+  match amount_eq with
+  | False =>
+    e = StakeDelegateFundsMismatch;
+    ThrowError e
+  | True =>
+    match o_delegator with
+    | Some delegator =>
+      ProcessDelegateStakeSuccessCallBack delegator amount;
+
+      e = { _eventname: "DelegateStake"; delegator: delegator; amount: amount };
+      event e
+    | None =>
+      e = UnknownDelegatorAddr;
+      ThrowError e
+    end
+  end
 end
 
 (********************************************************************************)
