@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	"github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	"github.com/fatih/color"
 	"log"
+	"reflect"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -50,12 +54,20 @@ func azil(amount int) string {
 }
 
 type Testing struct {
-	debug map[string]string
+	shortcuts map[string]string
 }
 
 func NewTesting() *Testing {
+	shortcuts := make(map[string]string)
+	shortcuts["azilssn"] = AZIL_SSN_ADDRESS
+	shortcuts["addr1"] = "0x" + addr1
+	shortcuts["addr2"] = "0x" + addr2
+	shortcuts["addr3"] = "0x" + addr3
+	shortcuts["addr4"] = "0x" + addr4
+	shortcuts["admin"] = "0x" + admin
+	shortcuts["verifier"] = "0x" + verifier
 	return &Testing{
-		debug: make(map[string]string),
+		shortcuts: shortcuts,
 	}
 }
 
@@ -78,7 +90,38 @@ func (t *Testing) GetReceiptString(txn *transaction.Transaction) string {
 
 func (t *Testing) LogPrettyReceipt(txn *transaction.Transaction) {
 	data, _ := json.MarshalIndent(txn.Receipt, "", "     ")
-	log.Println(string(data))
+	result := t.HighlightShortcuts(string(data))
+	log.Println(result)
+}
+
+func (t *Testing) LogState(contract interface{}) {
+	provider := provider.NewProvider(deploy.API_PROVIDER)
+	addr := ""
+	typ := reflect.ValueOf(contract).Type().String()
+	switch typ {
+	case "*deploy.Zproxy":
+		addr = contract.(*deploy.Zproxy).Addr
+		break
+	case "*deploy.Zimpl":
+		addr = contract.(*deploy.Zimpl).Addr
+		break
+	case "*deploy.BufferContract":
+		addr = contract.(*deploy.BufferContract).Addr
+		break
+	case "*deploy.HolderContract":
+		addr = contract.(*deploy.HolderContract).Addr
+		break
+	case "*deploy.AZil":
+		addr = contract.(*deploy.AZil).Addr
+		break
+	default:
+		panic("Unknown type " + typ)
+		break
+	}
+	rsp, _ := provider.GetSmartContractState(addr)
+	j, _ := json.MarshalIndent(rsp, "  ", "    ")
+	result := t.HighlightShortcuts(string(j))
+	fmt.Println(result)
 }
 
 func (t *Testing) AssertContain(s1, s2 string) {
@@ -158,22 +201,23 @@ func (t *Testing) AssertTransition(txn *transaction.Transaction, expectedTxn dep
 		_, file, no, _ := runtime.Caller(1)
 		log.Println("🔴 ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
 		actual, _ := json.MarshalIndent(txn, "", "     ")
+		actualNice := t.HighlightShortcuts(string(actual))
 		expected, _ := json.MarshalIndent(expectedTxn, "", "     ")
-		log.Println(fmt.Sprintf("Expected: %s", expected))
-		log.Println(fmt.Sprintf("Actual: %s", actual))
-		t.LogDebug()
+		expectedNice := t.HighlightShortcuts(string(expected))
+		log.Println(fmt.Sprintf("Expected: %s", expectedNice))
+		log.Println(fmt.Sprintf("Actual: %s", actualNice))
 		log.Fatalf("💔 TESTS ARE FAILED")
 	}
 }
 
-func (t *Testing) AssertEvent(txn *transaction.Transaction, wantedEvent deploy.Event) {
+func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent deploy.Event) {
 	found := false
 	if txn.Receipt.EventLogs != nil {
 		for _, el := range txn.Receipt.EventLogs {
 			txEvent := convertEventLog(el)
-			if txEvent.Address == "0x"+wantedEvent.Sender &&
-				txEvent.EventName == wantedEvent.EventName &&
-				compareParams(txEvent.Params, convertParams(wantedEvent.Params)) {
+			if txEvent.Address == "0x"+expectedEvent.Sender &&
+				txEvent.EventName == expectedEvent.EventName &&
+				compareParams(txEvent.Params, convertParams(expectedEvent.Params)) {
 				found = true
 				break
 			}
@@ -185,25 +229,53 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, wantedEvent deploy.E
 	} else {
 		_, file, no, _ := runtime.Caller(1)
 		log.Println("🔴 ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
-		z, _ := json.Marshal(wantedEvent)
-		log.Println(fmt.Sprintf("We assert: %s", z))
-		z, _ = json.Marshal(txn.Receipt.EventLogs)
-		log.Println(fmt.Sprintf("We have: %s", z))
-		t.LogDebug()
+		expected, _ := json.Marshal(expectedEvent)
+		expectedNice := t.HighlightShortcuts(string(expected))
+		log.Println(fmt.Sprintf("EXPECTED: %s", expectedNice))
+		actual, _ := json.Marshal(txn.Receipt.EventLogs)
+		actualNice := t.HighlightShortcuts(string(actual))
+		log.Println(fmt.Sprintf("ACTUAL: %s", actualNice))
 		log.Fatalf("💔 TESTS ARE FAILED")
 	}
 }
 
-func (t *Testing) AddDebug(key, value string) {
-	t.debug[key] = value
+func (t *Testing) AddShortcut(key, value string) {
+	t.shortcuts[key] = value
 }
 
-func (t *Testing) LogDebug() {
-	var output string
-	for key, val := range t.debug {
-		output += fmt.Sprintf("% 20s: %s\n", key, val)
+func (t *Testing) HighlightShortcuts(str string) string {
+
+	colors := [...]color.Attribute{
+		color.BgRed,
+		color.BgGreen,
+		color.BgYellow,
+		color.BgBlue,
+		color.BgMagenta,
+		color.BgCyan,
+		color.BgHiRed,
+		color.BgHiGreen,
+		color.BgHiYellow,
+		color.BgHiBlue,
+		color.BgHiMagenta,
+		color.BgHiCyan,
 	}
-	log.Println("Debug info\n" + strings.Trim(output, "\n"))
+
+	//sort shortcuts
+	keys := make([]string, 0, len(t.shortcuts))
+	for k := range t.shortcuts {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	l := len(colors)
+	i := 0
+	for _, k := range keys {
+		colorFunc := color.New(colors[i%l]).SprintFunc()
+		replacement := colorFunc(strings.ToUpper(k) + " " + t.shortcuts[k])
+		str = strings.ReplaceAll(str, t.shortcuts[k], replacement)
+		i++
+	}
+	return str
 }
 
 func convertParams(pmap deploy.ParamsMap) []core.ContractValue {
