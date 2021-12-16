@@ -11,7 +11,7 @@ func (t *Testing) DrainBuffer() {
 
 	Zproxy, _, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
 
-	Aimpl.DelegateStake(zil(10))
+	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
 
 	txn, err := Aimpl.DrainBuffer(Aimpl.Addr)
 	t.AssertError(txn, err, -107)
@@ -19,9 +19,9 @@ func (t *Testing) DrainBuffer() {
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
 	Zproxy.UpdateWallet(verifierKey)
 	deploy.IncreaseBlocknum(10)
-	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 	deploy.IncreaseBlocknum(10)
-	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
 	txn, _ = Aimpl.DrainBuffer(Buffer.Addr)
 
@@ -95,8 +95,8 @@ func (t *Testing) DrainBuffer() {
 	//try to drain buffer, not existent at main staking contract
 	//error should not be thrown
 	new_buffers := []string{"0x0000000000000000000000000000000000000000"}
-	Aimpl.ChangeBuffers(new_buffers)
-	Aimpl.DrainBuffer("0000000000000000000000000000000000000000")
+	t.AssertSuccess(Aimpl.ChangeBuffers(new_buffers))
+	txn, _ = Aimpl.DrainBuffer("0000000000000000000000000000000000000000")
 	t.AssertTransition(txn, deploy.Transition{
 		Aimpl.Addr, //sender
 		"ClaimRewards",

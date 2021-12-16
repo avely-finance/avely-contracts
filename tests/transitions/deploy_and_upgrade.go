@@ -56,12 +56,8 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	* Upgrade buffer/holder
 	********************************************************************/
 	new_buffers := []string{"0x" + Buffer.Addr}
-	if _, err := Aimpl.ChangeBuffers(new_buffers); err != nil {
-		t.LogError("failed to change aZil's buffer contract address; error = ", err)
-	}
-	if _, err := Aimpl.ChangeHolderAddress(Holder.Addr); err != nil {
-		t.LogError("failed to change aZil's holder contract address; error = ", err)
-	}
+	t.AssertSuccess(Aimpl.ChangeBuffers(new_buffers))
+	t.AssertSuccess(Aimpl.ChangeHolderAddress(Holder.Addr))
 
 	/********************************************************************
 	* Upgrade Zproxy, make some initial actions
@@ -73,34 +69,25 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 			"0x" + Zimpl.Addr,
 		},
 	}
-	_, err = Zproxy.Call("UpgradeTo", args, "0")
-	if err != nil {
-		t.LogError("Zproxy UpgradeTo failed", err)
-	}
-	Zproxy.AddSSN(AZIL_SSN_ADDRESS, "aZil SSN")
-	Zproxy.UpdateVerifierRewardAddr("0x" + verifier)
-	Zproxy.UpdateVerifier("0x" + verifier)
-	Zproxy.UpdateStakingParameters(zil(1000), zil(10)) //minstake (ssn not active if less), mindelegstake
-	Zproxy.Unpause()
+	t.AssertSuccess(Zproxy.Call("UpgradeTo", args, "0"))
+	t.AssertSuccess(Zproxy.AddSSN(AZIL_SSN_ADDRESS, "aZil SSN"))
+	t.AssertSuccess(Zproxy.UpdateVerifierRewardAddr("0x" + verifier))
+	t.AssertSuccess(Zproxy.UpdateVerifier("0x" + verifier))
+	t.AssertSuccess(Zproxy.UpdateStakingParameters(zil(1000), zil(10))) //minstake (ssn not active if less), mindelegstake
+	t.AssertSuccess(Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake
-	_, err = Aimpl.DelegateStake(zil(1000))
-	if err != nil {
-		t.LogError("DelegateStake", err)
-	}
+	t.AssertSuccess(Aimpl.DelegateStake(zil(1000)))
 	t.AssertEqual(Zimpl.Field("direct_deposit_deleg", "0x"+Buffer.Addr, AZIL_SSN_ADDRESS, "1"), zil(1000))
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	_, err = Holder.DelegateStake(zil(HOLDER_INITIAL_DELEGATE_ZIL))
-	if err != nil {
-		t.LogError("failed to delegate initial Holder's stake; error = ", err)
-	}
+	t.AssertSuccess(Holder.DelegateStake(zil(HOLDER_INITIAL_DELEGATE_ZIL)))
 
 	//SSN will become active on next cycle
 	Zproxy.UpdateWallet(verifierKey)
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	deploy.IncreaseBlocknum(10)
-	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
 	log.Println("upgrade succeed")
 	t.AddDebug("Zproxy", "0x"+Zproxy.Addr)
