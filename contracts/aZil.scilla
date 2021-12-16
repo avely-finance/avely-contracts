@@ -130,7 +130,6 @@ let is_buffer_addr =
 contract AZil(
   init_admin_address        : ByStr20,
   init_azil_ssn_address     : ByStr20,
-  init_zproxy_address       : ByStr20,
   init_zimpl_address        : ByStr20,
   init_holder_address       : ByStr20
 )
@@ -140,7 +139,6 @@ contract AZil(
 (* Mutable fields *)
 field contractadmin_address : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
-field zproxy_address        : ByStr20 = init_zproxy_address
 field zimpl_address         : ByStr20 = init_zimpl_address
 field holder_address        : ByStr20 = init_holder_address
 
@@ -521,14 +519,6 @@ transition ChangeHolderAddress(address: ByStr20)
   holder_address := address;
 
   e = { _eventname: "ChangeHolderAddress"; address: address };
-  event e
-end
-
-transition ChangeZproxyAddress(address: ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
-  zproxy_address := address;
-  e = { _eventname: "ChangeZproxyAddress"; address: address };
   event e
 end
 
