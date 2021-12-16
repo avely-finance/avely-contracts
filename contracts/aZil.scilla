@@ -11,7 +11,6 @@ type Withdrawal =
   | Withdrawal of Uint128 Uint128
 
 type Error =
-  | ReDelegInvalidSSNAddr
   | DelegDoesNotExistAtSSN
   | InvalidTotalAmt
   | DelegHasNoSufficientAmt
@@ -25,6 +24,7 @@ type Error =
   | StakeDelegateFundsMismatch
   | UnknownDelegatorAddr
   | CantFetchZimplBufferExistsAtSSN
+  | DelegHasBufferedDeposit
 
 let make_error =
   fun (result: Error) =>
@@ -34,7 +34,6 @@ let make_error =
       | DelegHasNoSufficientAmt => Int32 -13
       | DelegStakeNotEnough => Int32 -15
       | InvalidTotalAmt => Int32 -18
-      | ReDelegInvalidSSNAddr => Int32 -21
       | CantFetchZimplFields => Int32 -102
       | NoActiveBuffer => Int32 -103
       | CompleteWithdrawalFundsMismatch => Int32 -104
@@ -44,6 +43,7 @@ let make_error =
       | StakeDelegateFundsMismatch => Int32 -108
       | UnknownDelegatorAddr => Int32 -109
       | CantFetchZimplBufferExistsAtSSN => Int32 -110
+      | DelegHasBufferedDeposit => Int32 -110
       end
     in
     { _exception: "Error"; code: result_code }
@@ -93,6 +93,19 @@ let uint128_zero = Uint128 0
 let uint128_one = Uint128 1
 let uint32_zero = Uint32 0
 let uint32_one = Uint32 1
+
+let option_value =
+  tfun 'A =>
+  fun (default: 'A) =>
+  fun (opt_val: Option 'A) =>
+    match opt_val with
+    | Some v => v
+    | None => default
+    end
+
+let option_uint32_value =
+  let f = @option_value Uint32 in
+  f uint32_zero
 
 let addfunds_tag = "AddFunds"
 
@@ -372,12 +385,27 @@ procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   end;
 
   FetchRemoteZimplFields;
-  cycle <- local_lastrewardcycle;
+  lrc <- local_lastrewardcycle;
 
-  last_buf_deposit_cycle_deleg[initiator] := cycle;
+  last_buf_deposit_cycle_deleg[initiator] := lrc;
 
   IncreaseTotalStakeAmt stake_amt;
   IncreaseTotalTokenAmt token_amt
+end
+
+procedure AsseertNoBufferedDeposit(deleg: ByStr20)
+  FetchRemoteZimplFields;
+  ldcd_o <- last_buf_deposit_cycle_deleg[deleg];
+  ldcd = option_uint32_value ldcd_o;
+  lrc <- local_lastrewardcycle;
+
+  has_buffered = uint32_le lrc ldcd;
+  match has_buffered with
+  | True =>
+    e = DelegHasBufferedDeposit;
+    ThrowError e
+  | False =>
+  end
 end
 
 procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Uint128)
@@ -411,6 +439,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
 
   match current_token_amount with
   | Some current_token_amt =>
+    AsseertNoBufferedDeposit initiator;
     AdjustDeleg initiator current_token_amt withdraw_token_amt;
 
     (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
@@ -729,14 +758,12 @@ end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
 transition WithdrawStakeAmt(amount: Uint128)
-  (* TODO: IsDelegator; *)
   initiator = _sender;
   azil_ssn_addr <- azil_ssn_address;
 
   (* first we do all checks, then call Holder on success within procedure *)
   WithdrawalStakeAmt initiator amount;
 
-  (* TODO: we sending Azil callback, but ignoring Zimpl callback completely. Should we? *)
   msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
   ssnaddr : azil_ssn_addr; amount : amount};
   msg = one_msg msg_to_delegator;
@@ -744,7 +771,6 @@ transition WithdrawStakeAmt(amount: Uint128)
 end
 
 transition CompleteWithdrawal()
-  (* TODO: IsDelegator; *)
   initiator = _sender;
   wu <- withdrawal_unbonded[initiator];
   match wu with
