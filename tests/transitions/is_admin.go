@@ -41,6 +41,8 @@ func (t *Testing) IsAdmin() {
 
 	tx, err = Aimpl.ChangeZproxyAddress(addr3)
 	t.AssertError(tx, err, -106)
+	tx, err = Aimpl.ChangeZimplAddress(addr3)
+	t.AssertError(tx, err, -106)
 	tx, err = Aimpl.ChangeHolderAddress(addr3)
 	t.AssertError(tx, err, -106)
 	new_buffers := []string{"0x" + Buffer.Addr, "0x" + Buffer.Addr}

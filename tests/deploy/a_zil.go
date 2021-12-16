@@ -29,6 +29,17 @@ func (b *AZil) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, e
 	return b.Call("ChangeZproxyAddress", args, "0")
 }
 
+func (b *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeZimplAddress", args, "0")
+}
+
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -155,7 +166,7 @@ func (a *AZil) ZilBalanceOf(addr string) (string, error) {
 	return "", errors.New("Balance not found")
 }
 
-func NewAZilContract(key, aZilSSNAddress, zproxyAddr string) (*AZil, error) {
+func NewAZilContract(key, aZilSSNAddress, zproxyAddr, zimplAddr string) (*AZil, error) {
 	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
 	init := []core.ContractValue{
 		{
@@ -174,6 +185,10 @@ func NewAZilContract(key, aZilSSNAddress, zproxyAddr string) (*AZil, error) {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
 			Value: "0x" + zproxyAddr,
+		}, {
+			VName: "init_zimpl_address",
+			Type:  "ByStr20",
+			Value: "0x" + zimplAddr,
 		}, {
 			VName: "init_holder_address",
 			Type:  "ByStr20",
