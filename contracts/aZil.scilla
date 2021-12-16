@@ -284,7 +284,7 @@ end
 (* @dev: aZil actions                                       *)
 (************************************************************)
 
-procedure IsDelegstakeSufficient(amount: Uint128)
+procedure IsDelegStakeSufficient(amount: Uint128)
   mindelegstake_l <- mindelegstake;
   suffi =  uint128_le mindelegstake_l amount;
   match suffi with
@@ -345,7 +345,7 @@ end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
-  IsDelegstakeSufficient stake_amt;
+  IsDelegStakeSufficient stake_amt;
 
   total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
@@ -383,7 +383,7 @@ procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Ui
       (* Readjust all rest deleg to this cycle *)
       rest_deleg = builtin sub total_amount withdraw_amount;
       (* rest delegate should also meet mindelegstake *)
-      IsDelegstakeSufficient rest_deleg;
+      IsDelegStakeSufficient rest_deleg;
       TruncateDeleg deleg;
       (* Refer to transition TruncateDeleg, here we don't use Fillin transition because we *)
       (* know they are all empty, and this can reduce some gasfee *)
@@ -594,6 +594,7 @@ transition PerformAutoRestake()
   IsAdmin initiator;
 
   auto_restake_amt <- autorestakeamount;
+  IsDelegStakeSufficient auto_restake_amt;
 
   is_zero = builtin eq auto_restake_amt uint128_zero;
   match is_zero with
