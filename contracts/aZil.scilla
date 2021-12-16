@@ -16,8 +16,7 @@ type Error =
   | InvalidTotalAmt
   | DelegHasNoSufficientAmt
   | DelegStakeNotEnough
-  | CantFetchRemoteImplAddr
-  | CantFetchRemoteBnumReq
+  | CantFetchZimplFields
   | NoActiveBuffer
   | CompleteWithdrawalFundsMismatch
   | ClaimWithdrawalNoUnbonded
@@ -25,7 +24,7 @@ type Error =
   | UnknownBufferAddr
   | StakeDelegateFundsMismatch
   | UnknownDelegatorAddr
-  | CantFetchRemoteBufferExistsAtSSN
+  | CantFetchZimplBufferExistsAtSSN
 
 let make_error =
   fun (result: Error) =>
@@ -36,8 +35,7 @@ let make_error =
       | DelegStakeNotEnough => Int32 -15
       | InvalidTotalAmt => Int32 -18
       | ReDelegInvalidSSNAddr => Int32 -21
-      | CantFetchRemoteImplAddr => Int32 -101
-      | CantFetchRemoteBnumReq => Int32 -102
+      | CantFetchZimplFields => Int32 -102
       | NoActiveBuffer => Int32 -103
       | CompleteWithdrawalFundsMismatch => Int32 -104
       | ClaimWithdrawalNoUnbonded => Int32 -105
@@ -45,7 +43,7 @@ let make_error =
       | UnknownBufferAddr => Int32 -107
       | StakeDelegateFundsMismatch => Int32 -108
       | UnknownDelegatorAddr => Int32 -109
-      | CantFetchRemoteBufferExistsAtSSN => Int32 -110
+      | CantFetchZimplBufferExistsAtSSN => Int32 -110
       end
     in
     { _exception: "Error"; code: result_code }
@@ -198,55 +196,35 @@ procedure TransferFunds(tag: String, amt: Uint128, recipient: ByStr20)
 end
 
 procedure FetchRemoteZimplFields()
-  var_zproxy_address <- zproxy_address;
-  (* Address type cast *)
-  (* TODO: seems it's possible to save gas, using type check of transition parameter *)
-  (* https://scilla.readthedocs.io/en/latest/scilla-in-depth.html?highlight=remote#dynamic-typecheck-of-addresses *)
-  proxyAddrTypeTest <- & var_zproxy_address as ByStr20 with contract field implementation : ByStr20 end;
-  match proxyAddrTypeTest with
-  | Some v =>
-    implAddr <- & v.implementation;
-    implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128, field lastrewardcycle: Uint32 end;
-    match implAddrTypeTest with
-    | Some z =>
-      bnum_req <- & z.bnum_req;
-      local_bnum_req := bnum_req;
-      lrc <- & z.lastrewardcycle;
-      local_lastrewardcycle := lrc
-    | None =>
-        e = CantFetchRemoteBnumReq;
-        ThrowError e
-    end
+  implAddr <- zimpl_address;
+  implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128, field lastrewardcycle: Uint32 end;
+  match implAddrTypeTest with
+  | Some z =>
+    bnum_req <- & z.bnum_req;
+    local_bnum_req := bnum_req;
+    lrc <- & z.lastrewardcycle;
+    local_lastrewardcycle := lrc
   | None =>
-    e = CantFetchRemoteImplAddr;
+    e = CantFetchZimplFields;
     ThrowError e
   end
 end
 
 procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
-  var_zproxy_address <- zproxy_address;
-  proxyAddrTypeTest <- & var_zproxy_address as ByStr20 with contract field implementation : ByStr20 end;
-  match proxyAddrTypeTest with
-  | Some v =>
-    implAddr <- & v.implementation;
-    (* TODO we can prefetch/cache Zimpl address *)
-    implAddrTypeTest <- & implAddr as ByStr20 with contract field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128) end;
-    match implAddrTypeTest with
-    | Some z =>
-      o_deposit_amt_deleg <- & z.deposit_amt_deleg[buffer_addr];
-      match o_deposit_amt_deleg with
-      | Some amt =>
-        tmp_buffer_exists_at_ssn := uint32_one
-      | None =>
-        tmp_buffer_exists_at_ssn := uint32_zero
-      end
+  implAddr <- zimpl_address;
+  implAddrTypeTest <- & implAddr as ByStr20 with contract field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128) end;
+  match implAddrTypeTest with
+  | Some z =>
+    o_deposit_amt_deleg <- & z.deposit_amt_deleg[buffer_addr];
+    match o_deposit_amt_deleg with
+    | Some amt =>
+      tmp_buffer_exists_at_ssn := uint32_one
     | None =>
-        e = CantFetchRemoteBufferExistsAtSSN;
-        ThrowError e
+      tmp_buffer_exists_at_ssn := uint32_zero
     end
   | None =>
-    e = CantFetchRemoteImplAddr;
-    ThrowError e
+      e = CantFetchZimplBufferExistsAtSSN;
+      ThrowError e
   end
 end
 
