@@ -19,7 +19,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	 * we need to move buffered deposits to main stake
 	 *******************************************************************************/
 	Aimpl.UpdateWallet(key2)
-	Aimpl.DelegateStake(zil(15))
+	t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
 	// TODO: if delegator have buffered deposits, withdrawal should fail
 	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 
@@ -60,12 +60,9 @@ func (t *Testing) WithdrawStakeAmount() {
 	t.LogStart("WithdwarStakeAmount, step 3A")
 
 	deploy.IncreaseBlocknum(10)
-	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 	Aimpl.UpdateWallet(adminKey)
-	txn, err = Aimpl.DrainBuffer(Buffer.Addr)
-	if err != nil {
-		t.LogError("Aimpl.DrainBuffer(Buffer.Addr) error = ", err)
-	}
+	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
 
 	Aimpl.UpdateWallet(key2)
 	txn, err = Aimpl.WithdrawStakeAmt(azil(5))

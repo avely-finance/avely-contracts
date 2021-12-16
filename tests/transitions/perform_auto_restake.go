@@ -11,12 +11,12 @@ func (t *Testing) PerformAuoRestake() {
 
 	t.AssertEqual(Aimpl.Field("autorestakeamount"), zil(0))
 
-	Aimpl.IncreaseAutoRestakeAmount(zil(1))
+	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(zil(1)))
 	txn, err := Aimpl.PerformAutoRestake()
 	t.AssertError(txn, err, -15)
 
 	// increases to 100
-	Aimpl.IncreaseAutoRestakeAmount(zil(99))
+	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(zil(99)))
 	restakeAmount := zil(100)
 	t.AssertEqual(Aimpl.Field("autorestakeamount"), restakeAmount)
 
