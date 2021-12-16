@@ -25,6 +25,7 @@ type Error =
   | UnknownBufferAddr
   | StakeDelegateFundsMismatch
   | UnknownDelegatorAddr
+  | CantFetchRemoteBufferExistsAtSSN
 
 let make_error =
   fun (result: Error) =>
@@ -44,6 +45,7 @@ let make_error =
       | UnknownBufferAddr => Int32 -107
       | StakeDelegateFundsMismatch => Int32 -108
       | UnknownDelegatorAddr => Int32 -109
+      | CantFetchRemoteBufferExistsAtSSN => Int32 -110
       end
     in
     { _exception: "Error"; code: result_code }
@@ -157,6 +159,7 @@ field withdrawal_unbonded: Map ByStr20 Withdrawal = Emp ByStr20 Withdrawal
 field tmp_delegator: Option ByStr20 = None {ByStr20}
 field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
+field tmp_buffer_exists_at_ssn: Uint32 = uint32_zero
 
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
@@ -210,6 +213,33 @@ procedure FetchRemoteZimplFields()
       local_lastrewardcycle := lrc
     | None =>
         e = CantFetchRemoteBnumReq;
+        ThrowError e
+    end
+  | None =>
+    e = CantFetchRemoteImplAddr;
+    ThrowError e
+  end
+end
+
+procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
+  var_zproxy_address <- zproxy_address;
+  proxyAddrTypeTest <- & var_zproxy_address as ByStr20 with contract field implementation : ByStr20 end;
+  match proxyAddrTypeTest with
+  | Some v =>
+    implAddr <- & v.implementation;
+    (* TODO we can prefetch/cache Zimpl address *)
+    implAddrTypeTest <- & implAddr as ByStr20 with contract field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128) end;
+    match implAddrTypeTest with
+    | Some z =>
+      o_deposit_amt_deleg <- & z.deposit_amt_deleg[buffer_addr];
+      match o_deposit_amt_deleg with
+      | Some amt =>
+        tmp_buffer_exists_at_ssn := uint32_one
+      | None =>
+        tmp_buffer_exists_at_ssn := uint32_zero
+      end
+    | None =>
+        e = CantFetchRemoteBufferExistsAtSSN;
         ThrowError e
     end
   | None =>
@@ -555,17 +585,25 @@ transition DrainBuffer(buffer_addr: ByStr20)
 
   match is_buffer with
   | True =>
-    holder_addr <- holder_address;
-
-    ClaimRewards buffer_addr;
-    ClaimRewards holder_addr;
-
-    RequestDelegatorSwap buffer_addr holder_addr;
-    ConfirmDelegatorSwap buffer_addr holder_addr
+    FetchRemoteBufferExistsAtSSN buffer_addr;
+    var_buffer_exists <- tmp_buffer_exists_at_ssn;
+    is_exists = builtin eq var_buffer_exists uint32_one;
+    match is_exists with
+    | True =>
+      holder_addr <- holder_address;
+      ClaimRewards buffer_addr;
+      ClaimRewards holder_addr;
+      RequestDelegatorSwap buffer_addr holder_addr;
+      ConfirmDelegatorSwap buffer_addr holder_addr
+    | False =>
+      holder_addr <- holder_address;
+      ClaimRewards holder_addr
+    end
   | False =>
     e = UnknownBufferAddr;
     ThrowError e
-  end
+  end;
+  tmp_buffer_exists_at_ssn := uint32_zero
 end
 
 transition ClaimRewardsSuccessCallBack()
