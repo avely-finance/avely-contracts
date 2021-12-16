@@ -38,8 +38,9 @@ func (t *Testing) DelegateStakeSuccess() {
 	// Check delegate to the next cycle
 	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 	Aimpl.DelegateStake(zil(20))
-	nextCycle, _ := strconv.ParseInt(lastrewardcycle, 10, 32)
-	nextCycleStr := strconv.Itoa(int(nextCycle) + 1)
+
+	nextCycleStr := deploy.StrSum(lastrewardcycle, "1")
+
 	t.AssertEqual(Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+addr1), nextCycleStr)
 }
 
