@@ -15,13 +15,10 @@ func (t *Testing) WithdrawStakeAmount() {
 	Zproxy, _, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
 
 	/*******************************************************************************
-	 * 0. delegator (addr2) delegate 15 zil, and it should enter in buffered deposit,
-	 * we need to move buffered deposits to main stake
+	 * 0. delegator (addr2) delegate 15 zil
 	 *******************************************************************************/
 	Aimpl.UpdateWallet(key2)
-	t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
-	// TODO: if delegator have buffered deposits, withdrawal should fail
-	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+  t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
 
 	/*******************************************************************************
 	 * 1. non delegator(addr4) try to withdraw stake, should fail
@@ -33,9 +30,28 @@ func (t *Testing) WithdrawStakeAmount() {
 	t.AssertError(txn, err, -7)
 
 	/*******************************************************************************
-	 * 2A. delegator trying to withdraw more than staked, should fail
+	 * 2. Check withdrawal under delegator
 	 *******************************************************************************/
+
 	Aimpl.UpdateWallet(key2)
+
+	/*******************************************************************************
+	 * 2A. delegator trying to withdraw in the current cycle where he has a buffered deposit
+	 *******************************************************************************/
+
+	t.LogStart("WithdwarStakeAmount, step 2A")
+	txn, err = Aimpl.WithdrawStakeAmt(azil(1))
+
+	t.AssertError(txn, err, -110)
+	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1015))
+
+	// Trigger switch to the next cycle
+	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+
+	/*******************************************************************************
+	 * 2B. delegator trying to withdraw more than staked, should fail
+	 *******************************************************************************/
+
 	t.LogStart("WithdwarStakeAmount, step 2A")
 	txn, err = Aimpl.WithdrawStakeAmt(azil(100))
 
@@ -43,10 +59,10 @@ func (t *Testing) WithdrawStakeAmount() {
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1015))
 
 	/*******************************************************************************
-	 * 2B. delegator send withdraw request, but it should fail because mindelegatestake
+	 * 2C. delegator send withdraw request, but it should fail because mindelegatestake
 	 * TODO: how to be sure about size of mindelegatestake here?
 	 *******************************************************************************/
-	t.LogStart("WithdwarStakeAmount, step 2B")
+	t.LogStart("WithdwarStakeAmount, step 2C")
 	txn, err = Aimpl.WithdrawStakeAmt(azil(10))
 
 	t.AssertError(txn, err, -15)

@@ -9,17 +9,39 @@ import (
 func (t *Testing) DelegateStakeSuccess() {
 	t.LogStart("DelegateStake: Stake 10 ZIL")
 
-	_, Zimpl, Aimpl, Buffer, _ := t.DeployAndUpgrade()
+	Zproxy, Zimpl, Aimpl, Buffer, _ := t.DeployAndUpgrade()
 
 	Aimpl.UpdateWallet(key1)
-	t.AssertSuccess(Aimpl.DelegateStake(zil(20)))
+
+	// Because of DelegHasNoSufficientAmt
+	tx, err := Aimpl.DelegateStake(zil(1))
+	t.AssertError(tx, err, -15)
+
+	// Success delegate
+  t.AssertSuccess(Aimpl.DelegateStake(zil(20)))
+
+	lastrewardcycle := Zimpl.Field("lastrewardcycle")
+
+	t.AssertEqual(Zimpl.Field("buff_deposit_deleg", "0x"+Buffer.Addr, AZIL_SSN_ADDRESS, lastrewardcycle), zil(20))
 
 	t.AssertEqual(Zimpl.Field("buff_deposit_deleg", "0x"+Buffer.Addr, AZIL_SSN_ADDRESS, Zimpl.Field("lastrewardcycle")), zil(20))
 	t.AssertEqual(Aimpl.Field("_balance"), "0")
+
 	t.AssertEqual(Aimpl.Field("totalstakeamount"), zil(1020))
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1020))
+
 	t.AssertEqual(Aimpl.Field("balances", "0x"+admin), azil(1000))
 	t.AssertEqual(Aimpl.Field("balances", "0x"+addr1), azil(20))
+
+	t.AssertEqual(Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+addr1), lastrewardcycle)
+
+	// Check delegate to the next cycle
+	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
+	Aimpl.DelegateStake(zil(20))
+
+	nextCycleStr := deploy.StrSum(lastrewardcycle, "1")
+
+	t.AssertEqual(Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+addr1), nextCycleStr)
 }
 
 func (t *Testing) DelegateStakeBuffersRotation() {
