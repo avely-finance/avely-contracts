@@ -12,6 +12,12 @@ func (t *Testing) DelegateStakeSuccess() {
 	Zproxy, Zimpl, Aimpl, Buffer, _ := t.DeployAndUpgrade()
 
 	Aimpl.UpdateWallet(key1)
+
+	// Because of DelegHasNoSufficientAmt
+	tx, err := Aimpl.DelegateStake(zil(1))
+	t.AssertError(tx, err, -15)
+
+	// Success delegate
   t.AssertSuccess(Aimpl.DelegateStake(zil(20)))
 
 	lastrewardcycle := Zimpl.Field("lastrewardcycle")

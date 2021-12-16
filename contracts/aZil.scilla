@@ -363,8 +363,6 @@ end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
 procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
-  IsDelegStakeSufficient stake_amt;
-
   total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
 
@@ -677,6 +675,8 @@ transition DelegateStake()
   accept;
   stake_amt = _amount;
   initiator = _sender;
+
+  IsDelegStakeSufficient stake_amt;
 
   tmp_stake_delegate_amount := stake_amt;
   o_delegator = Some {ByStr20} initiator;
