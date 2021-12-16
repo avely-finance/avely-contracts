@@ -23,7 +23,7 @@ func (t *Testing) ZilBalanceOf() {
 	 * 2. After delegate (addr2) should have its balance updated
 	 *******************************************************************************/
 	t.LogStart("ZilBalanceOf, step 2")
-	Aimpl.DelegateStake(zil(15))
+	t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, zil(15))
 
@@ -35,8 +35,8 @@ func (t *Testing) ZilBalanceOf() {
 	 *******************************************************************************/
 	t.LogStart("ZilBalanceOf, step 3")
 	Aimpl.UpdateWallet(adminKey)
-	Aimpl.IncreaseAutoRestakeAmount(zil(10))
-	Aimpl.PerformAutoRestake()
+	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(zil(10)))
+	t.AssertSuccess(Aimpl.PerformAutoRestake())
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, deploy.MulDiv(
 		Aimpl.Field("balances", "0x"+addr2),
@@ -50,7 +50,7 @@ func (t *Testing) ZilBalanceOf() {
 	 *******************************************************************************/
 	t.LogStart("ZilBalanceOf, step 4")
 	Aimpl.UpdateWallet(key3)
-	Aimpl.DelegateStake(zil(10))
+	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, deploy.MulDiv(
 		Aimpl.Field("balances", "0x"+addr2),

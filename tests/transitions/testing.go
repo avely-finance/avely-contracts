@@ -250,3 +250,12 @@ func compareParams(all, wanted []core.ContractValue) bool {
 	}
 	return true
 }
+
+func (t *Testing) AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+	if err != nil {
+		_, file, no, _ := runtime.Caller(1)
+		t.LogPrettyReceipt(tx)
+		log.Fatalf("🔴 TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
+	}
+	return tx, err
+}
