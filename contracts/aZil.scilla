@@ -362,7 +362,7 @@ procedure TruncateDeleg(deleg: ByStr20)
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
-procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
+procedure UpdateTokenBalance(initiator: ByStr20, stake_amt: Uint128)
   total_token_amt <- totaltokenamount;
   current_stake_amt <- totalstakeamount;
 
@@ -391,7 +391,7 @@ procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   IncreaseTotalTokenAmt token_amt
 end
 
-procedure AsseertNoBufferedDeposit(deleg: ByStr20)
+procedure AssertNoBufferedDeposit(deleg: ByStr20)
   FetchRemoteZimplFields;
   ldcd_o <- last_buf_deposit_cycle_deleg[deleg];
   ldcd = option_uint32_value ldcd_o;
@@ -437,7 +437,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
 
   match current_token_amount with
   | Some current_token_amt =>
-    AsseertNoBufferedDeposit initiator;
+    AssertNoBufferedDeposit initiator;
     AdjustDeleg initiator current_token_amt withdraw_token_amt;
 
     (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
@@ -487,8 +487,7 @@ procedure ProcessDelegateStakeSuccessCallBack(delegator: ByStr20, amount: Uint12
     IncreaseTotalStakeAmt amount;
     autorestakeamount := uint128_zero
   | False =>
-    (* Update the delegator balance *)
-    Delegate delegator amount;
+    UpdateTokenBalance delegator amount;
 
     (* Reset tmp variables *)
     tmp_stake_delegate_amount := uint128_zero;
