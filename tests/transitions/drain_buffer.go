@@ -96,7 +96,7 @@ func (t *Testing) DrainBuffer() {
 	//error should not be thrown
 	new_buffers := []string{"0x0000000000000000000000000000000000000000"}
 	t.AssertSuccess(Aimpl.ChangeBuffers(new_buffers))
-	Aimpl.DrainBuffer("0000000000000000000000000000000000000000")
+	txn, _ = Aimpl.DrainBuffer("0000000000000000000000000000000000000000")
 	t.AssertTransition(txn, deploy.Transition{
 		Aimpl.Addr, //sender
 		"ClaimRewards",
