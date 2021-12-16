@@ -90,12 +90,12 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
 	log.Println("upgrade succeed")
-	t.AddDebug("Zproxy", "0x"+Zproxy.Addr)
-	t.AddDebug("Zimpl", "0x"+Zimpl.Addr)
-	t.AddDebug("Gzil", "0x"+gzil.Addr)
-	t.AddDebug("Aimpl", "0x"+Aimpl.Addr)
-	t.AddDebug("Buffer", "0x"+Buffer.Addr)
-	t.AddDebug("Holder", "0x"+Holder.Addr)
+	t.AddShortcut("Zproxy", "0x"+Zproxy.Addr)
+	t.AddShortcut("Zimpl", "0x"+Zimpl.Addr)
+	t.AddShortcut("Gzil", "0x"+gzil.Addr)
+	t.AddShortcut("Aimpl", "0x"+Aimpl.Addr)
+	t.AddShortcut("Buffer", "0x"+Buffer.Addr)
+	t.AddShortcut("Holder", "0x"+Holder.Addr)
 
 	return Zproxy, Zimpl, Aimpl, Buffer, Holder
 }

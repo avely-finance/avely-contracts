@@ -11,7 +11,6 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 	readyBlocks := []string{}
 
 	Zproxy, Zimpl, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
-	t.AddDebug("addr1", "0x"+addr1)
 
 	Aimpl.UpdateWallet(key1)
 	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))

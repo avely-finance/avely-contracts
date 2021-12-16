@@ -3,7 +3,6 @@ package deploy
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"reflect"
 	"strconv"
@@ -24,13 +23,6 @@ type Contract struct {
 	TxIdStateParsed string
 	StateMap        StateMap
 	StateFieldTypes StateFieldTypes
-}
-
-func (c *Contract) LogState() {
-	provider := provider2.NewProvider(API_PROVIDER)
-	rsp, _ := provider.GetSmartContractState(c.Addr)
-	j, _ := json.MarshalIndent(rsp, "  ", "    ")
-	fmt.Println(string(j))
 }
 
 func (c *Contract) GetBalance() string {
