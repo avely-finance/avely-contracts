@@ -91,4 +91,17 @@ func (t *Testing) DrainBuffer() {
 		"0",
 		deploy.ParamsMap{"requestor": "0x" + Buffer.Addr},
 	})
+
+	//try to drain buffer, not existent at main staking contract
+	//error should not be thrown
+	new_buffers := []string{"0x0000000000000000000000000000000000000000"}
+	Aimpl.ChangeBuffers(new_buffers)
+	Aimpl.DrainBuffer("0000000000000000000000000000000000000000")
+	t.AssertTransition(txn, deploy.Transition{
+		Aimpl.Addr, //sender
+		"ClaimRewards",
+		Holder.Addr,
+		"0",
+		deploy.ParamsMap{},
+	})
 }
