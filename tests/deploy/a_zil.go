@@ -200,6 +200,7 @@ func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
 
 		stateFieldTypes := make(StateFieldTypes)
 		stateFieldTypes["balances"] = "StateFieldMap"
+		stateFieldTypes["last_buf_deposit_cycle_deleg"] = "StateFieldMap"
 		stateFieldTypes["buffers_addresses"] = "StateFieldArray"
 		stateFieldTypes["withdrawal_pending"] = "StateFieldMapMapWithdrawal"
 		stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapWithdrawal"
