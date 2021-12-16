@@ -154,6 +154,10 @@ field withdrawal_pending: Map BNum (Map ByStr20 Withdrawal) = Emp BNum (Map BySt
 (* AddressOfDeleg ->  Deposit *)
 field withdrawal_unbonded: Map ByStr20 Withdrawal = Emp ByStr20 Withdrawal
 
+(* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
+(* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
+field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
+
 field tmp_delegator: Option ByStr20 = None {ByStr20}
 field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
@@ -340,7 +344,8 @@ procedure DecreaseTotalTokenAmt(amt: Uint128)
 end
 
 procedure TruncateDeleg(deleg: ByStr20)
-  delete balances[deleg]
+  delete balances[deleg];
+  delete last_buf_deposit_cycle_deleg[deleg]
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
@@ -365,6 +370,11 @@ procedure Delegate(initiator: ByStr20, stake_amt: Uint128)
   | None =>
     balances[initiator] := token_amt
   end;
+
+  FetchRemoteZimplFields;
+  cycle <- local_lastrewardcycle;
+
+  last_buf_deposit_cycle_deleg[initiator] := cycle;
 
   IncreaseTotalStakeAmt stake_amt;
   IncreaseTotalTokenAmt token_amt
