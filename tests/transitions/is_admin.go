@@ -39,8 +39,6 @@ func (t *Testing) IsAdmin() {
 	// Use non-admin user for Aimpl
 	Aimpl.UpdateWallet(key2)
 
-	tx, err = Aimpl.ChangeZproxyAddress(addr3)
-	t.AssertError(tx, err, -106)
 	tx, err = Aimpl.ChangeZimplAddress(addr3)
 	t.AssertError(tx, err, -106)
 	tx, err = Aimpl.ChangeHolderAddress(addr3)

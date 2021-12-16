@@ -31,7 +31,7 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	log.Println("deploy Zimpl succeed, address = ", Zimpl.Addr)
 
 	//deploy azil
-	Aimpl, err := deploy.NewAZilContract(adminKey, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
+	Aimpl, err := deploy.NewAZilContract(adminKey, AZIL_SSN_ADDRESS, Zimpl.Addr)
 	if err != nil {
 		t.LogError("deploy aZil error = ", err)
 	}
