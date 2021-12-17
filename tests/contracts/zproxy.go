@@ -1,6 +1,8 @@
-package deploy
+package contracts
 
 import (
+	"Azil/test/helpers"
+
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -140,11 +142,11 @@ func NewZproxy(key string) (*Zproxy, error) {
 		}, {
 			VName: "init_admin",
 			Type:  "ByStr20",
-			Value: "0x" + getAddressFromPrivateKey(key),
+			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_implementation",
 			Type:  "ByStr20",
-			Value: "0x" + getAddressFromPrivateKey(key),
+			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
 		},
 	}
 
@@ -157,7 +159,7 @@ func NewZproxy(key string) (*Zproxy, error) {
 		Signer: wallet,
 	}
 
-	tx, err := DeployTo(&contract)
+	tx, err := helpers.DeployTo(&contract)
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +170,7 @@ func NewZproxy(key string) (*Zproxy, error) {
 		stateFieldTypes := make(StateFieldTypes)
 
 		contract := Contract{
+			Provider:        *contract.Provider,
 			Code:            string(code),
 			Init:            init,
 			Addr:            tx.ContractAddress,

@@ -1,6 +1,8 @@
-package deploy
+package contracts
 
 import (
+	"Azil/test/helpers"
+
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -28,12 +30,12 @@ func NewGzil(key string) (*Gzil, error) {
 		{
 			VName: "contract_owner",
 			Type:  "ByStr20",
-			Value: "0x" + getAddressFromPrivateKey(key),
+			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
 		},
 		{
 			VName: "init_minter",
 			Type:  "ByStr20",
-			Value: "0x" + getAddressFromPrivateKey(key),
+			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
 		},
 		{
 			VName: "name",
@@ -71,7 +73,7 @@ func NewGzil(key string) (*Gzil, error) {
 		Signer: wallet,
 	}
 
-	tx, err := DeployTo(&contract)
+	tx, err := helpers.DeployTo(&contract)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +84,7 @@ func NewGzil(key string) (*Gzil, error) {
 		stateFieldTypes := make(StateFieldTypes)
 
 		contract := Contract{
+			Provider:        *contract.Provider,
 			Code:            string(code),
 			Init:            init,
 			Addr:            tx.ContractAddress,

@@ -1,86 +1,49 @@
-package transitions
+package helpers
 
 import (
-	"Azil/test/deploy"
 	"encoding/json"
 	"fmt"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/fatih/color"
 	"log"
-	"reflect"
 	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-const AZIL_SSN_ADDRESS = "0x166862bdd5d76b3a4775d2494820179d582acac5"
-const AZIL_SSN_REWARD_SHARE_PERCENT = "50"
+type ParamsMap map[string]string
 
-const HOLDER_INITIAL_DELEGATE_ZIL = 1000
-
-// owner
-const adminKey = "d96e9eb5b782a80ea153c937fa83e5948485fbfc8b7e7c069d7b914dbc350aba"
-const admin = "381f4008505e940ad7681ec3468a719060caf796"
-
-const verifierKey = "5430365143ce0154b682301d0ab731897221906a7054bbf5bd83c7663a6cbc40"
-const verifier = "10200e3da08ee88729469d6eabc055cb225821e7"
-
-const key1 = "1080d2cca18ace8225354ac021f9977404cee46f1d12e9981af8c36322eac1a4"
-const addr1 = "ac941274c3b6a50203cc5e7939b7dad9f32a0c12"
-const key2 = "254d9924fc1dcdca44ce92d80255c6a0bb690f867abde80e626fbfef4d357004"
-const addr2 = "ec902fe17d90203d0bddd943d97b29576ece3177"
-const key3 = "b8fc4e270594d87d3f728d0873a38fb0896ea83bd6f96b4f3c9ff0a29122efe4"
-const addr3 = "c2035715831ab100ec42e562ce341b834bed1f4c"
-const key4 = "b87f4ba7dcd6e60f2cca8352c89904e3993c5b2b0b608d255002edcda6374de4"
-const addr4 = "6cd3667ba79310837e33f0aecbe13688a6cbca32"
-
-const qa = "000000000000"
-
-func zil(amount int) string {
-	if amount == 0 {
-		return "0"
-	}
-	return fmt.Sprintf("%d%s", amount, qa)
+type Transition struct {
+	Sender    string
+	Tag       string
+	Recipient string
+	Amount    string
+	Params    ParamsMap
+}
+type Event struct {
+	Sender    string
+	EventName string
+	Params    ParamsMap
 }
 
-func azil(amount int) string {
-	if amount == 0 {
-		return "0"
-	}
-	return fmt.Sprintf("%d%s", amount, qa)
+//replacement for core.EventLog, because of strange "undefined type" error
+//we have https://github.com/Zilliqa/gozilliqa-sdk/blob/master/core/types.go#L107
+type EventLog struct {
+	EventName string               `json:"_eventname"`
+	Address   string               `json:"address"`
+	Params    []core.ContractValue `json:"params"`
 }
 
 type Testing struct {
 	shortcuts map[string]string
 }
 
-func NewTesting() *Testing {
-	shortcuts := make(map[string]string)
-	shortcuts["azilssn"] = AZIL_SSN_ADDRESS
-	shortcuts["addr1"] = "0x" + addr1
-	shortcuts["addr2"] = "0x" + addr2
-	shortcuts["addr3"] = "0x" + addr3
-	shortcuts["addr4"] = "0x" + addr4
-	shortcuts["admin"] = "0x" + admin
-	shortcuts["verifier"] = "0x" + verifier
+func NewTesting(shortcuts map[string]string) *Testing {
 	return &Testing{
 		shortcuts: shortcuts,
 	}
-}
-
-func (t *Testing) LogStart(tag string) {
-	log.Printf("⚙️  === Start to test %s === \n", tag)
-}
-
-func (t *Testing) LogEnd() {
-	log.Println("🏁 TESTS PASSED SUCCESSFULLY")
-}
-
-func (t *Testing) LogError(tag string, err error) {
-	log.Fatalf("🔴 Failed at %s, err = %s\n", tag, err.Error())
 }
 
 func (t *Testing) GetReceiptString(txn *transaction.Transaction) string {
@@ -92,36 +55,6 @@ func (t *Testing) LogPrettyReceipt(txn *transaction.Transaction) {
 	data, _ := json.MarshalIndent(txn.Receipt, "", "     ")
 	result := t.HighlightShortcuts(string(data))
 	log.Println(result)
-}
-
-func (t *Testing) LogState(contract interface{}) {
-	provider := provider.NewProvider(deploy.API_PROVIDER)
-	addr := ""
-	typ := reflect.ValueOf(contract).Type().String()
-	switch typ {
-	case "*deploy.Zproxy":
-		addr = contract.(*deploy.Zproxy).Addr
-		break
-	case "*deploy.Zimpl":
-		addr = contract.(*deploy.Zimpl).Addr
-		break
-	case "*deploy.BufferContract":
-		addr = contract.(*deploy.BufferContract).Addr
-		break
-	case "*deploy.HolderContract":
-		addr = contract.(*deploy.HolderContract).Addr
-		break
-	case "*deploy.AZil":
-		addr = contract.(*deploy.AZil).Addr
-		break
-	default:
-		panic("Unknown type " + typ)
-		break
-	}
-	rsp, _ := provider.GetSmartContractState(addr)
-	j, _ := json.MarshalIndent(rsp, "  ", "    ")
-	result := t.HighlightShortcuts(string(j))
-	fmt.Println(result)
 }
 
 func (t *Testing) AssertContain(s1, s2 string) {
@@ -181,7 +114,7 @@ type TransactionMessage struct {
 	Params    []ContractValue `json:"params"`
 }
 */
-func (t *Testing) AssertTransition(txn *transaction.Transaction, expectedTxn deploy.Transition) {
+func (t *Testing) AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
 	found := false
 	if txn.Receipt.Transitions != nil {
 		for _, txTransition := range txn.Receipt.Transitions {
@@ -210,7 +143,7 @@ func (t *Testing) AssertTransition(txn *transaction.Transaction, expectedTxn dep
 	}
 }
 
-func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent deploy.Event) {
+func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent Event) {
 	found := false
 	if txn.Receipt.EventLogs != nil {
 		for _, el := range txn.Receipt.EventLogs {
@@ -278,7 +211,7 @@ func (t *Testing) HighlightShortcuts(str string) string {
 	return str
 }
 
-func convertParams(pmap deploy.ParamsMap) []core.ContractValue {
+func convertParams(pmap ParamsMap) []core.ContractValue {
 	cvarr := []core.ContractValue{}
 	for key, val := range pmap {
 		cvarr = append(cvarr, core.ContractValue{
@@ -290,13 +223,13 @@ func convertParams(pmap deploy.ParamsMap) []core.ContractValue {
 	return cvarr
 }
 
-func convertEventLog(el interface{}) deploy.EventLog {
+func convertEventLog(el interface{}) EventLog {
 	//TODO: correct way to get txEvent EventLog structure
 	b, err := json.Marshal(el)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var txEvent deploy.EventLog // it's strange, but undefined: core.EventLog
+	var txEvent EventLog // it's strange, but undefined: core.EventLog
 	err = json.Unmarshal([]byte(b), &txEvent)
 	if err != nil {
 		log.Fatal(err)

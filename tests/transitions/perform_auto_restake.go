@@ -1,11 +1,11 @@
 package transitions
 
 import (
-	"Azil/test/deploy"
+	"Azil/test/helpers"
 )
 
-func (t *Testing) PerformAuoRestake() {
-	Zproxy, _, Aimpl, Buffer, _ := t.DeployAndUpgrade()
+func (tr *Transitions) PerformAuoRestake() {
+	Zproxy, _, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
 
 	Aimpl.UpdateWallet(adminKey)
 
@@ -25,11 +25,11 @@ func (t *Testing) PerformAuoRestake() {
 	// should return to 0
 	t.AssertEqual(Aimpl.Field("autorestakeamount"), zil(0))
 
-	t.AssertTransition(txn, deploy.Transition{
+	t.AssertTransition(txn, helpers.Transition{
 		Buffer.Addr, //sender
 		"DelegateStake",
 		Zproxy.Addr,
 		restakeAmount,
-		deploy.ParamsMap{},
+		helpers.ParamsMap{},
 	})
 }

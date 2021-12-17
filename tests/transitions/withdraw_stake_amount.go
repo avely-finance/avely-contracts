@@ -1,24 +1,21 @@
 package transitions
 
 import (
-	// "log"
-	"Azil/test/deploy"
+	"Azil/test/helpers"
 )
 
-func (t *Testing) WithdrawStakeAmount() {
-
-	const FakeEpochNum = "1234567890"
+func (tr *Transitions) WithdrawStakeAmount() {
 
 	t.LogStart("WithdrawStakeAmount")
 
 	// deploy smart contract
-	Zproxy, _, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
+	Zproxy, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
 	/*******************************************************************************
 	 * 0. delegator (addr2) delegate 15 zil
 	 *******************************************************************************/
 	Aimpl.UpdateWallet(key2)
-  t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
+	t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
 
 	/*******************************************************************************
 	 * 1. non delegator(addr4) try to withdraw stake, should fail
@@ -75,19 +72,19 @@ func (t *Testing) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	t.LogStart("WithdwarStakeAmount, step 3A")
 
-	deploy.IncreaseBlocknum(10)
+	helpers.IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 	Aimpl.UpdateWallet(adminKey)
 	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
 
 	Aimpl.UpdateWallet(key2)
 	txn, err = Aimpl.WithdrawStakeAmt(azil(5))
-	t.AssertTransition(txn, deploy.Transition{
+	t.AssertTransition(txn, helpers.Transition{
 		Aimpl.Addr,
 		"WithdrawStakeAmt",
 		Holder.Addr,
 		"0",
-		deploy.ParamsMap{"amount": zil(5)},
+		helpers.ParamsMap{"amount": zil(5)},
 	})
 	bnum1 := txn.Receipt.EpochNum
 
@@ -95,7 +92,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	//TODO: we can check this only in local testing environment,
 	//and even in this case we need to monitor all incoming balances, including Holder initial delegate
 	//t.AssertEqual(Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
-	t.AssertEqual(Aimpl.Field("totalstakeamount"), deploy.StrAdd(zil(1000), newDelegBalanceZil))
+	t.AssertEqual(Aimpl.Field("totalstakeamount"), helpers.StrAdd(zil(1000), newDelegBalanceZil))
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1010))
 	t.AssertEqual(Aimpl.Field("balances", "0x"+addr2), azil(10))
 	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(5))
@@ -109,8 +106,8 @@ func (t *Testing) WithdrawStakeAmount() {
 	t.LogStart("WithdrawStakeAmount, step 3B")
 	txn, _ = Aimpl.WithdrawStakeAmt(azil(10))
 	bnum2 := txn.Receipt.EpochNum
-	t.AssertEvent(txn, deploy.Event{Aimpl.Addr, "WithdrawStakeAmt",
-		deploy.ParamsMap{"withdraw_amount": azil(10), "withdraw_stake_amount": zil(10)}})
+	t.AssertEvent(txn, helpers.Event{Aimpl.Addr, "WithdrawStakeAmt",
+		helpers.ParamsMap{"withdraw_amount": azil(10), "withdraw_stake_amount": zil(10)}})
 	t.AssertEqual(Aimpl.Field("totalstakeamount"), zil(1000))  //0
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1000)) //0
 	//t.AssertEqual(Aimpl.Field("balances"), "empty")

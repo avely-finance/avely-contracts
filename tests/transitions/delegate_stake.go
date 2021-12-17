@@ -2,14 +2,15 @@ package transitions
 
 import (
 	//"log"
-	"Azil/test/deploy"
+	"Azil/test/contracts"
+	"Azil/test/helpers"
 	"strconv"
 )
 
-func (t *Testing) DelegateStakeSuccess() {
+func (tr *Transitions) DelegateStakeSuccess() {
 	t.LogStart("DelegateStake: Stake 10 ZIL")
 
-	Zproxy, Zimpl, Aimpl, Buffer, _ := t.DeployAndUpgrade()
+	Zproxy, Zimpl, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
 
 	Aimpl.UpdateWallet(key1)
 
@@ -39,17 +40,17 @@ func (t *Testing) DelegateStakeSuccess() {
 	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 	Aimpl.DelegateStake(zil(20))
 
-	nextCycleStr := deploy.StrAdd(lastrewardcycle, "1")
+	nextCycleStr := helpers.StrAdd(lastrewardcycle, "1")
 
 	t.AssertEqual(Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+addr1), nextCycleStr)
 }
 
-func (t *Testing) DelegateStakeBuffersRotation() {
+func (tr *Transitions) DelegateStakeBuffersRotation() {
 	t.LogStart("DelegateStake: Buffers rotation")
 
-	Zproxy, Zimpl, Aimpl, Buffer, _ := t.DeployAndUpgrade()
+	Zproxy, Zimpl, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
 
-	anotherBuffer, err1 := deploy.NewBufferContract(adminKey, Aimpl.Addr, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
+	anotherBuffer, err1 := contracts.NewBufferContract(adminKey, Aimpl.Addr, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err1 != nil {
 		t.LogError("Deploy buffer error = ", err1)
 	}

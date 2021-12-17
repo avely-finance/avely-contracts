@@ -1,15 +1,13 @@
 package transitions
 
 import (
-	// "log"
-	"Azil/test/deploy"
-	//"math/big"
+	"Azil/test/helpers"
 )
 
-func (t *Testing) DrainBuffer() {
+func (tr *Transitions) DrainBuffer() {
 	t.LogStart("CompleteWithdrawal - success")
 
-	Zproxy, _, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
+	Zproxy, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
 	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
 
@@ -18,55 +16,55 @@ func (t *Testing) DrainBuffer() {
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
 	Zproxy.UpdateWallet(verifierKey)
-	deploy.IncreaseBlocknum(10)
+	helpers.IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
-	deploy.IncreaseBlocknum(10)
+	helpers.IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
 	txn, _ = Aimpl.DrainBuffer(Buffer.Addr)
 
-	t.AssertTransition(txn, deploy.Transition{
+	t.AssertTransition(txn, helpers.Transition{
 		Aimpl.Addr,     //sender
 		"ClaimRewards", //tag
 		Buffer.Addr,    //recipient
 		"0",            //amount
-		deploy.ParamsMap{},
+		helpers.ParamsMap{},
 	})
 
 	/*
 		//In order to check rewards we shoul repeat reward calculation logic from procedure CalcStakeRewards
 			// Send funds and call a callback via Buffer
-			t.AssertTransition(txn, deploy.Transition{
+			t.AssertTransition(txn, helpers.Transition{
 				Zimpl.Addr, //sender
 				"AddFunds",
 				Buffer.Addr,
 				zil(1),
-				deploy.ParamsMap{},
+				helpers.ParamsMap{},
 			})
 
-			t.AssertTransition(txn, deploy.Transition{
+			t.AssertTransition(txn, helpers.Transition{
 				Zimpl.Addr, //sender
 				"WithdrawStakeRewardsSuccessCallBack",
 				Buffer.Addr,
 				"0",
-				deploy.ParamsMap{"rewards": zil(1)},
+				helpers.ParamsMap{"rewards": zil(1)},
 			})
 
 			// Send funds and call a callback via Holder
-			t.AssertTransition(txn, deploy.Transition{
+			t.AssertTransition(txn, helpers.Transition{
 				Zimpl.Addr, //sender
 				"AddFunds",
 				Holder.Addr,
 				zil(1),
-				deploy.ParamsMap{},
+				helpers.ParamsMap{},
 			})
 
-			t.AssertTransition(txn, deploy.Transition{
+			t.AssertTransition(txn, helpers.Transition{
 				Zimpl.Addr, //sender
 				"WithdrawStakeRewardsSuccessCallBack",
 				Holder.Addr,
 				"0",
-				deploy.ParamsMap{"rewards": zil(1)},
+				helpers.ParamsMap{"rewards": zil(1)},
 			})
 
 			// Check aZIL balance
@@ -76,20 +74,20 @@ func (t *Testing) DrainBuffer() {
 	*/
 
 	// Send Swap transactions
-	t.AssertTransition(txn, deploy.Transition{
+	t.AssertTransition(txn, helpers.Transition{
 		Buffer.Addr, //sender
 		"RequestDelegatorSwap",
 		Zproxy.Addr,
 		"0",
-		deploy.ParamsMap{"new_deleg_addr": "0x" + Holder.Addr},
+		helpers.ParamsMap{"new_deleg_addr": "0x" + Holder.Addr},
 	})
 
-	t.AssertTransition(txn, deploy.Transition{
+	t.AssertTransition(txn, helpers.Transition{
 		Holder.Addr, //sender
 		"ConfirmDelegatorSwap",
 		Zproxy.Addr,
 		"0",
-		deploy.ParamsMap{"requestor": "0x" + Buffer.Addr},
+		helpers.ParamsMap{"requestor": "0x" + Buffer.Addr},
 	})
 
 	//try to drain buffer, not existent at main staking contract
@@ -97,11 +95,11 @@ func (t *Testing) DrainBuffer() {
 	new_buffers := []string{"0x0000000000000000000000000000000000000000"}
 	t.AssertSuccess(Aimpl.ChangeBuffers(new_buffers))
 	txn, _ = Aimpl.DrainBuffer("0000000000000000000000000000000000000000")
-	t.AssertTransition(txn, deploy.Transition{
+	t.AssertTransition(txn, helpers.Transition{
 		Aimpl.Addr, //sender
 		"ClaimRewards",
 		Holder.Addr,
 		"0",
-		deploy.ParamsMap{},
+		helpers.ParamsMap{},
 	})
 }

@@ -1,6 +1,8 @@
-package deploy
+package contracts
 
 import (
+	"Azil/test/helpers"
+
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -10,7 +12,6 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	//"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
 type Zimpl struct {
@@ -28,7 +29,7 @@ func NewZimpl(key, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 		}, {
 			VName: "init_admin",
 			Type:  "ByStr20",
-			Value: "0x" + getAddressFromPrivateKey(key),
+			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_proxy_address",
 			Type:  "ByStr20",
@@ -50,7 +51,7 @@ func NewZimpl(key, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 		Signer: wallet,
 	}
 
-	tx, err := DeployTo(&contract)
+	tx, err := helpers.DeployTo(&contract)
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +64,7 @@ func NewZimpl(key, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 		stateFieldTypes["direct_deposit_deleg"] = "StateFieldMapMapMap"
 
 		contract := Contract{
+			Provider:        *contract.Provider,
 			Code:            string(code),
 			Init:            init,
 			Addr:            tx.ContractAddress,

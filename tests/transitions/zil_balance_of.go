@@ -1,15 +1,15 @@
 package transitions
 
 import (
-	"Azil/test/deploy"
+	"Azil/test/helpers"
 )
 
-func (t *Testing) ZilBalanceOf() {
+func (tr *Transitions) ZilBalanceOf() {
 
 	t.LogStart("ZilBalanceOf")
 
 	// deploy smart contract
-	_, _, Aimpl, _, _ := t.DeployAndUpgrade()
+	_, _, Aimpl, _, _ := tr.DeployAndUpgrade()
 
 	/*******************************************************************************
 	 * 1. Non-delegator address (addr2) should have empty balance
@@ -38,7 +38,7 @@ func (t *Testing) ZilBalanceOf() {
 	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(zil(10)))
 	t.AssertSuccess(Aimpl.PerformAutoRestake())
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)
-	t.AssertEqual(balance2, deploy.StrMulDiv(
+	t.AssertEqual(balance2, helpers.StrMulDiv(
 		Aimpl.Field("balances", "0x"+addr2),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
@@ -52,12 +52,12 @@ func (t *Testing) ZilBalanceOf() {
 	Aimpl.UpdateWallet(key3)
 	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)
-	t.AssertEqual(balance2, deploy.StrMulDiv(
+	t.AssertEqual(balance2, helpers.StrMulDiv(
 		Aimpl.Field("balances", "0x"+addr2),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
 	balance3, _ := Aimpl.ZilBalanceOf(addr3)
-	t.AssertEqual(balance3, deploy.StrMulDiv(
+	t.AssertEqual(balance3, helpers.StrMulDiv(
 		Aimpl.Field("balances", "0x"+addr3),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))

@@ -1,7 +1,6 @@
-package deploy
+package helpers
 
 import (
-	"fmt"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/keytools"
@@ -10,9 +9,10 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/ybbus/jsonrpc"
 	"log"
-	"math/big"
 	"strconv"
 )
+
+const API_PROVIDER string = "http://zilliqa_server:5555"
 
 func IncreaseBlocknum(delta int32) {
 	//https://raw.githubusercontent.com/Zilliqa/gozilliqa-sdk/7a254f739153c0551a327526009b4aaeeb4c9d87/provider/provider.go
@@ -32,7 +32,7 @@ func GetBalance(addr string) string {
 	return balAndNonce.Balance
 }
 
-func getAddressFromPrivateKey(privateKey string) string {
+func GetAddressFromPrivateKey(privateKey string) string {
 	publicKey := keytools.GetPublicKeyFromPrivateKey(util.DecodeHex(privateKey), true)
 	address := keytools.GetAddressFromPublic(publicKey)
 	return address
@@ -69,36 +69,4 @@ func CallFor(c *contract2.Contract, transition string, args []core.ContractValue
 		SenderPubKey: "",
 	}
 	return c.Call(transition, args, params, priority)
-}
-
-func StrAdd(arg ...string) string {
-	if len(arg) < 2 {
-		panic("StrAdd needs at least 2 arguments")
-	}
-	result, _ := new(big.Int).SetString("0", 10)
-	for _, v := range arg {
-		vInt, ok := new(big.Int).SetString(v, 10)
-		if !ok {
-			println(v)
-			panic(fmt.Sprintf("StrAdd can't get BigInt from argument ", v))
-		}
-		result = result.Add(result, vInt)
-	}
-	return result.String()
-}
-
-func StrSub(a, b string) string {
-	A, _ := new(big.Int).SetString(a, 10)
-	B, _ := new(big.Int).SetString(b, 10)
-	result := new(big.Int).Sub(A, B)
-	return result.String()
-}
-
-func StrMulDiv(a, b, c string) string {
-	A, _ := new(big.Int).SetString(a, 10)
-	B, _ := new(big.Int).SetString(b, 10)
-	C, _ := new(big.Int).SetString(c, 10)
-	result := new(big.Int).Mul(A, B)
-	result = result.Div(result, C)
-	return result.String()
 }
