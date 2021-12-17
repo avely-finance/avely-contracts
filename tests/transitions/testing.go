@@ -246,18 +246,18 @@ func (t *Testing) AddShortcut(key, value string) {
 func (t *Testing) HighlightShortcuts(str string) string {
 
 	colors := [...]color.Attribute{
-		color.BgRed,
-		color.BgGreen,
-		color.BgYellow,
-		color.BgBlue,
-		color.BgMagenta,
-		color.BgCyan,
-		color.BgHiRed,
-		color.BgHiGreen,
-		color.BgHiYellow,
-		color.BgHiBlue,
-		color.BgHiMagenta,
-		color.BgHiCyan,
+		color.FgRed,
+		color.FgGreen,
+		color.FgYellow,
+		color.FgBlue,
+		color.FgMagenta,
+		color.FgCyan,
+		color.FgHiRed,
+		color.FgHiGreen,
+		color.FgHiYellow,
+		color.FgHiBlue,
+		color.FgHiMagenta,
+		color.FgHiCyan,
 	}
 
 	//sort shortcuts
