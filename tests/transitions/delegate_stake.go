@@ -18,7 +18,7 @@ func (t *Testing) DelegateStakeSuccess() {
 	t.AssertError(tx, err, -15)
 
 	// Success delegate
-  t.AssertSuccess(Aimpl.DelegateStake(zil(20)))
+	t.AssertSuccess(Aimpl.DelegateStake(zil(20)))
 
 	lastrewardcycle := Zimpl.Field("lastrewardcycle")
 
@@ -39,7 +39,7 @@ func (t *Testing) DelegateStakeSuccess() {
 	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 	Aimpl.DelegateStake(zil(20))
 
-	nextCycleStr := deploy.StrSum(lastrewardcycle, "1")
+	nextCycleStr := deploy.StrAdd(lastrewardcycle, "1")
 
 	t.AssertEqual(Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+addr1), nextCycleStr)
 }
