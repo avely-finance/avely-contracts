@@ -91,7 +91,7 @@ func (c *Contract) Field(key ...string) string {
 
 func (c *Contract) State() string {
 	rsp, _ := c.Provider.GetSmartContractState(c.Addr)
-	result, _ := json.Marshal(rsp.Result)
+	result, _ := json.MarshalIndent(rsp.Result, "", "     ")
 	state := string(result)
 	return state
 }

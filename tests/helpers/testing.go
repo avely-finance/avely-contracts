@@ -46,17 +46,6 @@ func NewTesting(shortcuts map[string]string) *Testing {
 	}
 }
 
-func (t *Testing) GetReceiptString(txn *transaction.Transaction) string {
-	receipt, _ := json.Marshal(txn.Receipt)
-	return string(receipt)
-}
-
-func (t *Testing) LogPrettyReceipt(txn *transaction.Transaction) {
-	data, _ := json.MarshalIndent(txn.Receipt, "", "     ")
-	result := t.HighlightShortcuts(string(data))
-	log.Println(result)
-}
-
 func (t *Testing) AssertContain(s1, s2 string) {
 	_, file, no, _ := runtime.Caller(1)
 	t.AssertContainRaw("ASSERT_CONTAIN", s1, s2, file, no)
@@ -81,10 +70,11 @@ func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int)
 		log.Println("🔴 ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
 	}
 
-	tx := t.GetReceiptString(txn)
+	receipt, _ := json.Marshal(txn.Receipt)
+	txError := string(receipt)
 	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
 
-	t.AssertContainRaw("ASSERT_ERROR", tx, errorMessage, file, no)
+	t.AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
 }
 
 func (t *Testing) AssertContainRaw(code, s1, s2, file string, no int) {
@@ -259,7 +249,7 @@ func compareParams(all, wanted []core.ContractValue) bool {
 func (t *Testing) AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	if err != nil {
 		_, file, no, _ := runtime.Caller(1)
-		t.LogPrettyReceipt(tx)
+		t.LogNice(tx)
 		log.Fatalf("🔴 TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 	return tx, err
