@@ -1,10 +1,10 @@
 package transitions
 
-func (t *Testing) IsZimpl() {
+func (tr *Transitions) IsZimpl() {
 
 	t.LogStart("IsAimpl")
 
-	_, _, _, Buffer, Holder := t.DeployAndUpgrade()
+	_, _, _, Buffer, Holder := tr.DeployAndUpgrade()
 
 	// Use random user for Buffer
 	Buffer.UpdateWallet(key2)

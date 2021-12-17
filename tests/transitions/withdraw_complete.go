@@ -1,23 +1,23 @@
 package transitions
 
 import (
-	"Azil/test/deploy"
+	"Azil/test/helpers"
 	"strconv"
 )
 
-func (t *Testing) CompleteWithdrawalSuccess() {
+func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	t.LogStart("CompleteWithdrawal - success")
 	readyBlocks := []string{}
 
-	Zproxy, Zimpl, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
+	Zproxy, Zimpl, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
 	Aimpl.UpdateWallet(key1)
 	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
 
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
-	deploy.IncreaseBlocknum(10)
+	helpers.IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
 	Aimpl.UpdateWallet(adminKey)
@@ -28,55 +28,55 @@ func (t *Testing) CompleteWithdrawalSuccess() {
 
 	block1 := tx.Receipt.EpochNum
 	tx, _ = Aimpl.CompleteWithdrawal()
-	t.AssertEvent(tx, deploy.Event{Aimpl.Addr, "NoUnbondedStake", deploy.ParamsMap{}})
+	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "NoUnbondedStake", helpers.ParamsMap{}})
 
 	Aimpl.UpdateWallet(key2)
 	tx, _ = Aimpl.CompleteWithdrawal()
-	t.AssertEvent(tx, deploy.Event{Aimpl.Addr, "NoUnbondedStake", deploy.ParamsMap{}})
+	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "NoUnbondedStake", helpers.ParamsMap{}})
 
 	readyBlocks = append(readyBlocks, block1)
 	tx, err := Aimpl.ClaimWithdrawal(readyBlocks)
 	t.AssertError(tx, err, -105)
 
-	delta, _ := strconv.ParseInt(deploy.StrAdd(Zimpl.Field("bnum_req"), "1"), 10, 32)
-	deploy.IncreaseBlocknum(int32(delta))
+	delta, _ := strconv.ParseInt(helpers.StrAdd(Zimpl.Field("bnum_req"), "1"), 10, 32)
+	helpers.IncreaseBlocknum(int32(delta))
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
 	Aimpl.UpdateWallet(adminKey)
 	tx, _ = Aimpl.ClaimWithdrawal(readyBlocks)
-	t.AssertTransition(tx, deploy.Transition{
+	t.AssertTransition(tx, helpers.Transition{
 		Aimpl.Addr,           //sender
 		"CompleteWithdrawal", //tag
 		Holder.Addr,          //recipient
 		"0",                  //amount
-		deploy.ParamsMap{},
+		helpers.ParamsMap{},
 	})
-	t.AssertEvent(tx, deploy.Event{Holder.Addr, "AddFunds", deploy.ParamsMap{"funder": "0x" + Zimpl.Addr, "amount": zil(10)}})
+	t.AssertEvent(tx, helpers.Event{Holder.Addr, "AddFunds", helpers.ParamsMap{"funder": "0x" + Zimpl.Addr, "amount": zil(10)}})
 
-	t.AssertTransition(tx, deploy.Transition{
+	t.AssertTransition(tx, helpers.Transition{
 		Holder.Addr,                         //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
 		Aimpl.Addr,                          //recipient
 		zil(10),                             //amount
-		deploy.ParamsMap{},
+		helpers.ParamsMap{},
 	})
 
 	Aimpl.UpdateWallet(key1)
 	tx, _ = Aimpl.CompleteWithdrawal()
-	t.AssertEvent(tx, deploy.Event{Aimpl.Addr, "CompleteWithdrawal", deploy.ParamsMap{"amount": zil(10), "delegator": "0x" + addr1}})
-	t.AssertTransition(tx, deploy.Transition{
+	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "CompleteWithdrawal", helpers.ParamsMap{"amount": zil(10), "delegator": "0x" + addr1}})
+	t.AssertTransition(tx, helpers.Transition{
 		Aimpl.Addr,
 		"CompleteWithdrawalSuccessCallBack",
 		addr1,
 		"0",
-		deploy.ParamsMap{"amount": zil(10)},
+		helpers.ParamsMap{"amount": zil(10)},
 	})
-	t.AssertTransition(tx, deploy.Transition{
+	t.AssertTransition(tx, helpers.Transition{
 		Aimpl.Addr,
 		"AddFunds",
 		addr1,
 		zil(10),
-		deploy.ParamsMap{},
+		helpers.ParamsMap{},
 	})
 
 	t.AssertEqual(zil(1000), Aimpl.Field("totalstakeamount"))

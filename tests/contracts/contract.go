@@ -1,6 +1,8 @@
-package deploy
+package contracts
 
 import (
+	"Azil/test/helpers"
+
 	"encoding/json"
 	"errors"
 	"log"
@@ -14,7 +16,23 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
+const TX_CONFIRM_MAX_ATTEMPTS int = 5
+const TX_CONFIRM_INTERVAL_SEC int = 0
+
+var TxIdLast string = ""
+
+type Pair struct {
+	Argtypes    interface{} `json:"argtypes"`
+	Arguments   []string    `json:"arguments"`
+	Constructor string      `json:"constructor"`
+}
+
+type StateMap map[string]interface{}
+
+type StateFieldTypes map[string]string
+
 type Contract struct {
+	Provider        provider2.Provider
 	Code            string
 	Init            []core.ContractValue
 	Addr            string
@@ -23,12 +41,6 @@ type Contract struct {
 	TxIdStateParsed string
 	StateMap        StateMap
 	StateFieldTypes StateFieldTypes
-}
-
-func (c *Contract) GetBalance() string {
-	provider := provider2.NewProvider(API_PROVIDER)
-	balAndNonce, _ := provider.GetBalance(c.Addr)
-	return balAndNonce.Balance
 }
 
 func (c *Contract) UpdateWallet(newKey string) {
@@ -43,7 +55,7 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 		Signer:  c.Wallet,
 	}
 
-	tx, err := CallFor(&contract, transition, params, false, amount)
+	tx, err := helpers.CallFor(&contract, transition, params, false, amount)
 	TxIdLast = tx.ID
 	if err != nil {
 		return tx, err
@@ -77,14 +89,18 @@ func (c *Contract) Field(key ...string) string {
 	return "map"
 }
 
+func (c *Contract) State() string {
+	rsp, _ := c.Provider.GetSmartContractState(c.Addr)
+	result, _ := json.Marshal(rsp.Result)
+	state := string(result)
+	return state
+}
+
 func (c *Contract) stateParse() {
 	if c.TxIdStateParsed == TxIdLast {
 		return
 	}
-	provider := provider2.NewProvider(API_PROVIDER)
-	rsp, _ := provider.GetSmartContractState(c.Addr)
-	result, _ := json.Marshal(rsp.Result)
-	state := string(result)
+	state := c.State()
 
 	var statemap StateMap
 	json.Unmarshal([]byte(state), &statemap)

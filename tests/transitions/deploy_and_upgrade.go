@@ -1,51 +1,52 @@
 package transitions
 
 import (
-	"Azil/test/deploy"
+	"Azil/test/contracts"
+	"Azil/test/helpers"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"log"
 )
 
-func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZil, *deploy.BufferContract, *deploy.HolderContract) {
+func (tr *Transitions) DeployAndUpgrade() (*contracts.Zproxy, *contracts.Zimpl, *contracts.AZil, *contracts.BufferContract, *contracts.HolderContract) {
 	log.Println("start to deploy")
 
 	//deploy gzil
-	gzil, err := deploy.NewGzil(adminKey)
+	gzil, err := contracts.NewGzil(adminKey)
 	if err != nil {
 		t.LogError("deploy Gzil error = ", err)
 	}
 	log.Println("deploy Gzil succeed, address = ", gzil.Addr)
 
 	//deploy Zproxy
-	Zproxy, err := deploy.NewZproxy(adminKey)
+	Zproxy, err := contracts.NewZproxy(adminKey)
 	if err != nil {
 		t.LogError("deploy Zproxy error = ", err)
 	}
 	log.Println("deploy Zproxy succeed, address = ", Zproxy.Addr)
 
 	//deploy Zimpl
-	Zimpl, err := deploy.NewZimpl(adminKey, Zproxy.Addr, gzil.Addr)
+	Zimpl, err := contracts.NewZimpl(adminKey, Zproxy.Addr, gzil.Addr)
 	if err != nil {
 		t.LogError("deploy Zimpl error = ", err)
 	}
 	log.Println("deploy Zimpl succeed, address = ", Zimpl.Addr)
 
 	//deploy azil
-	Aimpl, err := deploy.NewAZilContract(adminKey, AZIL_SSN_ADDRESS, Zimpl.Addr)
+	Aimpl, err := contracts.NewAZilContract(adminKey, AZIL_SSN_ADDRESS, Zimpl.Addr)
 	if err != nil {
 		t.LogError("deploy aZil error = ", err)
 	}
 	log.Println("deploy aZil succeed, address = ", Aimpl.Addr)
 
 	//deploy buffer
-	Buffer, err := deploy.NewBufferContract(adminKey, Aimpl.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
+	Buffer, err := contracts.NewBufferContract(adminKey, Aimpl.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		t.LogError("deploy buffer error = ", err)
 	}
 	log.Println("deploy buffer succeed, address = ", Buffer.Addr)
 
 	//deploy holder
-	Holder, err := deploy.NewHolderContract(adminKey, Aimpl.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
+	Holder, err := contracts.NewHolderContract(adminKey, Aimpl.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		t.LogError("deploy holder error = ", err)
 	}
@@ -86,7 +87,7 @@ func (t *Testing) DeployAndUpgrade() (*deploy.Zproxy, *deploy.Zimpl, *deploy.AZi
 	//SSN will become active on next cycle
 	Zproxy.UpdateWallet(verifierKey)
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
-	deploy.IncreaseBlocknum(10)
+	helpers.IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
 	log.Println("upgrade succeed")

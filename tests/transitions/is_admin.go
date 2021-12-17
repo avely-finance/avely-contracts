@@ -1,14 +1,14 @@
 package transitions
 
 import (
-//"Azil/test/deploy"
+//"Azil/test/contracts"
 )
 
-func (t *Testing) IsAdmin() {
+func (tr *Transitions) IsAdmin() {
 
 	t.LogStart("IsAdmin")
 
-	_, _, Aimpl, Buffer, Holder := t.DeployAndUpgrade()
+	_, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
 	Buffer.UpdateWallet(key3)

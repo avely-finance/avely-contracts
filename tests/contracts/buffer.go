@@ -1,6 +1,8 @@
-package deploy
+package contracts
 
 import (
+	"Azil/test/helpers"
+
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -13,54 +15,16 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
-type HolderContract struct {
+type BufferContract struct {
 	Contract
 }
 
-func (b *HolderContract) AddFunds(amount string) (*transaction.Transaction, error) {
+func (b *BufferContract) AddFunds(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return b.Call("AddFunds", args, amount)
 }
 
-func (b *HolderContract) CompleteWithdrawalNoUnbondedStakeCallBack(amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"amount",
-			"Uint128",
-			amount,
-		},
-	}
-	return b.Call("CompleteWithdrawalNoUnbondedStakeCallBack", args, "0")
-}
-
-func (b *HolderContract) CompleteWithdrawalSuccessCallBack(amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"amount",
-			"Uint128",
-			amount,
-		},
-	}
-	return b.Call("CompleteWithdrawalSuccessCallBack", args, "0")
-}
-
-func (b *HolderContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"ssnaddr",
-			"ByStr20",
-			ssnaddr,
-		},
-		{
-			"amount",
-			"Uint128",
-			amount,
-		},
-	}
-	return b.Call("DelegateStakeSuccessCallBack", args, "0")
-}
-
-func (b *HolderContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards string) (*transaction.Transaction, error) {
+func (b *BufferContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"ssnaddr",
@@ -76,7 +40,7 @@ func (b *HolderContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards st
 	return b.Call("WithdrawStakeRewardsSuccessCallBack", args, "0")
 }
 
-func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
+func (b *BufferContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"ssnaddr",
@@ -89,21 +53,10 @@ func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string)
 			amount,
 		},
 	}
-	return b.Call("WithdrawStakeAmtSuccessCallBack", args, "0")
+	return b.Call("DelegateStakeSuccessCallBack", args, "0")
 }
 
-func (b *HolderContract) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"amount",
-			"Uint128",
-			amount,
-		},
-	}
-	return b.Call("WithdrawStakeAmt", args, "0")
-}
-
-func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
+func (b *BufferContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -114,7 +67,7 @@ func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Tran
 	return b.Call("ChangeZproxyAddress", args, "0")
 }
 
-func (b *HolderContract) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
+func (b *BufferContract) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -125,7 +78,7 @@ func (b *HolderContract) ChangeZimplAddress(new_addr string) (*transaction.Trans
 	return b.Call("ChangeZimplAddress", args, "0")
 }
 
-func (b *HolderContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
+func (b *BufferContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -136,7 +89,7 @@ func (b *HolderContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Tra
 	return b.Call("ChangeAzilSSNAddress", args, "0")
 }
 
-func (b *HolderContract) ChangeAimplAddress(new_addr string) (*transaction.Transaction, error) {
+func (b *BufferContract) ChangeAimplAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -147,34 +100,29 @@ func (b *HolderContract) ChangeAimplAddress(new_addr string) (*transaction.Trans
 	return b.Call("ChangeAimplAddress", args, "0")
 }
 
-func (b *HolderContract) CompleteWithdrawal() (*transaction.Transaction, error) {
+func (b *BufferContract) DelegateStake() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
-	return b.Call("CompleteWithdrawal", args, "0")
+	return b.Call("DelegateStake", args, "0")
 }
 
-func (b *HolderContract) ClaimRewards() (*transaction.Transaction, error) {
+func (b *BufferContract) ClaimRewards() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return b.Call("ClaimRewards", args, "0")
 }
 
-func (b *HolderContract) ConfirmDelegatorSwap(requestor string) (*transaction.Transaction, error) {
+func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
-			"requestor",
+			"new_deleg_addr",
 			"ByStr20",
-			"0x" + requestor,
+			"0x" + new_deleg_addr,
 		},
 	}
-	return b.Call("ConfirmDelegatorSwap", args, "0")
+	return b.Call("RequestDelegatorSwap", args, "0")
 }
 
-func (b *HolderContract) DelegateStake(amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return b.Call("DelegateStake", args, amount)
-}
-
-func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string) (*HolderContract, error) {
-	code, _ := ioutil.ReadFile("../contracts/holder.scilla")
+func NewBufferContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string) (*BufferContract, error) {
+	code, _ := ioutil.ReadFile("../contracts/buffer.scilla")
 
 	init := []core.ContractValue{
 		{
@@ -184,7 +132,7 @@ func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string
 		}, {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
-			Value: "0x" + getAddressFromPrivateKey(key),
+			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
@@ -213,7 +161,7 @@ func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string
 		Signer: wallet,
 	}
 
-	tx, err := DeployTo(&contract)
+	tx, err := helpers.DeployTo(&contract)
 	if err != nil {
 		return nil, err
 	}
@@ -222,6 +170,7 @@ func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 		stateFieldTypes := make(StateFieldTypes)
 		contract := Contract{
+			Provider:        *contract.Provider,
 			Code:            string(code),
 			Init:            init,
 			Addr:            tx.ContractAddress,
@@ -230,7 +179,7 @@ func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string
 			StateFieldTypes: stateFieldTypes,
 		}
 		TxIdLast = tx.ID
-		return &HolderContract{Contract: contract}, nil
+		return &BufferContract{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 		log.Println(string(data))

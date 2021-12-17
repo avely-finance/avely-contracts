@@ -1,6 +1,8 @@
-package deploy
+package contracts
 
 import (
+	"Azil/test/helpers"
+
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -165,7 +167,7 @@ func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
 		}, {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
-			Value: "0x" + getAddressFromPrivateKey(key),
+			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
@@ -190,7 +192,7 @@ func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
 		Signer: wallet,
 	}
 
-	tx, err := DeployTo(&contract)
+	tx, err := helpers.DeployTo(&contract)
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +208,7 @@ func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
 		stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapPair"
 
 		contract := Contract{
+			Provider:        *contract.Provider,
 			Code:            string(code),
 			Init:            init,
 			Addr:            tx.ContractAddress,
