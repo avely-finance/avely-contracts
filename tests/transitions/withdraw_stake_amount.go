@@ -95,7 +95,7 @@ func (t *Testing) WithdrawStakeAmount() {
 	//TODO: we can check this only in local testing environment,
 	//and even in this case we need to monitor all incoming balances, including Holder initial delegate
 	//t.AssertEqual(Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
-	t.AssertEqual(Aimpl.Field("totalstakeamount"), deploy.StrSum(zil(1000), newDelegBalanceZil))
+	t.AssertEqual(Aimpl.Field("totalstakeamount"), deploy.StrAdd(zil(1000), newDelegBalanceZil))
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1010))
 	t.AssertEqual(Aimpl.Field("balances", "0x"+addr2), azil(10))
 	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(5))

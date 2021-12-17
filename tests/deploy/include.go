@@ -3,7 +3,7 @@ package deploy
 import "github.com/Zilliqa/gozilliqa-sdk/core"
 
 //TYPES
-type Withdrawal struct {
+type Pair struct {
 	Argtypes    interface{} `json:"argtypes"`
 	Arguments   []string    `json:"arguments"`
 	Constructor string      `json:"constructor"`
