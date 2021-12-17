@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	"github.com/fatih/color"
 	"log"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -61,6 +59,15 @@ func (t *Testing) AssertEqual(s1, s2 string) {
 	} else {
 		log.Println("🟢 ASSERT_EQUAL SUCCESS")
 	}
+}
+
+func (t *Testing) AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+	if err != nil {
+		_, file, no, _ := runtime.Caller(1)
+		t.LogNice(tx)
+		log.Fatalf("🔴 TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
+	}
+	return tx, err
 }
 
 func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int) {
@@ -162,45 +169,6 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent Event)
 	}
 }
 
-func (t *Testing) AddShortcut(key, value string) {
-	t.shortcuts[key] = value
-}
-
-func (t *Testing) HighlightShortcuts(str string) string {
-
-	colors := [...]color.Attribute{
-		color.FgRed,
-		color.FgGreen,
-		color.FgYellow,
-		color.FgBlue,
-		color.FgMagenta,
-		color.FgCyan,
-		color.FgHiRed,
-		color.FgHiGreen,
-		color.FgHiYellow,
-		color.FgHiBlue,
-		color.FgHiMagenta,
-		color.FgHiCyan,
-	}
-
-	//sort shortcuts
-	keys := make([]string, 0, len(t.shortcuts))
-	for k := range t.shortcuts {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	l := len(colors)
-	i := 0
-	for _, k := range keys {
-		colorFunc := color.New(colors[i%l]).SprintFunc()
-		replacement := colorFunc(strings.ToUpper(k) + " " + t.shortcuts[k])
-		str = strings.ReplaceAll(str, t.shortcuts[k], replacement)
-		i++
-	}
-	return str
-}
-
 func convertParams(pmap ParamsMap) []core.ContractValue {
 	cvarr := []core.ContractValue{}
 	for key, val := range pmap {
@@ -244,13 +212,4 @@ func compareParams(all, wanted []core.ContractValue) bool {
 		}
 	}
 	return true
-}
-
-func (t *Testing) AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
-	if err != nil {
-		_, file, no, _ := runtime.Caller(1)
-		t.LogNice(tx)
-		log.Fatalf("🔴 TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
-	}
-	return tx, err
 }
