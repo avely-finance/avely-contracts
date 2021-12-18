@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+var Config = 1000
+
 func increaseBlocknum() {
 	for {
 		time.Sleep(10 * time.Second)
@@ -14,6 +16,9 @@ func increaseBlocknum() {
 }
 
 func main() {
+
+	helpers.Blockchain.ApiUrl = "http://zilliqa_server:5555"
+
 	go increaseBlocknum()
 	tr := transitions.NewTransitions()
 	tr.DelegateStakeSuccess()
