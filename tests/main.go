@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-var Config = 1000
-
 func increaseBlocknum() {
 	for {
 		time.Sleep(10 * time.Second)

@@ -7,7 +7,7 @@ import (
 
 func (tr *Transitions) CompleteWithdrawalSuccess() {
 
-	t.LogStart("CompleteWithdrawal - success")
+	log.Start("CompleteWithdrawal - success")
 	readyBlocks := []string{}
 
 	Zproxy, Zimpl, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()

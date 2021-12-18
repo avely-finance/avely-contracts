@@ -28,16 +28,23 @@ const addr4 = "6cd3667ba79310837e33f0aecbe13688a6cbca32"
 
 const qa = "000000000000"
 
-var shortcuts = map[string]string{
-	"azilssn":  AZIL_SSN_ADDRESS,
-	"addr1":    "0x" + addr1,
-	"addr2":    "0x" + addr2,
-	"addr3":    "0x" + addr3,
-	"addr4":    "0x" + addr4,
-	"admin":    "0x" + admin,
-	"verifier": "0x" + verifier,
+var t *helpers.Testing
+var log *helpers.Log
+
+func init() {
+	t = helpers.NewTesting()
+	log = helpers.GetLog()
+	shortcuts := map[string]string{
+		"azilssn":  AZIL_SSN_ADDRESS,
+		"addr1":    "0x" + addr1,
+		"addr2":    "0x" + addr2,
+		"addr3":    "0x" + addr3,
+		"addr4":    "0x" + addr4,
+		"admin":    "0x" + admin,
+		"verifier": "0x" + verifier,
+	}
+	log.AddShortcuts(shortcuts)
 }
-var t = helpers.NewTesting(shortcuts)
 
 func zil(amount int) string {
 	if amount == 0 {
