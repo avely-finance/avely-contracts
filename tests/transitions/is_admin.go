@@ -1,12 +1,8 @@
 package transitions
 
-import (
-//"Azil/test/contracts"
-)
-
 func (tr *Transitions) IsAdmin() {
 
-	t.LogStart("IsAdmin")
+	log.Start("IsAdmin")
 
 	_, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 

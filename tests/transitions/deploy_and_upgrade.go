@@ -4,55 +4,54 @@ import (
 	"Azil/test/contracts"
 	"Azil/test/helpers"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"log"
 )
 
 func (tr *Transitions) DeployAndUpgrade() (*contracts.Zproxy, *contracts.Zimpl, *contracts.AZil, *contracts.BufferContract, *contracts.HolderContract) {
-	log.Println("start to deploy")
+	log.Info("start to deploy")
 
 	//deploy gzil
 	gzil, err := contracts.NewGzil(adminKey)
 	if err != nil {
-		t.LogError("deploy Gzil error = ", err)
+		log.Fatal("deploy Gzil error = ", err.Error())
 	}
-	log.Println("deploy Gzil succeed, address = ", gzil.Addr)
+	log.Success("deploy Gzil succeed, address = ", gzil.Addr)
 
 	//deploy Zproxy
 	Zproxy, err := contracts.NewZproxy(adminKey)
 	if err != nil {
-		t.LogError("deploy Zproxy error = ", err)
+		log.Fatal("deploy Zproxy error = ", err.Error())
 	}
-	log.Println("deploy Zproxy succeed, address = ", Zproxy.Addr)
+	log.Success("deploy Zproxy succeed, address = ", Zproxy.Addr)
 
 	//deploy Zimpl
 	Zimpl, err := contracts.NewZimpl(adminKey, Zproxy.Addr, gzil.Addr)
 	if err != nil {
-		t.LogError("deploy Zimpl error = ", err)
+		log.Fatal("deploy Zimpl error = ", err.Error())
 	}
-	log.Println("deploy Zimpl succeed, address = ", Zimpl.Addr)
+	log.Success("deploy Zimpl succeed, address = ", Zimpl.Addr)
 
 	//deploy azil
 	Aimpl, err := contracts.NewAZilContract(adminKey, AZIL_SSN_ADDRESS, Zimpl.Addr)
 	if err != nil {
-		t.LogError("deploy aZil error = ", err)
+		log.Fatal("deploy aZil error = ", err.Error())
 	}
-	log.Println("deploy aZil succeed, address = ", Aimpl.Addr)
+	log.Success("deploy aZil succeed, address = ", Aimpl.Addr)
 
 	//deploy buffer
 	Buffer, err := contracts.NewBufferContract(adminKey, Aimpl.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
-		t.LogError("deploy buffer error = ", err)
+		log.Fatal("deploy buffer error = ", err.Error())
 	}
-	log.Println("deploy buffer succeed, address = ", Buffer.Addr)
+	log.Success("deploy buffer succeed, address = ", Buffer.Addr)
 
 	//deploy holder
 	Holder, err := contracts.NewHolderContract(adminKey, Aimpl.Addr /*aimpl_address*/, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
-		t.LogError("deploy holder error = ", err)
+		log.Fatal("deploy holder error = ", err.Error())
 	}
-	log.Println("deploy holder succeed, address = ", Holder.Addr)
+	log.Success("deploy holder succeed, address = ", Holder.Addr)
 
-	log.Println("start to upgrade")
+	log.Info("start to upgrade")
 	/********************************************************************
 	* Upgrade buffer/holder
 	********************************************************************/
@@ -90,13 +89,13 @@ func (tr *Transitions) DeployAndUpgrade() (*contracts.Zproxy, *contracts.Zimpl, 
 	helpers.IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
 
-	log.Println("upgrade succeed")
-	t.AddShortcut("Zproxy", "0x"+Zproxy.Addr)
-	t.AddShortcut("Zimpl", "0x"+Zimpl.Addr)
-	t.AddShortcut("Gzil", "0x"+gzil.Addr)
-	t.AddShortcut("Aimpl", "0x"+Aimpl.Addr)
-	t.AddShortcut("Buffer", "0x"+Buffer.Addr)
-	t.AddShortcut("Holder", "0x"+Holder.Addr)
+	log.AddShortcut("Zproxy", "0x"+Zproxy.Addr)
+	log.AddShortcut("Zimpl", "0x"+Zimpl.Addr)
+	log.AddShortcut("Gzil", "0x"+gzil.Addr)
+	log.AddShortcut("Aimpl", "0x"+Aimpl.Addr)
+	log.AddShortcut("Buffer", "0x"+Buffer.Addr)
+	log.AddShortcut("Holder", "0x"+Holder.Addr)
+	log.Success("upgrade succeed")
 
 	return Zproxy, Zimpl, Aimpl, Buffer, Holder
 }

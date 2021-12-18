@@ -5,7 +5,6 @@ import (
 
 	"encoding/json"
 	"errors"
-	"log"
 	"reflect"
 	"strconv"
 
@@ -137,7 +136,7 @@ func (c *Contract) stateParse() {
 			}
 		}
 	}
-	log.Println("State parsed after txid=" + TxIdLast)
+	helpers.GetLog().Info("State parsed after txid=" + TxIdLast)
 	c.StateMap = statemap
 	c.TxIdStateParsed = TxIdLast
 }

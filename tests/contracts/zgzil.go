@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -97,7 +96,6 @@ func NewGzil(key string) (*Gzil, error) {
 		return &Gzil{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
-		log.Println(string(data))
-		return nil, errors.New("deploy failed")
+		return nil, errors.New("deploy failed: " + string(data))
 	}
 }

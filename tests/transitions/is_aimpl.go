@@ -1,12 +1,8 @@
 package transitions
 
-import (
-//"Azil/test/contracts"
-)
-
 func (tr *Transitions) IsAimpl() {
 
-	t.LogStart("IsAimpl")
+	log.Start("IsAimpl")
 
 	_, _, _, Buffer, Holder := tr.DeployAndUpgrade()
 

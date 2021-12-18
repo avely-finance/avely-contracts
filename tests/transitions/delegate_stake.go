@@ -1,14 +1,13 @@
 package transitions
 
 import (
-	//"log"
 	"Azil/test/contracts"
 	"Azil/test/helpers"
 	"strconv"
 )
 
 func (tr *Transitions) DelegateStakeSuccess() {
-	t.LogStart("DelegateStake: Stake 10 ZIL")
+	log.Start("DelegateStake: Stake 10 ZIL")
 
 	Zproxy, Zimpl, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
 
@@ -46,13 +45,13 @@ func (tr *Transitions) DelegateStakeSuccess() {
 }
 
 func (tr *Transitions) DelegateStakeBuffersRotation() {
-	t.LogStart("DelegateStake: Buffers rotation")
+	log.Start("DelegateStake: Buffers rotation")
 
 	Zproxy, Zimpl, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
 
-	anotherBuffer, err1 := contracts.NewBufferContract(adminKey, Aimpl.Addr, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
-	if err1 != nil {
-		t.LogError("Deploy buffer error = ", err1)
+	anotherBuffer, err := contracts.NewBufferContract(adminKey, Aimpl.Addr, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
+	if err != nil {
+		log.Fatal("Deploy buffer error = ", err.Error())
 	}
 
 	new_buffers := []string{"0x" + Buffer.Addr, "0x" + Buffer.Addr, "0x" + anotherBuffer.Addr}

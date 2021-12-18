@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	"log"
 	"runtime"
 	"strconv"
 	"strings"
@@ -35,13 +34,10 @@ type EventLog struct {
 }
 
 type Testing struct {
-	shortcuts map[string]string
 }
 
-func NewTesting(shortcuts map[string]string) *Testing {
-	return &Testing{
-		shortcuts: shortcuts,
-	}
+func NewTesting() *Testing {
+	return &Testing{}
 }
 
 func (t *Testing) AssertContain(s1, s2 string) {
@@ -52,20 +48,20 @@ func (t *Testing) AssertContain(s1, s2 string) {
 func (t *Testing) AssertEqual(s1, s2 string) {
 	if s1 != s2 {
 		_, file, no, _ := runtime.Caller(1)
-		log.Println("🔴 ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
-		log.Println("🔴 EXPECTED: " + s2)
-		log.Println("🔴 ACTUAL: " + s1)
-		log.Fatalf("💔 TESTS ARE FAILED")
+		log.Error("ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Error("EXPECTED: " + s2)
+		log.Error("ACTUAL: " + s1)
+		log.Fatal("TESTS ARE FAILED")
 	} else {
-		log.Println("🟢 ASSERT_EQUAL SUCCESS")
+		log.Success("ASSERT_EQUAL SUCCESS")
 	}
 }
 
 func (t *Testing) AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	if err != nil {
 		_, file, no, _ := runtime.Caller(1)
-		t.LogNice(tx)
-		log.Fatalf("🔴 TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Error(tx)
+		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 	return tx, err
 }
@@ -74,7 +70,7 @@ func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int)
 	_, file, no, _ := runtime.Caller(1)
 
 	if err == nil {
-		log.Println("🔴 ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
+		log.Error("ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
 	}
 
 	receipt, _ := json.Marshal(txn.Receipt)
@@ -86,12 +82,12 @@ func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int)
 
 func (t *Testing) AssertContainRaw(code, s1, s2, file string, no int) {
 	if !strings.Contains(s1, s2) {
-		log.Println("🔴 " + code + " FAILED, " + file + ":" + strconv.Itoa(no))
-		log.Println(s1)
-		log.Println(s2)
-		log.Fatalf("💔 TESTS ARE FAILED")
+		log.Error(code + " FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Error(s1)
+		log.Error(s2)
+		log.Fatal("TESTS ARE FAILED")
 	} else {
-		log.Println("🟢 " + code + " SUCCESS")
+		log.Success(code)
 	}
 }
 
@@ -126,17 +122,15 @@ func (t *Testing) AssertTransition(txn *transaction.Transaction, expectedTxn Tra
 		}
 	}
 	if found {
-		log.Println("🟢 ASSERT_TRANSITION SUCCESS")
+		log.Success("ASSERT_TRANSITION SUCCESS")
 	} else {
 		_, file, no, _ := runtime.Caller(1)
-		log.Println("🔴 ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Error("ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
 		actual, _ := json.MarshalIndent(txn, "", "     ")
-		actualNice := t.HighlightShortcuts(string(actual))
 		expected, _ := json.MarshalIndent(expectedTxn, "", "     ")
-		expectedNice := t.HighlightShortcuts(string(expected))
-		log.Println(fmt.Sprintf("Expected: %s", expectedNice))
-		log.Println(fmt.Sprintf("Actual: %s", actualNice))
-		log.Fatalf("💔 TESTS ARE FAILED")
+		log.Error(fmt.Sprintf("Expected: %s", expected))
+		log.Error(fmt.Sprintf("Actual: %s", actual))
+		log.Fatal("TESTS ARE FAILED")
 	}
 }
 
@@ -155,17 +149,15 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent Event)
 	}
 
 	if found {
-		log.Println("🟢 ASSERT_EVENT SUCCESS")
+		log.Success("ASSERT_EVENT SUCCESS")
 	} else {
 		_, file, no, _ := runtime.Caller(1)
-		log.Println("🔴 ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
+		log.Error("ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
 		expected, _ := json.Marshal(expectedEvent)
-		expectedNice := t.HighlightShortcuts(string(expected))
-		log.Println(fmt.Sprintf("EXPECTED: %s", expectedNice))
+		log.Error(fmt.Sprintf("EXPECTED: %s", expected))
 		actual, _ := json.Marshal(txn.Receipt.EventLogs)
-		actualNice := t.HighlightShortcuts(string(actual))
-		log.Println(fmt.Sprintf("ACTUAL: %s", actualNice))
-		log.Fatalf("💔 TESTS ARE FAILED")
+		log.Error(fmt.Sprintf("ACTUAL: %s", actual))
+		log.Fatal("TESTS ARE FAILED")
 	}
 }
 
