@@ -32,8 +32,6 @@ type StateFieldTypes map[string]string
 
 type Contract struct {
 	Provider        provider2.Provider
-	Code            string
-	Init            []core.ContractValue
 	Addr            string
 	Bech32          string
 	Wallet          *account.Wallet
