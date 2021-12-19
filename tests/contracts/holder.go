@@ -224,8 +224,6 @@ func NewHolderContract(key, aimplAddr, azilSsnAddr, zproxyAddr, zimplAddr string
 		stateFieldTypes := make(StateFieldTypes)
 		contract := Contract{
 			Provider:        *contract.Provider,
-			Code:            string(code),
-			Init:            init,
 			Addr:            tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          wallet,
