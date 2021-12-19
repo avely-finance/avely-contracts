@@ -1,0 +1,22 @@
+{
+  "local": {
+    "ApiUrl": "http://zilliqa_server:5555",
+    "AzilSsnAddress": "0x166862bdd5d76b3a4775d2494820179d582acac5",
+    "AzilSsnRewardSharePercent": "50",
+    "HolderInitialDelegateZil": "1000",
+    "Admin":"381f4008505e940ad7681ec3468a719060caf796",
+    "AdminKey": "d96e9eb5b782a80ea153c937fa83e5948485fbfc8b7e7c069d7b914dbc350aba",
+    "Key1": "1080d2cca18ace8225354ac021f9977404cee46f1d12e9981af8c36322eac1a4",
+    "Addr1": "ac941274c3b6a50203cc5e7939b7dad9f32a0c12",
+    "Key2": "254d9924fc1dcdca44ce92d80255c6a0bb690f867abde80e626fbfef4d357004",
+    "Addr2": "ec902fe17d90203d0bddd943d97b29576ece3177",
+    "Key3": "b8fc4e270594d87d3f728d0873a38fb0896ea83bd6f96b4f3c9ff0a29122efe4",
+    "Addr3": "c2035715831ab100ec42e562ce341b834bed1f4c",
+    "Key4": "b87f4ba7dcd6e60f2cca8352c89904e3993c5b2b0b608d255002edcda6374de4",
+    "Addr4": "6cd3667ba79310837e33f0aecbe13688a6cbca32",
+    "VerifierKey": "5430365143ce0154b682301d0ab731897221906a7054bbf5bd83c7663a6cbc40",
+    "Verifier": "10200e3da08ee88729469d6eabc055cb225821e7"
+  },
+  "testnet": {
+  }
+}
