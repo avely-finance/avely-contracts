@@ -7,7 +7,7 @@ import (
 )
 
 func (tr *Transitions) DelegateStakeSuccess() {
-	log.Start("DelegateStake: Stake 10 ZIL")
+	t.Start("DelegateStake: Stake 10 ZIL")
 
 	Zproxy, Zimpl, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
 
@@ -45,13 +45,13 @@ func (tr *Transitions) DelegateStakeSuccess() {
 }
 
 func (tr *Transitions) DelegateStakeBuffersRotation() {
-	log.Start("DelegateStake: Buffers rotation")
+	t.Start("DelegateStake: Buffers rotation")
 
 	Zproxy, Zimpl, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
 
 	anotherBuffer, err := contracts.NewBufferContract(adminKey, Aimpl.Addr, AZIL_SSN_ADDRESS, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
-		log.Fatal("Deploy buffer error = ", err.Error())
+		log.Fatal("Deploy buffer error = " + err.Error())
 	}
 
 	new_buffers := []string{"0x" + Buffer.Addr, "0x" + Buffer.Addr, "0x" + anotherBuffer.Addr}

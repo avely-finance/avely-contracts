@@ -5,7 +5,7 @@ import (
 )
 
 func (tr *Transitions) DrainBuffer() {
-	log.Start("CompleteWithdrawal - success")
+	t.Start("CompleteWithdrawal - success")
 
 	Zproxy, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 

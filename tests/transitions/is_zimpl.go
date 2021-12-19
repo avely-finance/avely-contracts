@@ -2,7 +2,7 @@ package transitions
 
 func (tr *Transitions) IsZimpl() {
 
-	log.Start("IsAimpl")
+	t.Start("IsAimpl")
 
 	_, _, _, Buffer, Holder := tr.DeployAndUpgrade()
 

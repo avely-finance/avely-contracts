@@ -40,6 +40,10 @@ func NewTesting() *Testing {
 	return &Testing{}
 }
 
+func (t *Testing) Start(tag string) {
+	log.Infof("⚙️  === Start to test %s === \n", tag)
+}
+
 func (t *Testing) AssertContain(s1, s2 string) {
 	_, file, no, _ := runtime.Caller(1)
 	t.AssertContainRaw("ASSERT_CONTAIN", s1, s2, file, no)

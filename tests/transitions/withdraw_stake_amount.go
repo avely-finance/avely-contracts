@@ -6,7 +6,7 @@ import (
 
 func (tr *Transitions) WithdrawStakeAmount() {
 
-	log.Start("WithdrawStakeAmount")
+	t.Start("WithdrawStakeAmount")
 
 	// deploy smart contract
 	Zproxy, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
@@ -20,7 +20,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	/*******************************************************************************
 	 * 1. non delegator(addr4) try to withdraw stake, should fail
 	 *******************************************************************************/
-	log.Start("WithdwarStakeAmount, step 1")
+	t.Start("WithdwarStakeAmount, step 1")
 	Aimpl.UpdateWallet(key4)
 	txn, err := Aimpl.WithdrawStakeAmt(azil(10))
 
@@ -36,7 +36,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * 2A. delegator trying to withdraw in the current cycle where he has a buffered deposit
 	 *******************************************************************************/
 
-	log.Start("WithdwarStakeAmount, step 2A")
+	t.Start("WithdwarStakeAmount, step 2A")
 	txn, err = Aimpl.WithdrawStakeAmt(azil(1))
 
 	t.AssertError(txn, err, -110)
@@ -49,7 +49,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * 2B. delegator trying to withdraw more than staked, should fail
 	 *******************************************************************************/
 
-	log.Start("WithdwarStakeAmount, step 2A")
+	t.Start("WithdwarStakeAmount, step 2A")
 	txn, err = Aimpl.WithdrawStakeAmt(azil(100))
 
 	t.AssertError(txn, err, -13)
@@ -59,7 +59,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * 2C. delegator send withdraw request, but it should fail because mindelegatestake
 	 * TODO: how to be sure about size of mindelegatestake here?
 	 *******************************************************************************/
-	log.Start("WithdwarStakeAmount, step 2C")
+	t.Start("WithdwarStakeAmount, step 2C")
 	txn, err = Aimpl.WithdrawStakeAmt(azil(10))
 
 	t.AssertError(txn, err, -15)
@@ -70,7 +70,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * Also check that withdrawal_pending field contains correct information about requested withdrawal
 	 * balances field should be correct
 	 *******************************************************************************/
-	log.Start("WithdwarStakeAmount, step 3A")
+	t.Start("WithdwarStakeAmount, step 3A")
 
 	helpers.IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
@@ -103,7 +103,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * Also check that withdrawal_pending field contains correct information about requested withdrawal
 	 * Balances should be empty
 	 *******************************************************************************/
-	log.Start("WithdrawStakeAmount, step 3B")
+	t.Start("WithdrawStakeAmount, step 3B")
 	txn, _ = Aimpl.WithdrawStakeAmt(azil(10))
 	bnum2 := txn.Receipt.EpochNum
 	t.AssertEvent(txn, helpers.Event{Aimpl.Addr, "WithdrawStakeAmt",
