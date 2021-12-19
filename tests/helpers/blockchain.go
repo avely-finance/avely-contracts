@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/keytools"
@@ -24,7 +23,7 @@ func IncreaseBlocknum(delta int32) {
 	rpcClient := jsonrpc.NewClient(Blockchain.ApiUrl)
 	params := []interface{}{delta}
 	rpcClient.Call("IncreaseBlocknum", params)
-	log.Debug(fmt.Sprintf("🔗  === Blocknumber increased by %d ===", delta))
+	log.Infof("🔗  === Blocknumber increased by %d ===", delta)
 }
 
 func GetBalance(addr string) string {

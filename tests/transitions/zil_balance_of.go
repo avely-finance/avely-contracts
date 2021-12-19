@@ -6,7 +6,7 @@ import (
 
 func (tr *Transitions) ZilBalanceOf() {
 
-	log.Start("ZilBalanceOf")
+	t.Start("ZilBalanceOf")
 
 	// deploy smart contract
 	_, _, Aimpl, _, _ := tr.DeployAndUpgrade()
@@ -14,7 +14,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	/*******************************************************************************
 	 * 1. Non-delegator address (addr2) should have empty balance
 	 *******************************************************************************/
-	log.Start("ZilBalanceOf, step 1")
+	t.Start("ZilBalanceOf, step 1")
 	Aimpl.UpdateWallet(key2)
 	balance2, _ := Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, zil(0))
@@ -22,7 +22,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	/*******************************************************************************
 	 * 2. After delegate (addr2) should have its balance updated
 	 *******************************************************************************/
-	log.Start("ZilBalanceOf, step 2")
+	t.Start("ZilBalanceOf, step 2")
 	t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, zil(15))
@@ -33,7 +33,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	 * so azil/zil exchange rate changed, azil now costs more zils than before
 	 * so balance of addr2 in zil should be more
 	 *******************************************************************************/
-	log.Start("ZilBalanceOf, step 3")
+	t.Start("ZilBalanceOf, step 3")
 	Aimpl.UpdateWallet(adminKey)
 	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(zil(10)))
 	t.AssertSuccess(Aimpl.PerformAutoRestake())
@@ -48,7 +48,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	 * He'll get azils by new azil/zil rate, so zilBalanceOf should be equal to the delegated zils amount.
 	 * First user's (addr2) zil balance should not be changed.
 	 *******************************************************************************/
-	log.Start("ZilBalanceOf, step 4")
+	t.Start("ZilBalanceOf, step 4")
 	Aimpl.UpdateWallet(key3)
 	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
 	balance2, _ = Aimpl.ZilBalanceOf(addr2)

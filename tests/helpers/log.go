@@ -26,43 +26,39 @@ func GetLog() *Log {
 	return log
 }
 
-func (mylog *Log) Debug(v ...interface{}) {
-	golog.Println(v)
-}
-
 func (mylog *Log) Info(v ...interface{}) {
-	v = mylog.nice(v)
-	v = append([]interface{}{"🔵"}, v...)
-	golog.Println(v)
+	golog.Println(mylog.nice(v))
 }
 
-func (mylog *Log) Error(v ...interface{}) {
-	v = mylog.nice(v)
-	v = append([]interface{}{"🔴"}, v...)
-	golog.Println(v)
+func (mylog *Log) Infof(format string, v ...interface{}) {
+	golog.Printf(format, mylog.nice(v))
 }
 
 func (mylog *Log) Success(v ...interface{}) {
-	v = mylog.nice(v)
-	v = append([]interface{}{"🟢"}, v...)
-	golog.Println(v)
+	golog.Println("🟢", mylog.nice(v))
+}
+
+func (mylog *Log) Successf(format string, v ...interface{}) {
+	golog.Println("🟢 "+format, mylog.nice(v))
+}
+
+func (mylog *Log) Error(v ...interface{}) {
+	golog.Println("🔴", mylog.nice(v))
+}
+
+func (mylog *Log) Errorf(format string, v ...interface{}) {
+	golog.Println("🔴 "+format, mylog.nice(v))
 }
 
 func (mylog *Log) Fatal(v ...interface{}) {
-	v = mylog.nice(v)
-	v = append([]interface{}{"💔"}, v...)
-	golog.Fatal(v)
+	golog.Fatal("💔", mylog.nice(v))
 }
 
-func (mylog *Log) Start(tag string) {
-	golog.Printf("⚙️  === Start to test %s === \n", tag)
+func (mylog *Log) Fatalf(format string, v ...interface{}) {
+	golog.Println("💔 "+format, mylog.nice(v))
 }
 
-func (mylog *Log) End() {
-	golog.Println("🏁 TESTS PASSED SUCCESSFULLY")
-}
-
-func (mylog *Log) nice(params []interface{}) []interface{} {
+func (mylog *Log) nice(params []interface{}) interface{} {
 	for i, value := range params {
 		typ := reflect.ValueOf(value).Type().String()
 		switch typ {
@@ -76,6 +72,9 @@ func (mylog *Log) nice(params []interface{}) []interface{} {
 		default:
 			break
 		}
+	}
+	if len(params) == 1 {
+		return params[0]
 	}
 	return params
 }
@@ -91,7 +90,6 @@ func (mylog *Log) AddShortcuts(shortcuts map[string]string) {
 }
 
 func (mylog *Log) highlightShortcuts(str string) string {
-
 	colors := [...]color.Attribute{
 		color.FgRed,
 		color.FgGreen,

@@ -2,7 +2,7 @@ package transitions
 
 func (tr *Transitions) IsAdmin() {
 
-	log.Start("IsAdmin")
+	t.Start("IsAdmin")
 
 	_, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 

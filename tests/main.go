@@ -29,5 +29,5 @@ func main() {
 	tr.IsZimpl()
 	tr.DrainBuffer()
 	tr.PerformAuoRestake()
-	////////////////////helpers.LogEnd()
+	helpers.GetLog().Info("🏁 TESTS PASSED SUCCESSFULLY")
 }
