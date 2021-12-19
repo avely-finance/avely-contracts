@@ -7,7 +7,7 @@ import (
 func (tr *Transitions) PerformAuoRestake() {
 	Zproxy, _, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
 
-	Aimpl.UpdateWallet(adminKey)
+	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 
 	t.AssertEqual(Aimpl.Field("autorestakeamount"), zil(0))
 

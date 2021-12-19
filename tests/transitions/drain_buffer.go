@@ -15,11 +15,11 @@ func (tr *Transitions) DrainBuffer() {
 	t.AssertError(txn, err, -107)
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
-	Zproxy.UpdateWallet(verifierKey)
+	Zproxy.UpdateWallet(tr.cfg.VerifierKey)
 	helpers.IncreaseBlocknum(10)
-	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 	helpers.IncreaseBlocknum(10)
-	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
 	txn, _ = Aimpl.DrainBuffer(Buffer.Addr)
 
