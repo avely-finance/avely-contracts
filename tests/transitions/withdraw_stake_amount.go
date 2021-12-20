@@ -1,7 +1,7 @@
 package transitions
 
 import (
-	"Azil/test/helpers"
+	. "Azil/test/helpers"
 )
 
 func (tr *Transitions) WithdrawStakeAmount() {
@@ -72,19 +72,19 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	t.Start("WithdwarStakeAmount, step 3A")
 
-	helpers.IncreaseBlocknum(10)
+	IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
 
 	Aimpl.UpdateWallet(tr.cfg.Key2)
 	txn, err = Aimpl.WithdrawStakeAmt(azil(5))
-	t.AssertTransition(txn, helpers.Transition{
+	t.AssertTransition(txn, Transition{
 		Aimpl.Addr,
 		"WithdrawStakeAmt",
 		Holder.Addr,
 		"0",
-		helpers.ParamsMap{"amount": zil(5)},
+		ParamsMap{"amount": zil(5)},
 	})
 	bnum1 := txn.Receipt.EpochNum
 
@@ -92,7 +92,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	//TODO: we can check this only in local testing environment,
 	//and even in this case we need to monitor all incoming balances, including Holder initial delegate
 	//t.AssertEqual(Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
-	t.AssertEqual(Aimpl.Field("totalstakeamount"), helpers.StrAdd(zil(1000), newDelegBalanceZil))
+	t.AssertEqual(Aimpl.Field("totalstakeamount"), StrAdd(zil(1000), newDelegBalanceZil))
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1010))
 	t.AssertEqual(Aimpl.Field("balances", "0x"+tr.cfg.Addr2), azil(10))
 	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+tr.cfg.Addr2, "0"), azil(5))
@@ -106,8 +106,8 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	t.Start("WithdrawStakeAmount, step 3B")
 	txn, _ = Aimpl.WithdrawStakeAmt(azil(10))
 	bnum2 := txn.Receipt.EpochNum
-	t.AssertEvent(txn, helpers.Event{Aimpl.Addr, "WithdrawStakeAmt",
-		helpers.ParamsMap{"withdraw_amount": azil(10), "withdraw_stake_amount": zil(10)}})
+	t.AssertEvent(txn, Event{Aimpl.Addr, "WithdrawStakeAmt",
+		ParamsMap{"withdraw_amount": azil(10), "withdraw_stake_amount": zil(10)}})
 	t.AssertEqual(Aimpl.Field("totalstakeamount"), zil(1000))  //0
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1000)) //0
 	//t.AssertEqual(Aimpl.Field("balances"), "empty")

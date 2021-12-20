@@ -1,7 +1,7 @@
 package transitions
 
 import (
-	"Azil/test/helpers"
+	. "Azil/test/helpers"
 )
 
 func (tr *Transitions) PerformAuoRestake() {
@@ -25,11 +25,11 @@ func (tr *Transitions) PerformAuoRestake() {
 	// should return to 0
 	t.AssertEqual(Aimpl.Field("autorestakeamount"), zil(0))
 
-	t.AssertTransition(txn, helpers.Transition{
+	t.AssertTransition(txn, Transition{
 		Buffer.Addr, //sender
 		"DelegateStake",
 		Zproxy.Addr,
 		restakeAmount,
-		helpers.ParamsMap{},
+		ParamsMap{},
 	})
 }

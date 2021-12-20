@@ -1,7 +1,7 @@
 package transitions
 
 import (
-	"Azil/test/helpers"
+	. "Azil/test/helpers"
 )
 
 func (tr *Transitions) ZilBalanceOf() {
@@ -38,7 +38,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(zil(10)))
 	t.AssertSuccess(Aimpl.PerformAutoRestake())
 	balance2, _ = Aimpl.ZilBalanceOf(tr.cfg.Addr2)
-	t.AssertEqual(balance2, helpers.StrMulDiv(
+	t.AssertEqual(balance2, StrMulDiv(
 		Aimpl.Field("balances", "0x"+tr.cfg.Addr2),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
@@ -52,12 +52,12 @@ func (tr *Transitions) ZilBalanceOf() {
 	Aimpl.UpdateWallet(tr.cfg.Key3)
 	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
 	balance2, _ = Aimpl.ZilBalanceOf(tr.cfg.Addr2)
-	t.AssertEqual(balance2, helpers.StrMulDiv(
+	t.AssertEqual(balance2, StrMulDiv(
 		Aimpl.Field("balances", "0x"+tr.cfg.Addr2),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
 	balance3, _ := Aimpl.ZilBalanceOf(tr.cfg.Addr3)
-	t.AssertEqual(balance3, helpers.StrMulDiv(
+	t.AssertEqual(balance3, StrMulDiv(
 		Aimpl.Field("balances", "0x"+tr.cfg.Addr3),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))

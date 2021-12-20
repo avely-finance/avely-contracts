@@ -2,7 +2,7 @@ package transitions
 
 import (
 	"Azil/test/contracts"
-	"Azil/test/helpers"
+	. "Azil/test/helpers"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 )
 
@@ -86,7 +86,7 @@ func (tr *Transitions) DeployAndUpgrade() (*contracts.Zproxy, *contracts.Zimpl, 
 	//SSN will become active on next cycle
 	Zproxy.UpdateWallet(tr.cfg.VerifierKey)
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
-	helpers.IncreaseBlocknum(10)
+	IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
 	log.AddShortcut("Zproxy", "0x"+Zproxy.Addr)

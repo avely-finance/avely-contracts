@@ -1,23 +1,23 @@
 package transitions
 
 import (
-	"Azil/test/helpers"
+	. "Azil/test/helpers"
 	"fmt"
 )
 
-var t *helpers.Testing
-var log *helpers.Log
+var t *Testing
+var log *Log
 
 func init() {
-	t = helpers.NewTesting()
-	log = helpers.GetLog()
+	t = NewTesting()
+	log = GetLog()
 }
 
 type Transitions struct {
-	cfg helpers.Config
+	cfg Config
 }
 
-func NewTransitions(config helpers.Config) *Transitions {
+func NewTransitions(config Config) *Transitions {
 	return &Transitions{
 		cfg: config,
 	}
