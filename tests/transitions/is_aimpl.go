@@ -1,5 +1,9 @@
 package transitions
 
+import (
+	. "Azil/test/helpers"
+)
+
 func (tr *Transitions) IsAimpl() {
 
 	t.Start("IsAimpl")
@@ -19,7 +23,7 @@ func (tr *Transitions) IsAimpl() {
 	// Use non-admin user for Holder
 	Holder.UpdateWallet(tr.cfg.Key2)
 
-	tx, err = Holder.WithdrawStakeAmt(zil(1))
+	tx, err = Holder.WithdrawStakeAmt(Zil(1))
 	t.AssertError(tx, err, -301)
 	tx, err = Holder.CompleteWithdrawal()
 	t.AssertError(tx, err, -301)

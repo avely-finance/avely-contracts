@@ -17,8 +17,6 @@ type Config struct {
 	Key2                      string
 	Addr3                     string
 	Key3                      string
-	Addr4                     string
-	Key4                      string
 	Verifier                  string
 	VerifierKey               string
 }
