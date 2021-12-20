@@ -21,7 +21,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * 1. non delegator(tr.cfg.Addr4) try to withdraw stake, should fail
 	 *******************************************************************************/
 	t.Start("WithdwarStakeAmount, step 1")
-	Aimpl.UpdateWallet(tr.cfg.Key4)
+	Aimpl.UpdateWallet(tr.cfg.Key3)
 	txn, err := Aimpl.WithdrawStakeAmt(Azil(10))
 
 	t.AssertError(txn, err, -7)
