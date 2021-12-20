@@ -24,7 +24,6 @@ func main() {
 		"addr1":    "0x" + config.Addr1,
 		"addr2":    "0x" + config.Addr2,
 		"addr3":    "0x" + config.Addr3,
-		"addr4":    "0x" + config.Addr4,
 		"admin":    "0x" + config.Admin,
 		"verifier": "0x" + config.Verifier,
 	}
