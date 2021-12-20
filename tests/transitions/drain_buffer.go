@@ -9,7 +9,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	Zproxy, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
-	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
+	t.AssertSuccess(Aimpl.DelegateStake(Zil(10)))
 
 	txn, err := Aimpl.DrainBuffer(Aimpl.Addr)
 	t.AssertError(txn, err, -107)
@@ -69,8 +69,8 @@ func (tr *Transitions) DrainBuffer() {
 
 			// Check aZIL balance
 			// 1 ZIL from Buffer + 1 ZIL from Holder
-			t.AssertEqual(Aimpl.Field("_balance"), zil(2))
-			t.AssertEqual(Aimpl.Field("autorestakeamount"), zil(2))
+			t.AssertEqual(Aimpl.Field("_balance"), Zil(2))
+			t.AssertEqual(Aimpl.Field("autorestakeamount"), Zil(2))
 	*/
 
 	// Send Swap transactions

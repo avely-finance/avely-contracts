@@ -73,15 +73,15 @@ func (tr *Transitions) DeployAndUpgrade() (*contracts.Zproxy, *contracts.Zimpl, 
 	t.AssertSuccess(Zproxy.AddSSN(tr.cfg.AzilSsnAddress, "aZil SSN"))
 	t.AssertSuccess(Zproxy.UpdateVerifierRewardAddr("0x" + tr.cfg.Verifier))
 	t.AssertSuccess(Zproxy.UpdateVerifier("0x" + tr.cfg.Verifier))
-	t.AssertSuccess(Zproxy.UpdateStakingParameters(zil(1000), zil(10))) //minstake (ssn not active if less), mindelegstake
+	t.AssertSuccess(Zproxy.UpdateStakingParameters(Zil(1000), Zil(10))) //minstake (ssn not active if less), mindelegstake
 	t.AssertSuccess(Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake
-	t.AssertSuccess(Aimpl.DelegateStake(zil(1000)))
-	t.AssertEqual(Zimpl.Field("direct_deposit_deleg", "0x"+Buffer.Addr, tr.cfg.AzilSsnAddress, "1"), zil(1000))
+	t.AssertSuccess(Aimpl.DelegateStake(Zil(1000)))
+	t.AssertEqual(Zimpl.Field("direct_deposit_deleg", "0x"+Buffer.Addr, tr.cfg.AzilSsnAddress, "1"), Zil(1000))
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	t.AssertSuccess(Holder.DelegateStake(zil(tr.cfg.HolderInitialDelegateZil)))
+	t.AssertSuccess(Holder.DelegateStake(Zil(tr.cfg.HolderInitialDelegateZil)))
 
 	//SSN will become active on next cycle
 	Zproxy.UpdateWallet(tr.cfg.VerifierKey)
