@@ -1,5 +1,9 @@
 package transitions
 
+import (
+	. "Azil/test/helpers"
+)
+
 func (tr *Transitions) IsAdmin() {
 
 	t.Start("IsAdmin")
@@ -21,7 +25,7 @@ func (tr *Transitions) IsAdmin() {
 	// Use non-admin user for Holder
 	Holder.UpdateWallet(tr.cfg.Key2)
 
-	tx, err = Holder.DelegateStake(zil(1))
+	tx, err = Holder.DelegateStake(Zil(1))
 	t.AssertError(tx, err, -305)
 	tx, err = Holder.ChangeAzilSSNAddress(tr.cfg.Addr3)
 	t.AssertError(tx, err, -305)
@@ -44,7 +48,7 @@ func (tr *Transitions) IsAdmin() {
 	t.AssertError(tx, err, -106)
 	tx, err = Aimpl.PerformAutoRestake()
 	t.AssertError(tx, err, -106)
-	tx, err = Aimpl.UpdateStakingParameters(zil(100))
+	tx, err = Aimpl.UpdateStakingParameters(Zil(100))
 	t.AssertError(tx, err, -106)
 	tx, err = Aimpl.DrainBuffer(Buffer.Addr)
 	t.AssertError(tx, err, -106)

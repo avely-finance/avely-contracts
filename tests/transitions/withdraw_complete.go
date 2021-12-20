@@ -1,7 +1,7 @@
 package transitions
 
 import (
-	"Azil/test/helpers"
+	. "Azil/test/helpers"
 	"strconv"
 )
 
@@ -13,76 +13,76 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	Zproxy, Zimpl, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
 	Aimpl.UpdateWallet(tr.cfg.Key1)
-	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
+	t.AssertSuccess(Aimpl.DelegateStake(Zil(10)))
 
 	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
-	helpers.IncreaseBlocknum(10)
+	IncreaseBlocknum(10)
 	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
 	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
 
 	Aimpl.UpdateWallet(tr.cfg.Key1)
-	tx, _ := t.AssertSuccess(Aimpl.WithdrawStakeAmt(azil(10)))
+	tx, _ := t.AssertSuccess(Aimpl.WithdrawStakeAmt(Azil(10)))
 
 	block1 := tx.Receipt.EpochNum
 	tx, _ = Aimpl.CompleteWithdrawal()
-	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "NoUnbondedStake", helpers.ParamsMap{}})
+	t.AssertEvent(tx, Event{Aimpl.Addr, "NoUnbondedStake", ParamsMap{}})
 
 	Aimpl.UpdateWallet(tr.cfg.Key2)
 	tx, _ = Aimpl.CompleteWithdrawal()
-	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "NoUnbondedStake", helpers.ParamsMap{}})
+	t.AssertEvent(tx, Event{Aimpl.Addr, "NoUnbondedStake", ParamsMap{}})
 
 	readyBlocks = append(readyBlocks, block1)
 	tx, err := Aimpl.ClaimWithdrawal(readyBlocks)
 	t.AssertError(tx, err, -105)
 
-	delta, _ := strconv.ParseInt(helpers.StrAdd(Zimpl.Field("bnum_req"), "1"), 10, 32)
-	helpers.IncreaseBlocknum(int32(delta))
+	delta, _ := strconv.ParseInt(StrAdd(Zimpl.Field("bnum_req"), "1"), 10, 32)
+	IncreaseBlocknum(int32(delta))
 	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
 	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	tx, _ = Aimpl.ClaimWithdrawal(readyBlocks)
-	t.AssertTransition(tx, helpers.Transition{
+	t.AssertTransition(tx, Transition{
 		Aimpl.Addr,           //sender
 		"CompleteWithdrawal", //tag
 		Holder.Addr,          //recipient
 		"0",                  //amount
-		helpers.ParamsMap{},
+		ParamsMap{},
 	})
-	t.AssertEvent(tx, helpers.Event{Holder.Addr, "AddFunds", helpers.ParamsMap{"funder": "0x" + Zimpl.Addr, "amount": zil(10)}})
+	t.AssertEvent(tx, Event{Holder.Addr, "AddFunds", ParamsMap{"funder": "0x" + Zimpl.Addr, "amount": Zil(10)}})
 
-	t.AssertTransition(tx, helpers.Transition{
+	t.AssertTransition(tx, Transition{
 		Holder.Addr,                         //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
 		Aimpl.Addr,                          //recipient
-		zil(10),                             //amount
-		helpers.ParamsMap{},
+		Zil(10),                             //amount
+		ParamsMap{},
 	})
 
 	Aimpl.UpdateWallet(tr.cfg.Key1)
 	tx, _ = Aimpl.CompleteWithdrawal()
-	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "CompleteWithdrawal", helpers.ParamsMap{"amount": zil(10), "delegator": "0x" + tr.cfg.Addr1}})
-	t.AssertTransition(tx, helpers.Transition{
+	t.AssertEvent(tx, Event{Aimpl.Addr, "CompleteWithdrawal", ParamsMap{"amount": Zil(10), "delegator": "0x" + tr.cfg.Addr1}})
+	t.AssertTransition(tx, Transition{
 		Aimpl.Addr,
 		"CompleteWithdrawalSuccessCallBack",
 		tr.cfg.Addr1,
 		"0",
-		helpers.ParamsMap{"amount": zil(10)},
+		ParamsMap{"amount": Zil(10)},
 	})
-	t.AssertTransition(tx, helpers.Transition{
+	t.AssertTransition(tx, Transition{
 		Aimpl.Addr,
 		"AddFunds",
 		tr.cfg.Addr1,
-		zil(10),
-		helpers.ParamsMap{},
+		Zil(10),
+		ParamsMap{},
 	})
 
-	t.AssertEqual(zil(1000), Aimpl.Field("totalstakeamount"))
-	t.AssertEqual(azil(1000), Aimpl.Field("totaltokenamount"))
+	t.AssertEqual(Zil(1000), Aimpl.Field("totalstakeamount"))
+	t.AssertEqual(Azil(1000), Aimpl.Field("totaltokenamount"))
 	t.AssertEqual("0", Aimpl.Field("tmp_complete_withdrawal_available"))
-	t.AssertEqual(Aimpl.Field("balances", "0x"+tr.cfg.Admin), azil(1000))
+	t.AssertEqual(Aimpl.Field("balances", "0x"+tr.cfg.Admin), Azil(1000))
 	t.AssertEqual("empty", Aimpl.Field("withdrawal_unbonded"))
 	t.AssertEqual("empty", Aimpl.Field("withdrawal_pending"))
 }

@@ -1,40 +1,23 @@
 package transitions
 
 import (
-	"Azil/test/helpers"
-	"fmt"
+	. "Azil/test/helpers"
 )
 
-var t *helpers.Testing
-var log *helpers.Log
+var t *Testing
+var log *Log
 
 func init() {
-	t = helpers.NewTesting()
-	log = helpers.GetLog()
+	t = NewTesting()
+	log = GetLog()
 }
 
 type Transitions struct {
-	cfg helpers.Config
+	cfg Config
 }
 
-func NewTransitions(config helpers.Config) *Transitions {
+func NewTransitions(config Config) *Transitions {
 	return &Transitions{
 		cfg: config,
 	}
-}
-
-const qa = "000000000000"
-
-func zil(amount int) string {
-	if amount == 0 {
-		return "0"
-	}
-	return fmt.Sprintf("%d%s", amount, qa)
-}
-
-func azil(amount int) string {
-	if amount == 0 {
-		return "0"
-	}
-	return fmt.Sprintf("%d%s", amount, qa)
 }
