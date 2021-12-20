@@ -12,19 +12,19 @@ func (tr *Transitions) ZilBalanceOf() {
 	_, _, Aimpl, _, _ := tr.DeployAndUpgrade()
 
 	/*******************************************************************************
-	 * 1. Non-delegator address (tr.cfg.Addr2) should have empty balance
+	 * 1. Non-delegator address (addr2) should have empty balance
 	 *******************************************************************************/
 	t.Start("ZilBalanceOf, step 1")
-	Aimpl.UpdateWallet(tr.cfg.Key2)
-	balance2, _ := Aimpl.ZilBalanceOf(tr.cfg.Addr2)
+	Aimpl.UpdateWallet(key2)
+	balance2, _ := Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, zil(0))
 
 	/*******************************************************************************
-	 * 2. After delegate (tr.cfg.Addr2) should have its balance updated
+	 * 2. After delegate (addr2) should have its balance updated
 	 *******************************************************************************/
 	t.Start("ZilBalanceOf, step 2")
 	t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
-	balance2, _ = Aimpl.ZilBalanceOf(tr.cfg.Addr2)
+	balance2, _ = Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, zil(15))
 
 	/*******************************************************************************
@@ -34,31 +34,31 @@ func (tr *Transitions) ZilBalanceOf() {
 	 * so balance of addr2 in zil should be more
 	 *******************************************************************************/
 	t.Start("ZilBalanceOf, step 3")
-	Aimpl.UpdateWallet(tr.cfg.AdminKey)
+	Aimpl.UpdateWallet(adminKey)
 	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(zil(10)))
 	t.AssertSuccess(Aimpl.PerformAutoRestake())
-	balance2, _ = Aimpl.ZilBalanceOf(tr.cfg.Addr2)
+	balance2, _ = Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, helpers.StrMulDiv(
-		Aimpl.Field("balances", "0x"+tr.cfg.Addr2),
+		Aimpl.Field("balances", "0x"+addr2),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
 
 	/*******************************************************************************
-	 * 4. New user (tr.cfg.Addr3) delegating stake
+	 * 4. New user (addr3) delegating stake
 	 * He'll get azils by new azil/zil rate, so zilBalanceOf should be equal to the delegated zils amount.
-	 * First user's (tr.cfg.Addr2) zil balance should not be changed.
+	 * First user's (addr2) zil balance should not be changed.
 	 *******************************************************************************/
 	t.Start("ZilBalanceOf, step 4")
-	Aimpl.UpdateWallet(tr.cfg.Key3)
+	Aimpl.UpdateWallet(key3)
 	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
-	balance2, _ = Aimpl.ZilBalanceOf(tr.cfg.Addr2)
+	balance2, _ = Aimpl.ZilBalanceOf(addr2)
 	t.AssertEqual(balance2, helpers.StrMulDiv(
-		Aimpl.Field("balances", "0x"+tr.cfg.Addr2),
+		Aimpl.Field("balances", "0x"+addr2),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
-	balance3, _ := Aimpl.ZilBalanceOf(tr.cfg.Addr3)
+	balance3, _ := Aimpl.ZilBalanceOf(addr3)
 	t.AssertEqual(balance3, helpers.StrMulDiv(
-		Aimpl.Field("balances", "0x"+tr.cfg.Addr3),
+		Aimpl.Field("balances", "0x"+addr3),
 		Aimpl.Field("totalstakeamount"),
 		Aimpl.Field("totaltokenamount")))
 }

@@ -13,27 +13,12 @@ func increaseBlocknum() {
 	}
 }
 
-const CHAIN = "local"
-
 func main() {
-	config := helpers.LoadConfig(CHAIN)
 
-	log := helpers.GetLog()
-	shortcuts := map[string]string{
-		"azilssn":  config.AzilSsnAddress,
-		"addr1":    "0x" + config.Addr1,
-		"addr2":    "0x" + config.Addr2,
-		"addr3":    "0x" + config.Addr3,
-		"addr4":    "0x" + config.Addr4,
-		"admin":    "0x" + config.Admin,
-		"verifier": "0x" + config.Verifier,
-	}
-	log.AddShortcuts(shortcuts)
-
-	helpers.Blockchain.ApiUrl = config.ApiUrl
+	helpers.Blockchain.ApiUrl = "http://zilliqa_server:5555"
 
 	go increaseBlocknum()
-	tr := transitions.NewTransitions(config)
+	tr := transitions.NewTransitions()
 	tr.DelegateStakeSuccess()
 	tr.DelegateStakeBuffersRotation()
 	tr.WithdrawStakeAmount()
@@ -44,5 +29,5 @@ func main() {
 	tr.IsZimpl()
 	tr.DrainBuffer()
 	tr.PerformAuoRestake()
-	log.Info("🏁 TESTS PASSED SUCCESSFULLY")
+	helpers.GetLog().Info("🏁 TESTS PASSED SUCCESSFULLY")
 }

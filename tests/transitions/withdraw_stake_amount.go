@@ -12,16 +12,16 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	Zproxy, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
 	/*******************************************************************************
-	 * 0. delegator (tr.cfg.Addr2) delegate 15 zil
+	 * 0. delegator (addr2) delegate 15 zil
 	 *******************************************************************************/
-	Aimpl.UpdateWallet(tr.cfg.Key2)
+	Aimpl.UpdateWallet(key2)
 	t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
 
 	/*******************************************************************************
-	 * 1. non delegator(tr.cfg.Addr4) try to withdraw stake, should fail
+	 * 1. non delegator(addr4) try to withdraw stake, should fail
 	 *******************************************************************************/
 	t.Start("WithdwarStakeAmount, step 1")
-	Aimpl.UpdateWallet(tr.cfg.Key4)
+	Aimpl.UpdateWallet(key4)
 	txn, err := Aimpl.WithdrawStakeAmt(azil(10))
 
 	t.AssertError(txn, err, -7)
@@ -30,7 +30,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * 2. Check withdrawal under delegator
 	 *******************************************************************************/
 
-	Aimpl.UpdateWallet(tr.cfg.Key2)
+	Aimpl.UpdateWallet(key2)
 
 	/*******************************************************************************
 	 * 2A. delegator trying to withdraw in the current cycle where he has a buffered deposit
@@ -43,7 +43,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1015))
 
 	// Trigger switch to the next cycle
-	Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent)
+	Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT)
 
 	/*******************************************************************************
 	 * 2B. delegator trying to withdraw more than staked, should fail
@@ -73,11 +73,11 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	t.Start("WithdwarStakeAmount, step 3A")
 
 	helpers.IncreaseBlocknum(10)
-	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
-	Aimpl.UpdateWallet(tr.cfg.AdminKey)
+	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
+	Aimpl.UpdateWallet(adminKey)
 	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
 
-	Aimpl.UpdateWallet(tr.cfg.Key2)
+	Aimpl.UpdateWallet(key2)
 	txn, err = Aimpl.WithdrawStakeAmt(azil(5))
 	t.AssertTransition(txn, helpers.Transition{
 		Aimpl.Addr,
@@ -88,15 +88,15 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	})
 	bnum1 := txn.Receipt.EpochNum
 
-	newDelegBalanceZil, err := Aimpl.ZilBalanceOf(tr.cfg.Addr2)
+	newDelegBalanceZil, err := Aimpl.ZilBalanceOf(addr2)
 	//TODO: we can check this only in local testing environment,
 	//and even in this case we need to monitor all incoming balances, including Holder initial delegate
 	//t.AssertEqual(Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
 	t.AssertEqual(Aimpl.Field("totalstakeamount"), helpers.StrAdd(zil(1000), newDelegBalanceZil))
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1010))
-	t.AssertEqual(Aimpl.Field("balances", "0x"+tr.cfg.Addr2), azil(10))
-	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+tr.cfg.Addr2, "0"), azil(5))
-	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+tr.cfg.Addr2, "1"), zil(5))
+	t.AssertEqual(Aimpl.Field("balances", "0x"+addr2), azil(10))
+	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(5))
+	t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(5))
 
 	/*******************************************************************************
 	 * 3B. delegator withdrawing all remaining deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -111,15 +111,15 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	t.AssertEqual(Aimpl.Field("totalstakeamount"), zil(1000))  //0
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), azil(1000)) //0
 	//t.AssertEqual(Aimpl.Field("balances"), "empty")
-	t.AssertEqual(Aimpl.Field("balances", "0x"+tr.cfg.Admin), azil(1000))
+	t.AssertEqual(Aimpl.Field("balances", "0x"+admin), azil(1000))
 	//there is holder's initial stake
 	//t.AssertEqual(Zproxy.Field("totalstakeamount"), "0")
 	if bnum1 == bnum2 {
-		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+tr.cfg.Addr2, "0"), azil(15))
-		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+tr.cfg.Addr2, "1"), zil(15))
+		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "0"), azil(15))
+		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum1, "0x"+addr2, "1"), zil(15))
 	} else {
 		//second withdrawal happened in next block
-		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum2, "0x"+tr.cfg.Addr2, "0"), azil(10))
-		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum2, "0x"+tr.cfg.Addr2, "1"), zil(10))
+		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum2, "0x"+addr2, "0"), azil(10))
+		t.AssertEqual(Aimpl.Field("withdrawal_pending", bnum2, "0x"+addr2, "1"), zil(10))
 	}
 }

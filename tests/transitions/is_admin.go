@@ -7,37 +7,37 @@ func (tr *Transitions) IsAdmin() {
 	_, _, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
-	Buffer.UpdateWallet(tr.cfg.Key3)
+	Buffer.UpdateWallet(key3)
 
-	tx, err := Buffer.ChangeAzilSSNAddress(tr.cfg.Addr3)
+	tx, err := Buffer.ChangeAzilSSNAddress(addr3)
 	t.AssertError(tx, err, -402)
-	tx, err = Buffer.ChangeAimplAddress(tr.cfg.Addr3)
+	tx, err = Buffer.ChangeAimplAddress(addr3)
 	t.AssertError(tx, err, -402)
-	tx, err = Buffer.ChangeZproxyAddress(tr.cfg.Addr3)
+	tx, err = Buffer.ChangeZproxyAddress(addr3)
 	t.AssertError(tx, err, -402)
-	tx, err = Buffer.ChangeZimplAddress(tr.cfg.Addr3)
+	tx, err = Buffer.ChangeZimplAddress(addr3)
 	t.AssertError(tx, err, -402)
 
 	// Use non-admin user for Holder
-	Holder.UpdateWallet(tr.cfg.Key2)
+	Holder.UpdateWallet(key2)
 
 	tx, err = Holder.DelegateStake(zil(1))
 	t.AssertError(tx, err, -305)
-	tx, err = Holder.ChangeAzilSSNAddress(tr.cfg.Addr3)
+	tx, err = Holder.ChangeAzilSSNAddress(addr3)
 	t.AssertError(tx, err, -305)
-	tx, err = Holder.ChangeAimplAddress(tr.cfg.Addr3)
+	tx, err = Holder.ChangeAimplAddress(addr3)
 	t.AssertError(tx, err, -305)
-	tx, err = Holder.ChangeZproxyAddress(tr.cfg.Addr3)
+	tx, err = Holder.ChangeZproxyAddress(addr3)
 	t.AssertError(tx, err, -305)
-	tx, err = Holder.ChangeZimplAddress(tr.cfg.Addr3)
+	tx, err = Holder.ChangeZimplAddress(addr3)
 	t.AssertError(tx, err, -305)
 
 	// Use non-admin user for Aimpl
-	Aimpl.UpdateWallet(tr.cfg.Key2)
+	Aimpl.UpdateWallet(key2)
 
-	tx, err = Aimpl.ChangeZimplAddress(tr.cfg.Addr3)
+	tx, err = Aimpl.ChangeZimplAddress(addr3)
 	t.AssertError(tx, err, -106)
-	tx, err = Aimpl.ChangeHolderAddress(tr.cfg.Addr3)
+	tx, err = Aimpl.ChangeHolderAddress(addr3)
 	t.AssertError(tx, err, -106)
 	new_buffers := []string{"0x" + Buffer.Addr, "0x" + Buffer.Addr}
 	tx, err = Aimpl.ChangeBuffers(new_buffers)
