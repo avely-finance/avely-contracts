@@ -39,7 +39,7 @@ func (mylog *Log) Success(v ...interface{}) {
 }
 
 func (mylog *Log) Successf(format string, v ...interface{}) {
-	golog.Println("🟢 "+format, mylog.nice(v))
+	golog.Printf("🟢 "+format, mylog.nice(v))
 }
 
 func (mylog *Log) Error(v ...interface{}) {
@@ -47,7 +47,7 @@ func (mylog *Log) Error(v ...interface{}) {
 }
 
 func (mylog *Log) Errorf(format string, v ...interface{}) {
-	golog.Println("🔴 "+format, mylog.nice(v))
+	golog.Printf("🔴 "+format, mylog.nice(v))
 }
 
 func (mylog *Log) Fatal(v ...interface{}) {
@@ -55,11 +55,14 @@ func (mylog *Log) Fatal(v ...interface{}) {
 }
 
 func (mylog *Log) Fatalf(format string, v ...interface{}) {
-	golog.Println("💔 "+format, mylog.nice(v))
+	golog.Fatalf("💔 "+format, mylog.nice(v))
 }
 
 func (mylog *Log) nice(params []interface{}) interface{} {
 	for i, value := range params {
+		if value == nil {
+			continue
+		}
 		typ := reflect.ValueOf(value).Type().String()
 		switch typ {
 		case "string":

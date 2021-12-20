@@ -12,25 +12,25 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	Zproxy, Zimpl, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
-	Aimpl.UpdateWallet(key1)
+	Aimpl.UpdateWallet(tr.cfg.Key1)
 	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
 
-	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
 	helpers.IncreaseBlocknum(10)
-	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
-	Aimpl.UpdateWallet(adminKey)
+	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
 
-	Aimpl.UpdateWallet(key1)
+	Aimpl.UpdateWallet(tr.cfg.Key1)
 	tx, _ := t.AssertSuccess(Aimpl.WithdrawStakeAmt(azil(10)))
 
 	block1 := tx.Receipt.EpochNum
 	tx, _ = Aimpl.CompleteWithdrawal()
 	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "NoUnbondedStake", helpers.ParamsMap{}})
 
-	Aimpl.UpdateWallet(key2)
+	Aimpl.UpdateWallet(tr.cfg.Key2)
 	tx, _ = Aimpl.CompleteWithdrawal()
 	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "NoUnbondedStake", helpers.ParamsMap{}})
 
@@ -40,9 +40,9 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	delta, _ := strconv.ParseInt(helpers.StrAdd(Zimpl.Field("bnum_req"), "1"), 10, 32)
 	helpers.IncreaseBlocknum(int32(delta))
-	t.AssertSuccess(Zproxy.AssignStakeReward(AZIL_SSN_ADDRESS, AZIL_SSN_REWARD_SHARE_PERCENT))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
-	Aimpl.UpdateWallet(adminKey)
+	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	tx, _ = Aimpl.ClaimWithdrawal(readyBlocks)
 	t.AssertTransition(tx, helpers.Transition{
 		Aimpl.Addr,           //sender
@@ -61,20 +61,20 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 		helpers.ParamsMap{},
 	})
 
-	Aimpl.UpdateWallet(key1)
+	Aimpl.UpdateWallet(tr.cfg.Key1)
 	tx, _ = Aimpl.CompleteWithdrawal()
-	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "CompleteWithdrawal", helpers.ParamsMap{"amount": zil(10), "delegator": "0x" + addr1}})
+	t.AssertEvent(tx, helpers.Event{Aimpl.Addr, "CompleteWithdrawal", helpers.ParamsMap{"amount": zil(10), "delegator": "0x" + tr.cfg.Addr1}})
 	t.AssertTransition(tx, helpers.Transition{
 		Aimpl.Addr,
 		"CompleteWithdrawalSuccessCallBack",
-		addr1,
+		tr.cfg.Addr1,
 		"0",
 		helpers.ParamsMap{"amount": zil(10)},
 	})
 	t.AssertTransition(tx, helpers.Transition{
 		Aimpl.Addr,
 		"AddFunds",
-		addr1,
+		tr.cfg.Addr1,
 		zil(10),
 		helpers.ParamsMap{},
 	})
@@ -82,7 +82,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	t.AssertEqual(zil(1000), Aimpl.Field("totalstakeamount"))
 	t.AssertEqual(azil(1000), Aimpl.Field("totaltokenamount"))
 	t.AssertEqual("0", Aimpl.Field("tmp_complete_withdrawal_available"))
-	t.AssertEqual(Aimpl.Field("balances", "0x"+admin), azil(1000))
+	t.AssertEqual(Aimpl.Field("balances", "0x"+tr.cfg.Admin), azil(1000))
 	t.AssertEqual("empty", Aimpl.Field("withdrawal_unbonded"))
 	t.AssertEqual("empty", Aimpl.Field("withdrawal_pending"))
 }
