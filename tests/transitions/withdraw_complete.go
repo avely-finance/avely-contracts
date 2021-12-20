@@ -13,7 +13,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	Zproxy, Zimpl, Aimpl, Buffer, Holder := tr.DeployAndUpgrade()
 
 	Aimpl.UpdateWallet(tr.cfg.Key1)
-	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
+	t.AssertSuccess(Aimpl.DelegateStake(Zil(10)))
 
 	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
 
@@ -24,7 +24,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
 
 	Aimpl.UpdateWallet(tr.cfg.Key1)
-	tx, _ := t.AssertSuccess(Aimpl.WithdrawStakeAmt(azil(10)))
+	tx, _ := t.AssertSuccess(Aimpl.WithdrawStakeAmt(Azil(10)))
 
 	block1 := tx.Receipt.EpochNum
 	tx, _ = Aimpl.CompleteWithdrawal()
@@ -51,38 +51,38 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 		"0",                  //amount
 		ParamsMap{},
 	})
-	t.AssertEvent(tx, Event{Holder.Addr, "AddFunds", ParamsMap{"funder": "0x" + Zimpl.Addr, "amount": zil(10)}})
+	t.AssertEvent(tx, Event{Holder.Addr, "AddFunds", ParamsMap{"funder": "0x" + Zimpl.Addr, "amount": Zil(10)}})
 
 	t.AssertTransition(tx, Transition{
 		Holder.Addr,                         //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
 		Aimpl.Addr,                          //recipient
-		zil(10),                             //amount
+		Zil(10),                             //amount
 		ParamsMap{},
 	})
 
 	Aimpl.UpdateWallet(tr.cfg.Key1)
 	tx, _ = Aimpl.CompleteWithdrawal()
-	t.AssertEvent(tx, Event{Aimpl.Addr, "CompleteWithdrawal", ParamsMap{"amount": zil(10), "delegator": "0x" + tr.cfg.Addr1}})
+	t.AssertEvent(tx, Event{Aimpl.Addr, "CompleteWithdrawal", ParamsMap{"amount": Zil(10), "delegator": "0x" + tr.cfg.Addr1}})
 	t.AssertTransition(tx, Transition{
 		Aimpl.Addr,
 		"CompleteWithdrawalSuccessCallBack",
 		tr.cfg.Addr1,
 		"0",
-		ParamsMap{"amount": zil(10)},
+		ParamsMap{"amount": Zil(10)},
 	})
 	t.AssertTransition(tx, Transition{
 		Aimpl.Addr,
 		"AddFunds",
 		tr.cfg.Addr1,
-		zil(10),
+		Zil(10),
 		ParamsMap{},
 	})
 
-	t.AssertEqual(zil(1000), Aimpl.Field("totalstakeamount"))
-	t.AssertEqual(azil(1000), Aimpl.Field("totaltokenamount"))
+	t.AssertEqual(Zil(1000), Aimpl.Field("totalstakeamount"))
+	t.AssertEqual(Azil(1000), Aimpl.Field("totaltokenamount"))
 	t.AssertEqual("0", Aimpl.Field("tmp_complete_withdrawal_available"))
-	t.AssertEqual(Aimpl.Field("balances", "0x"+tr.cfg.Admin), azil(1000))
+	t.AssertEqual(Aimpl.Field("balances", "0x"+tr.cfg.Admin), Azil(1000))
 	t.AssertEqual("empty", Aimpl.Field("withdrawal_unbonded"))
 	t.AssertEqual("empty", Aimpl.Field("withdrawal_pending"))
 }

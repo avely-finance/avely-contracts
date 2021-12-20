@@ -17,15 +17,15 @@ func (tr *Transitions) ZilBalanceOf() {
 	t.Start("ZilBalanceOf, step 1")
 	Aimpl.UpdateWallet(tr.cfg.Key2)
 	balance2, _ := Aimpl.ZilBalanceOf(tr.cfg.Addr2)
-	t.AssertEqual(balance2, zil(0))
+	t.AssertEqual(balance2, Zil(0))
 
 	/*******************************************************************************
 	 * 2. After delegate (tr.cfg.Addr2) should have its balance updated
 	 *******************************************************************************/
 	t.Start("ZilBalanceOf, step 2")
-	t.AssertSuccess(Aimpl.DelegateStake(zil(15)))
+	t.AssertSuccess(Aimpl.DelegateStake(Zil(15)))
 	balance2, _ = Aimpl.ZilBalanceOf(tr.cfg.Addr2)
-	t.AssertEqual(balance2, zil(15))
+	t.AssertEqual(balance2, Zil(15))
 
 	/*******************************************************************************
 	 * 3. User balance in zil should be updated after restaking rewards
@@ -35,7 +35,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	 *******************************************************************************/
 	t.Start("ZilBalanceOf, step 3")
 	Aimpl.UpdateWallet(tr.cfg.AdminKey)
-	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(zil(10)))
+	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(Zil(10)))
 	t.AssertSuccess(Aimpl.PerformAutoRestake())
 	balance2, _ = Aimpl.ZilBalanceOf(tr.cfg.Addr2)
 	t.AssertEqual(balance2, StrMulDiv(
@@ -50,7 +50,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	 *******************************************************************************/
 	t.Start("ZilBalanceOf, step 4")
 	Aimpl.UpdateWallet(tr.cfg.Key3)
-	t.AssertSuccess(Aimpl.DelegateStake(zil(10)))
+	t.AssertSuccess(Aimpl.DelegateStake(Zil(10)))
 	balance2, _ = Aimpl.ZilBalanceOf(tr.cfg.Addr2)
 	t.AssertEqual(balance2, StrMulDiv(
 		Aimpl.Field("balances", "0x"+tr.cfg.Addr2),
