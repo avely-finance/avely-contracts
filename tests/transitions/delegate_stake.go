@@ -2,7 +2,7 @@ package transitions
 
 import (
 	"Azil/test/contracts"
-	"Azil/test/helpers"
+	. "Azil/test/helpers"
 	"strconv"
 )
 
@@ -39,7 +39,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent)
 	Aimpl.DelegateStake(zil(20))
 
-	nextCycleStr := helpers.StrAdd(lastrewardcycle, "1")
+	nextCycleStr := StrAdd(lastrewardcycle, "1")
 
 	t.AssertEqual(Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+tr.cfg.Addr1), nextCycleStr)
 }
