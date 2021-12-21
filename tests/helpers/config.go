@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -22,15 +23,22 @@ type Config struct {
 }
 
 func LoadConfig(chain string) (config Config) {
+	path := ".env." + chain
+	err := godotenv.Load(path)
+	if err != nil {
+		log.Fatalf("Error loading %s file", path)
+	}
+
 	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
 
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
 		log.Fatalf("Fatal error config file: %w \n", err)
 	}
 
 	section := viper.Sub(chain)
+	section.AutomaticEnv()
 	if section == nil { // Sub returns nil if the key cannot be found
 		log.Fatalf("Chain %s not found in config", chain)
 	}
