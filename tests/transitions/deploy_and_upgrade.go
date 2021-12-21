@@ -87,7 +87,7 @@ func (tr *Transitions) DeployAndUpgrade() (*contracts.Zproxy, *contracts.Zimpl, 
 	Zproxy.UpdateWallet(tr.cfg.VerifierKey)
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	IncreaseBlocknum(10)
-	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardShare))
 
 	log.AddShortcut("Zproxy", "0x"+Zproxy.Addr)
 	log.AddShortcut("Zimpl", "0x"+Zimpl.Addr)
