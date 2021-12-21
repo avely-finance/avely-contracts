@@ -15,10 +15,10 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	Aimpl.UpdateWallet(tr.cfg.Key1)
 	t.AssertSuccess(Aimpl.DelegateStake(Zil(10)))
 
-	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardShare))
 
 	IncreaseBlocknum(10)
-	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardShare))
 
 	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
@@ -40,7 +40,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	delta, _ := strconv.ParseInt(StrAdd(Zimpl.Field("bnum_req"), "1"), 10, 32)
 	IncreaseBlocknum(int32(delta))
-	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardShare))
 
 	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	tx, _ = Aimpl.ClaimWithdrawal(readyBlocks)

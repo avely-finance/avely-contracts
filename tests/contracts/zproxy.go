@@ -18,7 +18,7 @@ type Zproxy struct {
 	Contract
 }
 
-func (p *Zproxy) AssignStakeReward(ssn, percent string) (*transaction.Transaction, error) {
+func (p *Zproxy) AssignStakeReward(ssn, reward string) (*transaction.Transaction, error) {
 
 	type Constructor struct {
 		Constructor string   `json:"constructor"`
@@ -33,7 +33,7 @@ func (p *Zproxy) AssignStakeReward(ssn, percent string) (*transaction.Transactio
 
 	ars := []string{
 		ssn,
-		percent,
+		reward,
 	}
 
 	args := []core.ContractValue{
@@ -50,7 +50,8 @@ func (p *Zproxy) AssignStakeReward(ssn, percent string) (*transaction.Transactio
 		},
 	}
 
-	return p.Call("AssignStakeReward", args, percent)
+	// we send reward as ZIL amount because AssignStake works with only 1 SSN
+	return p.Call("AssignStakeReward", args, reward)
 }
 
 func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, error) {

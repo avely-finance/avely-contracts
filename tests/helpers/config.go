@@ -8,7 +8,7 @@ import (
 type Config struct {
 	ApiUrl                    string
 	AzilSsnAddress            string
-	AzilSsnRewardSharePercent string
+	AzilSsnRewardShare        string
 	HolderInitialDelegateZil  int
 	Admin                     string
 	AdminKey                  string

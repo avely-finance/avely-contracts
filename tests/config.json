@@ -2,7 +2,7 @@
   "local": {
     "ApiUrl": "http://zilliqa_server:5555",
     "AzilSsnAddress": "0x166862bdd5d76b3a4775d2494820179d582acac5",
-    "AzilSsnRewardSharePercent": "50",
+    "AzilSsnRewardShare": "50",
     "HolderInitialDelegateZil": "1000",
     "Admin":"381f4008505e940ad7681ec3468a719060caf796",
     "AdminKey": "",
