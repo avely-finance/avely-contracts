@@ -36,7 +36,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	t.AssertEqual(Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+tr.cfg.Addr1), lastrewardcycle)
 
 	// Check delegate to the next cycle
-	Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent)
+	Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardShare)
 	Aimpl.DelegateStake(Zil(20))
 
 	nextCycleStr := StrAdd(lastrewardcycle, "1")
@@ -58,7 +58,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 	t.AssertSuccess(Aimpl.ChangeBuffers(new_buffers))
 	Zproxy.UpdateWallet(tr.cfg.VerifierKey)
-	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardShare))
 
 	t.AssertSuccess(Aimpl.DelegateStake(Zil(10)))
 
