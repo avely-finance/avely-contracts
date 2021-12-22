@@ -4,7 +4,6 @@ import (
 	"Azil/test/helpers"
 	"Azil/test/transitions"
 	"flag"
-	"reflect"
 	"time"
 )
 
@@ -45,30 +44,11 @@ func main() {
 
 	if focus != "default" {
 		log.Info("🏁 Focus on " + focus)
-		st := reflect.TypeOf(tr)
-		_, exists := st.MethodByName(focus)
-		if exists {
-			reflect.ValueOf(tr).MethodByName(focus).Call([]reflect.Value{})
-		} else {
-			log.Fatal(" A focus test suite does not exist")
-		}
+		tr.FocusOn(focus)
 	} else {
 		log.Info("🏁 Run All Suites ")
-		runAll(tr)
+		tr.RunAll()
 	}
 
 	log.Info("🏁 TESTS PASSED SUCCESSFULLY")
-}
-
-func runAll(tr *transitions.Transitions) {
-	tr.DelegateStakeSuccess()
-	tr.DelegateStakeBuffersRotation()
-	tr.WithdrawStakeAmount()
-	tr.CompleteWithdrawalSuccess()
-	tr.ZilBalanceOf()
-	tr.IsAdmin()
-	tr.IsAimpl()
-	tr.IsZimpl()
-	tr.DrainBuffer()
-	tr.PerformAuoRestake()
 }
