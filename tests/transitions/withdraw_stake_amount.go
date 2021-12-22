@@ -39,7 +39,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	t.Start("WithdwarStakeAmount, step 2A")
 	txn, err = Aimpl.WithdrawStakeAmt(Azil(1))
 
-	t.AssertError(txn, err, -110)
+	t.AssertError(txn, err, -111)
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), Azil(1015))
 
 	// Trigger switch to the next cycle
