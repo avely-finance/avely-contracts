@@ -34,6 +34,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tx, _ = Aimpl.CompleteWithdrawal()
 	t.AssertEvent(tx, Event{Aimpl.Addr, "NoUnbondedStake", ParamsMap{}})
 
+	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	readyBlocks = append(readyBlocks, block1)
 	tx, err := Aimpl.ClaimWithdrawal(readyBlocks)
 	t.AssertError(tx, err, -105)
