@@ -43,7 +43,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	t.AssertEqual(Aimpl.Field("totaltokenamount"), Azil(1015))
 
 	// Trigger switch to the next cycle
-	Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent)
+	Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardShare)
 
 	/*******************************************************************************
 	 * 2B. delegator trying to withdraw more than staked, should fail
@@ -73,7 +73,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	t.Start("WithdwarStakeAmount, step 3A")
 
 	IncreaseBlocknum(10)
-	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardSharePercent))
+	t.AssertSuccess(Zproxy.AssignStakeReward(tr.cfg.AzilSsnAddress, tr.cfg.AzilSsnRewardShare))
 	Aimpl.UpdateWallet(tr.cfg.AdminKey)
 	t.AssertSuccess(Aimpl.DrainBuffer(Buffer.Addr))
 
