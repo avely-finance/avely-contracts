@@ -52,4 +52,7 @@ func (tr *Transitions) IsAdmin() {
 	t.AssertError(tx, err, -106)
 	tx, err = Aimpl.DrainBuffer(Buffer.Addr)
 	t.AssertError(tx, err, -106)
+	readyBlocks := []string{}
+	tx, err = Aimpl.ClaimWithdrawal(readyBlocks)
+	t.AssertError(tx, err, -106)
 }
