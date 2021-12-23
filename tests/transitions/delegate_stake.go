@@ -7,7 +7,7 @@ import (
 )
 
 func (tr *Transitions) DelegateStakeSuccess() {
-	t.Start("DelegateStake: Stake 10 ZIL")
+	Start("DelegateStake: Stake 10 ZIL")
 
 	p := tr.DeployAndUpgrade()
 
@@ -15,25 +15,25 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	// Because of DelegHasNoSufficientAmt
 	tx, err := p.Aimpl.DelegateStake(Zil(1))
-	t.AssertError(tx, err, -15)
+	AssertError(tx, err, -15)
 
 	// Success delegate
-	t.AssertSuccess(p.Aimpl.DelegateStake(Zil(20)))
+	AssertSuccess(p.Aimpl.DelegateStake(Zil(20)))
 
 	lastrewardcycle := p.Zimpl.Field("lastrewardcycle")
 
-	t.AssertEqual(p.Zimpl.Field("buff_deposit_deleg", "0x"+p.Buffer.Addr, sdk.Cfg.AzilSsnAddress, lastrewardcycle), Zil(20))
+	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", "0x"+p.Buffer.Addr, sdk.Cfg.AzilSsnAddress, lastrewardcycle), Zil(20))
 
-	t.AssertEqual(p.Zimpl.Field("buff_deposit_deleg", "0x"+p.Buffer.Addr, sdk.Cfg.AzilSsnAddress, p.Zimpl.Field("lastrewardcycle")), Zil(20))
-	t.AssertEqual(p.Aimpl.Field("_balance"), "0")
+	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", "0x"+p.Buffer.Addr, sdk.Cfg.AzilSsnAddress, p.Zimpl.Field("lastrewardcycle")), Zil(20))
+	AssertEqual(p.Aimpl.Field("_balance"), "0")
 
-	t.AssertEqual(p.Aimpl.Field("totalstakeamount"), Zil(1020))
-	t.AssertEqual(p.Aimpl.Field("totaltokenamount"), Azil(1020))
+	AssertEqual(p.Aimpl.Field("totalstakeamount"), Zil(1020))
+	AssertEqual(p.Aimpl.Field("totaltokenamount"), Azil(1020))
 
-	t.AssertEqual(p.Aimpl.Field("balances", "0x"+sdk.Cfg.Admin), Azil(1000))
-	t.AssertEqual(p.Aimpl.Field("balances", "0x"+sdk.Cfg.Addr1), Azil(20))
+	AssertEqual(p.Aimpl.Field("balances", "0x"+sdk.Cfg.Admin), Azil(1000))
+	AssertEqual(p.Aimpl.Field("balances", "0x"+sdk.Cfg.Addr1), Azil(20))
 
-	t.AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+sdk.Cfg.Addr1), lastrewardcycle)
+	AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+sdk.Cfg.Addr1), lastrewardcycle)
 
 	// Check delegate to the next cycle
 	p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare)
@@ -41,29 +41,29 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	nextCycleStr := StrAdd(lastrewardcycle, "1")
 
-	t.AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+sdk.Cfg.Addr1), nextCycleStr)
+	AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+sdk.Cfg.Addr1), nextCycleStr)
 }
 
 func (tr *Transitions) DelegateStakeBuffersRotation() {
-	t.Start("DelegateStake: Buffers rotation")
+	Start("DelegateStake: Buffers rotation")
 
 	p := tr.DeployAndUpgrade()
 
 	anotherBuffer, err := contracts.NewBufferContract(sdk, p.Aimpl.Addr, p.Zproxy.Addr, p.Zimpl.Addr)
 	if err != nil {
-		t.Log.Fatal("Deploy buffer error = " + err.Error())
+		GetLog().Fatal("Deploy buffer error = " + err.Error())
 	}
 
 	new_buffers := []string{"0x" + p.Buffer.Addr, "0x" + p.Buffer.Addr, "0x" + anotherBuffer.Addr}
 
-	t.AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
+	AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-	t.AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
-	t.AssertSuccess(p.Aimpl.DelegateStake(Zil(10)))
+	AssertSuccess(p.Aimpl.DelegateStake(Zil(10)))
 
 	lastRewardCycle, _ := strconv.ParseInt(p.Zimpl.Field("lastrewardcycle"), 10, 64)
 	index := lastRewardCycle % int64(len(new_buffers))
 	activeBufferAddr := new_buffers[index]
-	t.AssertEqual(p.Zimpl.Field("buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, strconv.FormatInt(lastRewardCycle, 10)), Zil(10))
+	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, strconv.FormatInt(lastRewardCycle, 10)), Zil(10))
 }

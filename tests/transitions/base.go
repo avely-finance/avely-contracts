@@ -4,15 +4,12 @@ import (
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
-	"log"
 	"reflect"
 )
 
-var t *Testing
 var sdk *AvelySDK
 
-func InitTransitions(sdkValue *AvelySDK, testingValue *Testing) *Transitions {
-	t = testingValue
+func InitTransitions(sdkValue *AvelySDK) *Transitions {
 	sdk = sdkValue
 
 	return NewTransitions()
@@ -26,11 +23,12 @@ func NewTransitions() *Transitions {
 }
 
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
-	p := Deploy(sdk, t.Log)
+	log := GetLog()
+	p := Deploy(sdk, log)
 
 	p.SyncBufferAndHolder()
 	p.SetupZProxy()
-	p.SetupShortcuts(t.Log)
+	p.SetupShortcuts(log)
 
 	return p
 }
@@ -41,7 +39,7 @@ func (tr *Transitions) FocusOn(focus string) {
 	if exists {
 		reflect.ValueOf(tr).MethodByName(focus).Call([]reflect.Value{})
 	} else {
-		log.Fatal(" A focus test suite does not exist")
+		GetLog().Fatal(" A focus test suite does not exist")
 	}
 }
 

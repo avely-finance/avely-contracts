@@ -14,8 +14,6 @@ func main() {
 	sdk := NewAvelySDK(*config)
 	log := helpers.GetLog()
 
-	testing := helpers.NewTesting(log)
-
 	shortcuts := map[string]string{
 		"azilssn":  config.AzilSsnAddress,
 		"addr1":    "0x" + config.Addr1,
@@ -24,9 +22,10 @@ func main() {
 		"admin":    "0x" + config.Admin,
 		"verifier": "0x" + config.Verifier,
 	}
+
 	log.AddShortcuts(shortcuts)
 
-	tr := InitTransitions(sdk, testing)
+	tr := InitTransitions(sdk)
 
 	focusPtr := flag.String("focus", "default", "a focus test suite")
 
