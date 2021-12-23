@@ -1,4 +1,4 @@
-package helpers
+package sdk
 
 import (
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
@@ -9,25 +9,34 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/ybbus/jsonrpc"
 	"strconv"
+	"log"
 )
 
-var Blockchain = struct {
-	ApiUrl string
-}{
-	ApiUrl: "",
+type AvelySDK struct {
+	Cfg Config
 }
 
-func IncreaseBlocknum(delta int32) {
+func NewAvelySDK(config Config) *AvelySDK {
+	return &AvelySDK{
+		Cfg: config,
+	}
+}
+
+func (sdk *AvelySDK) IncreaseBlocknum(delta int32) {
 	//https://raw.githubusercontent.com/Zilliqa/gozilliqa-sdk/7a254f739153c0551a327526009b4aaeeb4c9d87/provider/provider.go
 	//TODO singleton
-	rpcClient := jsonrpc.NewClient(Blockchain.ApiUrl)
+
+	if (sdk.Cfg.Chain != "local") {
+		log.Fatalf("Increasing block number available only for the local blockchain")
+	}
+
+	rpcClient := jsonrpc.NewClient(sdk.Cfg.ApiUrl)
 	params := []interface{}{delta}
 	rpcClient.Call("IncreaseBlocknum", params)
-	log.Infof("🔗  === Blocknumber increased by %d ===", delta)
 }
 
-func GetBalance(addr string) string {
-	provider := provider2.NewProvider(Blockchain.ApiUrl)
+func (sdk *AvelySDK) GetBalance(addr string) string {
+	provider := provider2.NewProvider(sdk.Cfg.ApiUrl)
 	balAndNonce, err := provider.GetBalance(addr)
 	if err != nil {
 		panic(err)
@@ -35,14 +44,14 @@ func GetBalance(addr string) string {
 	return balAndNonce.Balance
 }
 
-func GetAddressFromPrivateKey(privateKey string) string {
+func (sdk *AvelySDK) GetAddressFromPrivateKey(privateKey string) string {
 	publicKey := keytools.GetPublicKeyFromPrivateKey(util.DecodeHex(privateKey), true)
 	address := keytools.GetAddressFromPublic(publicKey)
 	return address
 }
 
-func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
-	c.Provider = provider2.NewProvider(Blockchain.ApiUrl)
+func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
+	c.Provider = provider2.NewProvider(sdk.Cfg.ApiUrl)
 	gasPrice, err := c.Provider.GetMinimumGasPrice()
 	if err != nil {
 		return nil, err
@@ -57,8 +66,8 @@ func DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
 	return c.Deploy(parameter)
 }
 
-func CallFor(c *contract2.Contract, transition string, args []core.ContractValue, priority bool, amount string) (*transaction2.Transaction, error) {
-	c.Provider = provider2.NewProvider(Blockchain.ApiUrl)
+func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []core.ContractValue, priority bool, amount string) (*transaction2.Transaction, error) {
+	c.Provider = provider2.NewProvider(sdk.Cfg.ApiUrl)
 	gasPrice, err := c.Provider.GetMinimumGasPrice()
 	if err != nil {
 		return nil, err

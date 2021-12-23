@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/avely-finance/avely-contracts/sdk"
 	"encoding/json"
 	"fmt"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
@@ -12,6 +13,8 @@ import (
 
 type ParamsMap map[string]string
 
+// var log *Log
+
 type Transition struct {
 	Sender    string
 	Tag       string
@@ -19,6 +22,7 @@ type Transition struct {
 	Amount    string
 	Params    ParamsMap
 }
+
 type Event struct {
 	Sender    string
 	EventName string
@@ -34,14 +38,17 @@ type EventLog struct {
 }
 
 type Testing struct {
+	Log *sdk.Log
 }
 
-func NewTesting() *Testing {
-	return &Testing{}
+func NewTesting(log *sdk.Log) *Testing {
+	return &Testing{
+		Log: log,
+	}
 }
 
 func (t *Testing) Start(tag string) {
-	log.Infof("⚙️  === Start to test %s === \n", tag)
+	t.Log.Infof("⚙️  === Start to test %s === \n", tag)
 }
 
 func (t *Testing) AssertContain(s1, s2 string) {
@@ -52,20 +59,20 @@ func (t *Testing) AssertContain(s1, s2 string) {
 func (t *Testing) AssertEqual(s1, s2 string) {
 	if s1 != s2 {
 		_, file, no, _ := runtime.Caller(1)
-		log.Error("ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
-		log.Error("EXPECTED: " + s2)
-		log.Error("ACTUAL: " + s1)
-		log.Fatal("TESTS ARE FAILED")
+		t.Log.Error("ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
+		t.Log.Error("EXPECTED: " + s2)
+		t.Log.Error("ACTUAL: " + s1)
+		t.Log.Fatal("TESTS ARE FAILED")
 	} else {
-		log.Success("ASSERT_EQUAL SUCCESS")
+		t.Log.Success("ASSERT_EQUAL SUCCESS")
 	}
 }
 
 func (t *Testing) AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	if err != nil {
 		_, file, no, _ := runtime.Caller(1)
-		log.Error(tx)
-		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
+		t.Log.Error(tx)
+		t.Log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 	return tx, err
 }
@@ -74,7 +81,7 @@ func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int)
 	_, file, no, _ := runtime.Caller(1)
 
 	if err == nil {
-		log.Error("ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
+		t.Log.Error("ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
 	}
 
 	receipt, _ := json.Marshal(txn.Receipt)
@@ -86,12 +93,12 @@ func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int)
 
 func (t *Testing) AssertContainRaw(code, s1, s2, file string, no int) {
 	if !strings.Contains(s1, s2) {
-		log.Error(code + " FAILED, " + file + ":" + strconv.Itoa(no))
-		log.Error(s1)
-		log.Error(s2)
-		log.Fatal("TESTS ARE FAILED")
+		t.Log.Error(code + " FAILED, " + file + ":" + strconv.Itoa(no))
+		t.Log.Error(s1)
+		t.Log.Error(s2)
+		t.Log.Fatal("TESTS ARE FAILED")
 	} else {
-		log.Success(code)
+		t.Log.Success(code)
 	}
 }
 
@@ -126,15 +133,15 @@ func (t *Testing) AssertTransition(txn *transaction.Transaction, expectedTxn Tra
 		}
 	}
 	if found {
-		log.Success("ASSERT_TRANSITION SUCCESS")
+		t.Log.Success("ASSERT_TRANSITION SUCCESS")
 	} else {
 		_, file, no, _ := runtime.Caller(1)
-		log.Error("ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
+		t.Log.Error("ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
 		actual, _ := json.MarshalIndent(txn, "", "     ")
 		expected, _ := json.MarshalIndent(expectedTxn, "", "     ")
-		log.Error(fmt.Sprintf("Expected: %s", expected))
-		log.Error(fmt.Sprintf("Actual: %s", actual))
-		log.Fatal("TESTS ARE FAILED")
+		t.Log.Error(fmt.Sprintf("Expected: %s", expected))
+		t.Log.Error(fmt.Sprintf("Actual: %s", actual))
+		t.Log.Fatal("TESTS ARE FAILED")
 	}
 }
 
@@ -142,7 +149,7 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent Event)
 	found := false
 	if txn.Receipt.EventLogs != nil {
 		for _, el := range txn.Receipt.EventLogs {
-			txEvent := convertEventLog(el)
+			txEvent := convertEventLog(el, t.Log)
 			if txEvent.Address == "0x"+expectedEvent.Sender &&
 				txEvent.EventName == expectedEvent.EventName &&
 				compareParams(txEvent.Params, convertParams(expectedEvent.Params)) {
@@ -153,15 +160,15 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent Event)
 	}
 
 	if found {
-		log.Success("ASSERT_EVENT SUCCESS")
+		t.Log.Success("ASSERT_EVENT SUCCESS")
 	} else {
 		_, file, no, _ := runtime.Caller(1)
-		log.Error("ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
+		t.Log.Error("ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
 		expected, _ := json.Marshal(expectedEvent)
-		log.Error(fmt.Sprintf("EXPECTED: %s", expected))
+		t.Log.Error(fmt.Sprintf("EXPECTED: %s", expected))
 		actual, _ := json.Marshal(txn.Receipt.EventLogs)
-		log.Error(fmt.Sprintf("ACTUAL: %s", actual))
-		log.Fatal("TESTS ARE FAILED")
+		t.Log.Error(fmt.Sprintf("ACTUAL: %s", actual))
+		t.Log.Fatal("TESTS ARE FAILED")
 	}
 }
 
@@ -177,7 +184,7 @@ func convertParams(pmap ParamsMap) []core.ContractValue {
 	return cvarr
 }
 
-func convertEventLog(el interface{}) EventLog {
+func convertEventLog(el interface{}, log *sdk.Log) EventLog {
 	//TODO: correct way to get txEvent EventLog structure
 	b, err := json.Marshal(el)
 	if err != nil {

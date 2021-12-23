@@ -1,4 +1,4 @@
-module Azil/test
+module github.com/avely-finance/avely-contracts
 
 go 1.17
 

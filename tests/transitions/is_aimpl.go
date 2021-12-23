@@ -1,17 +1,16 @@
 package transitions
 
 import (
-	. "Azil/test/helpers"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
 func (tr *Transitions) IsAimpl() {
-
 	t.Start("IsAimpl")
 
-	_, _, _, Buffer, Holder := tr.DeployAndUpgrade()
+	_, _, _, Buffer, Holder := sdk.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
-	Buffer.UpdateWallet(tr.cfg.Key2)
+	Buffer.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, err := Buffer.DelegateStake()
 	t.AssertError(tx, err, -401)
@@ -21,7 +20,7 @@ func (tr *Transitions) IsAimpl() {
 	t.AssertError(tx, err, -401)
 
 	// Use non-admin user for Holder
-	Holder.UpdateWallet(tr.cfg.Key2)
+	Holder.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, err = Holder.WithdrawStakeAmt(Zil(1))
 	t.AssertError(tx, err, -301)
