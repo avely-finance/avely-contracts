@@ -7,6 +7,7 @@ import(
 	"runtime"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	avelycore "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
 type Protocol struct {
@@ -62,6 +63,14 @@ func (p *Protocol) SetupZProxy() {
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	sdk.IncreaseBlocknum(10)
 	check(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+}
+
+func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
+	log.AddShortcut("Zproxy", "0x"+p.Zproxy.Addr)
+	log.AddShortcut("Zimpl", "0x"+p.Zimpl.Addr)
+	log.AddShortcut("Aimpl", "0x"+p.Aimpl.Addr)
+	log.AddShortcut("Buffer", "0x"+p.Buffer.Addr)
+	log.AddShortcut("Holder", "0x"+p.Holder.Addr)
 }
 
 func check(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
