@@ -225,7 +225,7 @@ func NewHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 		stateFieldTypes := make(StateFieldTypes)
 		contract := Contract{
-			Sdk: sdk,
+			Sdk:             sdk,
 			Provider:        *contract.Provider,
 			Addr:            tx.ContractAddress,
 			Bech32:          b32,

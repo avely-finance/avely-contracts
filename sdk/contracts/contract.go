@@ -15,11 +15,6 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
-// const TX_CONFIRM_MAX_ATTEMPTS int = 5
-// const TX_CONFIRM_INTERVAL_SEC int = 0
-
-// var TxIdLast string = ""
-
 type Pair struct {
 	Argtypes    interface{} `json:"argtypes"`
 	Arguments   []string    `json:"arguments"`
@@ -54,7 +49,6 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	}
 
 	tx, err := c.Sdk.CallFor(&contract, transition, params, false, amount)
-	// TxIdLast = tx.ID
 	if err != nil {
 		return tx, err
 	}

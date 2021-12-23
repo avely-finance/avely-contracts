@@ -4,7 +4,7 @@ import (
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
-func Deploy(sdk *AvelySDK, log *Log) (*Protocol) {
+func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	log.Info("start to deploy")
 
 	//deploy gzil

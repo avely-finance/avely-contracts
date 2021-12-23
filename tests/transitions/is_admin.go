@@ -8,7 +8,7 @@ func (tr *Transitions) IsAdmin() {
 
 	t.Start("IsAdmin")
 
-  p := tr.DeployAndUpgrade()
+	p := tr.DeployAndUpgrade()
 
 	// Use non-admin user for p.Buffer
 	p.Buffer.UpdateWallet(sdk.Cfg.Key3)

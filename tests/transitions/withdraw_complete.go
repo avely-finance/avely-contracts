@@ -46,18 +46,18 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 	tx, _ = p.Aimpl.ClaimWithdrawal(readyBlocks)
 	t.AssertTransition(tx, Transition{
-		p.Aimpl.Addr,           //sender
+		p.Aimpl.Addr,         //sender
 		"CompleteWithdrawal", //tag
-		p.Holder.Addr,          //recipient
+		p.Holder.Addr,        //recipient
 		"0",                  //amount
 		ParamsMap{},
 	})
 	t.AssertEvent(tx, Event{p.Holder.Addr, "AddFunds", ParamsMap{"funder": "0x" + p.Zimpl.Addr, "amount": Zil(10)}})
 
 	t.AssertTransition(tx, Transition{
-		p.Holder.Addr,                         //sender
+		p.Holder.Addr,                       //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
-		p.Aimpl.Addr,                          //recipient
+		p.Aimpl.Addr,                        //recipient
 		Zil(10),                             //amount
 		ParamsMap{},
 	})

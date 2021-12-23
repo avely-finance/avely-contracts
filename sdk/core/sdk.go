@@ -8,18 +8,18 @@ import (
 	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/ybbus/jsonrpc"
-	"strconv"
 	"log"
+	"strconv"
 )
 
 type AvelySDK struct {
-	Cfg Config
+	Cfg      Config
 	TxIdLast string
 }
 
 func NewAvelySDK(config Config) *AvelySDK {
 	return &AvelySDK{
-		Cfg: config,
+		Cfg:      config,
 		TxIdLast: "",
 	}
 }
@@ -27,7 +27,7 @@ func NewAvelySDK(config Config) *AvelySDK {
 func (sdk *AvelySDK) IncreaseBlocknum(delta int32) {
 	//https://raw.githubusercontent.com/Zilliqa/gozilliqa-sdk/7a254f739153c0551a327526009b4aaeeb4c9d87/provider/provider.go
 
-	if (sdk.Cfg.Chain != "local") {
+	if sdk.Cfg.Chain != "local" {
 		log.Fatalf("Increasing block number available only for the local blockchain")
 	}
 

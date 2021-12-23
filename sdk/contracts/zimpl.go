@@ -16,6 +16,7 @@ import (
 type Zimpl struct {
 	Contract
 }
+
 func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/ssnlist.scilla")
 	key := sdk.Cfg.AdminKey

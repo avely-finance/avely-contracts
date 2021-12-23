@@ -1,19 +1,19 @@
 package contracts
 
-import(
+import (
 	"fmt"
-	"log"
-	"strconv"
-	"runtime"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	avelycore "github.com/avely-finance/avely-contracts/sdk/core"
+	"log"
+	"runtime"
+	"strconv"
 )
 
 type Protocol struct {
 	Zproxy *Zproxy
-	Zimpl *Zimpl
-	Aimpl *AZil
+	Zimpl  *Zimpl
+	Aimpl  *AZil
 	Buffer *BufferContract
 	Holder *HolderContract
 }
@@ -21,15 +21,15 @@ type Protocol struct {
 func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffer *BufferContract, holder *HolderContract) *Protocol {
 	return &Protocol{
 		Zproxy: zproxy,
-		Zimpl: zimpl,
-		Aimpl: azil,
+		Zimpl:  zimpl,
+		Aimpl:  azil,
 		Buffer: buffer,
 		Holder: holder,
 	}
 }
 
 func (p *Protocol) SyncBufferAndHolder() {
-  new_buffers := []string{"0x" + p.Buffer.Addr}
+	new_buffers := []string{"0x" + p.Buffer.Addr}
 
 	check(p.Aimpl.ChangeBuffers(new_buffers))
 	check(p.Aimpl.ChangeHolderAddress(p.Holder.Addr))

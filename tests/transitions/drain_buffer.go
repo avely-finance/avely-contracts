@@ -24,9 +24,9 @@ func (tr *Transitions) DrainBuffer() {
 	txn, _ = p.Aimpl.DrainBuffer(p.Buffer.Addr)
 
 	t.AssertTransition(txn, Transition{
-		p.Aimpl.Addr,     //sender
+		p.Aimpl.Addr,   //sender
 		"ClaimRewards", //tag
-		p.Buffer.Addr,    //recipient
+		p.Buffer.Addr,  //recipient
 		"0",            //amount
 		ParamsMap{},
 	})

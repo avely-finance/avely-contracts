@@ -1,11 +1,11 @@
 package transitions
 
 import (
-	. "github.com/avely-finance/avely-contracts/tests/helpers"
-	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
-	"reflect"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	"log"
+	"reflect"
 )
 
 var t *Testing
@@ -22,11 +22,10 @@ type Transitions struct {
 }
 
 func NewTransitions() *Transitions {
-	return &Transitions{
-	}
+	return &Transitions{}
 }
 
-func (tr *Transitions) DeployAndUpgrade() (*Protocol) {
+func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p := Deploy(sdk, t.Log)
 
 	p.SyncBufferAndHolder()

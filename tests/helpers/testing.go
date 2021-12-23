@@ -1,11 +1,11 @@
 package helpers
 
 import (
-	sdk "github.com/avely-finance/avely-contracts/sdk/core"
 	"encoding/json"
 	"fmt"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	sdk "github.com/avely-finance/avely-contracts/sdk/core"
 	"runtime"
 	"strconv"
 	"strings"
