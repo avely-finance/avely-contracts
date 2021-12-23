@@ -7,7 +7,7 @@ import (
 func (tr *Transitions) IsAimpl() {
 	t.Start("IsAimpl")
 
-	p := DeployAndUpgrade()
+	p := tr.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
 	p.Buffer.UpdateWallet(sdk.Cfg.Key2)

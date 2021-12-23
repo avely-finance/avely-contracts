@@ -1,14 +1,15 @@
 package transitions
 
 import (
+	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
-	// "strconv"
+	"strconv"
 )
 
 func (tr *Transitions) DelegateStakeSuccess() {
 	t.Start("DelegateStake: Stake 10 ZIL")
 
-	p := DeployAndUpgrade()
+	p := tr.DeployAndUpgrade()
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
 
@@ -43,26 +44,26 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	t.AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+sdk.Cfg.Addr1), nextCycleStr)
 }
 
-// func (tr *Transitions) DelegateStakeBuffersRotation() {
-// 	t.Start("DelegateStake: Buffers rotation")
+func (tr *Transitions) DelegateStakeBuffersRotation() {
+	t.Start("DelegateStake: Buffers rotation")
 
-// 	p := DeployAndUpgrade()
+	p := tr.DeployAndUpgrade()
 
-// 	anotherBuffer, err := contracts.NewBufferContract(sdk.Cfg.AdminKey, p.Aimpl.Addr, sdk.Cfg.AzilSsnAddress, Zproxy.Addr, Zimpl.Addr)
-// 	if err != nil {
-// 		log.Fatal("Deploy buffer error = " + err.Error())
-// 	}
+	anotherBuffer, err := contracts.NewBufferContract(sdk, p.Aimpl.Addr, p.Zproxy.Addr, p.Zimpl.Addr)
+	if err != nil {
+		t.Log.Fatal("Deploy buffer error = " + err.Error())
+	}
 
-// 	new_buffers := []string{"0x" + Buffer.Addr, "0x" + Buffer.Addr, "0x" + anotherBuffer.Addr}
+	new_buffers := []string{"0x" + p.Buffer.Addr, "0x" + p.Buffer.Addr, "0x" + anotherBuffer.Addr}
 
-// 	t.AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
-// 	Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-// 	t.AssertSuccess(Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+	t.AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
+	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	t.AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
-// 	t.AssertSuccess(p.Aimpl.DelegateStake(Zil(10)))
+	t.AssertSuccess(p.Aimpl.DelegateStake(Zil(10)))
 
-// 	lastRewardCycle, _ := strconv.ParseInt(Zimpl.Field("lastrewardcycle"), 10, 64)
-// 	index := lastRewardCycle % int64(len(new_buffers))
-// 	activeBufferAddr := new_buffers[index]
-// 	t.AssertEqual(Zimpl.Field("buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, strconv.FormatInt(lastRewardCycle, 10)), Zil(10))
-// }
+	lastRewardCycle, _ := strconv.ParseInt(p.Zimpl.Field("lastrewardcycle"), 10, 64)
+	index := lastRewardCycle % int64(len(new_buffers))
+	activeBufferAddr := new_buffers[index]
+	t.AssertEqual(p.Zimpl.Field("buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, strconv.FormatInt(lastRewardCycle, 10)), Zil(10))
+}
