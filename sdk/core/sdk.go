@@ -24,7 +24,6 @@ func NewAvelySDK(config Config) *AvelySDK {
 
 func (sdk *AvelySDK) IncreaseBlocknum(delta int32) {
 	//https://raw.githubusercontent.com/Zilliqa/gozilliqa-sdk/7a254f739153c0551a327526009b4aaeeb4c9d87/provider/provider.go
-	//TODO singleton
 
 	if (sdk.Cfg.Chain != "local") {
 		log.Fatalf("Increasing block number available only for the local blockchain")

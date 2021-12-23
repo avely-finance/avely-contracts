@@ -52,15 +52,7 @@ func Deploy(sdk *AvelySDK, log *Log) (*Protocol) {
 	log.Success("deploy holder succeed, address = " + Holder.Addr)
 
 	return NewProtocol(Zproxy, Zimpl, Aimpl, Buffer, Holder)
-
-
-	// log.Info("start to upgrade")
-	// /********************************************************************
-	// * Upgrade buffer/holder
-	// ********************************************************************/
-	// new_buffers := []string{"0x" + Buffer.Addr}
-	// t.AssertSuccess(Aimpl.ChangeBuffers(new_buffers))
-	// t.AssertSuccess(Aimpl.ChangeHolderAddress(Holder.Addr))
+}
 
 	// /********************************************************************
 	// * Upgrade Zproxy, make some initial actions
@@ -101,7 +93,6 @@ func Deploy(sdk *AvelySDK, log *Log) (*Protocol) {
 	// log.Success("upgrade succeed")
 
 	// return Zproxy, Zimpl, Aimpl, Buffer, Holder
-}
 
 // func DeployAndUpgrade(sdk *AvelySDK, log *Log) (*contracts.Zproxy, *contracts.Zimpl, *contracts.AZil, *contracts.BufferContract, *contracts.HolderContract) {
 // 	log.Info("start to deploy")
