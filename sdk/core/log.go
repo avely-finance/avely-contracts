@@ -14,14 +14,6 @@ type Log struct {
 	shortcuts map[string]string
 }
 
-// var log *Log
-
-// func init() {
-// 	log = &Log{
-// 		shortcuts: make(map[string]string),
-// 	}
-// }
-
 func NewLog() *Log {
 	log := &Log{
 		shortcuts: make(map[string]string),

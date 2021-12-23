@@ -13,8 +13,6 @@ import (
 
 type ParamsMap map[string]string
 
-// var log *Log
-
 type Transition struct {
 	Sender    string
 	Tag       string

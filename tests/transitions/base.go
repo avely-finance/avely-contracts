@@ -9,31 +9,29 @@ import (
 )
 
 var t *Testing
-// var log Log
 var sdk *AvelySDK
 
 func InitTransitions(sdkValue *AvelySDK, testingValue *Testing) *Transitions {
 	t = testingValue
-	// log = testingValue.log
 	sdk = sdkValue
 
 	return NewTransitions()
 }
 
 type Transitions struct {
-	// cfg Config
 }
 
 func NewTransitions() *Transitions {
 	return &Transitions{
-		// cfg: config,
 	}
 }
 
 func (tr *Transitions) DeployAndUpgrade() (*Protocol) {
 	p := Deploy(sdk, t.Log)
+
 	p.SyncBufferAndHolder()
 	p.SetupZProxy()
+	p.SetupShortcuts(t.Log)
 
 	return p
 }
