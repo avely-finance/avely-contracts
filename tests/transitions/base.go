@@ -42,13 +42,13 @@ func (tr *Transitions) FocusOn(focus string) {
 }
 
 func (tr *Transitions) RunAll() {
-	// tr.DelegateStakeSuccess()
+	tr.DelegateStakeSuccess()
 	// tr.DelegateStakeBuffersRotation()
 	// tr.WithdrawStakeAmount()
 	// tr.CompleteWithdrawalSuccess()
 	// tr.ZilBalanceOf()
 	// tr.IsAdmin()
-	tr.IsAimpl()
+	// tr.IsAimpl()
 	// tr.IsZimpl()
 	// tr.IsBufferOrHolder()
 	// tr.DrainBuffer()
@@ -56,5 +56,9 @@ func (tr *Transitions) RunAll() {
 }
 
 func DeployAndUpgrade() (*contracts.Protocol) {
-	return Deploy(sdk, t.Log)
+	p := Deploy(sdk, t.Log)
+	p.SyncBufferAndHolder()
+	p.SetupZProxy()
+
+	return p
 }
