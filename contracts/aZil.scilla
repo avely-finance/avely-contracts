@@ -1,6 +1,6 @@
 scilla_version 0
 
-import ListUtils IntUtils
+import ListUtils IntUtils BoolUtils
 
 (***************************************************)
 (*               Associated library                *)
@@ -25,6 +25,7 @@ type Error =
   | UnknownDelegatorAddr
   | CantFetchZimplBufferExistsAtSSN
   | DelegHasBufferedDeposit
+  | BufferOrHolderValidationFailed
 
 let make_error =
   fun (result: Error) =>
@@ -43,7 +44,8 @@ let make_error =
       | StakeDelegateFundsMismatch => Int32 -108
       | UnknownDelegatorAddr => Int32 -109
       | CantFetchZimplBufferExistsAtSSN => Int32 -110
-      | DelegHasBufferedDeposit => Int32 -110
+      | DelegHasBufferedDeposit => Int32 -111
+      | BufferOrHolderValidationFailed => Int32 -112
       end
     in
     { _exception: "Error"; code: result_code }
@@ -200,6 +202,23 @@ procedure IsAdmin(initiator: ByStr20)
   | True  =>
   | False =>
     e = AdminValidationFailed;
+    ThrowError e
+  end
+end
+
+procedure IsBufferOrHolder(initiator: ByStr20)
+  buffers_addrs <- buffers_addresses;
+  is_buffer = is_buffer_addr buffers_addrs initiator;
+
+  holder <- holder_address;
+  is_holder = builtin eq initiator holder;
+
+  is_buffer_or_holder = orb is_buffer is_holder;
+
+  match is_buffer_or_holder with
+  | True  =>
+  | False =>
+    e = BufferOrHolderValidationFailed;
     ThrowError e
   end
 end
@@ -620,7 +639,8 @@ transition DrainBuffer(buffer_addr: ByStr20)
 end
 
 transition ClaimRewardsSuccessCallBack()
-  (* TODO: IsBufferOrHolder; *)
+  initiator = _sender;
+  IsBufferOrHolder initiator;
   accept;
   IncreaseAutoRestakeAmt _amount
 end
@@ -685,6 +705,9 @@ transition DelegateStake()
 end
 
 transition DelegateStakeSuccessCallBack(amount: Uint128)
+  initiator = _sender;
+  IsBufferOrHolder initiator;
+
   stake_delegate_amt <- tmp_stake_delegate_amount;
   o_delegator <- tmp_delegator;
 
@@ -733,7 +756,7 @@ end
 (********************************************************************************)
 
 transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
-  (* TODO: IsAdmin; *)
+  IsAdmin _sender;
   FetchRemoteZimplFields;
 
   current_bnum <- & BLOCKNUMBER;
@@ -793,7 +816,9 @@ transition CompleteWithdrawal()
 end
 
 transition CompleteWithdrawalSuccessCallBack()
-  (* IsHolder; *)
+  initiator = _sender;
+  IsBufferOrHolder initiator;
+
   accept;
   amount = _amount;
 

@@ -156,6 +156,29 @@ func (a *AZil) ZilBalanceOf(addr string) (string, error) {
 	return "", errors.New("Balance not found")
 }
 
+func (a *AZil) ClaimRewardsSuccessCallBack() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+
+	return a.Call("ClaimRewardsSuccessCallBack", args, "0")
+}
+
+func (a *AZil) DelegateStakeSuccessCallBack(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return a.Call("DelegateStakeSuccessCallBack", args, "0")
+}
+
+func (a *AZil) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+
+	return a.Call("CompleteWithdrawalSuccessCallBack", args, "0")
+}
+
 func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
 	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
 	init := []core.ContractValue{
