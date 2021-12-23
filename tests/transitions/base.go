@@ -42,6 +42,7 @@ func (tr *Transitions) RunAll() {
 	tr.IsAdmin()
 	tr.IsAimpl()
 	tr.IsZimpl()
+	tr.IsBufferOrHolder()
 	tr.DrainBuffer()
 	tr.PerformAuoRestake()
 }
