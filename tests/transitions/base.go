@@ -4,7 +4,6 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
-	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"reflect"
 	"log"
 )
@@ -31,6 +30,14 @@ func NewTransitions() *Transitions {
 	}
 }
 
+func (tr *Transitions) DeployAndUpgrade() (*Protocol) {
+	p := Deploy(sdk, t.Log)
+	p.SyncBufferAndHolder()
+	p.SetupZProxy()
+
+	return p
+}
+
 func (tr *Transitions) FocusOn(focus string) {
 	st := reflect.TypeOf(tr)
 	_, exists := st.MethodByName(focus)
@@ -53,12 +60,4 @@ func (tr *Transitions) RunAll() {
 	// tr.IsBufferOrHolder()
 	// tr.DrainBuffer()
 	// tr.PerformAuoRestake()
-}
-
-func DeployAndUpgrade() (*contracts.Protocol) {
-	p := Deploy(sdk, t.Log)
-	p.SyncBufferAndHolder()
-	p.SetupZProxy()
-
-	return p
 }
