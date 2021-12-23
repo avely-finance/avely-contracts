@@ -1,6 +1,8 @@
 {
   "local": {
     "ApiUrl": "http://zilliqa_server:5555",
+    "TxConfrimMaxAttempts": 5,
+    "TxConfirmIntervalSec": 0,
     "AzilSsnAddress": "0x166862bdd5d76b3a4775d2494820179d582acac5",
     "AzilSsnRewardShare": "50",
     "HolderInitialDelegateZil": "1000",

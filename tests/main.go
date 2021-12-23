@@ -5,7 +5,7 @@ import (
 	// "Azil/test/transitions"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/tests/transitions"
-	. "github.com/avely-finance/avely-contracts/sdk"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"flag"
 	"time"
 )
@@ -33,7 +33,7 @@ func main() {
 	sdk := NewAvelySDK(*config)
 	log := helpers.GetLog()
 
-	t := NewTesting(log)
+	testing := helpers.NewTesting(log)
 
 	// config := helpers.LoadConfig(CHAIN)
 

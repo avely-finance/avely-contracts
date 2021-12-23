@@ -1,12 +1,12 @@
 package contracts
 
 import (
-	"Azil/test/helpers"
-
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -179,8 +179,11 @@ func (a *AZil) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, er
 	return a.Call("CompleteWithdrawalSuccessCallBack", args, "0")
 }
 
-func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
-	code, _ := ioutil.ReadFile("../contracts/aZil.scilla")
+func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
+	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
+	key := sdk.Cfg.AdminKey
+	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
+
 	init := []core.ContractValue{
 		{
 			VName: "_scilla_version",
@@ -189,7 +192,7 @@ func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
 		}, {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
-			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
+			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
@@ -214,11 +217,11 @@ func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
 		Signer: wallet,
 	}
 
-	tx, err := helpers.DeployTo(&contract)
+	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, TX_CONFIRM_MAX_ATTEMPTS, TX_CONFIRM_INTERVAL_SEC, contract.Provider)
+	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
@@ -230,13 +233,13 @@ func NewAZilContract(key, aZilSSNAddress, zimplAddr string) (*AZil, error) {
 		stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapPair"
 
 		contract := Contract{
+			Sdk:             sdk,
 			Provider:        *contract.Provider,
 			Addr:            tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          wallet,
 			StateFieldTypes: stateFieldTypes,
 		}
-		TxIdLast = tx.ID
 		return &AZil{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")

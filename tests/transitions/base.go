@@ -2,7 +2,9 @@ package transitions
 
 import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
-	. "github.com/avely-finance/avely-contracts/sdk"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
+	. "github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"reflect"
 	"log"
 )
@@ -51,4 +53,8 @@ func (tr *Transitions) RunAll() {
 	// tr.IsBufferOrHolder()
 	// tr.DrainBuffer()
 	// tr.PerformAuoRestake()
+}
+
+func DeployAndUpgrade() (*contracts.Protocol) {
+	return Deploy(sdk, t.Log)
 }

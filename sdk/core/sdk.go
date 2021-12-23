@@ -1,4 +1,4 @@
-package sdk
+package core
 
 import (
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"

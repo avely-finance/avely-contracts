@@ -1,11 +1,11 @@
 package contracts
 
 import (
-	"Azil/test/helpers"
-
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -131,8 +131,9 @@ func (p *Zproxy) UpdateVerifierRewardAddr(newAddr string) (*transaction.Transact
 	return p.Call("UpdateVerifierRewardAddr", args, "0")
 }
 
-func NewZproxy(key string) (*Zproxy, error) {
-	code, _ := ioutil.ReadFile("../contracts/zilliqa_staking/proxy.scilla")
+func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
+	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/proxy.scilla")
+	key := sdk.Cfg.AdminKey
 
 	init := []core.ContractValue{
 		{
@@ -142,11 +143,11 @@ func NewZproxy(key string) (*Zproxy, error) {
 		}, {
 			VName: "init_admin",
 			Type:  "ByStr20",
-			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
+			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_implementation",
 			Type:  "ByStr20",
-			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
+			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
 		},
 	}
 
@@ -159,24 +160,24 @@ func NewZproxy(key string) (*Zproxy, error) {
 		Signer: wallet,
 	}
 
-	tx, err := helpers.DeployTo(&contract)
+	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, TX_CONFIRM_MAX_ATTEMPTS, TX_CONFIRM_INTERVAL_SEC, contract.Provider)
+	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
 		stateFieldTypes := make(StateFieldTypes)
 
 		contract := Contract{
+			Sdk:             sdk,
 			Provider:        *contract.Provider,
 			Addr:            tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          wallet,
 			StateFieldTypes: stateFieldTypes,
 		}
-		TxIdLast = tx.ID
 
 		return &Zproxy{Contract: contract}, nil
 	} else {
