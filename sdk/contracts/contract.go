@@ -1,12 +1,12 @@
 package contracts
 
 import (
-	"Azil/test/helpers"
-
 	"encoding/json"
 	"errors"
 	"reflect"
 	"strconv"
+
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
@@ -15,10 +15,10 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
-const TX_CONFIRM_MAX_ATTEMPTS int = 5
-const TX_CONFIRM_INTERVAL_SEC int = 0
+// const TX_CONFIRM_MAX_ATTEMPTS int = 5
+// const TX_CONFIRM_INTERVAL_SEC int = 0
 
-var TxIdLast string = ""
+// var TxIdLast string = ""
 
 type Pair struct {
 	Argtypes    interface{} `json:"argtypes"`
@@ -31,6 +31,7 @@ type StateMap map[string]interface{}
 type StateFieldTypes map[string]string
 
 type Contract struct {
+	Sdk             *AvelySDK
 	Provider        provider2.Provider
 	Addr            string
 	Bech32          string
@@ -52,12 +53,12 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 		Signer:  c.Wallet,
 	}
 
-	tx, err := helpers.CallFor(&contract, transition, params, false, amount)
-	TxIdLast = tx.ID
+	tx, err := c.Sdk.CallFor(&contract, transition, params, false, amount)
+	// TxIdLast = tx.ID
 	if err != nil {
 		return tx, err
 	}
-	tx.Confirm(tx.ID, TX_CONFIRM_MAX_ATTEMPTS, TX_CONFIRM_INTERVAL_SEC, contract.Provider)
+	tx.Confirm(tx.ID, c.Sdk.Cfg.TxConfrimMaxAttempts, c.Sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
 	if tx.Status != core.Confirmed {
 		return tx, errors.New("transaction didn't get confirmed")
 	}
@@ -94,9 +95,9 @@ func (c *Contract) State() string {
 }
 
 func (c *Contract) stateParse() {
-	if c.TxIdStateParsed == TxIdLast {
-		return
-	}
+	// if c.TxIdStateParsed == TxIdLast {
+	// 	return
+	// }
 	state := c.State()
 
 	var statemap StateMap
@@ -134,9 +135,8 @@ func (c *Contract) stateParse() {
 			}
 		}
 	}
-	helpers.GetLog().Info("State parsed after txid=" + TxIdLast)
 	c.StateMap = statemap
-	c.TxIdStateParsed = TxIdLast
+	c.TxIdStateParsed = "TxIdLast"
 }
 
 func stateFieldArray(v interface{}) map[string]interface{} {

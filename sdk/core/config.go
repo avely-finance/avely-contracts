@@ -1,4 +1,4 @@
-package sdk
+package core
 
 import (
 	"log"
@@ -9,6 +9,8 @@ import (
 type Config struct {
 	Chain 										string
 	ApiUrl                    string
+	TxConfrimMaxAttempts			int
+	TxConfirmIntervalSec      int
 	AzilSsnAddress            string
 	AzilSsnRewardShare        string
 	HolderInitialDelegateZil  int

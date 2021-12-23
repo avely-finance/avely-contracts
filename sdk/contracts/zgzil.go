@@ -1,11 +1,11 @@
 package contracts
 
 import (
-	"Azil/test/helpers"
-
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -17,8 +17,9 @@ type Gzil struct {
 	Contract
 }
 
-func NewGzil(key string) (*Gzil, error) {
-	code, _ := ioutil.ReadFile("../contracts/zilliqa_staking/gzil.scilla")
+func NewGzil(sdk *AvelySDK) (*Gzil, error) {
+	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/gzil.scilla")
+	key := sdk.Cfg.AdminKey
 
 	init := []core.ContractValue{
 		{
@@ -29,12 +30,12 @@ func NewGzil(key string) (*Gzil, error) {
 		{
 			VName: "contract_owner",
 			Type:  "ByStr20",
-			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
+			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
 		},
 		{
 			VName: "init_minter",
 			Type:  "ByStr20",
-			Value: "0x" + helpers.GetAddressFromPrivateKey(key),
+			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
 		},
 		{
 			VName: "name",
@@ -72,24 +73,24 @@ func NewGzil(key string) (*Gzil, error) {
 		Signer: wallet,
 	}
 
-	tx, err := helpers.DeployTo(&contract)
+	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
 		return nil, err
 	}
-	tx.Confirm(tx.ID, TX_CONFIRM_MAX_ATTEMPTS, TX_CONFIRM_INTERVAL_SEC, contract.Provider)
+	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
 		stateFieldTypes := make(StateFieldTypes)
 
 		contract := Contract{
+			Sdk:             sdk,
 			Provider:        *contract.Provider,
 			Addr:            tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          wallet,
 			StateFieldTypes: stateFieldTypes,
 		}
-		TxIdLast = tx.ID
 
 		return &Gzil{Contract: contract}, nil
 	} else {
