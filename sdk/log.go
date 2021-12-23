@@ -1,4 +1,4 @@
-package helpers
+package sdk
 
 import (
 	"encoding/json"
@@ -14,15 +14,19 @@ type Log struct {
 	shortcuts map[string]string
 }
 
-var log *Log
+// var log *Log
 
-func init() {
-	log = &Log{
+// func init() {
+// 	log = &Log{
+// 		shortcuts: make(map[string]string),
+// 	}
+// }
+
+func NewLog() *Log {
+	log := &Log{
 		shortcuts: make(map[string]string),
 	}
-}
 
-func GetLog() *Log {
 	return log
 }
 

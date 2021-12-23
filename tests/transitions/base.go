@@ -1,25 +1,31 @@
 package transitions
 
 import (
-	. "Azil/test/helpers"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk"
 	"reflect"
+	"log"
 )
 
 var t *Testing
-var log *Log
+// var log Log
+var sdk *AvelySDK
 
-func init() {
-	t = NewTesting()
-	log = GetLog()
+func InitTransitions(sdkValue *AvelySDK, testingValue *Testing) *Transitions {
+	t = testingValue
+	// log = testingValue.log
+	sdk = sdkValue
+
+	return NewTransitions()
 }
 
 type Transitions struct {
-	cfg Config
+	// cfg Config
 }
 
-func NewTransitions(config Config) *Transitions {
+func NewTransitions() *Transitions {
 	return &Transitions{
-		cfg: config,
+		// cfg: config,
 	}
 }
 
@@ -34,15 +40,15 @@ func (tr *Transitions) FocusOn(focus string) {
 }
 
 func (tr *Transitions) RunAll() {
-	tr.DelegateStakeSuccess()
-	tr.DelegateStakeBuffersRotation()
-	tr.WithdrawStakeAmount()
-	tr.CompleteWithdrawalSuccess()
-	tr.ZilBalanceOf()
-	tr.IsAdmin()
+	// tr.DelegateStakeSuccess()
+	// tr.DelegateStakeBuffersRotation()
+	// tr.WithdrawStakeAmount()
+	// tr.CompleteWithdrawalSuccess()
+	// tr.ZilBalanceOf()
+	// tr.IsAdmin()
 	tr.IsAimpl()
-	tr.IsZimpl()
-	tr.IsBufferOrHolder()
-	tr.DrainBuffer()
-	tr.PerformAuoRestake()
+	// tr.IsZimpl()
+	// tr.IsBufferOrHolder()
+	// tr.DrainBuffer()
+	// tr.PerformAuoRestake()
 }

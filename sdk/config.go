@@ -1,11 +1,13 @@
-package helpers
+package sdk
 
 import (
+	"log"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
+	Chain 										string
 	ApiUrl                    string
 	AzilSsnAddress            string
 	AzilSsnRewardShare        string
@@ -22,7 +24,11 @@ type Config struct {
 	VerifierKey               string
 }
 
-func LoadConfig(chain string) (config Config) {
+func NewConfig(chain string) *Config {
+	config := &Config{
+		Chain: chain,
+	}
+
 	path := ".env." + chain
 	err := godotenv.Load(path)
 	if err != nil {
@@ -47,5 +53,6 @@ func LoadConfig(chain string) (config Config) {
 	if err != nil {
 		log.Fatalf("Fatal error config file: %w \n", err)
 	}
-	return
+
+	return config
 }

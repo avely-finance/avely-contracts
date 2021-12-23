@@ -1,12 +1,11 @@
-package transitions
+package sdk
 
 import (
-	"Azil/test/contracts"
-	. "Azil/test/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 )
 
-func (tr *Transitions) DeployAndUpgrade() (*contracts.Zproxy, *contracts.Zimpl, *contracts.AZil, *contracts.BufferContract, *contracts.HolderContract) {
+func (tr *Transitions) DeployAndUpgrade(log *Log) (*contracts.Zproxy, *contracts.Zimpl, *contracts.AZil, *contracts.BufferContract, *contracts.HolderContract) {
 	log.Info("start to deploy")
 
 	//deploy gzil
