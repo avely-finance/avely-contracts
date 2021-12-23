@@ -95,9 +95,9 @@ func (c *Contract) State() string {
 }
 
 func (c *Contract) stateParse() {
-	// if c.TxIdStateParsed == TxIdLast {
-	// 	return
-	// }
+	if c.TxIdStateParsed == c.Sdk.TxIdLast {
+		return
+	}
 	state := c.State()
 
 	var statemap StateMap
@@ -136,7 +136,7 @@ func (c *Contract) stateParse() {
 		}
 	}
 	c.StateMap = statemap
-	c.TxIdStateParsed = "TxIdLast"
+	c.TxIdStateParsed = c.Sdk.TxIdLast
 }
 
 func stateFieldArray(v interface{}) map[string]interface{} {

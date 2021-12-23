@@ -70,7 +70,6 @@ func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 			Wallet:          wallet,
 			StateFieldTypes: stateFieldTypes,
 		}
-		// TxIdLast = tx.ID
 
 		return &Zimpl{Contract: contract}, nil
 	} else {

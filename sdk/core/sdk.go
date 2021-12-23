@@ -14,11 +14,13 @@ import (
 
 type AvelySDK struct {
 	Cfg Config
+	TxIdLast string
 }
 
 func NewAvelySDK(config Config) *AvelySDK {
 	return &AvelySDK{
 		Cfg: config,
+		TxIdLast: "",
 	}
 }
 
@@ -62,7 +64,11 @@ func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction,
 		GasLimit:     "75000",
 		SenderPubKey: "",
 	}
-	return c.Deploy(parameter)
+	tx, err := c.Deploy(parameter)
+
+	sdk.TxIdLast = tx.ID
+
+	return tx, err
 }
 
 func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []core.ContractValue, priority bool, amount string) (*transaction2.Transaction, error) {
@@ -79,5 +85,9 @@ func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []co
 		Amount:       amount,
 		SenderPubKey: "",
 	}
-	return c.Call(transition, args, params, priority)
+	tx, err := c.Call(transition, args, params, priority)
+
+	sdk.TxIdLast = tx.ID
+
+	return tx, err
 }
