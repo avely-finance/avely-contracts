@@ -35,68 +35,58 @@ type EventLog struct {
 	Params    []core.ContractValue `json:"params"`
 }
 
-type Testing struct {
-	Log *sdk.Log
+func Start(tag string) {
+	GetLog().Infof("⚙️  === Start to test %s === \n", tag)
 }
 
-func NewTesting(log *sdk.Log) *Testing {
-	return &Testing{
-		Log: log,
-	}
-}
-
-func (t *Testing) Start(tag string) {
-	t.Log.Infof("⚙️  === Start to test %s === \n", tag)
-}
-
-func (t *Testing) AssertContain(s1, s2 string) {
+func AssertContain(s1, s2 string) {
 	_, file, no, _ := runtime.Caller(1)
-	t.AssertContainRaw("ASSERT_CONTAIN", s1, s2, file, no)
+	AssertContainRaw("ASSERT_CONTAIN", s1, s2, file, no)
 }
 
-func (t *Testing) AssertEqual(s1, s2 string) {
+func AssertEqual(s1, s2 string) {
 	if s1 != s2 {
 		_, file, no, _ := runtime.Caller(1)
-		t.Log.Error("ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
-		t.Log.Error("EXPECTED: " + s2)
-		t.Log.Error("ACTUAL: " + s1)
-		t.Log.Fatal("TESTS ARE FAILED")
+		GetLog().Error("ASSERT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
+		GetLog().Error("EXPECTED: " + s2)
+		GetLog().Error("ACTUAL: " + s1)
+		GetLog().Fatal("TESTS ARE FAILED")
 	} else {
-		t.Log.Success("ASSERT_EQUAL SUCCESS")
+		GetLog().Success("ASSERT_EQUAL SUCCESS")
 	}
 }
 
-func (t *Testing) AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	if err != nil {
 		_, file, no, _ := runtime.Caller(1)
-		t.Log.Error(tx)
-		t.Log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
+		GetLog().Error(tx)
+		GetLog().Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 	return tx, err
 }
 
-func (t *Testing) AssertError(txn *transaction.Transaction, err error, code int) {
+func AssertError(txn *transaction.Transaction, err error, code int) {
 	_, file, no, _ := runtime.Caller(1)
 
 	if err == nil {
-		t.Log.Error("ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
+		GetLog().Error("ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
 	}
 
 	receipt, _ := json.Marshal(txn.Receipt)
 	txError := string(receipt)
 	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
 
-	t.AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
+	AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
 }
 
-func (t *Testing) AssertContainRaw(code, s1, s2, file string, no int) {
+func AssertContainRaw(code, s1, s2, file string, no int) {
 	if !strings.Contains(s1, s2) {
-		t.Log.Error(code + " FAILED, " + file + ":" + strconv.Itoa(no))
-		t.Log.Error(s1)
-		t.Log.Error(s2)
-		t.Log.Fatal("TESTS ARE FAILED")
+		GetLog().Error(code + " FAILED, " + file + ":" + strconv.Itoa(no))
+		GetLog().Error(s1)
+		GetLog().Error(s2)
+		GetLog().Fatal("TESTS ARE FAILED")
 	} else {
-		t.Log.Success(code)
+		GetLog().Success(code)
 	}
 }
 
@@ -116,7 +106,7 @@ type TransactionMessage struct {
 	Params    []ContractValue `json:"params"`
 }
 */
-func (t *Testing) AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
+func AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
 	found := false
 	if txn.Receipt.Transitions != nil {
 		for _, txTransition := range txn.Receipt.Transitions {
@@ -131,23 +121,23 @@ func (t *Testing) AssertTransition(txn *transaction.Transaction, expectedTxn Tra
 		}
 	}
 	if found {
-		t.Log.Success("ASSERT_TRANSITION SUCCESS")
+		GetLog().Success("ASSERT_TRANSITION SUCCESS")
 	} else {
 		_, file, no, _ := runtime.Caller(1)
-		t.Log.Error("ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
+		GetLog().Error("ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
 		actual, _ := json.MarshalIndent(txn, "", "     ")
 		expected, _ := json.MarshalIndent(expectedTxn, "", "     ")
-		t.Log.Error(fmt.Sprintf("Expected: %s", expected))
-		t.Log.Error(fmt.Sprintf("Actual: %s", actual))
-		t.Log.Fatal("TESTS ARE FAILED")
+		GetLog().Error(fmt.Sprintf("Expected: %s", expected))
+		GetLog().Error(fmt.Sprintf("Actual: %s", actual))
+		GetLog().Fatal("TESTS ARE FAILED")
 	}
 }
 
-func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent Event) {
+func AssertEvent(txn *transaction.Transaction, expectedEvent Event) {
 	found := false
 	if txn.Receipt.EventLogs != nil {
 		for _, el := range txn.Receipt.EventLogs {
-			txEvent := convertEventLog(el, t.Log)
+			txEvent := convertEventLog(el, GetLog())
 			if txEvent.Address == "0x"+expectedEvent.Sender &&
 				txEvent.EventName == expectedEvent.EventName &&
 				compareParams(txEvent.Params, convertParams(expectedEvent.Params)) {
@@ -158,15 +148,15 @@ func (t *Testing) AssertEvent(txn *transaction.Transaction, expectedEvent Event)
 	}
 
 	if found {
-		t.Log.Success("ASSERT_EVENT SUCCESS")
+		GetLog().Success("ASSERT_EVENT SUCCESS")
 	} else {
 		_, file, no, _ := runtime.Caller(1)
-		t.Log.Error("ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
+		GetLog().Error("ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
 		expected, _ := json.Marshal(expectedEvent)
-		t.Log.Error(fmt.Sprintf("EXPECTED: %s", expected))
+		GetLog().Error(fmt.Sprintf("EXPECTED: %s", expected))
 		actual, _ := json.Marshal(txn.Receipt.EventLogs)
-		t.Log.Error(fmt.Sprintf("ACTUAL: %s", actual))
-		t.Log.Fatal("TESTS ARE FAILED")
+		GetLog().Error(fmt.Sprintf("ACTUAL: %s", actual))
+		GetLog().Fatal("TESTS ARE FAILED")
 	}
 }
 

@@ -6,16 +6,16 @@ import (
 
 func (tr *Transitions) IsBufferOrHolder() {
 
-	t.Start("IsBufferOrHolder")
+	Start("IsBufferOrHolder")
 
 	p := tr.DeployAndUpgrade()
 
 	tx, err := p.Aimpl.ClaimRewardsSuccessCallBack()
-	t.AssertError(tx, err, -112)
+	AssertError(tx, err, -112)
 
 	tx, err = p.Aimpl.DelegateStakeSuccessCallBack(Zil(1))
-	t.AssertError(tx, err, -112)
+	AssertError(tx, err, -112)
 
 	tx, err = p.Aimpl.CompleteWithdrawalSuccessCallBack()
-	t.AssertError(tx, err, -112)
+	AssertError(tx, err, -112)
 }
