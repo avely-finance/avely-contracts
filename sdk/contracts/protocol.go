@@ -1,10 +1,10 @@
 package contracts
 
 import (
-	"fmt"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	avelycore "github.com/avely-finance/avely-contracts/sdk/core"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	"log"
 	"runtime"
 	"strconv"
@@ -48,14 +48,14 @@ func (p *Protocol) SetupZProxy() {
 	check(p.Zproxy.AddSSN(sdk.Cfg.AzilSsnAddress, "aZil SSN"))
 	check(p.Zproxy.UpdateVerifierRewardAddr("0x" + sdk.Cfg.Verifier))
 	check(p.Zproxy.UpdateVerifier("0x" + sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateStakingParameters(zil(1000), zil(10))) //minstake (ssn not active if less), mindelegstake
+	check(p.Zproxy.UpdateStakingParameters(ToZil(1000), ToZil(10))) //minstake (ssn not active if less), mindelegstake
 	check(p.Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake
-	check(p.Aimpl.DelegateStake(zil(1000)))
+	check(p.Aimpl.DelegateStake(ToZil(1000)))
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	check(p.Holder.DelegateStake(zil(sdk.Cfg.HolderInitialDelegateZil)))
+	check(p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil)))
 
 	//SSN will become active on next cycle
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
@@ -79,13 +79,4 @@ func check(tx *transaction.Transaction, err error) (*transaction.Transaction, er
 		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 	return tx, err
-}
-
-const qa = "000000000000"
-
-func zil(amount int) string {
-	if amount == 0 {
-		return "0"
-	}
-	return fmt.Sprintf("%d%s", amount, qa)
 }

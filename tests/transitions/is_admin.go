@@ -2,6 +2,7 @@ package transitions
 
 import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
 func (tr *Transitions) IsAdmin() {
@@ -25,7 +26,7 @@ func (tr *Transitions) IsAdmin() {
 	// Use non-admin user for p.Holder
 	p.Holder.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, err = p.Holder.DelegateStake(Zil(1))
+	tx, err = p.Holder.DelegateStake(ToZil(1))
 	AssertError(tx, err, -305)
 	tx, err = p.Holder.ChangeAzilSSNAddress(sdk.Cfg.Addr3)
 	AssertError(tx, err, -305)
@@ -49,7 +50,7 @@ func (tr *Transitions) IsAdmin() {
 	AssertError(tx, err, -106)
 	tx, err = p.Aimpl.PerformAutoRestake()
 	AssertError(tx, err, -106)
-	tx, err = p.Aimpl.UpdateStakingParameters(Zil(100))
+	tx, err = p.Aimpl.UpdateStakingParameters(ToZil(100))
 	AssertError(tx, err, -106)
 	tx, err = p.Aimpl.DrainBuffer(p.Buffer.Addr)
 	AssertError(tx, err, -106)

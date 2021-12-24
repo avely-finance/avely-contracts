@@ -2,6 +2,7 @@ package transitions
 
 import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
 func (tr *Transitions) PerformAuoRestake() {
@@ -9,21 +10,21 @@ func (tr *Transitions) PerformAuoRestake() {
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 
-	AssertEqual(p.Aimpl.Field("autorestakeamount"), Zil(0))
+	AssertEqual(p.Aimpl.Field("autorestakeamount"), ToZil(0))
 
-	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(Zil(1)))
+	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(1)))
 	txn, err := p.Aimpl.PerformAutoRestake()
 	AssertError(txn, err, -15)
 
 	// increases to 100
-	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(Zil(99)))
-	restakeAmount := Zil(100)
+	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(99)))
+	restakeAmount := ToZil(100)
 	AssertEqual(p.Aimpl.Field("autorestakeamount"), restakeAmount)
 
 	txn, _ = p.Aimpl.PerformAutoRestake()
 
 	// should return to 0
-	AssertEqual(p.Aimpl.Field("autorestakeamount"), Zil(0))
+	AssertEqual(p.Aimpl.Field("autorestakeamount"), ToZil(0))
 
 	AssertTransition(txn, Transition{
 		p.Buffer.Addr, //sender
