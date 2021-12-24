@@ -1,34 +1,34 @@
 package transitions
 
 import (
-	. "Azil/test/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
 func (tr *Transitions) IsAimpl() {
+	Start("IsAimpl")
 
-	t.Start("IsAimpl")
-
-	_, _, _, Buffer, Holder := tr.DeployAndUpgrade()
+	p := tr.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
-	Buffer.UpdateWallet(tr.cfg.Key2)
+	p.Buffer.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, err := Buffer.DelegateStake()
-	t.AssertError(tx, err, -401)
-	tx, err = Buffer.ClaimRewards()
-	t.AssertError(tx, err, -401)
-	tx, err = Buffer.RequestDelegatorSwap(Holder.Addr)
-	t.AssertError(tx, err, -401)
+	tx, err := p.Buffer.DelegateStake()
+	AssertError(tx, err, -401)
+	tx, err = p.Buffer.ClaimRewards()
+	AssertError(tx, err, -401)
+	tx, err = p.Buffer.RequestDelegatorSwap(p.Holder.Addr)
+	AssertError(tx, err, -401)
 
-	// Use non-admin user for Holder
-	Holder.UpdateWallet(tr.cfg.Key2)
+	// Use non-admin user for p.Holder
+	p.Holder.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, err = Holder.WithdrawStakeAmt(Zil(1))
-	t.AssertError(tx, err, -301)
-	tx, err = Holder.CompleteWithdrawal()
-	t.AssertError(tx, err, -301)
-	tx, err = Holder.ClaimRewards()
-	t.AssertError(tx, err, -301)
-	tx, err = Holder.ConfirmDelegatorSwap(Buffer.Addr)
-	t.AssertError(tx, err, -301)
+	tx, err = p.Holder.WithdrawStakeAmt(ToZil(1))
+	AssertError(tx, err, -301)
+	tx, err = p.Holder.CompleteWithdrawal()
+	AssertError(tx, err, -301)
+	tx, err = p.Holder.ClaimRewards()
+	AssertError(tx, err, -301)
+	tx, err = p.Holder.ConfirmDelegatorSwap(p.Buffer.Addr)
+	AssertError(tx, err, -301)
 }

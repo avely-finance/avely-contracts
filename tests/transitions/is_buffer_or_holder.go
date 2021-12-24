@@ -1,21 +1,22 @@
 package transitions
 
 import (
-	. "Azil/test/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
 func (tr *Transitions) IsBufferOrHolder() {
 
-	t.Start("IsBufferOrHolder")
+	Start("IsBufferOrHolder")
 
-	_, _, Aimpl, _, _ := tr.DeployAndUpgrade()
+	p := tr.DeployAndUpgrade()
 
-	tx, err := Aimpl.ClaimRewardsSuccessCallBack()
-	t.AssertError(tx, err, -112)
+	tx, err := p.Aimpl.ClaimRewardsSuccessCallBack()
+	AssertError(tx, err, -112)
 
-	tx, err = Aimpl.DelegateStakeSuccessCallBack(Zil(1))
-	t.AssertError(tx, err, -112)
+	tx, err = p.Aimpl.DelegateStakeSuccessCallBack(ToZil(1))
+	AssertError(tx, err, -112)
 
-	tx, err = Aimpl.CompleteWithdrawalSuccessCallBack()
-	t.AssertError(tx, err, -112)
+	tx, err = p.Aimpl.CompleteWithdrawalSuccessCallBack()
+	AssertError(tx, err, -112)
 }

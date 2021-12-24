@@ -35,19 +35,3 @@ func StrMulDiv(a, b, c string) string {
 	result = result.Div(result, C)
 	return result.String()
 }
-
-const qa = "000000000000"
-
-func Zil(amount int) string {
-	if amount == 0 {
-		return "0"
-	}
-	return fmt.Sprintf("%d%s", amount, qa)
-}
-
-func Azil(amount int) string {
-	if amount == 0 {
-		return "0"
-	}
-	return fmt.Sprintf("%d%s", amount, qa)
-}

@@ -1,26 +1,36 @@
 package transitions
 
 import (
-	. "Azil/test/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/contracts"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	"reflect"
 )
 
-var t *Testing
-var log *Log
+var sdk *AvelySDK
 
-func init() {
-	t = NewTesting()
-	log = GetLog()
+func InitTransitions(sdkValue *AvelySDK) *Transitions {
+	sdk = sdkValue
+
+	return NewTransitions()
 }
 
 type Transitions struct {
-	cfg Config
 }
 
-func NewTransitions(config Config) *Transitions {
-	return &Transitions{
-		cfg: config,
-	}
+func NewTransitions() *Transitions {
+	return &Transitions{}
+}
+
+func (tr *Transitions) DeployAndUpgrade() *Protocol {
+	log := GetLog()
+	p := Deploy(sdk, log)
+
+	p.SyncBufferAndHolder()
+	p.SetupZProxy()
+	p.SetupShortcuts(log)
+
+	return p
 }
 
 func (tr *Transitions) FocusOn(focus string) {
@@ -29,7 +39,7 @@ func (tr *Transitions) FocusOn(focus string) {
 	if exists {
 		reflect.ValueOf(tr).MethodByName(focus).Call([]reflect.Value{})
 	} else {
-		log.Fatal(" A focus test suite does not exist")
+		GetLog().Fatal(" A focus test suite does not exist")
 	}
 }
 
