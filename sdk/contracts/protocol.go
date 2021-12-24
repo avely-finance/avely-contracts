@@ -57,9 +57,9 @@ func (p *Protocol) SetupZProxy() {
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
 	check(p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil)))
 
-	//SSN will become active on next cycle
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 
+	// SSN will become active on next cycle
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	sdk.IncreaseBlocknum(10)
 	check(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))

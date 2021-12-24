@@ -35,4 +35,3 @@ func StrMulDiv(a, b, c string) string {
 	result = result.Div(result, C)
 	return result.String()
 }
-
