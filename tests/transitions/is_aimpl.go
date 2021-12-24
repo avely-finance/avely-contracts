@@ -2,6 +2,7 @@ package transitions
 
 import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
 func (tr *Transitions) IsAimpl() {
@@ -22,7 +23,7 @@ func (tr *Transitions) IsAimpl() {
 	// Use non-admin user for p.Holder
 	p.Holder.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, err = p.Holder.WithdrawStakeAmt(Zil(1))
+	tx, err = p.Holder.WithdrawStakeAmt(ToZil(1))
 	AssertError(tx, err, -301)
 	tx, err = p.Holder.CompleteWithdrawal()
 	AssertError(tx, err, -301)

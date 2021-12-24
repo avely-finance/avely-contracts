@@ -2,6 +2,7 @@ package transitions
 
 import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
 func (tr *Transitions) IsBufferOrHolder() {
@@ -13,7 +14,7 @@ func (tr *Transitions) IsBufferOrHolder() {
 	tx, err := p.Aimpl.ClaimRewardsSuccessCallBack()
 	AssertError(tx, err, -112)
 
-	tx, err = p.Aimpl.DelegateStakeSuccessCallBack(Zil(1))
+	tx, err = p.Aimpl.DelegateStakeSuccessCallBack(ToZil(1))
 	AssertError(tx, err, -112)
 
 	tx, err = p.Aimpl.CompleteWithdrawalSuccessCallBack()

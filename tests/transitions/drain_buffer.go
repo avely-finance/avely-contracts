@@ -2,6 +2,7 @@ package transitions
 
 import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
 func (tr *Transitions) DrainBuffer() {
@@ -9,7 +10,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	p := tr.DeployAndUpgrade()
 
-	AssertSuccess(p.Aimpl.DelegateStake(Zil(10)))
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
 
 	txn, err := p.Aimpl.DrainBuffer(p.Aimpl.Addr)
 	AssertError(txn, err, -107)

@@ -2,6 +2,7 @@ package transitions
 
 import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	"strconv"
 )
 
@@ -13,7 +14,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	p := tr.DeployAndUpgrade()
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
-	AssertSuccess(p.Aimpl.DelegateStake(Zil(10)))
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
 
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
@@ -24,7 +25,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertSuccess(p.Aimpl.DrainBuffer(p.Buffer.Addr))
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
-	tx, _ := AssertSuccess(p.Aimpl.WithdrawStakeAmt(Azil(10)))
+	tx, _ := AssertSuccess(p.Aimpl.WithdrawStakeAmt(ToAzil(10)))
 
 	block1 := tx.Receipt.EpochNum
 	tx, _ = p.Aimpl.CompleteWithdrawal()
@@ -52,38 +53,38 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 		"0",                  //amount
 		ParamsMap{},
 	})
-	AssertEvent(tx, Event{p.Holder.Addr, "AddFunds", ParamsMap{"funder": "0x" + p.Zimpl.Addr, "amount": Zil(10)}})
+	AssertEvent(tx, Event{p.Holder.Addr, "AddFunds", ParamsMap{"funder": "0x" + p.Zimpl.Addr, "amount": ToZil(10)}})
 
 	AssertTransition(tx, Transition{
 		p.Holder.Addr,                       //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
 		p.Aimpl.Addr,                        //recipient
-		Zil(10),                             //amount
+		ToZil(10),                             //amount
 		ParamsMap{},
 	})
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
 	tx, _ = p.Aimpl.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteWithdrawal", ParamsMap{"amount": Zil(10), "delegator": "0x" + sdk.Cfg.Addr1}})
+	AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(10), "delegator": "0x" + sdk.Cfg.Addr1}})
 	AssertTransition(tx, Transition{
 		p.Aimpl.Addr,
 		"CompleteWithdrawalSuccessCallBack",
 		sdk.Cfg.Addr1,
 		"0",
-		ParamsMap{"amount": Zil(10)},
+		ParamsMap{"amount": ToZil(10)},
 	})
 	AssertTransition(tx, Transition{
 		p.Aimpl.Addr,
 		"AddFunds",
 		sdk.Cfg.Addr1,
-		Zil(10),
+		ToZil(10),
 		ParamsMap{},
 	})
 
-	AssertEqual(Zil(1000), p.Aimpl.Field("totalstakeamount"))
-	AssertEqual(Azil(1000), p.Aimpl.Field("totaltokenamount"))
+	AssertEqual(ToZil(1000), p.Aimpl.Field("totalstakeamount"))
+	AssertEqual(ToAzil(1000), p.Aimpl.Field("totaltokenamount"))
 	AssertEqual("0", p.Aimpl.Field("tmp_complete_withdrawal_available"))
-	AssertEqual(p.Aimpl.Field("balances", "0x"+sdk.Cfg.Admin), Azil(1000))
+	AssertEqual(p.Aimpl.Field("balances", "0x"+sdk.Cfg.Admin), ToAzil(1000))
 	AssertEqual("empty", p.Aimpl.Field("withdrawal_unbonded"))
 	AssertEqual("empty", p.Aimpl.Field("withdrawal_pending"))
 }
