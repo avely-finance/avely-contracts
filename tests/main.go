@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/tests/transitions"
-	. "github.com/avely-finance/avely-contracts/sdk/core"
-	"flag"
 )
 
 const CHAIN = "local"

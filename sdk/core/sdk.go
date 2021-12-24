@@ -24,9 +24,9 @@ func NewAvelySDK(config Config) *AvelySDK {
 	}
 }
 
+// IncreaseBlocknum can be called if isolated server works in "manual" mode:
+// https://github.com/Zilliqa/zilliqa-isolated-server#running-the-isolated-server-with-manual-block-increase
 func (sdk *AvelySDK) IncreaseBlocknum(delta int32) {
-	//https://raw.githubusercontent.com/Zilliqa/gozilliqa-sdk/7a254f739153c0551a327526009b4aaeeb4c9d87/provider/provider.go
-
 	if sdk.Cfg.Chain != "local" {
 		log.Fatalf("Increasing block number available only for the local blockchain")
 	}

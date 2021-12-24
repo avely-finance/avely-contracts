@@ -1,8 +1,8 @@
 package transitions
 
 import (
-	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
 func (tr *Transitions) WithdrawStakeAmount() {

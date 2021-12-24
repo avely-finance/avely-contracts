@@ -1,8 +1,8 @@
 package transitions
 
 import (
-	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	"strconv"
 )
 
@@ -59,7 +59,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 		p.Holder.Addr,                       //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
 		p.Aimpl.Addr,                        //recipient
-		ToZil(10),                             //amount
+		ToZil(10),                           //amount
 		ParamsMap{},
 	})
 
