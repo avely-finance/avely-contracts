@@ -1,37 +1,37 @@
 package transitions
 
 import (
-	. "Azil/test/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
 func (tr *Transitions) IsZimpl() {
+	Start("IsAimpl")
 
-	t.Start("IsAimpl")
-
-	_, _, _, Buffer, Holder := tr.DeployAndUpgrade()
-
-	// Use random user for Buffer
-	Buffer.UpdateWallet(tr.cfg.Key2)
-
-	tx, err := Buffer.AddFunds(Zil(10))
-	t.AssertError(tx, err, -407)
-	tx, err = Buffer.WithdrawStakeRewardsSuccessCallBack(tr.cfg.Addr2, Zil(10))
-	t.AssertError(tx, err, -407)
-	tx, err = Buffer.DelegateStakeSuccessCallBack(tr.cfg.Addr2, Zil(10))
-	t.AssertError(tx, err, -407)
+	p := tr.DeployAndUpgrade()
 
 	// Use random user for Buffer
-	Holder.UpdateWallet(tr.cfg.Key2)
-	tx, err = Holder.AddFunds(Zil(10))
-	t.AssertError(tx, err, -307)
-	tx, err = Holder.DelegateStakeSuccessCallBack(tr.cfg.AzilSsnAddress, Zil(10))
-	t.AssertError(tx, err, -307)
-	tx, err = Holder.WithdrawStakeAmtSuccessCallBack(tr.cfg.Addr2, Zil(10))
-	t.AssertError(tx, err, -307)
-	tx, err = Holder.WithdrawStakeRewardsSuccessCallBack(tr.cfg.Addr2, Zil(10))
-	t.AssertError(tx, err, -307)
-	tx, err = Holder.CompleteWithdrawalSuccessCallBack(Zil(10))
-	t.AssertError(tx, err, -307)
-	tx, err = Holder.CompleteWithdrawalNoUnbondedStakeCallBack(Zil(10))
-	t.AssertError(tx, err, -307)
+	p.Buffer.UpdateWallet(sdk.Cfg.Key2)
+
+	tx, err := p.Buffer.AddFunds(ToZil(10))
+	AssertError(tx, err, -407)
+	tx, err = p.Buffer.WithdrawStakeRewardsSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
+	AssertError(tx, err, -407)
+	tx, err = p.Buffer.DelegateStakeSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
+	AssertError(tx, err, -407)
+
+	// Use random user for Buffer
+	p.Holder.UpdateWallet(sdk.Cfg.Key2)
+	tx, err = p.Holder.AddFunds(ToZil(10))
+	AssertError(tx, err, -307)
+	tx, err = p.Holder.DelegateStakeSuccessCallBack(sdk.Cfg.AzilSsnAddress, ToZil(10))
+	AssertError(tx, err, -307)
+	tx, err = p.Holder.WithdrawStakeAmtSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
+	AssertError(tx, err, -307)
+	tx, err = p.Holder.WithdrawStakeRewardsSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
+	AssertError(tx, err, -307)
+	tx, err = p.Holder.CompleteWithdrawalSuccessCallBack(ToZil(10))
+	AssertError(tx, err, -307)
+	tx, err = p.Holder.CompleteWithdrawalNoUnbondedStakeCallBack(ToZil(10))
+	AssertError(tx, err, -307)
 }

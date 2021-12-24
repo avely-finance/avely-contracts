@@ -1,34 +1,35 @@
 package transitions
 
 import (
-	. "Azil/test/helpers"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
+	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
 func (tr *Transitions) PerformAuoRestake() {
-	Zproxy, _, Aimpl, Buffer, _ := tr.DeployAndUpgrade()
+	p := tr.DeployAndUpgrade()
 
-	Aimpl.UpdateWallet(tr.cfg.AdminKey)
+	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 
-	t.AssertEqual(Aimpl.Field("autorestakeamount"), Zil(0))
+	AssertEqual(p.Aimpl.Field("autorestakeamount"), ToZil(0))
 
-	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(Zil(1)))
-	txn, err := Aimpl.PerformAutoRestake()
-	t.AssertError(txn, err, -15)
+	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(1)))
+	txn, err := p.Aimpl.PerformAutoRestake()
+	AssertError(txn, err, -15)
 
 	// increases to 100
-	t.AssertSuccess(Aimpl.IncreaseAutoRestakeAmount(Zil(99)))
-	restakeAmount := Zil(100)
-	t.AssertEqual(Aimpl.Field("autorestakeamount"), restakeAmount)
+	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(99)))
+	restakeAmount := ToZil(100)
+	AssertEqual(p.Aimpl.Field("autorestakeamount"), restakeAmount)
 
-	txn, _ = Aimpl.PerformAutoRestake()
+	txn, _ = p.Aimpl.PerformAutoRestake()
 
 	// should return to 0
-	t.AssertEqual(Aimpl.Field("autorestakeamount"), Zil(0))
+	AssertEqual(p.Aimpl.Field("autorestakeamount"), ToZil(0))
 
-	t.AssertTransition(txn, Transition{
-		Buffer.Addr, //sender
+	AssertTransition(txn, Transition{
+		p.Buffer.Addr, //sender
 		"DelegateStake",
-		Zproxy.Addr,
+		p.Zproxy.Addr,
 		restakeAmount,
 		ParamsMap{},
 	})

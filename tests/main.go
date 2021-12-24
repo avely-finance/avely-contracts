@@ -1,25 +1,19 @@
 package main
 
 import (
-	"Azil/test/helpers"
-	"Azil/test/transitions"
 	"flag"
-	"time"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/tests/helpers"
+	. "github.com/avely-finance/avely-contracts/tests/transitions"
 )
-
-func increaseBlocknum() {
-	for {
-		time.Sleep(10 * time.Second)
-		helpers.IncreaseBlocknum(1)
-	}
-}
 
 const CHAIN = "local"
 
 func main() {
-	config := helpers.LoadConfig(CHAIN)
-
+	config := NewConfig(CHAIN)
+	sdk := NewAvelySDK(*config)
 	log := helpers.GetLog()
+
 	shortcuts := map[string]string{
 		"azilssn":  config.AzilSsnAddress,
 		"addr1":    "0x" + config.Addr1,
@@ -28,14 +22,11 @@ func main() {
 		"admin":    "0x" + config.Admin,
 		"verifier": "0x" + config.Verifier,
 	}
+
 	log.AddShortcuts(shortcuts)
 
-	helpers.Blockchain.ApiUrl = config.ApiUrl
+	tr := InitTransitions(sdk)
 
-	go increaseBlocknum()
-	tr := transitions.NewTransitions(config)
-
-	// Example: go run main.go -focus=DelegateStakeSuccess
 	focusPtr := flag.String("focus", "default", "a focus test suite")
 
 	flag.Parse()
