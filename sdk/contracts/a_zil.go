@@ -11,8 +11,8 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
-	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
@@ -260,9 +260,9 @@ func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
 
 	return contract2.Contract{
 		Provider: provider2.NewProvider(sdk.Cfg.ApiUrl),
-		Code:   string(code),
-		Init:   init,
-		Signer: wallet,
+		Code:     string(code),
+		Init:     init,
+		Signer:   wallet,
 	}
 }
 

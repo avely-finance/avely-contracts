@@ -26,10 +26,10 @@ type Config struct {
 	VerifierKey              string
 
 	ZproxyAddr string
-	GzilAddr string
-	ZimplAddr string
-	AzilAddr string
-	BufferAddrs []string
+	GzilAddr   string
+	ZimplAddr  string
+	AzilAddr   string
+	BufferAddr string
 	HolderAddr string
 }
 
