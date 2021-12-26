@@ -10,6 +10,7 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
@@ -211,6 +212,7 @@ func NewHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (
 	wallet.AddByPrivateKey(key)
 
 	contract := contract2.Contract{
+		Provider: provider2.NewProvider(sdk.Cfg.ApiUrl),
 		Code:   string(code),
 		Init:   init,
 		Signer: wallet,
