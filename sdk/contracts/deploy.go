@@ -76,19 +76,19 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("Restore aZil succeed, address = " + Aimpl.Addr)
 
-	// // Restore buffer
-	// Buffer, err := RestoreBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
-	// if err != nil {
-	// 	log.Fatal("Restore buffer error = " + err.Error())
-	// }
-	// log.Success("Restore buffer succeed, address = " + Buffer.Addr)
+	// Restore buffer
+	Buffer, err := RestoreBufferContract(sdk, sdk.Cfg.BufferAddr, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	if err != nil {
+		log.Fatal("Restore buffer error = " + err.Error())
+	}
+	log.Success("Restore buffer succeed, address = " + Buffer.Addr)
 
-	// // Restore holder
-	// Holder, err := RestoreHolderContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
-	// if err != nil {
-	// 	log.Fatal("Restore holder error = " + err.Error())
-	// }
-	// log.Success("Restore holder succeed, address = " + Holder.Addr)
+	// Restore holder
+	Holder, err := RestoreHolderContract(sdk, sdk.Cfg.HolderAddr, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	if err != nil {
+		log.Fatal("Restore holder error = " + err.Error())
+	}
+	log.Success("Restore holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Aimpl, nil, nil)
+	return NewProtocol(Zproxy, Zimpl, Aimpl, Buffer, Holder)
 }

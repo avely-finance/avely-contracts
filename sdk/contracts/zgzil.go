@@ -9,9 +9,9 @@ import (
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
-	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 )
 
 type Gzil struct {
@@ -70,9 +70,9 @@ func NewGzil(sdk *AvelySDK) (*Gzil, error) {
 
 	contract := contract2.Contract{
 		Provider: provider2.NewProvider(sdk.Cfg.ApiUrl),
-		Code:   string(code),
-		Init:   init,
-		Signer: wallet,
+		Code:     string(code),
+		Init:     init,
+		Signer:   wallet,
 	}
 
 	tx, err := sdk.DeployTo(&contract)
