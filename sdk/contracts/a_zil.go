@@ -12,6 +12,7 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
@@ -180,6 +181,52 @@ func (a *AZil) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, er
 }
 
 func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
+	contract := buildAZilContract(sdk, zimplAddr)
+
+	tx, err := sdk.DeployTo(&contract)
+	if err != nil {
+		return nil, err
+	}
+	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
+	if tx.Status == core.Confirmed {
+		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
+
+		sdkContract := Contract{
+			Sdk:             sdk,
+			Provider:        *contract.Provider,
+			Addr:            tx.ContractAddress,
+			Bech32:          b32,
+			Wallet:          contract.Signer,
+			StateFieldTypes: buildAZilStateFields(),
+		}
+		return &AZil{Contract: sdkContract}, nil
+	} else {
+		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
+		return nil, errors.New("deploy failed:" + string(data))
+	}
+}
+
+func RestoreAZilContract(sdk *AvelySDK, contractAddress, zimplAddr string) (*AZil, error) {
+	contract := buildAZilContract(sdk, zimplAddr)
+
+	b32, err := bech32.ToBech32Address(contractAddress)
+
+	if err != nil {
+		return nil, errors.New("Config has invalid AZil address")
+	}
+
+	sdkContract := Contract{
+		Sdk:             sdk,
+		Provider:        *contract.Provider,
+		Addr:            contractAddress,
+		Bech32:          b32,
+		Wallet:          contract.Signer,
+		StateFieldTypes: buildAZilStateFields(),
+	}
+	return &AZil{Contract: sdkContract}, nil
+}
+
+func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
 	key := sdk.Cfg.AdminKey
 	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
@@ -211,38 +258,21 @@ func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
 	wallet := account.NewWallet()
 	wallet.AddByPrivateKey(key)
 
-	contract := contract2.Contract{
-		Code:   string(code),
-		Init:   init,
-		Signer: wallet,
+	return contract2.Contract{
+		Provider: provider2.NewProvider(sdk.Cfg.ApiUrl),
+		Code:     string(code),
+		Init:     init,
+		Signer:   wallet,
 	}
+}
 
-	tx, err := sdk.DeployTo(&contract)
-	if err != nil {
-		return nil, err
-	}
-	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
-	if tx.Status == core.Confirmed {
-		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
+func buildAZilStateFields() StateFieldTypes {
+	stateFieldTypes := make(StateFieldTypes)
+	stateFieldTypes["balances"] = "StateFieldMap"
+	stateFieldTypes["last_buf_deposit_cycle_deleg"] = "StateFieldMap"
+	stateFieldTypes["buffers_addresses"] = "StateFieldArray"
+	stateFieldTypes["withdrawal_pending"] = "StateFieldMapMapPair"
+	stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapPair"
 
-		stateFieldTypes := make(StateFieldTypes)
-		stateFieldTypes["balances"] = "StateFieldMap"
-		stateFieldTypes["last_buf_deposit_cycle_deleg"] = "StateFieldMap"
-		stateFieldTypes["buffers_addresses"] = "StateFieldArray"
-		stateFieldTypes["withdrawal_pending"] = "StateFieldMapMapPair"
-		stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapPair"
-
-		contract := Contract{
-			Sdk:             sdk,
-			Provider:        *contract.Provider,
-			Addr:            tx.ContractAddress,
-			Bech32:          b32,
-			Wallet:          wallet,
-			StateFieldTypes: stateFieldTypes,
-		}
-		return &AZil{Contract: contract}, nil
-	} else {
-		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
-		return nil, errors.New("deploy failed:" + string(data))
-	}
+	return stateFieldTypes
 }
