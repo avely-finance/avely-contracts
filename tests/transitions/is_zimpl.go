@@ -11,13 +11,13 @@ func (tr *Transitions) IsZimpl() {
 	p := tr.DeployAndUpgrade()
 
 	// Use random user for Buffer
-	p.Buffer.UpdateWallet(sdk.Cfg.Key2)
+	p.GetBuffer().UpdateWallet(sdk.Cfg.Key2)
 
-	tx, err := p.Buffer.AddFunds(ToZil(10))
+	tx, err := p.GetBuffer().AddFunds(ToZil(10))
 	AssertError(tx, err, -407)
-	tx, err = p.Buffer.WithdrawStakeRewardsSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
+	tx, err = p.GetBuffer().WithdrawStakeRewardsSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
 	AssertError(tx, err, -407)
-	tx, err = p.Buffer.DelegateStakeSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
+	tx, err = p.GetBuffer().DelegateStakeSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
 	AssertError(tx, err, -407)
 
 	// Use random user for Buffer
