@@ -20,7 +20,7 @@ func main() {
 	}
 	log.AddShortcuts(shortcuts)
 
-	p := RestoreFromState(sdk, log)
+	p := DeployOnlyAvely(sdk, log)
 
 	p.Aimpl.ZilBalanceOf(config.Addr1)
 
