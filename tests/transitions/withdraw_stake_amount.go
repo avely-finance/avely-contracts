@@ -76,7 +76,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	sdk.IncreaseBlocknum(10)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
-	AssertSuccess(p.Aimpl.DrainBuffer(p.Buffer.Addr))
+	AssertSuccess(p.Aimpl.DrainBuffer(p.GetBuffer().Addr))
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
 	txn, err = p.Aimpl.WithdrawStakeAmt(ToAzil(5))

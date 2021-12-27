@@ -11,16 +11,16 @@ func (tr *Transitions) IsAdmin() {
 
 	p := tr.DeployAndUpgrade()
 
-	// Use non-admin user for p.Buffer
-	p.Buffer.UpdateWallet(sdk.Cfg.Key3)
+	// Use non-admin user for p.GetBuffer()
+	p.GetBuffer().UpdateWallet(sdk.Cfg.Key3)
 
-	tx, err := p.Buffer.ChangeAzilSSNAddress(sdk.Cfg.Addr3)
+	tx, err := p.GetBuffer().ChangeAzilSSNAddress(sdk.Cfg.Addr3)
 	AssertError(tx, err, -402)
-	tx, err = p.Buffer.ChangeAimplAddress(sdk.Cfg.Addr3)
+	tx, err = p.GetBuffer().ChangeAimplAddress(sdk.Cfg.Addr3)
 	AssertError(tx, err, -402)
-	tx, err = p.Buffer.ChangeZproxyAddress(sdk.Cfg.Addr3)
+	tx, err = p.GetBuffer().ChangeZproxyAddress(sdk.Cfg.Addr3)
 	AssertError(tx, err, -402)
-	tx, err = p.Buffer.ChangeZimplAddress(sdk.Cfg.Addr3)
+	tx, err = p.GetBuffer().ChangeZimplAddress(sdk.Cfg.Addr3)
 	AssertError(tx, err, -402)
 
 	// Use non-admin user for p.Holder
@@ -45,14 +45,14 @@ func (tr *Transitions) IsAdmin() {
 	tx, err = p.Aimpl.ChangeHolderAddress(sdk.Cfg.Addr3)
 	AssertError(tx, err, -106)
 
-	new_buffers := []string{"0x" + p.Buffer.Addr, "0x" + p.Buffer.Addr}
+	new_buffers := []string{"0x" + p.GetBuffer().Addr, "0x" + p.GetBuffer().Addr}
 	tx, err = p.Aimpl.ChangeBuffers(new_buffers)
 	AssertError(tx, err, -106)
 	tx, err = p.Aimpl.PerformAutoRestake()
 	AssertError(tx, err, -106)
 	tx, err = p.Aimpl.UpdateStakingParameters(ToZil(100))
 	AssertError(tx, err, -106)
-	tx, err = p.Aimpl.DrainBuffer(p.Buffer.Addr)
+	tx, err = p.Aimpl.DrainBuffer(p.GetBuffer().Addr)
 	AssertError(tx, err, -106)
 	readyBlocks := []string{}
 	tx, err = p.Aimpl.ClaimWithdrawal(readyBlocks)
