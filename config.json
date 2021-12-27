@@ -15,7 +15,14 @@
     "Key3": "",
     "Addr3": "c2035715831ab100ec42e562ce341b834bed1f4c",
     "VerifierKey": "",
-    "Verifier": "10200e3da08ee88729469d6eabc055cb225821e7"
+    "Verifier": "10200e3da08ee88729469d6eabc055cb225821e7",
+
+    "ZproxyAddr": "e064919bcd3668e1ccd347c82dbb373ecf019838",
+    "GzilAddr": "8e712a8ccb32769f75c65437c86fbf87bdaa2265",
+    "ZimplAddr": "8f75b55099b11d0811a60b4d439cded10d413ccd",
+    "AzilAddr": "99aa55c59202c4ab3bf5728219ba2586b71e71f6",
+    "BufferAddr": "8ea494ab5c3482fa1c2188d67daf097f80e17106",
+    "HolderAddr": "2182aa23fc99af10445998bb4ad11deaf1dd11fb"
   },
   "testnet": {
   }

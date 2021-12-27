@@ -11,6 +11,7 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
@@ -132,6 +133,58 @@ func (p *Zproxy) UpdateVerifierRewardAddr(newAddr string) (*transaction.Transact
 }
 
 func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
+	contract := buildZproxyContract(sdk)
+
+	tx, err := sdk.DeployTo(&contract)
+	if err != nil {
+		return nil, err
+	}
+	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
+	if tx.Status == core.Confirmed {
+		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
+
+		stateFieldTypes := make(StateFieldTypes)
+
+		sdkContract := Contract{
+			Sdk:             sdk,
+			Provider:        *contract.Provider,
+			Addr:            tx.ContractAddress,
+			Bech32:          b32,
+			Wallet:          contract.Signer,
+			StateFieldTypes: stateFieldTypes,
+		}
+
+		return &Zproxy{Contract: sdkContract}, nil
+	} else {
+		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
+		return nil, errors.New("deploy failed:" + string(data))
+	}
+}
+
+func RestoreZproxy(sdk *AvelySDK, contractAddress string) (*Zproxy, error) {
+	contract := buildZproxyContract(sdk)
+
+	b32, err := bech32.ToBech32Address(contractAddress)
+
+	if err != nil {
+		return nil, errors.New("Config has invalid Zproxy address")
+	}
+
+	stateFieldTypes := make(StateFieldTypes)
+
+	sdkContract := Contract{
+		Sdk:             sdk,
+		Provider:        *contract.Provider,
+		Addr:            contractAddress,
+		Bech32:          b32,
+		Wallet:          contract.Signer,
+		StateFieldTypes: stateFieldTypes,
+	}
+
+	return &Zproxy{Contract: sdkContract}, nil
+}
+
+func buildZproxyContract(sdk *AvelySDK) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/proxy.scilla")
 	key := sdk.Cfg.AdminKey
 
@@ -154,34 +207,10 @@ func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
 	wallet := account.NewWallet()
 	wallet.AddByPrivateKey(key)
 
-	contract := contract2.Contract{
-		Code:   string(code),
-		Init:   init,
-		Signer: wallet,
-	}
-
-	tx, err := sdk.DeployTo(&contract)
-	if err != nil {
-		return nil, err
-	}
-	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
-	if tx.Status == core.Confirmed {
-		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
-
-		stateFieldTypes := make(StateFieldTypes)
-
-		contract := Contract{
-			Sdk:             sdk,
-			Provider:        *contract.Provider,
-			Addr:            tx.ContractAddress,
-			Bech32:          b32,
-			Wallet:          wallet,
-			StateFieldTypes: stateFieldTypes,
-		}
-
-		return &Zproxy{Contract: contract}, nil
-	} else {
-		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
-		return nil, errors.New("deploy failed:" + string(data))
+	return contract2.Contract{
+		Provider: provider2.NewProvider(sdk.Cfg.ApiUrl),
+		Code:     string(code),
+		Init:     init,
+		Signer:   wallet,
 	}
 }

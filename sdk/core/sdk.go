@@ -52,7 +52,6 @@ func (sdk *AvelySDK) GetAddressFromPrivateKey(privateKey string) string {
 }
 
 func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
-	c.Provider = provider2.NewProvider(sdk.Cfg.ApiUrl)
 	gasPrice, err := c.Provider.GetMinimumGasPrice()
 	if err != nil {
 		return nil, err

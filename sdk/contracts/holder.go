@@ -11,6 +11,7 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
@@ -175,6 +176,52 @@ func (b *HolderContract) DelegateStake(amount string) (*transaction.Transaction,
 }
 
 func NewHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (*HolderContract, error) {
+	contract := buildHolderContract(sdk, aimplAddr, zproxyAddr, zimplAddr)
+
+	tx, err := sdk.DeployTo(&contract)
+	if err != nil {
+		return nil, err
+	}
+	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
+	if tx.Status == core.Confirmed {
+		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
+		stateFieldTypes := make(StateFieldTypes)
+		sdkContract := Contract{
+			Sdk:             sdk,
+			Provider:        *contract.Provider,
+			Addr:            tx.ContractAddress,
+			Bech32:          b32,
+			Wallet:          contract.Signer,
+			StateFieldTypes: stateFieldTypes,
+		}
+		return &HolderContract{Contract: sdkContract}, nil
+	} else {
+		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
+		return nil, errors.New("deploy failed: " + string(data))
+	}
+}
+
+func RestoreHolderContract(sdk *AvelySDK, contractAddress, aimplAddr, zproxyAddr, zimplAddr string) (*HolderContract, error) {
+	contract := buildHolderContract(sdk, aimplAddr, zproxyAddr, zimplAddr)
+
+	b32, err := bech32.ToBech32Address(contractAddress)
+	if err != nil {
+		return nil, errors.New("Config has invalid Holder address")
+	}
+
+	stateFieldTypes := make(StateFieldTypes)
+	sdkContract := Contract{
+		Sdk:             sdk,
+		Provider:        *contract.Provider,
+		Addr:            contractAddress,
+		Bech32:          b32,
+		Wallet:          contract.Signer,
+		StateFieldTypes: stateFieldTypes,
+	}
+	return &HolderContract{Contract: sdkContract}, nil
+}
+
+func buildHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/holder.scilla")
 	key := sdk.Cfg.AdminKey
 	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
@@ -210,31 +257,10 @@ func NewHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (
 	wallet := account.NewWallet()
 	wallet.AddByPrivateKey(key)
 
-	contract := contract2.Contract{
-		Code:   string(code),
-		Init:   init,
-		Signer: wallet,
-	}
-
-	tx, err := sdk.DeployTo(&contract)
-	if err != nil {
-		return nil, err
-	}
-	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
-	if tx.Status == core.Confirmed {
-		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
-		stateFieldTypes := make(StateFieldTypes)
-		contract := Contract{
-			Sdk:             sdk,
-			Provider:        *contract.Provider,
-			Addr:            tx.ContractAddress,
-			Bech32:          b32,
-			Wallet:          wallet,
-			StateFieldTypes: stateFieldTypes,
-		}
-		return &HolderContract{Contract: contract}, nil
-	} else {
-		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
-		return nil, errors.New("deploy failed: " + string(data))
+	return contract2.Contract{
+		Provider: provider2.NewProvider(sdk.Cfg.ApiUrl),
+		Code:     string(code),
+		Init:     init,
+		Signer:   wallet,
 	}
 }
