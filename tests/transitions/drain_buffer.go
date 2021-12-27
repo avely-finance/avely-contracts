@@ -22,12 +22,12 @@ func (tr *Transitions) DrainBuffer() {
 	sdk.IncreaseBlocknum(10)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
-	txn, _ = p.Aimpl.DrainBuffer(p.Buffer.Addr)
+	txn, _ = p.Aimpl.DrainBuffer(p.GetBuffer().Addr)
 
 	AssertTransition(txn, Transition{
 		p.Aimpl.Addr,   //sender
 		"ClaimRewards", //tag
-		p.Buffer.Addr,  //recipient
+		p.GetBuffer().Addr,  //recipient
 		"0",            //amount
 		ParamsMap{},
 	})
@@ -41,7 +41,7 @@ func (tr *Transitions) DrainBuffer() {
 	AssertTransition(txn, Transition{
 		p.Zimpl.Addr, //sender
 		"AddFunds",
-		p.Buffer.Addr,
+		p.GetBuffer().Addr,
 		bufferRewards,
 		ParamsMap{},
 	})
@@ -49,7 +49,7 @@ func (tr *Transitions) DrainBuffer() {
 	AssertTransition(txn, Transition{
 		p.Zimpl.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
-		p.Buffer.Addr,
+		p.GetBuffer().Addr,
 		"0",
 		ParamsMap{"rewards": bufferRewards},
 	})
@@ -79,7 +79,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	// Send Swap transactions
 	AssertTransition(txn, Transition{
-		p.Buffer.Addr, //sender
+		p.GetBuffer().Addr, //sender
 		"RequestDelegatorSwap",
 		p.Zproxy.Addr,
 		"0",
@@ -91,7 +91,7 @@ func (tr *Transitions) DrainBuffer() {
 		"ConfirmDelegatorSwap",
 		p.Zproxy.Addr,
 		"0",
-		ParamsMap{"requestor": "0x" + p.Buffer.Addr},
+		ParamsMap{"requestor": "0x" + p.GetBuffer().Addr},
 	})
 
 	//try to drain buffer, not existent at main staking contract

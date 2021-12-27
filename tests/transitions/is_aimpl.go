@@ -11,13 +11,13 @@ func (tr *Transitions) IsAimpl() {
 	p := tr.DeployAndUpgrade()
 
 	// Use non-admin user for Buffer
-	p.Buffer.UpdateWallet(sdk.Cfg.Key2)
+	p.GetBuffer().UpdateWallet(sdk.Cfg.Key2)
 
-	tx, err := p.Buffer.DelegateStake()
+	tx, err := p.GetBuffer().DelegateStake()
 	AssertError(tx, err, -401)
-	tx, err = p.Buffer.ClaimRewards()
+	tx, err = p.GetBuffer().ClaimRewards()
 	AssertError(tx, err, -401)
-	tx, err = p.Buffer.RequestDelegatorSwap(p.Holder.Addr)
+	tx, err = p.GetBuffer().RequestDelegatorSwap(p.Holder.Addr)
 	AssertError(tx, err, -401)
 
 	// Use non-admin user for p.Holder
@@ -29,6 +29,6 @@ func (tr *Transitions) IsAimpl() {
 	AssertError(tx, err, -301)
 	tx, err = p.Holder.ClaimRewards()
 	AssertError(tx, err, -301)
-	tx, err = p.Holder.ConfirmDelegatorSwap(p.Buffer.Addr)
+	tx, err = p.Holder.ConfirmDelegatorSwap(p.GetBuffer().Addr)
 	AssertError(tx, err, -301)
 }
