@@ -1,14 +1,18 @@
 package main
 
 import (
+	"flag"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
+var log *Log
+var sdk *AvelySDK
+
 func main() {
-	log := NewLog()
+	log = NewLog()
 	config := NewConfig("local")
-	sdk := NewAvelySDK(*config)
+	sdk = NewAvelySDK(*config)
 
 	shortcuts := map[string]string{
 		"azilssn":  config.AzilSsnAddress,
@@ -20,11 +24,21 @@ func main() {
 	}
 	log.AddShortcuts(shortcuts)
 
+	cmd := flag.String("cmd", "help", "specific command")
+
+	flag.Parse()
+
+	switch *cmd {
+	case "deploy":
+		deployAvely()
+	default:
+		log.Fatal("Unknown command")
+	}
+
+	log.Success("Done")
+}
+
+func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
-
-	p.Aimpl.ZilBalanceOf(config.Addr1)
-
-	// p.SyncBufferAndHolder()
-	// p.SetupZProxy()
-	// p.SetupShortcuts(log)
+	p.SyncBufferAndHolder()
 }
