@@ -11,11 +11,11 @@ import (
 )
 
 type Protocol struct {
-	Zproxy *Zproxy
-	Zimpl  *Zimpl
-	Aimpl  *AZil
+	Zproxy  *Zproxy
+	Zimpl   *Zimpl
+	Aimpl   *AZil
 	Buffers []*BufferContract
-	Holder *HolderContract
+	Holder  *HolderContract
 }
 
 func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
@@ -24,11 +24,11 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferCont
 	}
 
 	return &Protocol{
-		Zproxy: zproxy,
-		Zimpl:  zimpl,
-		Aimpl:  azil,
+		Zproxy:  zproxy,
+		Zimpl:   zimpl,
+		Aimpl:   azil,
 		Buffers: buffers,
-		Holder: holder,
+		Holder:  holder,
 	}
 }
 
@@ -40,7 +40,7 @@ func (p *Protocol) SyncBufferAndHolder() {
 	new_buffers := []string{}
 
 	for _, b := range p.Buffers {
-		new_buffers = append(new_buffers, "0x" + b.Addr)
+		new_buffers = append(new_buffers, "0x"+b.Addr)
 	}
 
 	check(p.Aimpl.ChangeBuffers(new_buffers))
