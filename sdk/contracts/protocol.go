@@ -14,22 +14,34 @@ type Protocol struct {
 	Zproxy *Zproxy
 	Zimpl  *Zimpl
 	Aimpl  *AZil
-	Buffer *BufferContract
+	Buffers []*BufferContract
 	Holder *HolderContract
 }
 
-func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffer *BufferContract, holder *HolderContract) *Protocol {
+func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
+	if len(buffers) == 0 {
+		log.Fatal("Protocol should have at least one buffer")
+	}
+
 	return &Protocol{
 		Zproxy: zproxy,
 		Zimpl:  zimpl,
 		Aimpl:  azil,
-		Buffer: buffer,
+		Buffers: buffers,
 		Holder: holder,
 	}
 }
 
+func (p *Protocol) GetBuffer() *BufferContract {
+	return p.Buffers[0]
+}
+
 func (p *Protocol) SyncBufferAndHolder() {
-	new_buffers := []string{"0x" + p.Buffer.Addr}
+	new_buffers := []string{}
+
+	for _, b := range p.Buffers {
+		new_buffers = append(new_buffers, "0x" + b.Addr)
+	}
 
 	check(p.Aimpl.ChangeBuffers(new_buffers))
 	check(p.Aimpl.ChangeHolderAddress(p.Holder.Addr))
@@ -69,8 +81,12 @@ func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
 	log.AddShortcut("Zproxy", "0x"+p.Zproxy.Addr)
 	log.AddShortcut("Zimpl", "0x"+p.Zimpl.Addr)
 	log.AddShortcut("Aimpl", "0x"+p.Aimpl.Addr)
-	log.AddShortcut("Buffer", "0x"+p.Buffer.Addr)
 	log.AddShortcut("Holder", "0x"+p.Holder.Addr)
+
+	for i, b := range p.Buffers {
+		title := "Buffer" + strconv.Itoa(i)
+		log.AddShortcut(title, "0x"+b.Addr)
+	}
 }
 
 func check(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
