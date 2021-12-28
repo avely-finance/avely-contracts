@@ -17,14 +17,15 @@
     "VerifierKey": "",
     "Verifier": "10200e3da08ee88729469d6eabc055cb225821e7",
 
-    "ZproxyAddr": "e064919bcd3668e1ccd347c82dbb373ecf019838",
-    "GzilAddr": "8e712a8ccb32769f75c65437c86fbf87bdaa2265",
-    "ZimplAddr": "8f75b55099b11d0811a60b4d439cded10d413ccd",
-    "AzilAddr": "99aa55c59202c4ab3bf5728219ba2586b71e71f6",
+    "GzilAddr": "4b68ebd5c54ae9ad1f069260b4c89f0d3be70a45",
+    "ZproxyAddr": "f01a69dc79ce51ee99cb3e0e1343f5570b6ea5b0",
+    "ZimplAddr": "7b351a9a548d0090d499dd7c9b77ce0cee4669c5",
+    "AzilAddr": "d5d319ebb0e024a979e59d3299fab68e975bf502",
     "BufferAddrs": [
-      "8ea494ab5c3482fa1c2188d67daf097f80e17106"
+      "05d896cc9858bf707e826fccc5bb999fa1f7dd3b",
+      "43d34a06ed517ad041adadc99b6de5e355d11036"
     ],
-    "HolderAddr": "2182aa23fc99af10445998bb4ad11deaf1dd11fb"
+    "HolderAddr": "069f04820706f71ea38c4f3740b1cc35490414b1"
   },
   "testnet": {
   }

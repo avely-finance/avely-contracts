@@ -24,15 +24,28 @@ func main() {
 	}
 	log.AddShortcuts(shortcuts)
 
-	cmd := flag.String("cmd", "help", "specific command")
+	cmd := flag.String("cmd", "default", "specific command")
+	addrPtr := flag.String("addr", "default", "an entity address")
 
 	flag.Parse()
 
-	switch *cmd {
-	case "deploy":
+	if *cmd == "deploy" {
 		deployAvely()
-	default:
-		log.Fatal("Unknown command")
+	} else {
+		// for non-deploy commands we need initialize protocol from config
+		p := RestoreFromState(sdk, log)
+		addr := *addrPtr
+
+		switch *cmd {
+		case "deploy_buffer":
+			deployBuffer(p)
+		case "sync_buffers":
+			syncBuffers(p)
+		case "drain_buffer":
+			drainBuffer(p, addr)
+		default:
+			log.Fatal("Unknown command")
+		}
 	}
 
 	log.Success("Done")
@@ -41,4 +54,28 @@ func main() {
 func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
 	p.SyncBufferAndHolder()
+}
+
+func deployBuffer(p *Protocol) {
+	buffer, err := p.DeployBuffer()
+
+	if err != nil {
+		log.Fatalf("Buffer deploy failed with error: ", err)
+	} else {
+		log.Success("Buffer deploy is successfully compelted. Address: " + buffer.Addr)
+	}
+}
+
+func syncBuffers(p *Protocol) {
+	p.SyncBufferAndHolder()
+}
+
+func drainBuffer(p *Protocol, buffer_addr string) {
+	tx, err := p.Aimpl.DrainBuffer(buffer_addr)
+
+	if err != nil {
+		log.Fatalf("Drain failed with error: ", err)
+	} else {
+		log.Success("Drain is successfully compelted. Tx: " + tx.ID)
+	}
 }
