@@ -13,12 +13,13 @@ import (
 type Protocol struct {
 	Zproxy  *Zproxy
 	Zimpl   *Zimpl
+	Aproxy  *AZilProxy
 	Aimpl   *AZil
 	Buffers []*BufferContract
 	Holder  *HolderContract
 }
 
-func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
+func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, aproxy *AZilProxy, aimpl *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
 	if len(buffers) == 0 {
 		log.Fatal("Protocol should have at least one buffer")
 	}
@@ -26,7 +27,8 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferCont
 	return &Protocol{
 		Zproxy:  zproxy,
 		Zimpl:   zimpl,
-		Aimpl:   azil,
+		Aproxy:  aproxy,
+		Aimpl:   aimpl,
 		Buffers: buffers,
 		Holder:  holder,
 	}
@@ -80,6 +82,7 @@ func (p *Protocol) SetupZProxy() {
 func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
 	log.AddShortcut("Zproxy", "0x"+p.Zproxy.Addr)
 	log.AddShortcut("Zimpl", "0x"+p.Zimpl.Addr)
+	log.AddShortcut("Aproxy", "0x"+p.Aproxy.Addr)
 	log.AddShortcut("Aimpl", "0x"+p.Aimpl.Addr)
 	log.AddShortcut("Holder", "0x"+p.Holder.Addr)
 
