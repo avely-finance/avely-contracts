@@ -12,14 +12,14 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	p := tr.DeployAndUpgrade()
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
+	p.Aproxy.UpdateWallet(sdk.Cfg.Key1)
 
 	// Because of DelegHasNoSufficientAmt
-	tx, err := p.Aimpl.DelegateStake(ToZil(1))
+	tx, err := p.Aproxy.DelegateStake(ToZil(1))
 	AssertError(tx, err, -15)
 
 	// Success delegate
-	AssertSuccess(p.Aimpl.DelegateStake(ToZil(20)))
+	AssertSuccess(p.Aproxy.DelegateStake(ToZil(20)))
 
 	lastrewardcycle := p.Zimpl.Field("lastrewardcycle")
 
@@ -38,7 +38,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	// Check delegate to the next cycle
 	p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare)
-	p.Aimpl.DelegateStake(ToZil(20))
+	p.Aproxy.DelegateStake(ToZil(20))
 
 	nextCycleStr := StrAdd(lastrewardcycle, "1")
 
@@ -61,7 +61,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
-	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
+	AssertSuccess(p.Aproxy.DelegateStake(ToZil(10)))
 
 	lastRewardCycle, _ := strconv.ParseInt(p.Zimpl.Field("lastrewardcycle"), 10, 64)
 	index := lastRewardCycle % int64(len(new_buffers))

@@ -690,10 +690,9 @@ end
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
-transition DelegateStake()
+transition DelegateStake(initiator: ByStr20)
   accept;
   stake_amt = _amount;
-  initiator = _sender;
 
   IsDelegStakeSufficient stake_amt;
 
@@ -779,8 +778,7 @@ transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
 end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
-transition WithdrawStakeAmt(amount: Uint128)
-  initiator = _sender;
+transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
   azil_ssn_addr <- azil_ssn_address;
 
   (* first we do all checks, then call Holder on success within procedure *)
@@ -792,8 +790,7 @@ transition WithdrawStakeAmt(amount: Uint128)
   send msg
 end
 
-transition CompleteWithdrawal()
-  initiator = _sender;
+transition CompleteWithdrawal(initiator: ByStr20)
   wu <- withdrawal_unbonded[initiator];
   match wu with
   | Some (Withdrawal wtoken wstake) =>
@@ -841,7 +838,7 @@ end
 (************************************************************)
 (* @dev: Returns an account zil amount                      *)
 (************************************************************)
-transition ZilBalanceOf(address: ByStr20)
+transition ZilBalanceOf(address: ByStr20, initiator: ByStr20)
   total_token_amt <- totaltokenamount;
   total_stake_amt <- totalstakeamount;
 
@@ -856,7 +853,7 @@ transition ZilBalanceOf(address: ByStr20)
   e = { _eventname: "ZilBalanceOf"; address: address; balance: balance };
   event e;
 
-  msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : _sender; _amount : uint128_zero; address: address; balance : balance};
+  msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : initiator; _amount : uint128_zero; address: address; balance : balance};
   msgs = one_msg msg_to_sender;
   send msgs
 end
