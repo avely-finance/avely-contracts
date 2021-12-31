@@ -64,8 +64,14 @@ func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, e
 	return a.Contract.Call("ChangeHolderAddress", args, "0")
 }
 
-func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (a *AZil) DelegateStake(amount, initiator string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"initiator",
+			"ByStr20",
+			"0x" + initiator,
+		},
+	}
 
 	return a.Call("DelegateStake", args, amount)
 }
@@ -91,12 +97,17 @@ func (a *AZil) UpdateStakingParameters(min_deleg_stake string) (*transaction.Tra
 	return a.Call("UpdateStakingParameters", args, "0")
 }
 
-func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+func (a *AZil) WithdrawStakeAmt(amount, initiator string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"amount",
 			"Uint128",
 			amount,
+		},
+		{
+			"initiator",
+			"ByStr20",
+			"0x" + initiator,
 		},
 	}
 	return a.Call("WithdrawStakeAmt", args, "0")
@@ -113,17 +124,28 @@ func (a *AZil) DrainBuffer(buffer_addr string) (*transaction.Transaction, error)
 	return a.Call("DrainBuffer", args, "0")
 }
 
-func (a *AZil) CompleteWithdrawal() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (a *AZil) CompleteWithdrawal(initiator string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"initiator",
+			"ByStr20",
+			"0x" + initiator,
+		},
+	}
 	return a.Call("CompleteWithdrawal", args, "0")
 }
 
-func (a *AZil) ZilBalanceOf(addr string) (string, error) {
+func (a *AZil) ZilBalanceOf(addr, initiator string) (string, error) {
 	args := []core.ContractValue{
 		{
 			"address",
 			"ByStr20",
 			"0x" + addr,
+		},
+		{
+			"initiator",
+			"ByStr20",
+			"0x" + initiator,
 		},
 	}
 	tx, err := a.Contract.Call("ZilBalanceOf", args, "0")

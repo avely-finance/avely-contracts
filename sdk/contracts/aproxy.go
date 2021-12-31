@@ -3,6 +3,7 @@ package contracts
 import (
     "encoding/json"
     "errors"
+    "fmt"
     "io/ioutil"
 
     . "github.com/avely-finance/avely-contracts/sdk/core"
@@ -12,10 +13,63 @@ import (
     contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
     "github.com/Zilliqa/gozilliqa-sdk/core"
     provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
+    "github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
 type AZilProxy struct {
     Contract
+}
+
+func (a *AZilProxy) CompleteWithdrawal() (*transaction.Transaction, error) {
+    args := []core.ContractValue{}
+    return a.Call("CompleteWithdrawal", args, "0")
+}
+
+func (a *AZilProxy) DelegateStake(amount string) (*transaction.Transaction, error) {
+    args := []core.ContractValue{}
+    return a.Call("DelegateStake", args, amount)
+}
+
+func (a *AZilProxy) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+    args := []core.ContractValue{
+        {
+            "amount",
+            "Uint128",
+            amount,
+        },
+    }
+    return a.Call("WithdrawStakeAmt", args, "0")
+}
+
+func (a *AZilProxy) ZilBalanceOf(addr string) (string, error) {
+    args := []core.ContractValue{
+        {
+            "address",
+            "ByStr20",
+            "0x" + addr,
+        },
+    }
+    tx, err := a.Contract.Call("ZilBalanceOf", args, "0")
+    if err != nil {
+        return "", err
+    }
+
+    for _, transition := range tx.Receipt.Transitions {
+        if "ZilBalanceOfCallBack" != transition.Msg.Tag {
+            continue
+        }
+        for _, param := range transition.Msg.Params {
+            if param.VName == "address" && param.Value != "0x"+addr {
+                //it's balance of some other address, it should not be so
+                return "", errors.New("Balance not found for addr=" + addr)
+            }
+            if param.VName == "balance" {
+                return fmt.Sprintf("%v", param.Value), nil
+            }
+        }
+        break
+    }
+    return "", errors.New("Balance not found")
 }
 
 func NewAZilProxyContract(sdk *AvelySDK, aimplAddr string) (*AZilProxy, error) {
