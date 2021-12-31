@@ -1,0 +1,17 @@
+scilla_version 0
+
+library AZilProxy
+
+let one_msg =
+  fun (m: Message) =>
+    let e = Nil {Message} in
+    Cons {Message} m e
+
+contract AZilProxy(
+  init_aimpl_address: ByStr20,
+  init_admin_address: ByStr20
+)
+
+(* Mutable fields *)
+field aimpl_address: ByStr20 = init_aimpl_address
+field admin_address: ByStr20 = init_admin_address

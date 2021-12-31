@@ -35,6 +35,13 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("deploy aZil succeed, address = " + Aimpl.Addr)
 
+	// deploy aproxy
+	Aproxy, err := NewAZilProxyContract(sdk, Aimpl.Addr)
+	if err != nil {
+		log.Fatal("deploy Aproxy error = " + err.Error())
+	}
+	log.Success("deploy Aproxy succeed, address = " + Aproxy.Addr)
+
 	// deploy buffer
 	Buffer, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
@@ -50,10 +57,10 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Aimpl, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, Aproxy, Aimpl, buffers, Holder)
 }
 
-// Restore ZProxy + Zimpl and deploy new versions of Azil, Buffer and Holder
+// Restore ZProxy + Zimpl and deploy new versions of Azil, Aproxy, Buffer and Holder
 func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	log.Info("start to DeployOnlyAvely")
 
@@ -78,6 +85,13 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("deploy aZil succeed, address = " + Aimpl.Addr)
 
+	// deploy aproxy
+	Aproxy, err := NewAZilProxyContract(sdk, Aimpl.Addr)
+	if err != nil {
+		log.Fatal("deploy Aproxy error = " + err.Error())
+	}
+	log.Success("deploy Aproxy succeed, address = " + Aproxy.Addr)
+
 	// deploy buffer
 	Buffer, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
@@ -93,7 +107,7 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Aimpl, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, Aproxy, Aimpl, buffers, Holder)
 }
 
 func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
@@ -120,6 +134,13 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("Restore aZil succeed, address = " + Aimpl.Addr)
 
+	// Restore aproxy
+	Aproxy, err := RestoreAZilProxyContract(sdk, sdk.Cfg.AproxyAddr, Aimpl.Addr)
+	if err != nil {
+		log.Fatal("Restore Aproxy error = " + err.Error())
+	}
+	log.Success("Restore Aproxy succeed, address = " + Aproxy.Addr)
+
 	// Restore buffers
 	buffers := []*BufferContract{}
 	for _, addr := range sdk.Cfg.BufferAddrs {
@@ -139,5 +160,5 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("Restore holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Aimpl, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, Aproxy, Aimpl, buffers, Holder)
 }
