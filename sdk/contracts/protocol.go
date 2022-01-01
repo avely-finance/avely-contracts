@@ -66,7 +66,7 @@ func (p *Protocol) SetupZProxy() {
 	check(p.Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake
-	check(p.Aimpl.DelegateStake(ToZil(1000)))
+	check(p.Aproxy.DelegateStake(ToZil(1000)))
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
 	check(p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil)))
