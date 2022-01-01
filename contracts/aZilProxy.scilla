@@ -2,6 +2,18 @@ scilla_version 0
 
 library AZilProxy
 
+type Error =
+  | AdminValidationFailed
+
+let make_error =
+  fun (result: Error) =>
+    let result_code =
+      match result with
+      | AdminValidationFailed => Int32 -202
+      end
+    in
+    { _exception: "Error"; code: result_code }
+
 let zero = Uint128 0
 
 let one_msg =
@@ -17,6 +29,35 @@ contract AZilProxy(
 (* Mutable fields *)
 field aimpl_address: ByStr20 = init_aimpl_address
 field admin_address: ByStr20 = init_admin_address
+
+(***************************************************)
+(*              Procedures                         *)
+(***************************************************)
+procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
+end
+
+procedure IsAdmin(initiator: ByStr20)
+  var_admin_address <- admin_address;
+  is_admin = builtin eq initiator var_admin_address;
+  match is_admin with
+  | True  =>
+  | False =>
+    e = AdminValidationFailed;
+    ThrowError e
+  end
+end
+
+(***************************************************)
+(*              Proxy Transitions                  *)
+(***************************************************)
+transition UpgradeTo(newImplementation: ByStr20)
+  IsAdmin _sender;
+  aimpl_address := newImplementation;
+  e = {_eventname: "UpgradeTo"; aimpl_address: newImplementation};
+  event e
+end
 
 (***************************************************)
 (*                Delegator transitions            *)
