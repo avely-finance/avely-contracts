@@ -202,8 +202,8 @@ func (a *AZil) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, er
 	return a.Call("CompleteWithdrawalSuccessCallBack", args, "0")
 }
 
-func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, zimplAddr)
+func NewAZilContract(sdk *AvelySDK, aproxyAddr, zimplAddr string) (*AZil, error) {
+	contract := buildAZilContract(sdk, aproxyAddr, zimplAddr)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -228,8 +228,8 @@ func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
 	}
 }
 
-func RestoreAZilContract(sdk *AvelySDK, contractAddress, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, zimplAddr)
+func RestoreAZilContract(sdk *AvelySDK, contractAddress, aproxyAddr, zimplAddr string) (*AZil, error) {
+	contract := buildAZilContract(sdk, aproxyAddr, zimplAddr)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -248,7 +248,7 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, zimplAddr string) (*AZi
 	return &AZil{Contract: sdkContract}, nil
 }
 
-func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
+func buildAZilContract(sdk *AvelySDK, aproxyAddr, zimplAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
 	key := sdk.Cfg.AdminKey
 	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
@@ -262,6 +262,10 @@ func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
 			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+		}, {
+			VName: "init_aproxy_address",
+			Type:  "ByStr20",
+			Value: "0x" + aproxyAddr,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
