@@ -11,7 +11,7 @@ func (tr *Transitions) Proxy() {
 
     p := tr.DeployAndUpgrade()
 
-    newImpl := "0x" + sdk.Cfg.Addr3
+    newImpl := sdk.Cfg.Addr3
 
     //non-admin
     p.Aproxy.UpdateWallet(sdk.Cfg.Key3)
@@ -21,6 +21,6 @@ func (tr *Transitions) Proxy() {
     //admin
     p.Aproxy.UpdateWallet(sdk.Cfg.AdminKey)
     tx, _ = AssertSuccess(p.Aproxy.UpgradeTo(newImpl))
-    AssertEvent(tx, Event{p.Aproxy.Addr, "UpgradeTo", ParamsMap{"aimpl_address": newImpl}})
-    AssertEqual(p.Aproxy.Field("aimpl_address"), newImpl)
+    AssertEvent(tx, Event{p.Aproxy.Addr, "UpgradeTo", ParamsMap{"aimpl_address": "0x" + newImpl}})
+    AssertEqual(p.Aproxy.Field("aimpl_address"), "0x"+newImpl)
 }

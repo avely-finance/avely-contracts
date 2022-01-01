@@ -2,11 +2,9 @@ package contracts
 
 import (
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	avelycore "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	"log"
-	"runtime"
 	"strconv"
 )
 
@@ -90,12 +88,4 @@ func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
 		title := "Buffer" + strconv.Itoa(i)
 		log.AddShortcut(title, "0x"+b.Addr)
 	}
-}
-
-func check(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
-	if err != nil {
-		_, file, no, _ := runtime.Caller(1)
-		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
-	}
-	return tx, err
 }

@@ -1,7 +1,11 @@
 package contracts
 
 import (
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"log"
+	"runtime"
+	"strconv"
 )
 
 func Deploy(sdk *AvelySDK, log *Log) *Protocol {
@@ -28,6 +32,13 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("deploy Zimpl succeed, address = " + Zimpl.Addr)
 
+	// deploy aproxy
+	Aproxy, err := NewAZilProxyContract(sdk, "0000000000000000000000000000000000000000")
+	if err != nil {
+		log.Fatal("deploy Aproxy error = " + err.Error())
+	}
+	log.Success("deploy Aproxy succeed, address = " + Aproxy.Addr)
+
 	// deploy azil
 	Aimpl, err := NewAZilContract(sdk, Zimpl.Addr)
 	if err != nil {
@@ -35,12 +46,8 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("deploy aZil succeed, address = " + Aimpl.Addr)
 
-	// deploy aproxy
-	Aproxy, err := NewAZilProxyContract(sdk, Aimpl.Addr)
-	if err != nil {
-		log.Fatal("deploy Aproxy error = " + err.Error())
-	}
-	log.Success("deploy Aproxy succeed, address = " + Aproxy.Addr)
+	//upgrade proxy to aimpl address
+	check(Aproxy.UpgradeTo(Aimpl.Addr))
 
 	// deploy buffer
 	Buffer, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
@@ -78,6 +85,13 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
+	// deploy aproxy
+	Aproxy, err := NewAZilProxyContract(sdk, "0000000000000000000000000000000000000000")
+	if err != nil {
+		log.Fatal("deploy Aproxy error = " + err.Error())
+	}
+	log.Success("deploy Aproxy succeed, address = " + Aproxy.Addr)
+
 	// deploy azil
 	Aimpl, err := NewAZilContract(sdk, Zimpl.Addr)
 	if err != nil {
@@ -85,12 +99,8 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("deploy aZil succeed, address = " + Aimpl.Addr)
 
-	// deploy aproxy
-	Aproxy, err := NewAZilProxyContract(sdk, Aimpl.Addr)
-	if err != nil {
-		log.Fatal("deploy Aproxy error = " + err.Error())
-	}
-	log.Success("deploy Aproxy succeed, address = " + Aproxy.Addr)
+	//upgrade proxy to aimpl address
+	check(Aproxy.UpgradeTo(Aimpl.Addr))
 
 	// deploy buffer
 	Buffer, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
@@ -161,4 +171,13 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	log.Success("Restore holder succeed, address = " + Holder.Addr)
 
 	return NewProtocol(Zproxy, Zimpl, Aproxy, Aimpl, buffers, Holder)
+}
+
+//TODO: move this function to core/sdk.go, rename to CheckTx
+func check(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+	if err != nil {
+		_, file, no, _ := runtime.Caller(1)
+		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
+	}
+	return tx, err
 }
