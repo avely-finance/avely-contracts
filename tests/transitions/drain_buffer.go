@@ -10,7 +10,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	p := tr.DeployAndUpgrade()
 
-	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
+	AssertSuccess(p.Aproxy.DelegateStake(ToZil(10)))
 
 	txn, err := p.Aimpl.DrainBuffer(p.Aimpl.Addr)
 	AssertError(txn, err, -107)
@@ -25,10 +25,10 @@ func (tr *Transitions) DrainBuffer() {
 	txn, _ = p.Aimpl.DrainBuffer(p.GetBuffer().Addr)
 
 	AssertTransition(txn, Transition{
-		p.Aimpl.Addr,   //sender
-		"ClaimRewards", //tag
-		p.GetBuffer().Addr,  //recipient
-		"0",            //amount
+		p.Aimpl.Addr,       //sender
+		"ClaimRewards",     //tag
+		p.GetBuffer().Addr, //recipient
+		"0",                //amount
 		ParamsMap{},
 	})
 

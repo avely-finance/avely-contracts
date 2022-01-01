@@ -2,6 +2,8 @@ scilla_version 0
 
 library AZilProxy
 
+let zero = Uint128 0
+
 let one_msg =
   fun (m: Message) =>
     let e = Nil {Message} in
@@ -15,3 +17,35 @@ contract AZilProxy(
 (* Mutable fields *)
 field aimpl_address: ByStr20 = init_aimpl_address
 field admin_address: ByStr20 = init_admin_address
+
+(***************************************************)
+(*                Delegator transitions            *)
+(***************************************************)
+transition DelegateStake()
+  current_impl <- aimpl_address;
+  accept;
+  msg = {_tag: "DelegateStake"; _recipient: current_impl; _amount: _amount; initiator: _sender};
+  msgs = one_msg msg;
+  send msgs
+end
+
+transition WithdrawStakeAmt(amount: Uint128)
+  current_impl <- aimpl_address;
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: current_impl; _amount: zero; amount: amount; initiator: _sender};
+  msgs = one_msg msg;
+  send msgs
+end
+
+transition CompleteWithdrawal()
+  current_impl <- aimpl_address;
+  msg = {_tag: "CompleteWithdrawal"; _recipient: current_impl; _amount: zero; initiator: _sender};
+  msgs = one_msg msg;
+  send msgs
+end
+
+transition ZilBalanceOf(address: ByStr20)
+  current_impl <- aimpl_address;
+  msg = {_tag: "ZilBalanceOf"; _recipient: current_impl; _amount: zero; address: address; initiator: _sender};
+  msgs = one_msg msg;
+  send msgs
+end
