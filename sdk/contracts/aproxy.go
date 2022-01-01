@@ -35,7 +35,7 @@ func (a *AZilProxy) UpgradeTo(newImplementation string) (*transaction.Transactio
         {
             "newImplementation",
             "ByStr20",
-            newImplementation,
+            "0x" + newImplementation,
         },
     }
     return a.Call("UpgradeTo", args, "0")
