@@ -11,21 +11,27 @@ func (tr *Transitions) Proxy() {
 
     p := tr.DeployAndUpgrade()
 
-    newImpl := sdk.Cfg.Addr3
+    newAddr := sdk.Cfg.Addr3
 
-    //non-admin
+    //call proxy admin transitions with non-admin user; expecting errors
     p.Aproxy.UpdateWallet(sdk.Cfg.Key3)
-    tx, err := p.Aproxy.UpgradeTo(newImpl)
+    tx, err := p.Aproxy.UpgradeTo(newAddr)
     AssertError(tx, err, -202)
 
-    //admin
+    tx, err = p.Aproxy.ChangeAdmin(newAddr)
+    AssertError(tx, err, -202)
+
+    //call proxy admin transitions with admin user; expecting success
     p.Aproxy.UpdateWallet(sdk.Cfg.AdminKey)
-    tx, _ = AssertSuccess(p.Aproxy.UpgradeTo(newImpl))
-    AssertEvent(tx, Event{p.Aproxy.Addr, "UpgradeTo", ParamsMap{"aimpl_address": "0x" + newImpl}})
-    AssertEqual(p.Aproxy.Field("aimpl_address"), "0x"+newImpl)
+    tx, _ = AssertSuccess(p.Aproxy.UpgradeTo(newAddr))
+    AssertEvent(tx, Event{p.Aproxy.Addr, "UpgradeTo", ParamsMap{"aimpl_address": "0x" + newAddr}})
+    AssertEqual(p.Aproxy.Field("aimpl_address"), "0x"+newAddr)
 
-    //try to call proxy transitions directly
+    tx, _ = AssertSuccess(p.Aproxy.ChangeAdmin(newAddr))
+    AssertEvent(tx, Event{p.Aproxy.Addr, "ChangeAdmin", ParamsMap{"currentAdmin": "0x" + sdk.Cfg.Admin, "newAdmin": "0x" + newAddr}})
+    AssertEqual(p.Aproxy.Field("staging_admin_address"), "0x"+newAddr)
 
+    //call aimpl transitions, which are supposed to call through proxy, directly; expecting errors
     initiator := sdk.Cfg.Addr3
     tx, err = p.Aimpl.DelegateStake(ToZil(10), initiator)
     AssertError(tx, err, -113)
