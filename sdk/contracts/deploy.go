@@ -40,7 +40,7 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	log.Success("deploy Aproxy succeed, address = " + Aproxy.Addr)
 
 	// deploy azil
-	Aimpl, err := NewAZilContract(sdk, Zimpl.Addr)
+	Aimpl, err := NewAZilContract(sdk, Aproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy aZil error = " + err.Error())
 	}
@@ -93,7 +93,7 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	log.Success("deploy Aproxy succeed, address = " + Aproxy.Addr)
 
 	// deploy azil
-	Aimpl, err := NewAZilContract(sdk, Zimpl.Addr)
+	Aimpl, err := NewAZilContract(sdk, Aproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy aZil error = " + err.Error())
 	}
@@ -137,19 +137,19 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Success("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
-	// Restore azil
-	Aimpl, err := RestoreAZilContract(sdk, sdk.Cfg.AzilAddr, Zimpl.Addr)
-	if err != nil {
-		log.Fatal("Restore aZil error = " + err.Error())
-	}
-	log.Success("Restore aZil succeed, address = " + Aimpl.Addr)
-
 	// Restore aproxy
-	Aproxy, err := RestoreAZilProxyContract(sdk, sdk.Cfg.AproxyAddr, Aimpl.Addr)
+	Aproxy, err := RestoreAZilProxyContract(sdk, sdk.Cfg.AproxyAddr, "0000000000000000000000000000000000000000")
 	if err != nil {
 		log.Fatal("Restore Aproxy error = " + err.Error())
 	}
 	log.Success("Restore Aproxy succeed, address = " + Aproxy.Addr)
+
+	// Restore azil
+	Aimpl, err := RestoreAZilContract(sdk, sdk.Cfg.AzilAddr, Aproxy.Addr, Zimpl.Addr)
+	if err != nil {
+		log.Fatal("Restore aZil error = " + err.Error())
+	}
+	log.Success("Restore aZil succeed, address = " + Aimpl.Addr)
 
 	// Restore buffers
 	buffers := []*BufferContract{}
