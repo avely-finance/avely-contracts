@@ -26,6 +26,7 @@ type Error =
   | CantFetchZimplBufferExistsAtSSN
   | DelegHasBufferedDeposit
   | BufferOrHolderValidationFailed
+  | ProxyValidationFailed
 
 let make_error =
   fun (result: Error) =>
@@ -46,6 +47,7 @@ let make_error =
       | CantFetchZimplBufferExistsAtSSN => Int32 -110
       | DelegHasBufferedDeposit => Int32 -111
       | BufferOrHolderValidationFailed => Int32 -112
+      | ProxyValidationFailed => Int32 -113
       end
     in
     { _exception: "Error"; code: result_code }
@@ -144,6 +146,7 @@ let is_buffer_addr =
 
 contract AZil(
   init_admin_address        : ByStr20,
+  init_aproxy_address       : ByStr20,
   init_azil_ssn_address     : ByStr20,
   init_zimpl_address        : ByStr20,
   init_holder_address       : ByStr20
@@ -219,6 +222,16 @@ procedure IsBufferOrHolder(initiator: ByStr20)
   | True  =>
   | False =>
     e = BufferOrHolderValidationFailed;
+    ThrowError e
+  end
+end
+
+procedure IsProxy()
+  is_proxy = builtin eq _sender init_aproxy_address;
+  match is_proxy with
+  | True  =>
+  | False =>
+    e = ProxyValidationFailed;
     ThrowError e
   end
 end
@@ -691,6 +704,7 @@ end
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
 transition DelegateStake(initiator: ByStr20)
+  IsProxy;
   accept;
   stake_amt = _amount;
 
@@ -779,6 +793,7 @@ end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
 transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
+  IsProxy;
   azil_ssn_addr <- azil_ssn_address;
 
   (* first we do all checks, then call Holder on success within procedure *)
@@ -791,6 +806,7 @@ transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
 end
 
 transition CompleteWithdrawal(initiator: ByStr20)
+  IsProxy;
   wu <- withdrawal_unbonded[initiator];
   match wu with
   | Some (Withdrawal wtoken wstake) =>
@@ -839,6 +855,7 @@ end
 (* @dev: Returns an account zil amount                      *)
 (************************************************************)
 transition ZilBalanceOf(address: ByStr20, initiator: ByStr20)
+  IsProxy;
   total_token_amt <- totaltokenamount;
   total_stake_amt <- totalstakeamount;
 
