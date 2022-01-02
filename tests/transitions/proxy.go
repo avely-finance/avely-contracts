@@ -44,4 +44,17 @@ func (tr *Transitions) Proxy() {
 
     tx, err = p.Aimpl.CompleteWithdrawal(initiator)
     AssertError(tx, err, -113)
+
+    //claim admin
+    wrongActor := sdk.Cfg.Key1
+    p.Aproxy.UpdateWallet(wrongActor)
+    tx, err = p.Aproxy.ClaimAdmin()
+    AssertError(tx, err, -203)
+
+    newAdmin := sdk.Cfg.Key3
+    p.Aproxy.UpdateWallet(newAdmin)
+    tx, _ = AssertSuccess(p.Aproxy.ClaimAdmin())
+    AssertEvent(tx, Event{p.Aproxy.Addr, "ClaimAdmin", ParamsMap{"newAdmin": "0x" + newAddr}})
+    AssertEqual(p.Aproxy.Field("admin_address"), "0x"+newAddr)
+
 }
