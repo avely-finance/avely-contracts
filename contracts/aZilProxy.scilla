@@ -4,12 +4,14 @@ library AZilProxy
 
 type Error =
   | AdminValidationFailed
+  | StagingAdminValidationFailed
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
       | AdminValidationFailed => Int32 -202
+      | StagingAdminValidationFailed => Int32 -203
       end
     in
     { _exception: "Error"; code: result_code }
@@ -67,6 +69,28 @@ transition ChangeAdmin(newAdmin: ByStr20)
   cur_admin_address <- admin_address;
   e = {_eventname: "ChangeAdmin"; currentAdmin: cur_admin_address; newAdmin: newAdmin};
   event e
+end
+
+transition ClaimAdmin()
+  staging_admin_o <- staging_admin_address;
+  match staging_admin_o with
+  | Some staging_admin =>
+    is_stagingadmin = builtin eq staging_admin _sender;
+    match is_stagingadmin with
+    | True =>
+      admin_address := _sender;
+      tmp_staging_admin = None {ByStr20};
+      staging_admin_address := tmp_staging_admin;
+      e = {_eventname: "ClaimAdmin"; newAdmin: _sender};
+      event e
+    | False =>
+      e = StagingAdminValidationFailed;
+      ThrowError e
+    end
+  | None =>
+    e = StagingAdminValidationFailed;
+    ThrowError e
+  end
 end
 
 (***************************************************)

@@ -52,6 +52,11 @@ func (a *AZilProxy) ChangeAdmin(newAdmin string) (*transaction.Transaction, erro
     return a.Call("ChangeAdmin", args, "0")
 }
 
+func (a *AZilProxy) ClaimAdmin() (*transaction.Transaction, error) {
+    args := []core.ContractValue{}
+    return a.Call("ClaimAdmin", args, "0")
+}
+
 func (a *AZilProxy) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
     args := []core.ContractValue{
         {
