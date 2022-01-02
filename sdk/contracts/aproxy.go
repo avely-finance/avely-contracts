@@ -30,6 +30,17 @@ func (a *AZilProxy) DelegateStake(amount string) (*transaction.Transaction, erro
     return a.Call("DelegateStake", args, amount)
 }
 
+func (a *AZilProxy) UpgradeTo(newImplementation string) (*transaction.Transaction, error) {
+    args := []core.ContractValue{
+        {
+            "newImplementation",
+            "ByStr20",
+            "0x" + newImplementation,
+        },
+    }
+    return a.Call("UpgradeTo", args, "0")
+}
+
 func (a *AZilProxy) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
     args := []core.ContractValue{
         {
