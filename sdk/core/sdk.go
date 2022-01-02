@@ -57,7 +57,7 @@ func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction,
 		return nil, err
 	}
 	parameter := contract2.DeployParams{
-		Version:      strconv.FormatInt(int64(util.Pack(222, 1)), 10),
+		Version:      strconv.FormatInt(int64(util.Pack(sdk.Cfg.ChainId, 1)), 10),
 		Nonce:        "",
 		GasPrice:     gasPrice,
 		GasLimit:     "75000",
@@ -77,7 +77,7 @@ func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []co
 		return nil, err
 	}
 	params := contract2.CallParams{
-		Version:      strconv.FormatInt(int64(util.Pack(222, 1)), 10),
+		Version:      strconv.FormatInt(int64(util.Pack(sdk.Cfg.ChainId, 1)), 10),
 		Nonce:        "",
 		GasPrice:     gasPrice,
 		GasLimit:     "40000",
