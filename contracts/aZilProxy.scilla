@@ -29,6 +29,7 @@ contract AZilProxy(
 (* Mutable fields *)
 field aimpl_address: ByStr20 = init_aimpl_address
 field admin_address: ByStr20 = init_admin_address
+field staging_admin_address: Option ByStr20 = None {ByStr20}
 
 (***************************************************)
 (*              Procedures                         *)
@@ -56,6 +57,15 @@ transition UpgradeTo(newImplementation: ByStr20)
   IsAdmin _sender;
   aimpl_address := newImplementation;
   e = {_eventname: "UpgradeTo"; aimpl_address: newImplementation};
+  event e
+end
+
+transition ChangeAdmin(newAdmin: ByStr20)
+  IsAdmin _sender;
+  new_staging_admin = Some {ByStr20} newAdmin;
+  staging_admin_address := new_staging_admin;
+  cur_admin_address <- admin_address;
+  e = {_eventname: "ChangeAdmin"; currentAdmin: cur_admin_address; newAdmin: newAdmin};
   event e
 end
 

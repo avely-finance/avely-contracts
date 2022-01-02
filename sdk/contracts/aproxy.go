@@ -41,6 +41,17 @@ func (a *AZilProxy) UpgradeTo(newImplementation string) (*transaction.Transactio
     return a.Call("UpgradeTo", args, "0")
 }
 
+func (a *AZilProxy) ChangeAdmin(newAdmin string) (*transaction.Transaction, error) {
+    args := []core.ContractValue{
+        {
+            "newAdmin",
+            "ByStr20",
+            "0x" + newAdmin,
+        },
+    }
+    return a.Call("ChangeAdmin", args, "0")
+}
+
 func (a *AZilProxy) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
     args := []core.ContractValue{
         {
@@ -162,5 +173,6 @@ func buildAZilProxyContract(sdk *AvelySDK, aimplAddr string) contract2.Contract 
 
 func buildAZilProxyStateFields() StateFieldTypes {
     stateFieldTypes := make(StateFieldTypes)
+    stateFieldTypes["staging_admin_address"] = "StateFieldOption"
     return stateFieldTypes
 }
