@@ -15,8 +15,8 @@ If you see auth error, read [this](https://github.community/t/docker-pull-from-p
 * `yarn run typecheck:all` to typecheck all contracts (not implemented for now)
 
 ## How to deploy and test contracts on local blockchain
-Check example of constracts deployment in ./scripts/example-deploy.js  
-Run `yarn node scripts/example-deploy.js --help` to see command line options.  
+Check example of constracts deployment in ./scripts/example-deploy.js
+Run `yarn node scripts/example-deploy.js --help` to see command line options.
 For now, there are:
 
 * `--network=local|testnet`
@@ -57,6 +57,14 @@ For now, there are:
     "nonce": 0
   }
 }
+```
+
+## Deploy
+
+Configure `.env.testnet` and run
+
+```sh
+go run tools/admin_actions.go --chain=testnet --cmd=deploy
 ```
 
 ## Predefined zilliqa accounts
