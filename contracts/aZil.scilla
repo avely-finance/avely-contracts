@@ -11,43 +11,43 @@ type Withdrawal =
   | Withdrawal of Uint128 Uint128
 
 type Error =
-  | DelegDoesNotExistAtSSN
-  | InvalidTotalAmt
-  | DelegHasNoSufficientAmt
-  | DelegStakeNotEnough
-  | CantFetchZimplFields
-  | NoActiveBuffer
-  | CompleteWithdrawalFundsMismatch
-  | ClaimWithdrawalNoUnbonded
   | AdminValidationFailed
-  | UnknownBufferAddr
-  | StakeDelegateFundsMismatch
-  | UnknownDelegatorAddr
-  | CantFetchZimplBufferExistsAtSSN
-  | DelegHasBufferedDeposit
+  | BufferAddrUnknown
+  | BufferNoActive
   | BufferOrHolderValidationFailed
+  | CantFetchZimplBufferExistsAtSSN
+  | CantFetchZimplFields
+  | ClaimWithdrawalNoUnbonded
+  | CompleteWithdrawalFundsMismatch
+  | DelegAddrUnknown
+  | DelegDoesNotExistAtSSN
+  | DelegHasBufferedDeposit
+  | DelegHasNoSufficientAmt
+  | DelegStakeFundsMismatch
+  | DelegStakeNotEnough
+  | InvalidTotalAmt
   | ProxyValidationFailed
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | DelegDoesNotExistAtSSN => Int32 -7
-      | DelegHasNoSufficientAmt => Int32 -13
-      | DelegStakeNotEnough => Int32 -15
-      | InvalidTotalAmt => Int32 -18
-      | CantFetchZimplFields => Int32 -102
-      | NoActiveBuffer => Int32 -103
-      | CompleteWithdrawalFundsMismatch => Int32 -104
-      | ClaimWithdrawalNoUnbonded => Int32 -105
-      | AdminValidationFailed => Int32 -106
-      | UnknownBufferAddr => Int32 -107
-      | StakeDelegateFundsMismatch => Int32 -108
-      | UnknownDelegatorAddr => Int32 -109
-      | CantFetchZimplBufferExistsAtSSN => Int32 -110
-      | DelegHasBufferedDeposit => Int32 -111
-      | BufferOrHolderValidationFailed => Int32 -112
-      | ProxyValidationFailed => Int32 -113
+      | AdminValidationFailed           => "AdminValidationFailed"
+      | BufferAddrUnknown               => "BufferAddrUnknown"
+      | BufferNoActive                  => "BufferNoActive"
+      | BufferOrHolderValidationFailed  => "BufferOrHolderValidationFailed"
+      | CantFetchZimplBufferExistsAtSSN => "CantFetchZimplBufferExistsAtSSN"
+      | CantFetchZimplFields            => "CantFetchZimplFields"
+      | ClaimWithdrawalNoUnbonded       => "ClaimWithdrawalNoUnbonded"
+      | CompleteWithdrawalFundsMismatch => "CompleteWithdrawalFundsMismatch"
+      | DelegAddrUnknown                => "DelegAddrUnknown"
+      | DelegDoesNotExistAtSSN          => "DelegDoesNotExistAtSSN"
+      | DelegHasBufferedDeposit         => "DelegHasBufferedDeposit"
+      | DelegHasNoSufficientAmt         => "DelegHasNoSufficientAmt"
+      | DelegStakeFundsMismatch         => "DelegStakeFundsMismatch"
+      | DelegStakeNotEnough             => "DelegStakeNotEnough"
+      | InvalidTotalAmt                 => "InvalidTotalAmt"
+      | ProxyValidationFailed           => "ProxyValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }
@@ -302,7 +302,7 @@ procedure BufferDelegate(amount: Uint128)
 
   match buffer with
   | None =>
-    e = NoActiveBuffer;
+    e = BufferNoActive;
     ThrowError e
   | Some buffer_addr =>
     msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
@@ -645,7 +645,7 @@ transition DrainBuffer(buffer_addr: ByStr20)
       ClaimRewards holder_addr
     end
   | False =>
-    e = UnknownBufferAddr;
+    e = BufferAddrUnknown;
     ThrowError e
   end;
   tmp_buffer_exists_at_ssn := uint32_zero
@@ -728,7 +728,7 @@ transition DelegateStakeSuccessCallBack(amount: Uint128)
 
   match amount_eq with
   | False =>
-    e = StakeDelegateFundsMismatch;
+    e = DelegStakeFundsMismatch;
     ThrowError e
   | True =>
     match o_delegator with
@@ -738,7 +738,7 @@ transition DelegateStakeSuccessCallBack(amount: Uint128)
       e = { _eventname: "DelegateStake"; delegator: delegator; amount: amount };
       event e
     | None =>
-      e = UnknownDelegatorAddr;
+      e = DelegAddrUnknown;
       ThrowError e
     end
   end

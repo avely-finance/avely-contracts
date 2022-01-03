@@ -10,8 +10,8 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AdminValidationFailed => Int32 -202
-      | StagingAdminValidationFailed => Int32 -203
+      | AdminValidationFailed => "AdminValidationFailed"
+      | StagingAdminValidationFailed => "StagingAdminValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }

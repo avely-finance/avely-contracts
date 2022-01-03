@@ -13,25 +13,25 @@ let one_msg =
     Cons {Message} msg nil_msg
 
 type Error =
+  | AdminValidationFailed
   | AimplValidationFailed
+  | ClaimRewardsHolderFundsMismatch
   | CompleteWithdrawalHolderFundsMismatch
   | CompleteWithdrawalHolderFundsZero
   | CompleteWithdrawalHolderNoUnbondedStake
-  | AdminValidationFailed
-  | ClaimRewardsHolderFundsMismatch
   | ZimplValidationFailed
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AimplValidationFailed => Int32 -301
-      | CompleteWithdrawalHolderFundsMismatch => Int32 -302
-      | CompleteWithdrawalHolderFundsZero => Int32 -303
-      | CompleteWithdrawalHolderNoUnbondedStake => Int32 -304
-      | AdminValidationFailed => Int32 -305
-      | ClaimRewardsHolderFundsMismatch => Int32 -306
-      | ZimplValidationFailed => Int32 -307
+      | AdminValidationFailed                   => "AdminValidationFailed"
+      | AimplValidationFailed                   => "AimplValidationFailed"
+      | ClaimRewardsHolderFundsMismatch         => "ClaimRewardsHolderFundsMismatch"
+      | CompleteWithdrawalHolderFundsMismatch   => "CompleteWithdrawalHolderFundsMismatch"
+      | CompleteWithdrawalHolderFundsZero       => "CompleteWithdrawalHolderFundsZero"
+      | CompleteWithdrawalHolderNoUnbondedStake => "CompleteWithdrawalHolderNoUnbondedStake"
+      | ZimplValidationFailed                   => "ZimplValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }
