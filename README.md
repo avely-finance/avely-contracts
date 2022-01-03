@@ -1,4 +1,4 @@
-# zillica-dapp-template
+# Avely Finance :: Avely Contracts
 
 ## Docker Compose Setup
 * `docker-compose run --rm runner` to start bash with scilla, zli inside
