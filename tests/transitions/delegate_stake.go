@@ -16,7 +16,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	// Because of DelegHasNoSufficientAmt
 	tx, err := p.Aproxy.DelegateStake(ToZil(1))
-	AssertError(tx, err, -15)
+	AssertError(tx, err, "DelegStakeNotEnough")
 
 	// Success delegate
 	AssertSuccess(p.Aproxy.DelegateStake(ToZil(20)))

@@ -38,7 +38,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 	readyBlocks = append(readyBlocks, block1)
 	tx, err := p.Aimpl.ClaimWithdrawal(readyBlocks)
-	AssertError(tx, err, -105)
+	AssertError(tx, err, "ClaimWithdrawalNoUnbonded")
 
 	delta, _ := strconv.ParseInt(StrAdd(p.Zimpl.Field("bnum_req"), "1"), 10, 32)
 	sdk.IncreaseBlocknum(int32(delta))

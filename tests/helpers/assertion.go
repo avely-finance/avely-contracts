@@ -6,6 +6,7 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	sdk "github.com/avely-finance/avely-contracts/sdk/core"
+	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -65,7 +66,7 @@ func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transac
 	return tx, err
 }
 
-func AssertError(txn *transaction.Transaction, err error, code int) {
+func AssertError(txn *transaction.Transaction, err error, code interface{}) {
 	_, file, no, _ := runtime.Caller(1)
 
 	if err == nil {
@@ -74,8 +75,18 @@ func AssertError(txn *transaction.Transaction, err error, code int) {
 
 	receipt, _ := json.Marshal(txn.Receipt)
 	txError := string(receipt)
-	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
-
+	var errorMessage = ""
+	typ := reflect.ValueOf(code).Kind()
+	switch typ {
+	case reflect.String:
+		errorMessage = fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (String \\\"%s\\\"))])", code)
+		break
+	case reflect.Int:
+		errorMessage = fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
+		break
+	default:
+		panic("Unknown code type: " + typ.String())
+	}
 	AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
 }
 
