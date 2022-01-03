@@ -6,7 +6,6 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	sdk "github.com/avely-finance/avely-contracts/sdk/core"
-	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -66,7 +65,7 @@ func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transac
 	return tx, err
 }
 
-func AssertError(txn *transaction.Transaction, code interface{}) {
+func AssertError(txn *transaction.Transaction, code string) {
 	_, file, no, _ := runtime.Caller(1)
 
 	if txn.Receipt.Success && txn.Status == core.Confirmed {
@@ -75,19 +74,21 @@ func AssertError(txn *transaction.Transaction, code interface{}) {
 
 	receipt, _ := json.Marshal(txn.Receipt)
 	txError := string(receipt)
-	var errorMessage = ""
-	typ := reflect.ValueOf(code).Kind()
-	switch typ {
-	case reflect.String:
-		errorMessage = fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (String \\\"%s\\\"))])", code)
-		break
-	case reflect.Int:
-		errorMessage = fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
-		break
-	default:
-		panic("Unknown code type: " + typ.String())
-	}
+	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (String \\\"%s\\\"))])", code)
 	AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
+}
+
+func AssertSsnlistError(txn *transaction.Transaction, code int32) {
+	_, file, no, _ := runtime.Caller(1)
+
+	if txn.Receipt.Success && txn.Status == core.Confirmed {
+		GetLog().Error("ASSERT_SSNLIST_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
+	}
+
+	receipt, _ := json.Marshal(txn.Receipt)
+	txError := string(receipt)
+	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
+	AssertContainRaw("ASSERT_SSNLIST_ERROR", txError, errorMessage, file, no)
 }
 
 func AssertContainRaw(code, s1, s2, file string, no int) {
