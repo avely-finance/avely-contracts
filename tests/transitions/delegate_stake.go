@@ -15,8 +15,8 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	p.Aproxy.UpdateWallet(sdk.Cfg.Key1)
 
 	// Because of DelegHasNoSufficientAmt
-	tx, err := p.Aproxy.DelegateStake(ToZil(1))
-	AssertError(tx, err, "DelegStakeNotEnough")
+	tx, _ := p.Aproxy.DelegateStake(ToZil(1))
+	AssertError(tx, "DelegStakeNotEnough")
 
 	// Success delegate
 	AssertSuccess(p.Aproxy.DelegateStake(ToZil(20)))

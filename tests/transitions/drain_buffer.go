@@ -12,8 +12,8 @@ func (tr *Transitions) DrainBuffer() {
 
 	AssertSuccess(p.Aproxy.DelegateStake(ToZil(10)))
 
-	txn, err := p.Aimpl.DrainBuffer(p.Aimpl.Addr)
-	AssertError(txn, err, "BufferAddrUnknown")
+	txn, _ := p.Aimpl.DrainBuffer(p.Aimpl.Addr)
+	AssertError(txn, "BufferAddrUnknown")
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)

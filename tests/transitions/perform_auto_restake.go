@@ -13,8 +13,8 @@ func (tr *Transitions) PerformAuoRestake() {
 	AssertEqual(p.Aimpl.Field("autorestakeamount"), ToZil(0))
 
 	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(1)))
-	txn, err := p.Aimpl.PerformAutoRestake()
-	AssertError(txn, err, "DelegStakeNotEnough")
+	txn, _ := p.Aimpl.PerformAutoRestake()
+	AssertError(txn, "DelegStakeNotEnough")
 
 	// increases to 100
 	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(99)))

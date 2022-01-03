@@ -66,10 +66,10 @@ func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transac
 	return tx, err
 }
 
-func AssertError(txn *transaction.Transaction, err error, code interface{}) {
+func AssertError(txn *transaction.Transaction, code interface{}) {
 	_, file, no, _ := runtime.Caller(1)
 
-	if err == nil {
+	if txn.Receipt.Success && txn.Status == core.Confirmed {
 		GetLog().Error("ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
 	}
 
