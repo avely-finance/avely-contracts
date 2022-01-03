@@ -106,6 +106,9 @@ func (c *Contract) stateParse() {
 			}
 		} else {
 			switch typ {
+			case "StateFieldOption":
+				statemap[k] = stateFieldOption(v)
+				break
 			case "StateFieldMap":
 				statemap[k] = stateFieldMap(v)
 				break
@@ -131,6 +134,18 @@ func (c *Contract) stateParse() {
 	}
 	c.StateMap = statemap
 	c.TxIdStateParsed = c.Sdk.TxIdLast
+}
+
+func stateFieldOption(v interface{}) string {
+	tmp, _ := json.Marshal(v)
+	var field map[string]interface{}
+	json.Unmarshal([]byte(tmp), &field)
+
+	args := field["arguments"].([]interface{})
+	if 0 == len(args) {
+		return ""
+	}
+	return args[0].(string)
 }
 
 func stateFieldArray(v interface{}) map[string]interface{} {

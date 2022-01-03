@@ -17,10 +17,11 @@
     "Addr3": "c2035715831ab100ec42e562ce341b834bed1f4c",
     "VerifierKey": "",
     "Verifier": "10200e3da08ee88729469d6eabc055cb225821e7",
-
+    
     "GzilAddr": "",
     "ZproxyAddr": "",
     "ZimplAddr": "",
+    "AproxyAddr": "",
     "AzilAddr": "",
     "BufferAddrs": [
       ""
@@ -49,6 +50,7 @@
     "GzilAddr": "4b68ebd5c54ae9ad1f069260b4c89f0d3be70a45",
     "ZproxyAddr": "351a37e2841A45c7F2De18Ee45F968E106416273",
     "ZimplAddr": "A2e4657de8108dd3730EB51f05a1d486D77bE2Df",
+    "AproxyAddr": "",
     "AzilAddr": "a30f5cf8cfea23f0a6f2d0f8dc233ffc92d8e035",
     "BufferAddrs": [
       "abf4ea8c888b922f04d09c6163f508bc81671669"
