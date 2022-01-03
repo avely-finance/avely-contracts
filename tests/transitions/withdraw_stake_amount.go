@@ -25,7 +25,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	p.Aproxy.UpdateWallet(sdk.Cfg.Key3)
 	txn, err := p.Aproxy.WithdrawStakeAmt(ToAzil(10))
 
-	AssertError(txn, err, -7)
+	AssertError(txn, err, "DelegDoesNotExistAtSSN")
 
 	/*******************************************************************************
 	 * 2. Check withdrawal under delegator
@@ -40,7 +40,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	Start("WithdwarStakeAmount, step 2A")
 	txn, err = p.Aproxy.WithdrawStakeAmt(ToAzil(1))
 
-	AssertError(txn, err, -111)
+	AssertError(txn, err, "DelegHasBufferedDeposit")
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
 
 	// Trigger switch to the next cycle
@@ -53,7 +53,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	Start("WithdwarStakeAmount, step 2A")
 	txn, err = p.Aproxy.WithdrawStakeAmt(ToAzil(100))
 
-	AssertError(txn, err, -13)
+	AssertError(txn, err, "DelegHasNoSufficientAmt")
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
 
 	/*******************************************************************************
@@ -63,7 +63,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	Start("WithdwarStakeAmount, step 2C")
 	txn, err = p.Aproxy.WithdrawStakeAmt(ToAzil(10))
 
-	AssertError(txn, err, -15)
+	AssertError(txn, err, "DelegStakeNotEnough")
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
 
 	/*******************************************************************************

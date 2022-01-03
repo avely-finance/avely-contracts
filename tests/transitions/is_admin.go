@@ -41,20 +41,20 @@ func (tr *Transitions) IsAdmin() {
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, err = p.Aimpl.ChangeZimplAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -106)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.Aimpl.ChangeHolderAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -106)
+	AssertError(tx, err, "AdminValidationFailed")
 
 	new_buffers := []string{"0x" + p.GetBuffer().Addr, "0x" + p.GetBuffer().Addr}
 	tx, err = p.Aimpl.ChangeBuffers(new_buffers)
-	AssertError(tx, err, -106)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.Aimpl.PerformAutoRestake()
-	AssertError(tx, err, -106)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.Aimpl.UpdateStakingParameters(ToZil(100))
-	AssertError(tx, err, -106)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.Aimpl.DrainBuffer(p.GetBuffer().Addr)
-	AssertError(tx, err, -106)
+	AssertError(tx, err, "AdminValidationFailed")
 	readyBlocks := []string{}
 	tx, err = p.Aimpl.ClaimWithdrawal(readyBlocks)
-	AssertError(tx, err, -106)
+	AssertError(tx, err, "AdminValidationFailed")
 }
