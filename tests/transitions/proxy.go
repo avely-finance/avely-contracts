@@ -28,8 +28,8 @@ func (tr *Transitions) Proxy() {
     //claim admin with wrong user, expecting error
     wrongActor := sdk.Cfg.Key1
     p.Aproxy.UpdateWallet(wrongActor)
-    tx, err := p.Aproxy.ClaimAdmin()
-    AssertError(tx, err, -203)
+    tx, _ = p.Aproxy.ClaimAdmin()
+    AssertError(tx, "StagingAdminValidationFailed")
 
     //claim admin with correct user, expecting success
     p.Aproxy.UpdateWallet(newAdminKey)
@@ -46,25 +46,25 @@ func (tr *Transitions) Proxy() {
 func callAimplDirectly(p *contracts.Protocol) {
     //call aimpl transitions, which are supposed to call through proxy, directly; expecting errors
     initiator := sdk.Cfg.Addr3
-    tx, err := p.Aimpl.DelegateStake(ToZil(10), initiator)
-    AssertError(tx, err, -113)
+    tx, _ := p.Aimpl.DelegateStake(ToZil(10), initiator)
+    AssertError(tx, "ProxyValidationFailed")
 
-    tx, err = p.Aimpl.ZilBalanceOf(initiator, initiator)
-    AssertError(tx, err, -113)
+    tx, _ = p.Aimpl.ZilBalanceOf(initiator, initiator)
+    AssertError(tx, "ProxyValidationFailed")
 
-    tx, err = p.Aimpl.WithdrawStakeAmt(ToZil(10), initiator)
-    AssertError(tx, err, -113)
+    tx, _ = p.Aimpl.WithdrawStakeAmt(ToZil(10), initiator)
+    AssertError(tx, "ProxyValidationFailed")
 
-    tx, err = p.Aimpl.CompleteWithdrawal(initiator)
-    AssertError(tx, err, -113)
+    tx, _ = p.Aimpl.CompleteWithdrawal(initiator)
+    AssertError(tx, "ProxyValidationFailed")
 }
 
 func callNonAdmin(p *contracts.Protocol) {
     //call proxy admin transitions with non-admin user; expecting errors
     p.Aproxy.UpdateWallet(sdk.Cfg.Key1)
-    tx, err := p.Aproxy.UpgradeTo("0000000000000000000000000000000000000000")
-    AssertError(tx, err, -202)
+    tx, _ := p.Aproxy.UpgradeTo("0000000000000000000000000000000000000000")
+    AssertError(tx, "AdminValidationFailed")
 
-    tx, err = p.Aproxy.ChangeAdmin("0000000000000000000000000000000000000000")
-    AssertError(tx, err, -202)
+    tx, _ = p.Aproxy.ChangeAdmin("0000000000000000000000000000000000000000")
+    AssertError(tx, "AdminValidationFailed")
 }
