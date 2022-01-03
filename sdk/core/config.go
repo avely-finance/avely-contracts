@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Chain                    string
 	ApiUrl                   string
+	ChainId                  int
 	TxConfrimMaxAttempts     int
 	TxConfirmIntervalSec     int
 	AzilSsnAddress           string
