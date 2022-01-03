@@ -29,6 +29,7 @@ type Config struct {
 	ZproxyAddr  string
 	GzilAddr    string
 	ZimplAddr   string
+	AproxyAddr  string
 	AzilAddr    string
 	BufferAddrs []string
 	HolderAddr  string
