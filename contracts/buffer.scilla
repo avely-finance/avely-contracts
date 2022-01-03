@@ -8,8 +8,8 @@ library Buffer
 let uint128_zero = Uint128 0
 
 type Error =
-  | AimplValidationFailed
   | AdminValidationFailed
+  | AimplValidationFailed
   | ClaimRewardsBufferFundsMismatch
   | ZimplValidationFailed
 
@@ -17,10 +17,10 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AimplValidationFailed => Int32 -401
-      | AdminValidationFailed => Int32 -402
-      | ClaimRewardsBufferFundsMismatch => Int32 -403
-      | ZimplValidationFailed => Int32 -407
+      | AdminValidationFailed           => "AdminValidationFailed"
+      | AimplValidationFailed           => "AimplValidationFailed"
+      | ClaimRewardsBufferFundsMismatch => "ClaimRewardsBufferFundsMismatch"
+      | ZimplValidationFailed           => "ZimplValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }

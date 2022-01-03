@@ -14,21 +14,21 @@ func (tr *Transitions) IsAimpl() {
 	p.GetBuffer().UpdateWallet(sdk.Cfg.Key2)
 
 	tx, err := p.GetBuffer().DelegateStake()
-	AssertError(tx, err, -401)
+	AssertError(tx, err, "AimplValidationFailed")
 	tx, err = p.GetBuffer().ClaimRewards()
-	AssertError(tx, err, -401)
+	AssertError(tx, err, "AimplValidationFailed")
 	tx, err = p.GetBuffer().RequestDelegatorSwap(p.Holder.Addr)
-	AssertError(tx, err, -401)
+	AssertError(tx, err, "AimplValidationFailed")
 
 	// Use non-admin user for p.Holder
 	p.Holder.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, err = p.Holder.WithdrawStakeAmt(ToZil(1))
-	AssertError(tx, err, -301)
+	AssertError(tx, err, "AimplValidationFailed")
 	tx, err = p.Holder.CompleteWithdrawal()
-	AssertError(tx, err, -301)
+	AssertError(tx, err, "AimplValidationFailed")
 	tx, err = p.Holder.ClaimRewards()
-	AssertError(tx, err, -301)
+	AssertError(tx, err, "AimplValidationFailed")
 	tx, err = p.Holder.ConfirmDelegatorSwap(p.GetBuffer().Addr)
-	AssertError(tx, err, -301)
+	AssertError(tx, err, "AimplValidationFailed")
 }

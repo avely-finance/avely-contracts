@@ -15,27 +15,27 @@ func (tr *Transitions) IsAdmin() {
 	p.GetBuffer().UpdateWallet(sdk.Cfg.Key3)
 
 	tx, err := p.GetBuffer().ChangeAzilSSNAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -402)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.GetBuffer().ChangeAimplAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -402)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.GetBuffer().ChangeZproxyAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -402)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.GetBuffer().ChangeZimplAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -402)
+	AssertError(tx, err, "AdminValidationFailed")
 
 	// Use non-admin user for p.Holder
 	p.Holder.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, err = p.Holder.DelegateStake(ToZil(1))
-	AssertError(tx, err, -305)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.Holder.ChangeAzilSSNAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -305)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.Holder.ChangeAimplAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -305)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.Holder.ChangeZproxyAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -305)
+	AssertError(tx, err, "AdminValidationFailed")
 	tx, err = p.Holder.ChangeZimplAddress(sdk.Cfg.Addr3)
-	AssertError(tx, err, -305)
+	AssertError(tx, err, "AdminValidationFailed")
 
 	// Use non-admin user for Aimpl
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
