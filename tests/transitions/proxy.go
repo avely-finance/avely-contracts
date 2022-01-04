@@ -19,9 +19,14 @@ func (tr *Transitions) Proxy() {
     newAdminKey := sdk.Cfg.Key3
     newImplAddr := "0000000000000000000000000000000000000000"
 
+    //claim not existent staging admin, expecting error
+    p.Aproxy.UpdateWallet(newAdminKey)
+    tx, _ := p.Aimpl.ClaimAdmin()
+    AssertError(tx, "StagingAdminNotExists")
+
     //change admin, expecting success
     p.Aproxy.UpdateWallet(sdk.Cfg.AdminKey)
-    tx, _ := AssertSuccess(p.Aproxy.ChangeAdmin(newAdminAddr))
+    tx, _ = AssertSuccess(p.Aproxy.ChangeAdmin(newAdminAddr))
     AssertEvent(tx, Event{p.Aproxy.Addr, "ChangeAdmin", ParamsMap{"currentAdmin": "0x" + sdk.Cfg.Admin, "newAdmin": "0x" + newAdminAddr}})
     AssertEqual(p.Aproxy.Field("staging_admin_address"), "0x"+newAdminAddr)
 
