@@ -27,7 +27,7 @@ func (tr *Transitions) Proxy() {
     //change admin, expecting success
     p.Aproxy.UpdateWallet(sdk.Cfg.AdminKey)
     tx, _ = AssertSuccess(p.Aproxy.ChangeAdmin(newAdminAddr))
-    AssertEvent(tx, Event{p.Aproxy.Addr, "ChangeAdmin", ParamsMap{"currentAdmin": "0x" + sdk.Cfg.Admin, "newAdmin": "0x" + newAdminAddr}})
+    AssertEvent(tx, Event{p.Aproxy.Addr, "ChangeAdmin", ParamsMap{"current_admin": "0x" + sdk.Cfg.Admin, "new_admin": "0x" + newAdminAddr}})
     AssertEqual(p.Aproxy.Field("staging_admin_address"), "0x"+newAdminAddr)
 
     //claim admin with wrong user, expecting error
@@ -39,13 +39,14 @@ func (tr *Transitions) Proxy() {
     //claim admin with correct user, expecting success
     p.Aproxy.UpdateWallet(newAdminKey)
     tx, _ = AssertSuccess(p.Aproxy.ClaimAdmin())
-    AssertEvent(tx, Event{p.Aproxy.Addr, "ClaimAdmin", ParamsMap{"newAdmin": "0x" + newAdminAddr}})
+    AssertEvent(tx, Event{p.Aproxy.Addr, "ClaimAdmin", ParamsMap{"new_admin": "0x" + newAdminAddr}})
     AssertEqual(p.Aproxy.Field("admin_address"), "0x"+newAdminAddr)
 
     //call UpgradeTo with new admin, expecting success
     tx, _ = AssertSuccess(p.Aproxy.UpgradeTo(newImplAddr))
     AssertEvent(tx, Event{p.Aproxy.Addr, "UpgradeTo", ParamsMap{"aimpl_address": "0x" + newImplAddr}})
     AssertEqual(p.Aproxy.Field("aimpl_address"), "0x"+newImplAddr)
+    AssertEqual(p.Aproxy.Field("staging_admin_address"), "")
 }
 
 func callAimplDirectly(p *contracts.Protocol) {
