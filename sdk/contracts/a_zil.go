@@ -19,6 +19,17 @@ type AZil struct {
 	Contract
 }
 
+func (b *AZil) ChangeAdmin(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_admin",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return b.Call("ChangeAdmin", args, "0")
+}
+
 func (b *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
