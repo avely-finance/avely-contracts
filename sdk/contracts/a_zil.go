@@ -189,6 +189,11 @@ func (a *AZil) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, er
 	return a.Call("CompleteWithdrawalSuccessCallBack", args, "0")
 }
 
+func (a *AZil) Pause() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("Pause", args, "0")
+}
+
 func (a *AZil) Unpause() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("UnPause", args, "0")

@@ -588,8 +588,8 @@ end
 (************************************************************)
 
 transition Pause()
-  (* RequireNotPaused; *)
   IsAdmin _sender;
+  (* RequireNotPaused; *)
 
   is_paused := true;
   e = { _eventname: "Pause"; is_paused: true };
@@ -597,6 +597,8 @@ transition Pause()
 end
 
 transition UnPause()
+  IsAdmin _sender;
+
   paused <- is_paused;
   match paused with
   | True =>
@@ -604,8 +606,6 @@ transition UnPause()
     error = NotPaused;
     ThrowError error
   end;
-
-  IsAdmin _sender;
 
   is_paused := false;
   e = { _eventname: "Unpause"; is_paused: false };
