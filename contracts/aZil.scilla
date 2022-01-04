@@ -26,6 +26,7 @@ type Error =
   | DelegStakeFundsMismatch
   | DelegStakeNotEnough
   | InvalidTotalAmt
+  | NotPaused
   | ProxyValidationFailed
   | StagingAdminNotExists
   | StagingAdminValidationFailed
@@ -49,6 +50,7 @@ let make_error =
       | DelegStakeFundsMismatch         => "DelegStakeFundsMismatch"
       | DelegStakeNotEnough             => "DelegStakeNotEnough"
       | InvalidTotalAmt                 => "InvalidTotalAmt"
+      | NotPaused                       => "NotPaused"
       | ProxyValidationFailed           => "ProxyValidationFailed"
       | StagingAdminNotExists           => "StagingAdminNotExists"
       | StagingAdminValidationFailed    => "StagingAdminValidationFailed"
@@ -97,6 +99,8 @@ let one_msg =
     let nil_msg = Nil {Message} in
     Cons {Message} msg nil_msg
 
+let false = False
+let true = True
 let uint128_zero = Uint128 0
 let uint128_one = Uint128 1
 let uint32_zero = Uint32 0
@@ -155,16 +159,18 @@ contract AZil(
   init_zimpl_address        : ByStr20,
   init_holder_address       : ByStr20
 )
-(*  Parameters *)
-(* (owner     : ByStr20) *)
 
-(* Mutable fields *)
 field admin_address         : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field zimpl_address         : ByStr20 = init_zimpl_address
 field holder_address        : ByStr20 = init_holder_address
+field buffers_addresses: List ByStr20 = Nil {ByStr20}
 field staging_admin_address : Option ByStr20 = None {ByStr20}
 
+field is_paused: Bool = True
+
+(* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
+field mindelegstake: Uint128 = Uint128 10000000000000
 field totalstakeamount:  Uint128 = uint128_zero
 field totaltokenamount:  Uint128 = uint128_zero
 field autorestakeamount: Uint128 = uint128_zero
@@ -188,11 +194,6 @@ field tmp_buffer_exists_at_ssn: Uint32 = uint32_zero
 
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
-
-(* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
-field mindelegstake: Uint128 = Uint128 10000000000000
-
-field buffers_addresses: List ByStr20 = Nil {ByStr20}
 
 (************************************************************)
 (* @dev: Procedures                                         *)
@@ -585,6 +586,31 @@ end
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
+
+transition Pause()
+  (* RequireNotPaused; *)
+  IsAdmin _sender;
+
+  is_paused := true;
+  e = { _eventname: "Pause"; is_paused: true };
+  event e
+end
+
+transition UnPause()
+  paused <- is_paused;
+  match paused with
+  | True =>
+  | False =>
+    error = NotPaused;
+    ThrowError error
+  end;
+
+  IsAdmin _sender;
+
+  is_paused := false;
+  e = { _eventname: "Unpause"; is_paused: false };
+  event e
+end
 
 transition ChangeAdmin(new_admin: ByStr20)
   IsAdmin _sender;

@@ -51,6 +51,10 @@ func (p *Protocol) SyncBufferAndHolder() {
 	check(p.Aimpl.ChangeHolderAddress(p.Holder.Addr))
 }
 
+func (p *Protocol) Unpause() {
+	check(p.Aimpl.Unpause())
+}
+
 func (p *Protocol) SetupZProxy() {
 	sdk := p.Aimpl.Sdk
 	args := []core.ContractValue{
