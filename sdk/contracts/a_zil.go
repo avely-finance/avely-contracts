@@ -297,6 +297,7 @@ func buildAZilStateFields() StateFieldTypes {
 	stateFieldTypes["withdrawal_pending"] = "StateFieldMapMapPair"
 	stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapPair"
 	stateFieldTypes["staging_admin_address"] = "StateFieldOption"
+	stateFieldTypes["is_paused"] = "StateFieldBool"
 
 	return stateFieldTypes
 }
