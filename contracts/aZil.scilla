@@ -27,6 +27,8 @@ type Error =
   | DelegStakeNotEnough
   | InvalidTotalAmt
   | ProxyValidationFailed
+  | StagingAdminNotExists
+  | StagingAdminValidationFailed
 
 let make_error =
   fun (result: Error) =>
@@ -48,6 +50,8 @@ let make_error =
       | DelegStakeNotEnough             => "DelegStakeNotEnough"
       | InvalidTotalAmt                 => "InvalidTotalAmt"
       | ProxyValidationFailed           => "ProxyValidationFailed"
+      | StagingAdminNotExists           => "StagingAdminNotExists"
+      | StagingAdminValidationFailed    => "StagingAdminValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }
@@ -155,10 +159,11 @@ contract AZil(
 (* (owner     : ByStr20) *)
 
 (* Mutable fields *)
-field contractadmin_address : ByStr20 = init_admin_address
+field admin_address         : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field zimpl_address         : ByStr20 = init_zimpl_address
 field holder_address        : ByStr20 = init_holder_address
+field staging_admin_address : Option ByStr20 = None {ByStr20}
 
 field totalstakeamount:  Uint128 = uint128_zero
 field totaltokenamount:  Uint128 = uint128_zero
@@ -199,7 +204,7 @@ procedure ThrowError(err: Error)
 end
 
 procedure IsAdmin(initiator: ByStr20)
-  contractadmin_tmp <- contractadmin_address;
+  contractadmin_tmp <- admin_address;
   is_admin = builtin eq initiator contractadmin_tmp;
   match is_admin with
   | True  =>
@@ -580,6 +585,37 @@ end
 (************************************************************)
 (* @dev: Admin actions                                      *)
 (************************************************************)
+
+transition ChangeAdmin(new_admin: ByStr20)
+  IsAdmin _sender;
+  var_staging_admin = Some {ByStr20} new_admin;
+  staging_admin_address := var_staging_admin;
+  var_admin_address <- admin_address;
+  e = {_eventname: "ChangeAdmin"; current_admin: var_admin_address; new_admin: new_admin};
+  event e
+end
+
+transition ClaimAdmin()
+  staging_admin_o <- staging_admin_address;
+  match staging_admin_o with
+  | Some staging_admin =>
+    is_stagingadmin = builtin eq staging_admin _sender;
+    match is_stagingadmin with
+    | True =>
+      admin_address := _sender;
+      tmp_staging_admin = None {ByStr20};
+      staging_admin_address := tmp_staging_admin;
+      e = {_eventname: "ClaimAdmin"; new_admin: _sender};
+      event e
+    | False =>
+      e = StagingAdminValidationFailed;
+      ThrowError e
+    end
+  | None =>
+    e = StagingAdminNotExists;
+    ThrowError e
+  end
+end
 
 transition ChangeHolderAddress(address: ByStr20)
   initiator = _sender;

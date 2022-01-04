@@ -19,6 +19,22 @@ type AZil struct {
 	Contract
 }
 
+func (a *AZil) ChangeAdmin(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_admin",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return a.Call("ChangeAdmin", args, "0")
+}
+
+func (a *AZil) ClaimAdmin() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("ClaimAdmin", args, "0")
+}
+
 func (b *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -270,6 +286,7 @@ func buildAZilStateFields() StateFieldTypes {
 	stateFieldTypes["buffers_addresses"] = "StateFieldArray"
 	stateFieldTypes["withdrawal_pending"] = "StateFieldMapMapPair"
 	stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapPair"
+	stateFieldTypes["staging_admin_address"] = "StateFieldOption"
 
 	return stateFieldTypes
 }
