@@ -11,7 +11,7 @@ func (tr *Transitions) IsAdmin() {
 
 	p := tr.DeployAndUpgrade()
 
-	// Use non-admin user for p.GetBuffer()
+	// Use non-admin user for p.GetBuffer(), expecting errors
 	p.GetBuffer().UpdateWallet(sdk.Cfg.Key3)
 
 	tx, _ := p.GetBuffer().ChangeAzilSSNAddress(sdk.Cfg.Addr3)
@@ -23,7 +23,7 @@ func (tr *Transitions) IsAdmin() {
 	tx, _ = p.GetBuffer().ChangeZimplAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "AdminValidationFailed")
 
-	// Use non-admin user for p.Holder
+	// Use non-admin user for p.Holder, expecting errors
 	p.Holder.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, _ = p.Holder.DelegateStake(ToZil(1))
@@ -37,9 +37,11 @@ func (tr *Transitions) IsAdmin() {
 	tx, _ = p.Holder.ChangeZimplAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "AdminValidationFailed")
 
-	// Use non-admin user for Aimpl
+	// Use non-admin user for Aimpl, expecting errors
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
 
+	tx, _ = p.Aimpl.ChangeAdmin(sdk.Cfg.Addr3)
+	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Aimpl.ChangeZimplAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Aimpl.ChangeHolderAddress(sdk.Cfg.Addr3)
