@@ -56,6 +56,7 @@ func (tr *Transitions) RunAll() {
 	tr.IsZimpl()
 	tr.IsBufferOrHolder()
 	tr.DrainBuffer()
+	tr.Pause()
 	tr.PerformAuoRestake()
 	tr.Proxy()
 }
