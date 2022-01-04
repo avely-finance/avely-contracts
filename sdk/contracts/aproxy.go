@@ -33,7 +33,7 @@ func (a *AZilProxy) DelegateStake(amount string) (*transaction.Transaction, erro
 func (a *AZilProxy) UpgradeTo(newImplementation string) (*transaction.Transaction, error) {
     args := []core.ContractValue{
         {
-            "newImplementation",
+            "new_implementation",
             "ByStr20",
             "0x" + newImplementation,
         },
@@ -44,7 +44,7 @@ func (a *AZilProxy) UpgradeTo(newImplementation string) (*transaction.Transactio
 func (a *AZilProxy) ChangeAdmin(newAdmin string) (*transaction.Transaction, error) {
     args := []core.ContractValue{
         {
-            "newAdmin",
+            "new_admin",
             "ByStr20",
             "0x" + newAdmin,
         },

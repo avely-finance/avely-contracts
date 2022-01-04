@@ -5,6 +5,7 @@ library AZilProxy
 type Error =
   | AdminValidationFailed
   | StagingAdminValidationFailed
+  | StagingAdminNotExists
 
 let make_error =
   fun (result: Error) =>
@@ -12,6 +13,7 @@ let make_error =
       match result with
       | AdminValidationFailed => "AdminValidationFailed"
       | StagingAdminValidationFailed => "StagingAdminValidationFailed"
+      | StagingAdminNotExists => "StagingAdminNotExists"
       end
     in
     { _exception: "Error"; code: result_code }
@@ -55,19 +57,19 @@ end
 (***************************************************)
 (*              Proxy Transitions                  *)
 (***************************************************)
-transition UpgradeTo(newImplementation: ByStr20)
+transition UpgradeTo(new_implementation: ByStr20)
   IsAdmin _sender;
-  aimpl_address := newImplementation;
-  e = {_eventname: "UpgradeTo"; aimpl_address: newImplementation};
+  aimpl_address := new_implementation;
+  e = {_eventname: "UpgradeTo"; aimpl_address: new_implementation};
   event e
 end
 
-transition ChangeAdmin(newAdmin: ByStr20)
+transition ChangeAdmin(new_admin: ByStr20)
   IsAdmin _sender;
-  new_staging_admin = Some {ByStr20} newAdmin;
-  staging_admin_address := new_staging_admin;
+  var_staging_admin = Some {ByStr20} new_admin;
+  staging_admin_address := var_staging_admin;
   cur_admin_address <- admin_address;
-  e = {_eventname: "ChangeAdmin"; currentAdmin: cur_admin_address; newAdmin: newAdmin};
+  e = {_eventname: "ChangeAdmin"; current_admin: cur_admin_address; new_admin: new_admin};
   event e
 end
 
@@ -79,16 +81,16 @@ transition ClaimAdmin()
     match is_stagingadmin with
     | True =>
       admin_address := _sender;
-      tmp_staging_admin = None {ByStr20};
-      staging_admin_address := tmp_staging_admin;
-      e = {_eventname: "ClaimAdmin"; newAdmin: _sender};
+      var_staging_admin = None {ByStr20};
+      staging_admin_address := var_staging_admin;
+      e = {_eventname: "ClaimAdmin"; new_admin: _sender};
       event e
     | False =>
       e = StagingAdminValidationFailed;
       ThrowError e
     end
   | None =>
-    e = StagingAdminValidationFailed;
+    e = StagingAdminNotExists;
     ThrowError e
   end
 end
