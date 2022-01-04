@@ -47,9 +47,7 @@ contract Holder(
   init_zproxy_address       : ByStr20,
   init_zimpl_address        : ByStr20
 )
-(*  Parameters *)
 
-(* Mutable fields *)
 field contractadmin_address : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field aimpl_address         : ByStr20 = init_aimpl_address
@@ -67,7 +65,7 @@ procedure ThrowError(err: Error)
   throw e
 end
 
-procedure IsAimpl()
+procedure RequireAimpl()
   var_aimpl_address <- aimpl_address;
   is_aimpl = builtin eq _sender var_aimpl_address;
   match is_aimpl with
@@ -78,7 +76,7 @@ procedure IsAimpl()
   end
 end
 
-procedure IsZimpl()
+procedure RequireZimpl()
   var_zimpl_address <- zimpl_address;
   is_zimpl = builtin eq _sender var_zimpl_address;
   match is_zimpl with
@@ -89,9 +87,9 @@ procedure IsZimpl()
   end
 end
 
-procedure IsAdmin(initiator: ByStr20)
+procedure RequireAdmin()
   contractadmin_tmp <- contractadmin_address;
-  is_admin = builtin eq initiator contractadmin_tmp;
+  is_admin = builtin eq _sender contractadmin_tmp;
   match is_admin with
   | True  =>
   | False =>
@@ -111,32 +109,28 @@ end
 (************************************************************)
 
 transition ChangeAzilSSNAddress(address: ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
+  RequireAdmin;
   azil_ssn_address := address;
   e = { _eventname: "ChangeAzilSSNAddress"; address: address };
   event e
 end
 
 transition ChangeAimplAddress(address: ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
+  RequireAdmin;
   aimpl_address := address;
   e = { _eventname: "ChangeAimplAddress"; address: address };
   event e
 end
 
 transition ChangeZimplAddress(address: ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
+  RequireAdmin;
   zimpl_address := address;
   e = { _eventname: "ChangeZimplAddress"; address: address };
   event e
 end
 
 transition ChangeZproxyAddress(address: ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
+  RequireAdmin;
   zproxy_address := address;
   e = { _eventname: "ChangeZproxyAddress"; address: address };
   event e
@@ -147,7 +141,7 @@ end
 (************************************************************)
 
 transition WithdrawStakeAmt(amount: Uint128)
-  IsAimpl;
+  RequireAimpl;
   ssnaddr <- azil_ssn_address;
   var_zproxy_address <- zproxy_address;
   msg = {_tag: "WithdrawStakeAmt"; _recipient: var_zproxy_address; _amount: uint128_zero;
@@ -157,12 +151,12 @@ transition WithdrawStakeAmt(amount: Uint128)
 end
 
 transition WithdrawStakeAmtSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  IsZimpl
+  RequireZimpl
   (* nop *)
 end
 
 transition CompleteWithdrawal()
-  IsAimpl;
+  RequireAimpl;
   tmp_added_funds := uint128_zero;
   var_zproxy_address <- zproxy_address;
   msg = {_tag: "CompleteWithdrawal"; _recipient: var_zproxy_address; _amount: uint128_zero };
@@ -178,7 +172,7 @@ end
 (* We should accept funds here, according to ZRC-5  *)
 (****************************************************)
 transition AddFunds()
-  IsZimpl;
+  RequireZimpl;
   accept;
   tmp_added_funds := _amount;
   e = { _eventname : "AddFunds"; funder: _sender; amount: _amount };
@@ -186,7 +180,7 @@ transition AddFunds()
 end
 
 transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
-  IsZimpl;
+  RequireZimpl;
 
   (* send funds and callback to Aimpl *)
   added_funds <- tmp_added_funds;
@@ -226,7 +220,7 @@ transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
 end
 
 transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
-  IsZimpl;
+  RequireZimpl;
   e = { _eventname: "CompleteWithdrawalHolderNoUnbondedStake" };
   event e;
   e = CompleteWithdrawalHolderNoUnbondedStake;
@@ -234,7 +228,7 @@ transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
 end
 
 transition ClaimRewards()
-  IsAimpl;
+  RequireAimpl;
   tmp_added_funds := uint128_zero;
 
   ssnaddr <- azil_ssn_address;
@@ -246,7 +240,7 @@ transition ClaimRewards()
 end
 
 transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint128)
-  IsZimpl;
+  RequireZimpl;
   added_funds <- tmp_added_funds;
   (* reset tmp variable *)
   tmp_added_funds := uint128_zero;
@@ -267,7 +261,7 @@ transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint12
 end
 
 transition ConfirmDelegatorSwap(requestor: ByStr20)
-  IsAimpl;
+  RequireAimpl;
 
   var_zproxy_address <- zproxy_address;
 
@@ -280,8 +274,7 @@ end
 (* Else Zimpl will not know anything about Holder and will return DelegDoesNotExistAtSSN error *)
 (* Transition should be done by admin *)
 transition DelegateStake()
-  initiator = _sender;
-  IsAdmin initiator;
+  RequireAdmin;
   accept;
   stake_amt = _amount;
 
@@ -292,6 +285,6 @@ transition DelegateStake()
 end
 
 transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
-  IsZimpl
+  RequireZimpl
   (* nop *)
 end

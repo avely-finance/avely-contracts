@@ -30,7 +30,6 @@ contract AZilProxy(
   init_admin_address: ByStr20
 )
 
-(* Mutable fields *)
 field aimpl_address: ByStr20 = init_aimpl_address
 field admin_address: ByStr20 = init_admin_address
 field staging_admin_address: Option ByStr20 = None {ByStr20}
@@ -43,9 +42,9 @@ procedure ThrowError(err: Error)
   throw e
 end
 
-procedure IsAdmin(initiator: ByStr20)
+procedure RequireAdmin()
   var_admin_address <- admin_address;
-  is_admin = builtin eq initiator var_admin_address;
+  is_admin = builtin eq _sender var_admin_address;
   match is_admin with
   | True  =>
   | False =>
@@ -58,14 +57,14 @@ end
 (*              Proxy Transitions                  *)
 (***************************************************)
 transition UpgradeTo(new_implementation: ByStr20)
-  IsAdmin _sender;
+  RequireAdmin;
   aimpl_address := new_implementation;
   e = {_eventname: "UpgradeTo"; aimpl_address: new_implementation};
   event e
 end
 
 transition ChangeAdmin(new_admin: ByStr20)
-  IsAdmin _sender;
+  RequireAdmin;
   var_staging_admin = Some {ByStr20} new_admin;
   staging_admin_address := var_staging_admin;
   cur_admin_address <- admin_address;
