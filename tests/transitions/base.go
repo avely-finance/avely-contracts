@@ -44,6 +44,7 @@ func (tr *Transitions) FocusOn(focus string) {
 }
 
 func (tr *Transitions) RunAll() {
+	tr.Admin()
 	tr.DelegateStakeSuccess()
 	tr.DelegateStakeBuffersRotation()
 	tr.WithdrawStakeAmount()
@@ -55,4 +56,5 @@ func (tr *Transitions) RunAll() {
 	tr.IsBufferOrHolder()
 	tr.DrainBuffer()
 	tr.PerformAuoRestake()
+	tr.Proxy()
 }
