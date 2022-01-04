@@ -206,9 +206,9 @@ procedure ThrowError(err: Error)
   throw e
 end
 
-procedure IsAdmin(initiator: ByStr20)
+procedure RequireAdmin()
   contractadmin_tmp <- admin_address;
-  is_admin = builtin eq initiator contractadmin_tmp;
+  is_admin = builtin eq _sender contractadmin_tmp;
   match is_admin with
   | True  =>
   | False =>
@@ -227,12 +227,12 @@ procedure RequireNotPaused()
   end
 end
 
-procedure IsBufferOrHolder(initiator: ByStr20)
+procedure RequireBufferOrHolder()
   buffers_addrs <- buffers_addresses;
-  is_buffer = is_buffer_addr buffers_addrs initiator;
+  is_buffer = is_buffer_addr buffers_addrs _sender;
 
   holder <- holder_address;
-  is_holder = builtin eq initiator holder;
+  is_holder = builtin eq _sender holder;
 
   is_buffer_or_holder = orb is_buffer is_holder;
 
@@ -244,7 +244,7 @@ procedure IsBufferOrHolder(initiator: ByStr20)
   end
 end
 
-procedure IsProxy()
+procedure RequireProxy()
   is_proxy = builtin eq _sender init_aproxy_address;
   match is_proxy with
   | True  =>
@@ -600,7 +600,7 @@ end
 (************************************************************)
 
 transition Pause()
-  IsAdmin _sender;
+  RequireAdmin;
   RequireNotPaused;
 
   is_paused := true;
@@ -609,7 +609,7 @@ transition Pause()
 end
 
 transition UnPause()
-  IsAdmin _sender;
+  RequireAdmin;
 
   paused <- is_paused;
   match paused with
@@ -625,7 +625,7 @@ transition UnPause()
 end
 
 transition ChangeAdmin(new_admin: ByStr20)
-  IsAdmin _sender;
+  RequireAdmin;
   var_staging_admin = Some {ByStr20} new_admin;
   staging_admin_address := var_staging_admin;
   var_admin_address <- admin_address;
@@ -656,7 +656,7 @@ transition ClaimAdmin()
 end
 
 transition ChangeHolderAddress(address: ByStr20)
-  IsAdmin _sender;
+  RequireAdmin;
   holder_address := address;
 
   e = { _eventname: "ChangeHolderAddress"; address: address };
@@ -664,19 +664,19 @@ transition ChangeHolderAddress(address: ByStr20)
 end
 
 transition ChangeZimplAddress(address: ByStr20)
-  IsAdmin _sender;
+  RequireAdmin;
   zimpl_address := address;
   e = { _eventname: "ChangeZimplAddress"; address: address };
   event e
 end
 
 transition ChangeBuffers(new_buffers: List ByStr20)
-  IsAdmin _sender;
+  RequireAdmin;
   buffers_addresses := new_buffers
 end
 
 transition GetCurrentBuffer()
-  IsAdmin _sender;
+  RequireAdmin;
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
@@ -693,7 +693,7 @@ transition GetCurrentBuffer()
 end
 
 transition DrainBuffer(buffer_addr: ByStr20)
-  IsAdmin _sender;
+  RequireAdmin;
   buffers_addrs <- buffers_addresses;
   is_buffer = is_buffer_addr buffers_addrs buffer_addr;
 
@@ -721,13 +721,13 @@ transition DrainBuffer(buffer_addr: ByStr20)
 end
 
 transition ClaimRewardsSuccessCallBack()
-  IsBufferOrHolder _sender;
+  RequireBufferOrHolder;
   accept;
   IncreaseAutoRestakeAmt _amount
 end
 
 transition PerformAutoRestake()
-  IsAdmin _sender;
+  RequireAdmin;
 
   auto_restake_amt <- autorestakeamount;
   IsDelegStakeSufficient auto_restake_amt;
@@ -745,7 +745,7 @@ transition PerformAutoRestake()
 end
 
 transition IncreaseAutoRestakeAmount()
-  IsAdmin _sender;
+  RequireAdmin;
   accept;
   amount = _amount;
 
@@ -758,7 +758,7 @@ end
 (* @dev: Set the staking parameters of contract. *)
 (* @param min_deleg_stake: New mindelegstake value *)
 transition UpdateStakingParameters(min_deleg_stake: Uint128)
-  IsAdmin _sender;
+  RequireAdmin;
   mindelegstake := min_deleg_stake;
 
   e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };
@@ -769,8 +769,9 @@ end
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
 transition DelegateStake(initiator: ByStr20)
-  IsProxy;
+  RequireProxy;
   RequireNotPaused;
+
   accept;
   stake_amt = _amount;
 
@@ -784,8 +785,7 @@ transition DelegateStake(initiator: ByStr20)
 end
 
 transition DelegateStakeSuccessCallBack(amount: Uint128)
-  initiator = _sender;
-  IsBufferOrHolder initiator;
+  RequireBufferOrHolder;
 
   stake_delegate_amt <- tmp_stake_delegate_amount;
   o_delegator <- tmp_delegator;
@@ -835,7 +835,7 @@ end
 (********************************************************************************)
 
 transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
-  IsAdmin _sender;
+  RequireAdmin;
   FetchRemoteZimplFields;
 
   current_bnum <- & BLOCKNUMBER;
@@ -859,8 +859,9 @@ end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
 transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
-  IsProxy;
+  RequireProxy;
   RequireNotPaused;
+
   azil_ssn_addr <- azil_ssn_address;
 
   (* first we do all checks, then call Holder on success within procedure *)
@@ -873,8 +874,9 @@ transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
 end
 
 transition CompleteWithdrawal(initiator: ByStr20)
-  IsProxy;
+  RequireProxy;
   RequireNotPaused;
+
   wu <- withdrawal_unbonded[initiator];
   match wu with
   | Some (Withdrawal wtoken wstake) =>
@@ -897,8 +899,7 @@ transition CompleteWithdrawal(initiator: ByStr20)
 end
 
 transition CompleteWithdrawalSuccessCallBack()
-  initiator = _sender;
-  IsBufferOrHolder initiator;
+  RequireBufferOrHolder;
 
   accept;
   amount = _amount;
@@ -923,8 +924,9 @@ end
 (* @dev: Returns an account zil amount                      *)
 (************************************************************)
 transition ZilBalanceOf(address: ByStr20, initiator: ByStr20)
-  IsProxy;
+  RequireProxy;
   RequireNotPaused;
+
   total_token_amt <- totaltokenamount;
   total_stake_amt <- totalstakeamount;
 
