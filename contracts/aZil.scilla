@@ -604,7 +604,7 @@ transition Pause()
   RequireNotPaused;
 
   is_paused := true;
-  e = { _eventname: "Pause"; is_paused: true };
+  e = { _eventname: "Pause"; is_paused: uint32_one };
   event e
 end
 
@@ -620,7 +620,7 @@ transition UnPause()
   end;
 
   is_paused := false;
-  e = { _eventname: "Unpause"; is_paused: false };
+  e = { _eventname: "UnPause"; is_paused: uint32_zero };
   event e
 end
 
