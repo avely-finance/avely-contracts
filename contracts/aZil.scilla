@@ -618,8 +618,7 @@ transition ClaimAdmin()
 end
 
 transition ChangeHolderAddress(address: ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
+  IsAdmin _sender;
   holder_address := address;
 
   e = { _eventname: "ChangeHolderAddress"; address: address };
@@ -627,22 +626,19 @@ transition ChangeHolderAddress(address: ByStr20)
 end
 
 transition ChangeZimplAddress(address: ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
+  IsAdmin _sender;
   zimpl_address := address;
   e = { _eventname: "ChangeZimplAddress"; address: address };
   event e
 end
 
 transition ChangeBuffers(new_buffers: List ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
+  IsAdmin _sender;
   buffers_addresses := new_buffers
 end
 
 transition GetCurrentBuffer()
-  initiator = _sender;
-  IsAdmin initiator;
+  IsAdmin _sender;
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
@@ -659,8 +655,7 @@ transition GetCurrentBuffer()
 end
 
 transition DrainBuffer(buffer_addr: ByStr20)
-  initiator = _sender;
-  IsAdmin initiator;
+  IsAdmin _sender;
   buffers_addrs <- buffers_addresses;
   is_buffer = is_buffer_addr buffers_addrs buffer_addr;
 
@@ -688,15 +683,13 @@ transition DrainBuffer(buffer_addr: ByStr20)
 end
 
 transition ClaimRewardsSuccessCallBack()
-  initiator = _sender;
-  IsBufferOrHolder initiator;
+  IsBufferOrHolder _sender;
   accept;
   IncreaseAutoRestakeAmt _amount
 end
 
 transition PerformAutoRestake()
-  initiator = _sender;
-  IsAdmin initiator;
+  IsAdmin _sender;
 
   auto_restake_amt <- autorestakeamount;
   IsDelegStakeSufficient auto_restake_amt;
@@ -714,8 +707,7 @@ transition PerformAutoRestake()
 end
 
 transition IncreaseAutoRestakeAmount()
-  initiator = _sender;
-  IsAdmin initiator;
+  IsAdmin _sender;
   accept;
   amount = _amount;
 
@@ -728,8 +720,7 @@ end
 (* @dev: Set the staking parameters of contract. *)
 (* @param min_deleg_stake: New mindelegstake value *)
 transition UpdateStakingParameters(min_deleg_stake: Uint128)
-  initiator = _sender;
-  IsAdmin initiator;
+  IsAdmin _sender;
   mindelegstake := min_deleg_stake;
 
   e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };
