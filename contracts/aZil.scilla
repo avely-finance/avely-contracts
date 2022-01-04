@@ -166,16 +166,16 @@ field admin_address         : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field zimpl_address         : ByStr20 = init_zimpl_address
 field holder_address        : ByStr20 = init_holder_address
-field buffers_addresses: List ByStr20 = Nil {ByStr20}
+field buffers_addresses     : List ByStr20 = Nil {ByStr20}
 field staging_admin_address : Option ByStr20 = None {ByStr20}
 
 field is_paused: Bool = True
 
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
-field mindelegstake: Uint128 = Uint128 10000000000000
-field totalstakeamount:  Uint128 = uint128_zero
-field totaltokenamount:  Uint128 = uint128_zero
-field autorestakeamount: Uint128 = uint128_zero
+field mindelegstake     : Uint128 = Uint128 10000000000000
+field totalstakeamount  : Uint128 = uint128_zero
+field totaltokenamount  : Uint128 = uint128_zero
+field autorestakeamount : Uint128 = uint128_zero
 
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
