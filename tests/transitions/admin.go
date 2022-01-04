@@ -13,7 +13,7 @@ func (tr *Transitions) Admin() {
     newAdminAddr := sdk.Cfg.Addr3
     newAdminKey := sdk.Cfg.Key3
 
-    //claim not existetn staging admin, expecting error
+    //claim not existent staging admin, expecting error
     p.Aimpl.UpdateWallet(newAdminKey)
     tx, _ := p.Aimpl.ClaimAdmin()
     AssertError(tx, "StagingAdminNotExists")
