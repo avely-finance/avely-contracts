@@ -27,6 +27,7 @@ type Error =
   | DelegStakeNotEnough
   | InvalidTotalAmt
   | NotPaused
+  | Paused
   | ProxyValidationFailed
   | StagingAdminNotExists
   | StagingAdminValidationFailed
@@ -50,6 +51,7 @@ let make_error =
       | DelegStakeFundsMismatch         => "DelegStakeFundsMismatch"
       | DelegStakeNotEnough             => "DelegStakeNotEnough"
       | InvalidTotalAmt                 => "InvalidTotalAmt"
+      | Paused                          => "Paused"
       | NotPaused                       => "NotPaused"
       | ProxyValidationFailed           => "ProxyValidationFailed"
       | StagingAdminNotExists           => "StagingAdminNotExists"
@@ -212,6 +214,16 @@ procedure IsAdmin(initiator: ByStr20)
   | False =>
     e = AdminValidationFailed;
     ThrowError e
+  end
+end
+
+procedure RequireNotPaused()
+  paused <- is_paused;
+  match paused with
+  | False =>
+  | True =>
+    error = Paused;
+    ThrowError error
   end
 end
 
@@ -589,7 +601,7 @@ end
 
 transition Pause()
   IsAdmin _sender;
-  (* RequireNotPaused; *)
+  RequireNotPaused;
 
   is_paused := true;
   e = { _eventname: "Pause"; is_paused: true };
@@ -758,6 +770,7 @@ end
 (************************************************************)
 transition DelegateStake(initiator: ByStr20)
   IsProxy;
+  RequireNotPaused;
   accept;
   stake_amt = _amount;
 
@@ -847,6 +860,7 @@ end
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
 transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
   IsProxy;
+  RequireNotPaused;
   azil_ssn_addr <- azil_ssn_address;
 
   (* first we do all checks, then call Holder on success within procedure *)
@@ -860,6 +874,7 @@ end
 
 transition CompleteWithdrawal(initiator: ByStr20)
   IsProxy;
+  RequireNotPaused;
   wu <- withdrawal_unbonded[initiator];
   match wu with
   | Some (Withdrawal wtoken wstake) =>
@@ -909,6 +924,7 @@ end
 (************************************************************)
 transition ZilBalanceOf(address: ByStr20, initiator: ByStr20)
   IsProxy;
+  RequireNotPaused;
   total_token_amt <- totaltokenamount;
   total_stake_amt <- totalstakeamount;
 
