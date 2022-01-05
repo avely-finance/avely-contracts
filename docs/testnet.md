@@ -1,4 +1,10 @@
-## Testnet
+# Testnet
+
+## Configuration
+
+Create and configure `.env.testnet`. Ask the team for private keys for shared admin and user accounts
+
+## Links
 
 Staking testnet Dashboard:
 https://testnet-stake.zilliqa.com/dashboard
