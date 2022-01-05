@@ -56,15 +56,28 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	}
 
 	new_buffers := []string{"0x" + p.GetBuffer().Addr, "0x" + p.GetBuffer().Addr, "0x" + anotherBuffer.Addr}
-
 	AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
+	activeBufferAddr := calcActiveBufferAddr(p, new_buffers)
+	testGetCurrentBuffer(p, activeBufferAddr)
+
+	//next reward cycle
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	AssertSuccess(p.Aproxy.DelegateStake(ToZil(10)))
 
-	lastRewardCycle, _ := strconv.ParseInt(p.Zimpl.Field("lastrewardcycle"), 10, 64)
-	index := lastRewardCycle % int64(len(new_buffers))
-	activeBufferAddr := new_buffers[index]
-	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, strconv.FormatInt(lastRewardCycle, 10)), ToZil(10))
+	activeBufferAddr = calcActiveBufferAddr(p, new_buffers)
+	testGetCurrentBuffer(p, activeBufferAddr)
+	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, p.Zimpl.Field("lastrewardcycle")), ToZil(10))
+}
+
+func calcActiveBufferAddr(p *contracts.Protocol, buffers []string) string {
+	lrcInt64, _ := strconv.ParseInt(p.Zimpl.Field("lastrewardcycle"), 10, 64)
+	index := lrcInt64 % int64(len(buffers))
+	return buffers[index]
+}
+
+func testGetCurrentBuffer(p *contracts.Protocol, activeBufferAddr string) {
+	tx, _ := AssertSuccess(p.Aimpl.GetCurrentBuffer())
+	AssertEvent(tx, Event{p.Aimpl.Addr, "GetCurrentBufferSuccess", ParamsMap{"buffer": activeBufferAddr}})
 }
