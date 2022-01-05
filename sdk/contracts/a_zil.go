@@ -282,7 +282,7 @@ func buildAZilContract(sdk *AvelySDK, aproxyAddr, zimplAddr string) contract2.Co
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
-			Value: aZilSSNAddress,
+			Value: "0x" + aZilSSNAddress,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",

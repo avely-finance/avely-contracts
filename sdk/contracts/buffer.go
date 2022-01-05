@@ -190,7 +190,7 @@ func buildBufferContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string)
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
-			Value: aZilSSNAddress,
+			Value: "0x" + aZilSSNAddress,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
