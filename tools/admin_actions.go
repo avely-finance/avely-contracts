@@ -41,9 +41,9 @@ func main() {
 		addr := *addrPtr
 
 		switch cmd {
-		case "from_bench32":
+		case "from_bech32":
 			convertFromBech32Addr(addr)
-		case "to_bench32":
+		case "to_bech32":
 			convertToBech32Addr(addr)
 		case "show_tx":
 			showTx(p, addr)
