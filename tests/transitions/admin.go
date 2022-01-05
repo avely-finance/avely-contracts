@@ -14,6 +14,7 @@ func (tr *Transitions) Admin() {
 
     checkChangeAzilSSNAddress(p)
     checkChangeZimplAddress(p)
+    checkChangeZproxyAddress(p)
     checkChangeAimplAddress(p)
 
     newAdminAddr := sdk.Cfg.Addr3
@@ -62,7 +63,8 @@ func checkChangeAzilSSNAddress(p *contracts.Protocol) {
 }
 
 func checkChangeZimplAddress(p *contracts.Protocol) {
-    zimplAddr := p.Aimpl.Field("zimpl_address")[2:]
+    zimplAddr := p.Zimpl.Addr
+
     tx, _ := AssertSuccess(p.Aimpl.ChangeZimplAddress(core.ZeroAddr))
     AssertEvent(tx, Event{p.Aimpl.Addr, "ChangeZimplAddress", ParamsMap{"address": "0x" + core.ZeroAddr}})
     AssertEqual(p.Aimpl.Field("zimpl_address"), "0x"+core.ZeroAddr)
@@ -91,4 +93,18 @@ func checkChangeAimplAddress(p *contracts.Protocol) {
     AssertEvent(tx, Event{p.Holder.Addr, "ChangeAimplAddress", ParamsMap{"address": "0x" + core.ZeroAddr}})
     AssertEqual(p.Holder.Field("aimpl_address"), "0x"+core.ZeroAddr)
     AssertSuccess(p.Holder.ChangeAimplAddress(aimplAddr))
+}
+
+func checkChangeZproxyAddress(p *contracts.Protocol) {
+    zproxyAddr := p.Zproxy.Addr
+
+    tx, _ := AssertSuccess(p.GetBuffer().ChangeZproxyAddress(core.ZeroAddr))
+    AssertEvent(tx, Event{p.GetBuffer().Addr, "ChangeZproxyAddress", ParamsMap{"address": "0x" + core.ZeroAddr}})
+    AssertEqual(p.GetBuffer().Field("zproxy_address"), "0x"+core.ZeroAddr)
+    AssertSuccess(p.GetBuffer().ChangeZproxyAddress(zproxyAddr))
+
+    tx, _ = AssertSuccess(p.Holder.ChangeZproxyAddress(core.ZeroAddr))
+    AssertEvent(tx, Event{p.Holder.Addr, "ChangeZproxyAddress", ParamsMap{"address": "0x" + core.ZeroAddr}})
+    AssertEqual(p.Holder.Field("zproxy_address"), "0x"+core.ZeroAddr)
+    AssertSuccess(p.Holder.ChangeZproxyAddress(zproxyAddr))
 }
