@@ -73,6 +73,17 @@ func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction,
 	return a.Contract.Call("ClaimWithdrawal", args, "0")
 }
 
+func (a *AZil) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			"0x" + new_addr,
+		},
+	}
+	return a.Call("ChangeAzilSSNAddress", args, "0")
+}
+
 func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

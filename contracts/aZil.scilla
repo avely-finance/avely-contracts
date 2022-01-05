@@ -655,6 +655,13 @@ transition ClaimAdmin()
   end
 end
 
+transition ChangeAzilSSNAddress(address: ByStr20)
+  RequireAdmin;
+  azil_ssn_address := address;
+  e = { _eventname: "ChangeAzilSSNAddress"; address: address };
+  event e
+end
+
 transition ChangeHolderAddress(address: ByStr20)
   RequireAdmin;
   holder_address := address;
