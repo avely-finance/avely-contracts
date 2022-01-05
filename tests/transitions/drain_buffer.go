@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -83,7 +84,7 @@ func (tr *Transitions) DrainBuffer() {
 		"RequestDelegatorSwap",
 		p.Zproxy.Addr,
 		"0",
-		ParamsMap{"new_deleg_addr": "0x" + p.Holder.Addr},
+		ParamsMap{"new_deleg_addr": p.Holder.Addr},
 	})
 
 	AssertTransition(txn, Transition{
@@ -91,14 +92,14 @@ func (tr *Transitions) DrainBuffer() {
 		"ConfirmDelegatorSwap",
 		p.Zproxy.Addr,
 		"0",
-		ParamsMap{"requestor": "0x" + p.GetBuffer().Addr},
+		ParamsMap{"requestor": p.GetBuffer().Addr},
 	})
 
 	//try to drain buffer, not existent at main staking contract
 	//error should not be thrown
-	new_buffers := []string{"0x0000000000000000000000000000000000000000"}
+	new_buffers := []string{core.ZeroAddr}
 	AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
-	txn, _ = p.Aimpl.DrainBuffer("0000000000000000000000000000000000000000")
+	txn, _ = p.Aimpl.DrainBuffer(core.ZeroAddr)
 	AssertTransition(txn, Transition{
 		p.Aimpl.Addr, //sender
 		"ClaimRewards",

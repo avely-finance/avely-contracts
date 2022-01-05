@@ -35,7 +35,7 @@ func (a *AZilProxy) UpgradeTo(newImplementation string) (*transaction.Transactio
         {
             "new_implementation",
             "ByStr20",
-            "0x" + newImplementation,
+            newImplementation,
         },
     }
     return a.Call("UpgradeTo", args, "0")
@@ -46,7 +46,7 @@ func (a *AZilProxy) ChangeAdmin(newAdmin string) (*transaction.Transaction, erro
         {
             "new_admin",
             "ByStr20",
-            "0x" + newAdmin,
+            newAdmin,
         },
     }
     return a.Call("ChangeAdmin", args, "0")
@@ -73,7 +73,7 @@ func (a *AZilProxy) ZilBalanceOf(addr string) (string, error) {
         {
             "address",
             "ByStr20",
-            "0x" + addr,
+            addr,
         },
     }
     tx, err := a.Contract.Call("ZilBalanceOf", args, "0")
@@ -86,7 +86,7 @@ func (a *AZilProxy) ZilBalanceOf(addr string) (string, error) {
             continue
         }
         for _, param := range transition.Msg.Params {
-            if param.VName == "address" && param.Value != "0x"+addr {
+            if param.VName == "address" && param.Value != addr {
                 //it's balance of some other address, it should not be so
                 return "", errors.New("Balance not found for addr=" + addr)
             }
@@ -113,7 +113,7 @@ func NewAZilProxyContract(sdk *AvelySDK, aimplAddr string) (*AZilProxy, error) {
         sdkContract := Contract{
             Sdk:             sdk,
             Provider:        *contract.Provider,
-            Addr:            tx.ContractAddress,
+            Addr:            "0x" + tx.ContractAddress,
             Bech32:          b32,
             Wallet:          contract.Signer,
             StateFieldTypes: buildAZilProxyStateFields(),
@@ -157,11 +157,11 @@ func buildAZilProxyContract(sdk *AvelySDK, aimplAddr string) contract2.Contract 
         }, {
             VName: "init_admin_address",
             Type:  "ByStr20",
-            Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+            Value: sdk.GetAddressFromPrivateKey(key),
         }, {
             VName: "init_aimpl_address",
             Type:  "ByStr20",
-            Value: "0x" + aimplAddr,
+            Value: aimplAddr,
         },
     }
 

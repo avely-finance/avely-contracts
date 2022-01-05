@@ -16,11 +16,11 @@ func main() {
 
 	shortcuts := map[string]string{
 		"azilssn":  config.AzilSsnAddress,
-		"addr1":    "0x" + config.Addr1,
-		"addr2":    "0x" + config.Addr2,
-		"addr3":    "0x" + config.Addr3,
-		"admin":    "0x" + config.Admin,
-		"verifier": "0x" + config.Verifier,
+		"addr1":    config.Addr1,
+		"addr2":    config.Addr2,
+		"addr3":    config.Addr3,
+		"admin":    config.Admin,
+		"verifier": config.Verifier,
 	}
 
 	log.AddShortcuts(shortcuts)

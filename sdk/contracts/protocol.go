@@ -44,7 +44,7 @@ func (p *Protocol) SyncBufferAndHolder() {
 	new_buffers := []string{}
 
 	for _, b := range p.Buffers {
-		new_buffers = append(new_buffers, "0x"+b.Addr)
+		new_buffers = append(new_buffers, b.Addr)
 	}
 
 	check(p.Aimpl.ChangeBuffers(new_buffers))
@@ -61,13 +61,13 @@ func (p *Protocol) SetupZProxy() {
 		{
 			"newImplementation",
 			"ByStr20",
-			"0x" + p.Zimpl.Addr,
+			p.Zimpl.Addr,
 		},
 	}
 	check(p.Zproxy.Call("UpgradeTo", args, "0"))
 	check(p.Zproxy.AddSSN(sdk.Cfg.AzilSsnAddress, "aZil SSN"))
-	check(p.Zproxy.UpdateVerifierRewardAddr("0x" + sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateVerifier("0x" + sdk.Cfg.Verifier))
+	check(p.Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
+	check(p.Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
 	check(p.Zproxy.UpdateStakingParameters(ToZil(1000), ToZil(10))) //minstake (ssn not active if less), mindelegstake
 	check(p.Zproxy.Unpause())
 
@@ -86,14 +86,14 @@ func (p *Protocol) SetupZProxy() {
 }
 
 func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
-	log.AddShortcut("Zproxy", "0x"+p.Zproxy.Addr)
-	log.AddShortcut("Zimpl", "0x"+p.Zimpl.Addr)
-	log.AddShortcut("Aproxy", "0x"+p.Aproxy.Addr)
-	log.AddShortcut("Aimpl", "0x"+p.Aimpl.Addr)
-	log.AddShortcut("Holder", "0x"+p.Holder.Addr)
+	log.AddShortcut("Zproxy", p.Zproxy.Addr)
+	log.AddShortcut("Zimpl", p.Zimpl.Addr)
+	log.AddShortcut("Aproxy", p.Aproxy.Addr)
+	log.AddShortcut("Aimpl", p.Aimpl.Addr)
+	log.AddShortcut("Holder", p.Holder.Addr)
 
 	for i, b := range p.Buffers {
 		title := "Buffer" + strconv.Itoa(i)
-		log.AddShortcut(title, "0x"+b.Addr)
+		log.AddShortcut(title, b.Addr)
 	}
 }
