@@ -3,6 +3,7 @@ package transitions
 import (
     "github.com/avely-finance/avely-contracts/sdk/contracts"
     "github.com/avely-finance/avely-contracts/sdk/core"
+    "github.com/avely-finance/avely-contracts/sdk/utils"
     . "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -17,6 +18,7 @@ func (tr *Transitions) Admin() {
     checkChangeZimplAddress(p)
     checkChangeZproxyAddress(p)
     checkChangeAimplAddress(p)
+    checkUpdateStakingParameters(p)
 
     newAdminAddr := sdk.Cfg.Addr3
     newAdminKey := sdk.Cfg.Key3
@@ -117,4 +119,13 @@ func checkChangeZproxyAddress(p *contracts.Protocol) {
     AssertEvent(tx, Event{p.Holder.Addr, "ChangeZproxyAddress", ParamsMap{"address": "0x" + core.ZeroAddr}})
     AssertEqual(p.Holder.Field("zproxy_address"), "0x"+core.ZeroAddr)
     AssertSuccess(p.Holder.ChangeZproxyAddress(zproxyAddr))
+}
+
+func checkUpdateStakingParameters(p *contracts.Protocol) {
+    prevValue := p.Aimpl.Field("mindelegstake")
+    testValue := utils.ToZil(54321)
+    tx, _ := AssertSuccess(p.Aimpl.UpdateStakingParameters(testValue))
+    AssertEvent(tx, Event{p.Aimpl.Addr, "UpdateStakingParameters", ParamsMap{"min_deleg_stake": testValue}})
+    AssertEqual(p.Aimpl.Field("mindelegstake"), testValue)
+    AssertSuccess(p.Aimpl.UpdateStakingParameters(prevValue))
 }
