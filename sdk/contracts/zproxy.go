@@ -33,7 +33,7 @@ func (p *Zproxy) AssignStakeReward(ssn, reward string) (*transaction.Transaction
 	}
 
 	ars := []string{
-		ssn,
+		"0x" + ssn,
 		reward,
 	}
 
@@ -60,7 +60,7 @@ func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, err
 		{
 			"ssnaddr",
 			"ByStr20",
-			addr,
+			"0x" + addr,
 		},
 		{
 			"name",
