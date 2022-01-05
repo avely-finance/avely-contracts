@@ -5,13 +5,12 @@ import (
 	"errors"
 	"io/ioutil"
 
-	. "github.com/avely-finance/avely-contracts/sdk/core"
-
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
 type Zimpl struct {
@@ -32,7 +31,7 @@ func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 		contract := Contract{
 			Sdk:             sdk,
 			Provider:        *contract.Provider,
-			Addr:            tx.ContractAddress,
+			Addr:            "0x" + tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          contract.Signer,
 			StateFieldTypes: buildZimplStateFields(),
@@ -78,16 +77,16 @@ func buildZimplContract(sdk *AvelySDK, ZproxyAddr, GzilAddr string) contract2.Co
 		}, {
 			VName: "init_admin",
 			Type:  "ByStr20",
-			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+			Value: sdk.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_proxy_address",
 			Type:  "ByStr20",
-			Value: "0x" + ZproxyAddr,
+			Value: ZproxyAddr,
 		},
 		{
 			VName: "init_gzil_address",
 			Type:  "ByStr20",
-			Value: "0x" + GzilAddr,
+			Value: GzilAddr,
 		},
 	}
 

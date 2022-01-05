@@ -23,18 +23,18 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	lastrewardcycle := p.Zimpl.Field("lastrewardcycle")
 
-	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", "0x"+p.GetBuffer().Addr, "0x"+sdk.Cfg.AzilSsnAddress, lastrewardcycle), ToZil(20))
+	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", p.GetBuffer().Addr, sdk.Cfg.AzilSsnAddress, lastrewardcycle), ToZil(20))
 
-	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", "0x"+p.GetBuffer().Addr, "0x"+sdk.Cfg.AzilSsnAddress, p.Zimpl.Field("lastrewardcycle")), ToZil(20))
+	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", p.GetBuffer().Addr, sdk.Cfg.AzilSsnAddress, p.Zimpl.Field("lastrewardcycle")), ToZil(20))
 	AssertEqual(p.Aimpl.Field("_balance"), "0")
 
 	AssertEqual(p.Aimpl.Field("totalstakeamount"), ToZil(1020))
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1020))
 
-	AssertEqual(p.Aimpl.Field("balances", "0x"+sdk.Cfg.Admin), ToAzil(1000))
-	AssertEqual(p.Aimpl.Field("balances", "0x"+sdk.Cfg.Addr1), ToAzil(20))
+	AssertEqual(p.Aimpl.Field("balances", sdk.Cfg.Admin), ToAzil(1000))
+	AssertEqual(p.Aimpl.Field("balances", sdk.Cfg.Addr1), ToAzil(20))
 
-	AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+sdk.Cfg.Addr1), lastrewardcycle)
+	AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", sdk.Cfg.Addr1), lastrewardcycle)
 
 	// Check delegate to the next cycle
 	p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare)
@@ -42,7 +42,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	nextCycleStr := StrAdd(lastrewardcycle, "1")
 
-	AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", "0x"+sdk.Cfg.Addr1), nextCycleStr)
+	AssertEqual(p.Aimpl.Field("last_buf_deposit_cycle_deleg", sdk.Cfg.Addr1), nextCycleStr)
 }
 
 func (tr *Transitions) DelegateStakeBuffersRotation() {
@@ -55,7 +55,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 		GetLog().Fatal("Deploy buffer error = " + err.Error())
 	}
 
-	new_buffers := []string{"0x" + p.GetBuffer().Addr, "0x" + p.GetBuffer().Addr, "0x" + anotherBuffer.Addr}
+	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr, anotherBuffer.Addr}
 	AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
 	activeBufferAddr := calcActiveBufferAddr(p, new_buffers)
 	testGetCurrentBuffer(p, activeBufferAddr)
@@ -68,7 +68,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 	activeBufferAddr = calcActiveBufferAddr(p, new_buffers)
 	testGetCurrentBuffer(p, activeBufferAddr)
-	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", activeBufferAddr, "0x"+sdk.Cfg.AzilSsnAddress, p.Zimpl.Field("lastrewardcycle")), ToZil(10))
+	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, p.Zimpl.Field("lastrewardcycle")), ToZil(10))
 }
 
 func calcActiveBufferAddr(p *contracts.Protocol, buffers []string) string {

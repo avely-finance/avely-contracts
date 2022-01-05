@@ -49,7 +49,7 @@ func (tr *Transitions) IsAdmin() {
 	tx, _ = p.Aimpl.ChangeHolderAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "AdminValidationFailed")
 
-	new_buffers := []string{"0x" + p.GetBuffer().Addr, "0x" + p.GetBuffer().Addr}
+	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr}
 	tx, _ = p.Aimpl.ChangeBuffers(new_buffers)
 	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Aimpl.IncreaseAutoRestakeAmount(ToZil(1))
