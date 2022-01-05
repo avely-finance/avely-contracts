@@ -13,15 +13,13 @@ import (
 )
 
 type AvelySDK struct {
-	Cfg      Config
-	TxIdLast string
-	TxLast   *transaction2.Transaction
+	Cfg    Config
+	TxLast *transaction2.Transaction
 }
 
 func NewAvelySDK(config Config) *AvelySDK {
 	return &AvelySDK{
-		Cfg:      config,
-		TxIdLast: "",
+		Cfg: config,
 	}
 }
 
@@ -66,7 +64,6 @@ func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction,
 	}
 	tx, err := c.Deploy(parameter)
 
-	sdk.TxIdLast = tx.ID
 	sdk.TxLast = tx
 
 	return tx, err
@@ -88,7 +85,6 @@ func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []co
 	}
 	tx, err := c.Call(transition, args, params, priority)
 
-	sdk.TxIdLast = tx.ID
 	sdk.TxLast = tx
 
 	return tx, err
