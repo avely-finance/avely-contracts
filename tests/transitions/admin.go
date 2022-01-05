@@ -1,6 +1,8 @@
 package transitions
 
 import (
+    "github.com/avely-finance/avely-contracts/sdk/contracts"
+    "github.com/avely-finance/avely-contracts/sdk/core"
     . "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -9,6 +11,8 @@ func (tr *Transitions) Admin() {
     Start("Azil contract admin transitions")
 
     p := tr.DeployAndUpgrade()
+
+    checkChangeAzilSSNAddress(p)
 
     newAdminAddr := sdk.Cfg.Addr3
     newAdminKey := sdk.Cfg.Key3
@@ -36,5 +40,21 @@ func (tr *Transitions) Admin() {
     AssertEvent(tx, Event{p.Aimpl.Addr, "ClaimAdmin", ParamsMap{"new_admin": "0x" + newAdminAddr}})
     AssertEqual(p.Aimpl.Field("admin_address"), "0x"+newAdminAddr)
     AssertEqual(p.Aimpl.Field("staging_admin_address"), "")
+}
 
+func checkChangeAzilSSNAddress(p *contracts.Protocol) {
+    tx, _ := AssertSuccess(p.Aimpl.ChangeAzilSSNAddress(core.ZeroAddr))
+    AssertEvent(tx, Event{p.Aimpl.Addr, "ChangeAzilSSNAddress", ParamsMap{"address": "0x" + core.ZeroAddr}})
+    AssertEqual(p.Aimpl.Field("azil_ssn_address"), "0x"+core.ZeroAddr)
+    AssertSuccess(p.Aimpl.ChangeAzilSSNAddress(sdk.Cfg.AzilSsnAddress))
+
+    tx, _ = AssertSuccess(p.GetBuffer().ChangeAzilSSNAddress(core.ZeroAddr))
+    AssertEvent(tx, Event{p.GetBuffer().Addr, "ChangeAzilSSNAddress", ParamsMap{"address": "0x" + core.ZeroAddr}})
+    AssertEqual(p.GetBuffer().Field("azil_ssn_address"), "0x"+core.ZeroAddr)
+    AssertSuccess(p.GetBuffer().ChangeAzilSSNAddress(sdk.Cfg.AzilSsnAddress))
+
+    tx, _ = AssertSuccess(p.Holder.ChangeAzilSSNAddress(core.ZeroAddr))
+    AssertEvent(tx, Event{p.Holder.Addr, "ChangeAzilSSNAddress", ParamsMap{"address": "0x" + core.ZeroAddr}})
+    AssertEqual(p.Holder.Field("azil_ssn_address"), "0x"+core.ZeroAddr)
+    AssertSuccess(p.Holder.ChangeAzilSSNAddress(sdk.Cfg.AzilSsnAddress))
 }
