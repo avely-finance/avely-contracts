@@ -89,7 +89,7 @@ func (c *Contract) State() string {
 }
 
 func (c *Contract) stateParse() {
-	if c.TxIdStateParsed == c.Sdk.TxIdLast {
+	if c.TxIdStateParsed == c.Sdk.TxLast.ID {
 		return
 	}
 	state := c.State()
@@ -136,7 +136,7 @@ func (c *Contract) stateParse() {
 		}
 	}
 	c.StateMap = statemap
-	c.TxIdStateParsed = c.Sdk.TxIdLast
+	c.TxIdStateParsed = c.Sdk.TxLast.ID
 }
 
 func stateFieldBool(v interface{}) string {
