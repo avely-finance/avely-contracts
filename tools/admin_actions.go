@@ -43,6 +43,8 @@ func main() {
 		switch cmd {
 		case "from_bench32":
 			convertFromBech32Addr(addr)
+		case "to_bench32":
+			convertToBech32Addr(addr)
 		case "show_tx":
 			showTx(p, addr)
 		case "deploy_buffer":
@@ -74,6 +76,16 @@ func showTx(p *Protocol, tx_addr string) {
 
 func convertFromBech32Addr(addr32 string) {
 	addr, err := bech32.FromBech32Addr(addr32)
+
+	if err != nil {
+		log.Fatalf("Convert failed with err: ", err)
+	}
+
+	log.Success("Converted address: " + addr)
+}
+
+func convertToBech32Addr(addr32 string) {
+	addr, err := bech32.ToBech32Address(addr32)
 
 	if err != nil {
 		log.Fatalf("Convert failed with err: ", err)
