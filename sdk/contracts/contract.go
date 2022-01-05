@@ -89,7 +89,7 @@ func (c *Contract) State() string {
 }
 
 func (c *Contract) stateParse() {
-	if c.TxIdStateParsed == c.Sdk.TxIdLast {
+	if c.TxIdStateParsed == c.Sdk.TxLast.ID {
 		return
 	}
 	state := c.State()
@@ -108,6 +108,9 @@ func (c *Contract) stateParse() {
 			switch typ {
 			case "StateFieldOption":
 				statemap[k] = stateFieldOption(v)
+				break
+			case "StateFieldBool":
+				statemap[k] = stateFieldBool(v)
 				break
 			case "StateFieldMap":
 				statemap[k] = stateFieldMap(v)
@@ -133,7 +136,15 @@ func (c *Contract) stateParse() {
 		}
 	}
 	c.StateMap = statemap
-	c.TxIdStateParsed = c.Sdk.TxIdLast
+	c.TxIdStateParsed = c.Sdk.TxLast.ID
+}
+
+func stateFieldBool(v interface{}) string {
+	tmp, _ := json.Marshal(v)
+	var field map[string]interface{}
+	json.Unmarshal([]byte(tmp), &field)
+	val := field["constructor"].(string)
+	return val
 }
 
 func stateFieldOption(v interface{}) string {
