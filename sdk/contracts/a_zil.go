@@ -189,6 +189,16 @@ func (a *AZil) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, er
 	return a.Call("CompleteWithdrawalSuccessCallBack", args, "0")
 }
 
+func (a *AZil) Pause() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("Pause", args, "0")
+}
+
+func (a *AZil) Unpause() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("UnPause", args, "0")
+}
+
 func NewAZilContract(sdk *AvelySDK, aproxyAddr, zimplAddr string) (*AZil, error) {
 	contract := buildAZilContract(sdk, aproxyAddr, zimplAddr)
 
@@ -287,6 +297,7 @@ func buildAZilStateFields() StateFieldTypes {
 	stateFieldTypes["withdrawal_pending"] = "StateFieldMapMapPair"
 	stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapPair"
 	stateFieldTypes["staging_admin_address"] = "StateFieldOption"
+	stateFieldTypes["is_paused"] = "StateFieldBool"
 
 	return stateFieldTypes
 }
