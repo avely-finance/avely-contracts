@@ -12,6 +12,8 @@ import (
 	"strconv"
 )
 
+const ZeroAddr = "0000000000000000000000000000000000000000"
+
 type AvelySDK struct {
 	Cfg    Config
 	TxLast *transaction2.Transaction
