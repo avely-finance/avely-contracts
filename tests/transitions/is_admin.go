@@ -50,6 +50,8 @@ func (tr *Transitions) IsAdmin() {
 	new_buffers := []string{"0x" + p.GetBuffer().Addr, "0x" + p.GetBuffer().Addr}
 	tx, _ = p.Aimpl.ChangeBuffers(new_buffers)
 	AssertError(tx, "AdminValidationFailed")
+	tx, _ = p.Aimpl.IncreaseAutoRestakeAmount(ToZil(1))
+	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Aimpl.PerformAutoRestake()
 	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Aimpl.UpdateStakingParameters(ToZil(100))
