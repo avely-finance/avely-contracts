@@ -31,12 +31,12 @@ func NewGzil(sdk *AvelySDK) (*Gzil, error) {
 		{
 			VName: "contract_owner",
 			Type:  "ByStr20",
-			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+			Value: sdk.GetAddressFromPrivateKey(key),
 		},
 		{
 			VName: "init_minter",
 			Type:  "ByStr20",
-			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+			Value: sdk.GetAddressFromPrivateKey(key),
 		},
 		{
 			VName: "name",
@@ -88,7 +88,7 @@ func NewGzil(sdk *AvelySDK) (*Gzil, error) {
 		contract := Contract{
 			Sdk:             sdk,
 			Provider:        *contract.Provider,
-			Addr:            tx.ContractAddress,
+			Addr:            "0x" + tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          wallet,
 			StateFieldTypes: stateFieldTypes,

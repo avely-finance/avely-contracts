@@ -33,7 +33,7 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	log.Success("deploy Zimpl succeed, address = " + Zimpl.Addr)
 
 	// deploy aproxy
-	Aproxy, err := NewAZilProxyContract(sdk, "0000000000000000000000000000000000000000")
+	Aproxy, err := NewAZilProxyContract(sdk, ZeroAddr)
 	if err != nil {
 		log.Fatal("deploy Aproxy error = " + err.Error())
 	}
@@ -86,7 +86,7 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	log.Success("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
 	// deploy aproxy
-	Aproxy, err := NewAZilProxyContract(sdk, "0000000000000000000000000000000000000000")
+	Aproxy, err := NewAZilProxyContract(sdk, ZeroAddr)
 	if err != nil {
 		log.Fatal("deploy Aproxy error = " + err.Error())
 	}
@@ -138,7 +138,7 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	log.Success("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
 	// Restore aproxy
-	Aproxy, err := RestoreAZilProxyContract(sdk, sdk.Cfg.AproxyAddr, "0000000000000000000000000000000000000000")
+	Aproxy, err := RestoreAZilProxyContract(sdk, sdk.Cfg.AproxyAddr, ZeroAddr)
 	if err != nil {
 		log.Fatal("Restore Aproxy error = " + err.Error())
 	}
