@@ -122,8 +122,8 @@ func AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
 	found := false
 	if txn.Receipt.Transitions != nil {
 		for _, txTransition := range txn.Receipt.Transitions {
-			if txTransition.Addr == "0x"+expectedTxn.Sender &&
-				txTransition.Msg.Recipient == "0x"+expectedTxn.Recipient &&
+			if txTransition.Addr == expectedTxn.Sender &&
+				txTransition.Msg.Recipient == expectedTxn.Recipient &&
 				txTransition.Msg.Tag == expectedTxn.Tag &&
 				txTransition.Msg.Amount == expectedTxn.Amount &&
 				compareParams(txTransition.Msg.Params, convertParams(expectedTxn.Params)) {
@@ -150,7 +150,7 @@ func AssertEvent(txn *transaction.Transaction, expectedEvent Event) {
 	if txn.Receipt.EventLogs != nil {
 		for _, el := range txn.Receipt.EventLogs {
 			txEvent := convertEventLog(el, GetLog())
-			if txEvent.Address == "0x"+expectedEvent.Sender &&
+			if txEvent.Address == expectedEvent.Sender &&
 				txEvent.EventName == expectedEvent.EventName &&
 				compareParams(txEvent.Params, convertParams(expectedEvent.Params)) {
 				found = true

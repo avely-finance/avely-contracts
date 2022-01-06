@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-const ZeroAddr = "0000000000000000000000000000000000000000"
+const ZeroAddr = "0x0000000000000000000000000000000000000000"
 
 type AvelySDK struct {
 	Cfg    Config
@@ -49,7 +49,7 @@ func (sdk *AvelySDK) GetBalance(addr string) string {
 func (sdk *AvelySDK) GetAddressFromPrivateKey(privateKey string) string {
 	publicKey := keytools.GetPublicKeyFromPrivateKey(util.DecodeHex(privateKey), true)
 	address := keytools.GetAddressFromPublic(publicKey)
-	return address
+	return "0x" + address
 }
 
 func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {

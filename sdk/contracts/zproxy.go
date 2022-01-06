@@ -33,7 +33,7 @@ func (p *Zproxy) AssignStakeReward(ssn, reward string) (*transaction.Transaction
 	}
 
 	ars := []string{
-		"0x" + ssn,
+		ssn,
 		reward,
 	}
 
@@ -60,7 +60,7 @@ func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, err
 		{
 			"ssnaddr",
 			"ByStr20",
-			"0x" + addr,
+			addr,
 		},
 		{
 			"name",
@@ -148,7 +148,7 @@ func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
 		sdkContract := Contract{
 			Sdk:             sdk,
 			Provider:        *contract.Provider,
-			Addr:            tx.ContractAddress,
+			Addr:            "0x" + tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          contract.Signer,
 			StateFieldTypes: stateFieldTypes,
@@ -196,11 +196,11 @@ func buildZproxyContract(sdk *AvelySDK) contract2.Contract {
 		}, {
 			VName: "init_admin",
 			Type:  "ByStr20",
-			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+			Value: sdk.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_implementation",
 			Type:  "ByStr20",
-			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+			Value: sdk.GetAddressFromPrivateKey(key),
 		},
 	}
 

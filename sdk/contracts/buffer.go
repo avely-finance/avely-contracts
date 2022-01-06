@@ -29,7 +29,7 @@ func (b *BufferContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards st
 		{
 			"ssnaddr",
 			"ByStr20",
-			"0x" + ssnaddr,
+			ssnaddr,
 		},
 		{
 			"rewards",
@@ -45,7 +45,7 @@ func (b *BufferContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*
 		{
 			"ssnaddr",
 			"ByStr20",
-			"0x" + ssnaddr,
+			ssnaddr,
 		},
 		{
 			"amount",
@@ -61,7 +61,7 @@ func (b *BufferContract) ChangeZproxyAddress(new_addr string) (*transaction.Tran
 		{
 			"address",
 			"ByStr20",
-			"0x" + new_addr,
+			new_addr,
 		},
 	}
 	return b.Call("ChangeZproxyAddress", args, "0")
@@ -72,7 +72,7 @@ func (b *BufferContract) ChangeZimplAddress(new_addr string) (*transaction.Trans
 		{
 			"address",
 			"ByStr20",
-			"0x" + new_addr,
+			new_addr,
 		},
 	}
 	return b.Call("ChangeZimplAddress", args, "0")
@@ -83,7 +83,7 @@ func (b *BufferContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Tra
 		{
 			"address",
 			"ByStr20",
-			"0x" + new_addr,
+			new_addr,
 		},
 	}
 	return b.Call("ChangeAzilSSNAddress", args, "0")
@@ -94,7 +94,7 @@ func (b *BufferContract) ChangeAimplAddress(new_addr string) (*transaction.Trans
 		{
 			"address",
 			"ByStr20",
-			"0x" + new_addr,
+			new_addr,
 		},
 	}
 	return b.Call("ChangeAimplAddress", args, "0")
@@ -115,7 +115,7 @@ func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transacti
 		{
 			"new_deleg_addr",
 			"ByStr20",
-			"0x" + new_deleg_addr,
+			new_deleg_addr,
 		},
 	}
 	return b.Call("RequestDelegatorSwap", args, "0")
@@ -135,7 +135,7 @@ func NewBufferContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (
 		sdkContract := Contract{
 			Sdk:             sdk,
 			Provider:        *contract.Provider,
-			Addr:            tx.ContractAddress,
+			Addr:            "0x" + tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          contract.Signer,
 			StateFieldTypes: stateFieldTypes,
@@ -182,23 +182,23 @@ func buildBufferContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string)
 		}, {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
-			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+			Value: sdk.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + aimplAddr,
+			Value: aimplAddr,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
-			Value: "0x" + aZilSSNAddress,
+			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
-			Value: "0x" + zproxyAddr,
+			Value: zproxyAddr,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + zimplAddr,
+			Value: zimplAddr,
 		},
 	}
 

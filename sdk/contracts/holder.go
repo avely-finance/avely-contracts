@@ -51,7 +51,7 @@ func (b *HolderContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*
 		{
 			"ssnaddr",
 			"ByStr20",
-			"0x" + ssnaddr,
+			ssnaddr,
 		},
 		{
 			"amount",
@@ -67,7 +67,7 @@ func (b *HolderContract) WithdrawStakeRewardsSuccessCallBack(ssnaddr, rewards st
 		{
 			"ssnaddr",
 			"ByStr20",
-			"0x" + ssnaddr,
+			ssnaddr,
 		},
 		{
 			"rewards",
@@ -83,7 +83,7 @@ func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string)
 		{
 			"ssnaddr",
 			"ByStr20",
-			"0x" + ssnaddr,
+			ssnaddr,
 		},
 		{
 			"amount",
@@ -110,7 +110,7 @@ func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Tran
 		{
 			"address",
 			"ByStr20",
-			"0x" + new_addr,
+			new_addr,
 		},
 	}
 	return b.Call("ChangeZproxyAddress", args, "0")
@@ -121,7 +121,7 @@ func (b *HolderContract) ChangeZimplAddress(new_addr string) (*transaction.Trans
 		{
 			"address",
 			"ByStr20",
-			"0x" + new_addr,
+			new_addr,
 		},
 	}
 	return b.Call("ChangeZimplAddress", args, "0")
@@ -132,7 +132,7 @@ func (b *HolderContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Tra
 		{
 			"address",
 			"ByStr20",
-			"0x" + new_addr,
+			new_addr,
 		},
 	}
 	return b.Call("ChangeAzilSSNAddress", args, "0")
@@ -143,7 +143,7 @@ func (b *HolderContract) ChangeAimplAddress(new_addr string) (*transaction.Trans
 		{
 			"address",
 			"ByStr20",
-			"0x" + new_addr,
+			new_addr,
 		},
 	}
 	return b.Call("ChangeAimplAddress", args, "0")
@@ -164,7 +164,7 @@ func (b *HolderContract) ConfirmDelegatorSwap(requestor string) (*transaction.Tr
 		{
 			"requestor",
 			"ByStr20",
-			"0x" + requestor,
+			requestor,
 		},
 	}
 	return b.Call("ConfirmDelegatorSwap", args, "0")
@@ -189,7 +189,7 @@ func NewHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (
 		sdkContract := Contract{
 			Sdk:             sdk,
 			Provider:        *contract.Provider,
-			Addr:            tx.ContractAddress,
+			Addr:            "0x" + tx.ContractAddress,
 			Bech32:          b32,
 			Wallet:          contract.Signer,
 			StateFieldTypes: stateFieldTypes,
@@ -234,23 +234,23 @@ func buildHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string)
 		}, {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
-			Value: "0x" + sdk.GetAddressFromPrivateKey(key),
+			Value: sdk.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + aimplAddr,
+			Value: aimplAddr,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",
-			Value: "0x" + aZilSSNAddress,
+			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
-			Value: "0x" + zproxyAddr,
+			Value: zproxyAddr,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
-			Value: "0x" + zimplAddr,
+			Value: zimplAddr,
 		},
 	}
 

@@ -39,7 +39,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	AssertSuccess(p.Aimpl.PerformAutoRestake())
 	balance2, _ = p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr2)
 	AssertEqual(balance2, StrMulDiv(
-		p.Aimpl.Field("balances", "0x"+sdk.Cfg.Addr2),
+		p.Aimpl.Field("balances", sdk.Cfg.Addr2),
 		p.Aimpl.Field("totalstakeamount"),
 		p.Aimpl.Field("totaltokenamount")))
 
@@ -53,12 +53,12 @@ func (tr *Transitions) ZilBalanceOf() {
 	AssertSuccess(p.Aproxy.DelegateStake(ToZil(10)))
 	balance2, _ = p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr2)
 	AssertEqual(balance2, StrMulDiv(
-		p.Aimpl.Field("balances", "0x"+sdk.Cfg.Addr2),
+		p.Aimpl.Field("balances", sdk.Cfg.Addr2),
 		p.Aimpl.Field("totalstakeamount"),
 		p.Aimpl.Field("totaltokenamount")))
 	balance3, _ := p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr3)
 	AssertEqual(balance3, StrMulDiv(
-		p.Aimpl.Field("balances", "0x"+sdk.Cfg.Addr3),
+		p.Aimpl.Field("balances", sdk.Cfg.Addr3),
 		p.Aimpl.Field("totalstakeamount"),
 		p.Aimpl.Field("totaltokenamount")))
 }
