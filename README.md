@@ -10,3 +10,9 @@ If you see auth error, read [this](https://github.community/t/docker-pull-from-p
 ## Configuration
 
 For local development you'll need .env.local file, copied from .env.example.
+
+## Links
+
+* [Testnet useful info](docs/testnet.md)
+* [How to debug Scilla](docs/debug.md)
+* [Isolated Server know how](docs/isolated_server.md)

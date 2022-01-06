@@ -9,6 +9,12 @@ Create and configure `.env.testnet`. Ask the team for private keys for shared ad
 Staking testnet Dashboard:
 https://testnet-stake.zilliqa.com/dashboard
 
+Staking contract addresses:
+* https://dev.zilliqa.com/docs/staking/phase1/staking-general-information/
+* https://testnet-viewer.zilliqa.com/#staking-contract
+
+Staked Seed Nodes:
+https://testnet-viewer.zilliqa.com/
 
 Admin account:
 https://viewblock.io/zilliqa/address/zil17c2804u3j3uwttl7r77e5rxuam5lmepdf2l87e?network=testnet
