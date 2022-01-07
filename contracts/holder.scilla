@@ -13,7 +13,6 @@ let one_msg =
     Cons {Message} msg nil_msg
 
 type Error =
-  | AdminValidationFailed
   | AimplValidationFailed
   | ClaimRewardsHolderFundsMismatch
   | CompleteWithdrawalHolderFundsMismatch
@@ -25,7 +24,6 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AdminValidationFailed                   => "AdminValidationFailed"
       | AimplValidationFailed                   => "AimplValidationFailed"
       | ClaimRewardsHolderFundsMismatch         => "ClaimRewardsHolderFundsMismatch"
       | CompleteWithdrawalHolderFundsMismatch   => "CompleteWithdrawalHolderFundsMismatch"
@@ -41,14 +39,12 @@ let make_error =
 (***************************************************)
 
 contract Holder(
-  init_admin_address        : ByStr20,
   init_azil_ssn_address     : ByStr20,
   init_aimpl_address        : ByStr20,
   init_zproxy_address       : ByStr20,
   init_zimpl_address        : ByStr20
 )
 
-field contractadmin_address : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field aimpl_address         : ByStr20 = init_aimpl_address
 field zproxy_address        : ByStr20 = init_zproxy_address
@@ -87,53 +83,10 @@ procedure RequireZimpl()
   end
 end
 
-procedure RequireAdmin()
-  contractadmin_tmp <- contractadmin_address;
-  is_admin = builtin eq _sender contractadmin_tmp;
-  match is_admin with
-  | True  =>
-  | False =>
-    e = AdminValidationFailed;
-    ThrowError e
-  end
-end
-
 procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: Uint128)
   msg = {_tag: "DelegateStake"; _recipient: proxy_contract_addr; _amount: amount; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
-end
-
-(************************************************************)
-(* @dev: Admin actions                                      *)
-(************************************************************)
-
-transition ChangeAzilSSNAddress(address: ByStr20)
-  RequireAdmin;
-  azil_ssn_address := address;
-  e = { _eventname: "ChangeAzilSSNAddress"; address: address };
-  event e
-end
-
-transition ChangeAimplAddress(address: ByStr20)
-  RequireAdmin;
-  aimpl_address := address;
-  e = { _eventname: "ChangeAimplAddress"; address: address };
-  event e
-end
-
-transition ChangeZimplAddress(address: ByStr20)
-  RequireAdmin;
-  zimpl_address := address;
-  e = { _eventname: "ChangeZimplAddress"; address: address };
-  event e
-end
-
-transition ChangeZproxyAddress(address: ByStr20)
-  RequireAdmin;
-  zproxy_address := address;
-  e = { _eventname: "ChangeZproxyAddress"; address: address };
-  event e
 end
 
 (************************************************************)
@@ -272,9 +225,7 @@ end
 
 (* Purpose of this transition is one-time min_deleg_stake delegate from Holder after its deploy *)
 (* Else Zimpl will not know anything about Holder and will return DelegDoesNotExistAtSSN error *)
-(* Transition should be done by admin *)
 transition DelegateStake()
-  RequireAdmin;
   accept;
   stake_amt = _amount;
 
