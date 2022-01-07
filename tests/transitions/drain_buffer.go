@@ -11,7 +11,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	p := tr.DeployAndUpgrade()
 
-	AssertSuccess(p.Aproxy.DelegateStake(ToZil(10)))
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
 
 	txn, _ := p.Aimpl.DrainBuffer(p.Aimpl.Addr)
 	AssertError(txn, "BufferAddrUnknown")

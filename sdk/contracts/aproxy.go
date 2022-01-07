@@ -3,7 +3,6 @@ package contracts
 import (
     "encoding/json"
     "errors"
-    "fmt"
     "io/ioutil"
 
     . "github.com/avely-finance/avely-contracts/sdk/core"
@@ -66,37 +65,6 @@ func (a *AZilProxy) WithdrawStakeAmt(amount string) (*transaction.Transaction, e
         },
     }
     return a.Call("WithdrawStakeAmt", args, "0")
-}
-
-func (a *AZilProxy) ZilBalanceOf(addr string) (string, error) {
-    args := []core.ContractValue{
-        {
-            "address",
-            "ByStr20",
-            addr,
-        },
-    }
-    tx, err := a.Contract.Call("ZilBalanceOf", args, "0")
-    if err != nil {
-        return "", err
-    }
-
-    for _, transition := range tx.Receipt.Transitions {
-        if "ZilBalanceOfCallBack" != transition.Msg.Tag {
-            continue
-        }
-        for _, param := range transition.Msg.Params {
-            if param.VName == "address" && param.Value != addr {
-                //it's balance of some other address, it should not be so
-                return "", errors.New("Balance not found for addr=" + addr)
-            }
-            if param.VName == "balance" {
-                return fmt.Sprintf("%v", param.Value), nil
-            }
-        }
-        break
-    }
-    return "", errors.New("Balance not found")
 }
 
 func NewAZilProxyContract(sdk *AvelySDK, aimplAddr string) (*AZilProxy, error) {

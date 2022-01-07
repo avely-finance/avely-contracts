@@ -3,6 +3,7 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
@@ -95,15 +96,8 @@ func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, e
 	return a.Contract.Call("ChangeHolderAddress", args, "0")
 }
 
-func (a *AZil) DelegateStake(amount, initiator string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"initiator",
-			"ByStr20",
-			initiator,
-		},
-	}
-
+func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
 	return a.Call("DelegateStake", args, amount)
 }
 
@@ -128,17 +122,12 @@ func (a *AZil) UpdateStakingParameters(min_deleg_stake string) (*transaction.Tra
 	return a.Call("UpdateStakingParameters", args, "0")
 }
 
-func (a *AZil) WithdrawStakeAmt(amount, initiator string) (*transaction.Transaction, error) {
+func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"amount",
 			"Uint128",
 			amount,
-		},
-		{
-			"initiator",
-			"ByStr20",
-			initiator,
 		},
 	}
 	return a.Call("WithdrawStakeAmt", args, "0")
@@ -155,31 +144,40 @@ func (a *AZil) DrainBuffer(buffer_addr string) (*transaction.Transaction, error)
 	return a.Call("DrainBuffer", args, "0")
 }
 
-func (a *AZil) CompleteWithdrawal(initiator string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"initiator",
-			"ByStr20",
-			initiator,
-		},
-	}
+func (a *AZil) CompleteWithdrawal() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
 	return a.Call("CompleteWithdrawal", args, "0")
 }
 
-func (a *AZil) ZilBalanceOf(addr, initiator string) (*transaction.Transaction, error) {
+func (a *AZil) ZilBalanceOf(addr string) (string, error) {
 	args := []core.ContractValue{
 		{
 			"address",
 			"ByStr20",
 			addr,
 		},
-		{
-			"initiator",
-			"ByStr20",
-			initiator,
-		},
 	}
-	return a.Contract.Call("ZilBalanceOf", args, "0")
+	tx, err := a.Contract.Call("ZilBalanceOf", args, "0")
+	if err != nil {
+		return "", err
+	}
+
+	for _, transition := range tx.Receipt.Transitions {
+		if "ZilBalanceOfCallBack" != transition.Msg.Tag {
+			continue
+		}
+		for _, param := range transition.Msg.Params {
+			if param.VName == "address" && param.Value != addr {
+				//it's balance of some other address, it should not be so
+				return "", errors.New("Balance not found for addr=" + addr)
+			}
+			if param.VName == "balance" {
+				return fmt.Sprintf("%v", param.Value), nil
+			}
+		}
+		break
+	}
+	return "", errors.New("Balance not found")
 }
 
 func (a *AZil) ClaimRewardsSuccessCallBack() (*transaction.Transaction, error) {
@@ -215,8 +213,8 @@ func (a *AZil) Unpause() (*transaction.Transaction, error) {
 	return a.Call("UnPause", args, "0")
 }
 
-func NewAZilContract(sdk *AvelySDK, aproxyAddr, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, aproxyAddr, zimplAddr)
+func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
+	contract := buildAZilContract(sdk, zimplAddr)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -241,8 +239,8 @@ func NewAZilContract(sdk *AvelySDK, aproxyAddr, zimplAddr string) (*AZil, error)
 	}
 }
 
-func RestoreAZilContract(sdk *AvelySDK, contractAddress, aproxyAddr, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, aproxyAddr, zimplAddr)
+func RestoreAZilContract(sdk *AvelySDK, contractAddress, zimplAddr string) (*AZil, error) {
+	contract := buildAZilContract(sdk, zimplAddr)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -261,7 +259,7 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, aproxyAddr, zimplAddr s
 	return &AZil{Contract: sdkContract}, nil
 }
 
-func buildAZilContract(sdk *AvelySDK, aproxyAddr, zimplAddr string) contract2.Contract {
+func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
 	key := sdk.Cfg.AdminKey
 	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
@@ -275,10 +273,6 @@ func buildAZilContract(sdk *AvelySDK, aproxyAddr, zimplAddr string) contract2.Co
 			VName: "init_admin_address",
 			Type:  "ByStr20",
 			Value: sdk.GetAddressFromPrivateKey(key),
-		}, {
-			VName: "init_aproxy_address",
-			Type:  "ByStr20",
-			Value: aproxyAddr,
 		}, {
 			VName: "init_azil_ssn_address",
 			Type:  "ByStr20",

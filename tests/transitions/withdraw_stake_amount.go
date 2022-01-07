@@ -15,15 +15,15 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	/*******************************************************************************
 	 * 0. delegator (sdk.Cfg.Addr2) delegate 15 zil
 	 *******************************************************************************/
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key2)
-	AssertSuccess(p.Aproxy.DelegateStake(ToZil(15)))
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(15)))
 
 	/*******************************************************************************
 	 * 1. non delegator(sdk.Cfg.Addr4) try to withdraw stake, should fail
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 1")
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key3)
-	txn, _ := p.Aproxy.WithdrawStakeAmt(ToAzil(10))
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key3)
+	txn, _ := p.Aimpl.WithdrawStakeAmt(ToAzil(10))
 
 	AssertError(txn, "DelegDoesNotExistAtSSN")
 
@@ -31,14 +31,14 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * 2. Check withdrawal under delegator
 	 *******************************************************************************/
 
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key2)
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
 
 	/*******************************************************************************
 	 * 2A. delegator trying to withdraw in the current cycle where he has a buffered deposit
 	 *******************************************************************************/
 
 	Start("WithdwarStakeAmount, step 2A")
-	txn, _ = p.Aproxy.WithdrawStakeAmt(ToAzil(1))
+	txn, _ = p.Aimpl.WithdrawStakeAmt(ToAzil(1))
 
 	AssertError(txn, "DelegHasBufferedDeposit")
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
@@ -51,7 +51,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 *******************************************************************************/
 
 	Start("WithdwarStakeAmount, step 2A")
-	txn, _ = p.Aproxy.WithdrawStakeAmt(ToAzil(100))
+	txn, _ = p.Aimpl.WithdrawStakeAmt(ToAzil(100))
 
 	AssertError(txn, "DelegHasNoSufficientAmt")
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
@@ -61,7 +61,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * TODO: how to be sure about size of mindelegatestake here?
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 2C")
-	txn, _ = p.Aproxy.WithdrawStakeAmt(ToAzil(10))
+	txn, _ = p.Aimpl.WithdrawStakeAmt(ToAzil(10))
 
 	AssertError(txn, "DelegStakeNotEnough")
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
@@ -78,8 +78,8 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 	AssertSuccess(p.Aimpl.DrainBuffer(p.GetBuffer().Addr))
 
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key2)
-	txn, _ = p.Aproxy.WithdrawStakeAmt(ToAzil(5))
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
+	txn, _ = p.Aimpl.WithdrawStakeAmt(ToAzil(5))
 	AssertTransition(txn, Transition{
 		p.Aimpl.Addr,
 		"WithdrawStakeAmt",
@@ -89,7 +89,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	})
 	bnum1 := txn.Receipt.EpochNum
 
-	newDelegBalanceZil, _ := p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr2)
+	newDelegBalanceZil, _ := p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr2)
 	//TODO: we can check this only in local testing environment,
 	//and even in this case we need to monitor all incoming balances, including Holder initial delegate
 	//t.AssertEqual(p.Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
@@ -105,7 +105,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * Balances should be empty
 	 *******************************************************************************/
 	Start("WithdrawStakeAmount, step 3B")
-	txn, _ = p.Aproxy.WithdrawStakeAmt(ToAzil(10))
+	txn, _ = p.Aimpl.WithdrawStakeAmt(ToAzil(10))
 	bnum2 := txn.Receipt.EpochNum
 	AssertEvent(txn, Event{p.Aimpl.Addr, "WithdrawStakeAmt",
 		ParamsMap{"withdraw_amount": ToAzil(10), "withdraw_stake_amount": ToZil(10)}})
