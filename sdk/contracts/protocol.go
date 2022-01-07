@@ -45,7 +45,7 @@ func (p *Protocol) SyncBufferAndHolder() {
 		new_buffers = append(new_buffers, b.Addr)
 	}
 
-	check(p.Aimpl.ChangeBuffers(new_buffers))
+	check(p.Aimpl.SetBuffers(new_buffers))
 	check(p.Aimpl.SetHolderAddress(p.Holder.Addr))
 }
 

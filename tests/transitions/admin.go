@@ -14,6 +14,7 @@ func (tr *Transitions) Admin() {
     p := tr.DeployAndUpgrade()
 
     checkSetHolderAddress(p)
+    checkSetBuffers(p)
     checkUpdateStakingParameters(p)
 
     newAdminAddr := sdk.Cfg.Addr3
@@ -48,6 +49,12 @@ func checkSetHolderAddress(p *contracts.Protocol) {
     AssertEqual(p.Aimpl.Field("holder_address"), p.Holder.Addr)
     tx, _ := p.Aimpl.SetHolderAddress(core.ZeroAddr)
     AssertError(tx, "HolderAlreadySet")
+}
+
+func checkSetBuffers(p *contracts.Protocol) {
+    new_buffers := []string{core.ZeroAddr, core.ZeroAddr, core.ZeroAddr}
+    tx, _ := p.Aimpl.SetBuffers(new_buffers)
+    AssertError(tx, "BuffersAlreadySet")
 }
 
 func checkUpdateStakingParameters(p *contracts.Protocol) {

@@ -36,7 +36,7 @@ func (a *AZil) ClaimAdmin() (*transaction.Transaction, error) {
 	return a.Call("ClaimAdmin", args, "0")
 }
 
-func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
+func (a *AZil) SetBuffers(new_buffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"new_buffers",
@@ -44,7 +44,7 @@ func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, er
 			new_buffers,
 		},
 	}
-	return a.Contract.Call("ChangeBuffers", args, "0")
+	return a.Contract.Call("SetBuffers", args, "0")
 }
 
 func (a *AZil) GetCurrentBuffer() (*transaction.Transaction, error) {

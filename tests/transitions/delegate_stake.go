@@ -50,14 +50,11 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 	p := tr.DeployAndUpgrade()
 
-	anotherBuffer, err := contracts.NewBufferContract(sdk, p.Aimpl.Addr, p.Zproxy.Addr, p.Zimpl.Addr)
-	if err != nil {
-		GetLog().Fatal("Deploy buffer error = " + err.Error())
+	buffers := make([]string, len(p.Buffers))
+	for i, buff := range p.Buffers {
+		buffers[i] = buff.Addr
 	}
-
-	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr, anotherBuffer.Addr}
-	AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
-	activeBufferAddr := calcActiveBufferAddr(p, new_buffers)
+	activeBufferAddr := calcActiveBufferAddr(p, buffers)
 	testGetCurrentBuffer(p, activeBufferAddr)
 
 	//next reward cycle
@@ -66,7 +63,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
 
-	activeBufferAddr = calcActiveBufferAddr(p, new_buffers)
+	activeBufferAddr = calcActiveBufferAddr(p, buffers)
 	testGetCurrentBuffer(p, activeBufferAddr)
 	AssertEqual(p.Zimpl.Field("buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, p.Zimpl.Field("lastrewardcycle")), ToZil(10))
 }
