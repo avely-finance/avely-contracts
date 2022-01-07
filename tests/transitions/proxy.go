@@ -3,7 +3,6 @@ package transitions
 import (
     "github.com/avely-finance/avely-contracts/sdk/contracts"
     "github.com/avely-finance/avely-contracts/sdk/core"
-    . "github.com/avely-finance/avely-contracts/sdk/utils"
     . "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -13,7 +12,6 @@ func (tr *Transitions) Proxy() {
 
     p := tr.DeployAndUpgrade()
 
-    callAimplDirectly(p)
     callNonAdmin(p)
 
     newAdminAddr := sdk.Cfg.Addr3
@@ -48,22 +46,6 @@ func (tr *Transitions) Proxy() {
     AssertEvent(tx, Event{p.Aproxy.Addr, "UpgradeTo", ParamsMap{"aimpl_address": newImplAddr}})
     AssertEqual(p.Aproxy.Field("aimpl_address"), newImplAddr)
     AssertEqual(p.Aproxy.Field("staging_admin_address"), "")
-}
-
-func callAimplDirectly(p *contracts.Protocol) {
-    //call aimpl transitions, which are supposed to call through proxy, directly; expecting errors
-    initiator := sdk.Cfg.Addr3
-    tx, _ := p.Aimpl.DelegateStake(ToZil(10), initiator)
-    AssertError(tx, "ProxyValidationFailed")
-
-    tx, _ = p.Aimpl.ZilBalanceOf(initiator, initiator)
-    AssertError(tx, "ProxyValidationFailed")
-
-    tx, _ = p.Aimpl.WithdrawStakeAmt(ToZil(10), initiator)
-    AssertError(tx, "ProxyValidationFailed")
-
-    tx, _ = p.Aimpl.CompleteWithdrawal(initiator)
-    AssertError(tx, "ProxyValidationFailed")
 }
 
 func callNonAdmin(p *contracts.Protocol) {

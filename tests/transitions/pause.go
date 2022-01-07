@@ -46,17 +46,17 @@ func callPaused(p *contracts.Protocol) {
 	tx, _ := p.Aimpl.Pause()
 	AssertError(tx, "Paused")
 
-	tx, _ = p.Aproxy.DelegateStake(ToZil(10))
+	tx, _ = p.Aimpl.DelegateStake(ToZil(10))
 	AssertError(tx, "Paused")
 
-	p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr1)
+	p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr1)
 	tx = sdk.TxLast
 	AssertError(tx, "Paused")
 
-	tx, _ = p.Aproxy.WithdrawStakeAmt(ToZil(10))
+	tx, _ = p.Aimpl.WithdrawStakeAmt(ToZil(10))
 	AssertError(tx, "Paused")
 
-	tx, _ = p.Aproxy.CompleteWithdrawal()
+	tx, _ = p.Aimpl.CompleteWithdrawal()
 	AssertError(tx, "Paused")
 
 	AssertSuccess(p.Aimpl.Unpause())

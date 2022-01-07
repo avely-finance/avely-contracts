@@ -13,8 +13,8 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	p := tr.DeployAndUpgrade()
 
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key1)
-	AssertSuccess(p.Aproxy.DelegateStake(ToZil(10)))
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
 
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
@@ -24,15 +24,15 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 	AssertSuccess(p.Aimpl.DrainBuffer(p.GetBuffer().Addr))
 
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key1)
-	tx, _ := AssertSuccess(p.Aproxy.WithdrawStakeAmt(ToAzil(10)))
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
+	tx, _ := AssertSuccess(p.Aimpl.WithdrawStakeAmt(ToAzil(10)))
 
 	block1 := tx.Receipt.EpochNum
-	tx, _ = p.Aproxy.CompleteWithdrawal()
+	tx, _ = p.Aimpl.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.Aimpl.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key2)
-	tx, _ = p.Aproxy.CompleteWithdrawal()
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
+	tx, _ = p.Aimpl.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.Aimpl.Addr, "NoUnbondedStake", ParamsMap{}})
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
@@ -63,8 +63,8 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 		ParamsMap{},
 	})
 
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key1)
-	tx, _ = p.Aproxy.CompleteWithdrawal()
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
+	tx, _ = p.Aimpl.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(10), "delegator": sdk.Cfg.Addr1}})
 	AssertTransition(tx, Transition{
 		p.Aimpl.Addr,

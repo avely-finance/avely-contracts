@@ -58,5 +58,4 @@ func (tr *Transitions) RunAll() {
 	tr.DrainBuffer()
 	tr.Pause()
 	tr.PerformAuoRestake()
-	tr.Proxy()
 }
