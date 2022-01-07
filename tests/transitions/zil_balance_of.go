@@ -15,16 +15,16 @@ func (tr *Transitions) ZilBalanceOf() {
 	 * 1. Non-delegator address (sdk.Cfg.Addr2) should have empty balance
 	 *******************************************************************************/
 	Start("ZilBalanceOf, step 1")
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key2)
-	balance2, _ := p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr2)
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
+	balance2, _ := p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr2)
 	AssertEqual(balance2, ToZil(0))
 
 	/*******************************************************************************
 	 * 2. After delegate (sdk.Cfg.Addr2) should have its balance updated
 	 *******************************************************************************/
 	Start("ZilBalanceOf, step 2")
-	AssertSuccess(p.Aproxy.DelegateStake(ToZil(15)))
-	balance2, _ = p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr2)
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(15)))
+	balance2, _ = p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr2)
 	AssertEqual(balance2, ToZil(15))
 
 	/*******************************************************************************
@@ -37,7 +37,7 @@ func (tr *Transitions) ZilBalanceOf() {
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(10)))
 	AssertSuccess(p.Aimpl.PerformAutoRestake())
-	balance2, _ = p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr2)
+	balance2, _ = p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr2)
 	AssertEqual(balance2, StrMulDiv(
 		p.Aimpl.Field("balances", sdk.Cfg.Addr2),
 		p.Aimpl.Field("totalstakeamount"),
@@ -49,14 +49,14 @@ func (tr *Transitions) ZilBalanceOf() {
 	 * First user's (sdk.Cfg.Addr2) zil balance should not be changed.
 	 *******************************************************************************/
 	Start("ZilBalanceOf, step 4")
-	p.Aproxy.UpdateWallet(sdk.Cfg.Key3)
-	AssertSuccess(p.Aproxy.DelegateStake(ToZil(10)))
-	balance2, _ = p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr2)
+	p.Aimpl.UpdateWallet(sdk.Cfg.Key3)
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
+	balance2, _ = p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr2)
 	AssertEqual(balance2, StrMulDiv(
 		p.Aimpl.Field("balances", sdk.Cfg.Addr2),
 		p.Aimpl.Field("totalstakeamount"),
 		p.Aimpl.Field("totaltokenamount")))
-	balance3, _ := p.Aproxy.ZilBalanceOf(sdk.Cfg.Addr3)
+	balance3, _ := p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr3)
 	AssertEqual(balance3, StrMulDiv(
 		p.Aimpl.Field("balances", sdk.Cfg.Addr3),
 		p.Aimpl.Field("totalstakeamount"),

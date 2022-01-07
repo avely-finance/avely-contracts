@@ -11,13 +11,12 @@ import (
 type Protocol struct {
 	Zproxy  *Zproxy
 	Zimpl   *Zimpl
-	Aproxy  *AZilProxy
 	Aimpl   *AZil
 	Buffers []*BufferContract
 	Holder  *HolderContract
 }
 
-func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, aproxy *AZilProxy, aimpl *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
+func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, aimpl *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
 	if len(buffers) == 0 {
 		log.Fatal("Protocol should have at least one buffer")
 	}
@@ -25,7 +24,6 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, aproxy *AZilProxy, aimpl *AZil, b
 	return &Protocol{
 		Zproxy:  zproxy,
 		Zimpl:   zimpl,
-		Aproxy:  aproxy,
 		Aimpl:   aimpl,
 		Buffers: buffers,
 		Holder:  holder,
@@ -72,7 +70,7 @@ func (p *Protocol) SetupZProxy() {
 	check(p.Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake
-	check(p.Aproxy.DelegateStake(ToZil(1000)))
+	check(p.Aimpl.DelegateStake(ToZil(1000)))
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
 	check(p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil)))
@@ -88,7 +86,6 @@ func (p *Protocol) SetupZProxy() {
 func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
 	log.AddShortcut("Zproxy", p.Zproxy.Addr)
 	log.AddShortcut("Zimpl", p.Zimpl.Addr)
-	log.AddShortcut("Aproxy", p.Aproxy.Addr)
 	log.AddShortcut("Aimpl", p.Aimpl.Addr)
 	log.AddShortcut("Holder", p.Holder.Addr)
 
