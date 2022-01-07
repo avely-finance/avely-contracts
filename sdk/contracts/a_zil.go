@@ -36,17 +36,6 @@ func (a *AZil) ClaimAdmin() (*transaction.Transaction, error) {
 	return a.Call("ClaimAdmin", args, "0")
 }
 
-func (b *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeZimplAddress", args, "0")
-}
-
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -72,17 +61,6 @@ func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction,
 		},
 	}
 	return a.Contract.Call("ClaimWithdrawal", args, "0")
-}
-
-func (a *AZil) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return a.Call("ChangeAzilSSNAddress", args, "0")
 }
 
 func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, error) {
