@@ -28,7 +28,6 @@ type Error =
   | InvalidTotalAmt
   | NotPaused
   | Paused
-  | ProxyValidationFailed
   | StagingAdminNotExists
   | StagingAdminValidationFailed
 
@@ -53,7 +52,6 @@ let make_error =
       | InvalidTotalAmt                 => "InvalidTotalAmt"
       | Paused                          => "Paused"
       | NotPaused                       => "NotPaused"
-      | ProxyValidationFailed           => "ProxyValidationFailed"
       | StagingAdminNotExists           => "StagingAdminNotExists"
       | StagingAdminValidationFailed    => "StagingAdminValidationFailed"
       end
@@ -156,7 +154,6 @@ let is_buffer_addr =
 
 contract AZil(
   init_admin_address        : ByStr20,
-  init_aproxy_address       : ByStr20,
   init_azil_ssn_address     : ByStr20,
   init_zimpl_address        : ByStr20,
   init_holder_address       : ByStr20
@@ -240,16 +237,6 @@ procedure RequireBufferOrHolder()
   | True  =>
   | False =>
     e = BufferOrHolderValidationFailed;
-    ThrowError e
-  end
-end
-
-procedure RequireProxy()
-  is_proxy = builtin eq _sender init_aproxy_address;
-  match is_proxy with
-  | True  =>
-  | False =>
-    e = ProxyValidationFailed;
     ThrowError e
   end
 end
@@ -775,8 +762,7 @@ end
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
-transition DelegateStake(initiator: ByStr20)
-  RequireProxy;
+transition DelegateStake()
   RequireNotPaused;
 
   accept;
@@ -785,7 +771,7 @@ transition DelegateStake(initiator: ByStr20)
   IsDelegStakeSufficient stake_amt;
 
   tmp_stake_delegate_amount := stake_amt;
-  o_delegator = Some {ByStr20} initiator;
+  o_delegator = Some {ByStr20} _sender;
   tmp_delegator := o_delegator;
 
   BufferDelegate stake_amt
@@ -865,38 +851,36 @@ transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
 end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
-transition WithdrawStakeAmt(amount: Uint128, initiator: ByStr20)
-  RequireProxy;
+transition WithdrawStakeAmt(amount: Uint128)
   RequireNotPaused;
 
   azil_ssn_addr <- azil_ssn_address;
 
   (* first we do all checks, then call Holder on success within procedure *)
-  WithdrawalStakeAmt initiator amount;
+  WithdrawalStakeAmt _sender amount;
 
-  msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
-  ssnaddr : azil_ssn_addr; amount : amount};
+  msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
+    ssnaddr : azil_ssn_addr; amount : amount};
   msg = one_msg msg_to_delegator;
   send msg
 end
 
-transition CompleteWithdrawal(initiator: ByStr20)
-  RequireProxy;
+transition CompleteWithdrawal()
   RequireNotPaused;
 
-  wu <- withdrawal_unbonded[initiator];
+  wu <- withdrawal_unbonded[_sender];
   match wu with
   | Some (Withdrawal wtoken wstake) =>
-    delete withdrawal_unbonded[initiator];
-    e = { _eventname: "CompleteWithdrawal"; delegator: initiator; amount: wstake };
+    delete withdrawal_unbonded[_sender];
+    e = { _eventname: "CompleteWithdrawal"; delegator: _sender; amount: wstake };
     event e;
-    TransferFunds addfunds_tag wstake initiator;
-    msg_to_delegator = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : initiator; _amount : uint128_zero;
+    TransferFunds addfunds_tag wstake _sender;
+    msg_to_delegator = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
       amount : wstake};
     msg = one_msg msg_to_delegator;
     send msg
   | None =>
-    msg_to_delegator = {_tag : "CompleteWithdrawalNoUnbondedStakeCallBack"; _recipient : initiator; _amount : uint128_zero;
+    msg_to_delegator = {_tag : "CompleteWithdrawalNoUnbondedStakeCallBack"; _recipient : _sender; _amount : uint128_zero;
     amount : uint128_zero};
     msg = one_msg msg_to_delegator;
     send msg;
@@ -930,8 +914,7 @@ end
 (************************************************************)
 (* @dev: Returns an account zil amount                      *)
 (************************************************************)
-transition ZilBalanceOf(address: ByStr20, initiator: ByStr20)
-  RequireProxy;
+transition ZilBalanceOf(address: ByStr20)
   RequireNotPaused;
 
   total_token_amt <- totaltokenamount;
@@ -948,7 +931,7 @@ transition ZilBalanceOf(address: ByStr20, initiator: ByStr20)
   e = { _eventname: "ZilBalanceOf"; address: address; balance: balance };
   event e;
 
-  msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : initiator; _amount : uint128_zero; address: address; balance : balance};
+  msg_to_sender = { _tag : "ZilBalanceOfCallBack"; _recipient : _sender; _amount : uint128_zero; address: address; balance : balance};
   msgs = one_msg msg_to_sender;
   send msgs
 end
