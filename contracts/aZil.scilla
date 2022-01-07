@@ -15,6 +15,7 @@ type Error =
   | BufferAddrUnknown
   | BufferNoActive
   | BufferOrHolderValidationFailed
+  | BuffersAlreadySet
   | CantFetchZimplBufferExistsAtSSN
   | CantFetchZimplFields
   | ClaimWithdrawalNoUnbonded
@@ -40,6 +41,7 @@ let make_error =
       | BufferAddrUnknown               => "BufferAddrUnknown"
       | BufferNoActive                  => "BufferNoActive"
       | BufferOrHolderValidationFailed  => "BufferOrHolderValidationFailed"
+      | BuffersAlreadySet               => "BuffersAlreadySet"
       | CantFetchZimplBufferExistsAtSSN => "CantFetchZimplBufferExistsAtSSN"
       | CantFetchZimplFields            => "CantFetchZimplFields"
       | ClaimWithdrawalNoUnbonded       => "ClaimWithdrawalNoUnbonded"
@@ -659,9 +661,23 @@ transition SetHolderAddress(address: ByStr20)
   end
 end
 
-transition ChangeBuffers(new_buffers: List ByStr20)
-  RequireAdmin;
-  buffers_addresses := new_buffers
+transition SetBuffers(new_buffers: List ByStr20)
+  (* TODO RequirePaused; ?*)
+
+  var_buffers_addrs <- buffers_addresses;
+  blen =
+    let llen = @list_length ByStr20 in
+    llen var_buffers_addrs;
+
+  is_buffers_empty = builtin eq blen uint32_zero;
+  match is_buffers_empty with
+  | False =>
+    e = BuffersAlreadySet;
+    ThrowError e
+  | True =>
+    buffers_addresses := new_buffers
+  end
+
 end
 
 transition GetCurrentBuffer()

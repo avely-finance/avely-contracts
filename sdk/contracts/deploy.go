@@ -40,12 +40,18 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	log.Success("deploy aZil succeed, address = " + Aimpl.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	Buffer1, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
-		log.Fatal("deploy buffer error = " + err.Error())
+		log.Fatal("deploy buffer1 error = " + err.Error())
 	}
-	log.Success("deploy buffer succeed, address = " + Buffer.Addr)
-	buffers := []*BufferContract{Buffer}
+	log.Success("deploy buffer1 succeed, address = " + Buffer1.Addr)
+	// another buffer
+	Buffer2, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	if err != nil {
+		log.Fatal("deploy buffer2 error = " + err.Error())
+	}
+	log.Success("deploy buffer2 succeed, address = " + Buffer2.Addr)
+	buffers := []*BufferContract{Buffer1, Buffer2}
 
 	// deploy holder
 	Holder, err := NewHolderContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
