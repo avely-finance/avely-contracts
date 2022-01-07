@@ -26,6 +26,7 @@ type Error =
   | DelegStakeFundsMismatch
   | DelegStakeNotEnough
   | InvalidTotalAmt
+  | HolderAlreadySet
   | NotPaused
   | Paused
   | StagingAdminNotExists
@@ -50,6 +51,7 @@ let make_error =
       | DelegStakeFundsMismatch         => "DelegStakeFundsMismatch"
       | DelegStakeNotEnough             => "DelegStakeNotEnough"
       | InvalidTotalAmt                 => "InvalidTotalAmt"
+      | HolderAlreadySet                => "HolderAlreadySet"
       | Paused                          => "Paused"
       | NotPaused                       => "NotPaused"
       | StagingAdminNotExists           => "StagingAdminNotExists"
@@ -105,6 +107,7 @@ let uint128_zero = Uint128 0
 let uint128_one = Uint128 1
 let uint32_zero = Uint32 0
 let uint32_one = Uint32 1
+let bystr20_zero = 0x0000000000000000000000000000000000000000
 
 let option_value =
   tfun 'A =>
@@ -155,14 +158,13 @@ let is_buffer_addr =
 contract AZil(
   init_admin_address        : ByStr20,
   init_azil_ssn_address     : ByStr20,
-  init_zimpl_address        : ByStr20,
-  init_holder_address       : ByStr20
+  init_zimpl_address        : ByStr20
 )
 
 field admin_address         : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field zimpl_address         : ByStr20 = init_zimpl_address
-field holder_address        : ByStr20 = init_holder_address
+field holder_address        : ByStr20 = bystr20_zero
 field buffers_addresses     : List ByStr20 = Nil {ByStr20}
 field staging_admin_address : Option ByStr20 = None {ByStr20}
 
@@ -642,12 +644,19 @@ transition ClaimAdmin()
   end
 end
 
-transition ChangeHolderAddress(address: ByStr20)
-  RequireAdmin;
-  holder_address := address;
-
-  e = { _eventname: "ChangeHolderAddress"; address: address };
-  event e
+transition SetHolderAddress(address: ByStr20)
+  (* TODO RequirePaused; ?*)
+  var_holder_addr <- holder_address;
+  is_holder_empty = builtin eq var_holder_addr bystr20_zero;
+  match is_holder_empty with
+  | True =>
+    holder_address := address;
+    e = { _eventname: "SetHolderAddress"; address: address };
+    event e
+  | False =>
+    e = HolderAlreadySet;
+    ThrowError e
+  end
 end
 
 transition ChangeBuffers(new_buffers: List ByStr20)

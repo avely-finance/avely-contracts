@@ -13,7 +13,7 @@ func (tr *Transitions) Admin() {
 
     p := tr.DeployAndUpgrade()
 
-    checkChangeHolderAddress(p)
+    checkSetHolderAddress(p)
     checkUpdateStakingParameters(p)
 
     newAdminAddr := sdk.Cfg.Addr3
@@ -44,13 +44,10 @@ func (tr *Transitions) Admin() {
     AssertEqual(p.Aimpl.Field("staging_admin_address"), "")
 }
 
-func checkChangeHolderAddress(p *contracts.Protocol) {
-    holderAddr := p.Holder.Addr
-
-    tx, _ := AssertSuccess(p.Aimpl.ChangeHolderAddress(core.ZeroAddr))
-    AssertEvent(tx, Event{p.Aimpl.Addr, "ChangeHolderAddress", ParamsMap{"address": core.ZeroAddr}})
-    AssertEqual(p.Aimpl.Field("holder_address"), core.ZeroAddr)
-    AssertSuccess(p.Aimpl.ChangeHolderAddress(holderAddr))
+func checkSetHolderAddress(p *contracts.Protocol) {
+    AssertEqual(p.Aimpl.Field("holder_address"), p.Holder.Addr)
+    tx, _ := p.Aimpl.SetHolderAddress(core.ZeroAddr)
+    AssertError(tx, "HolderAlreadySet")
 }
 
 func checkUpdateStakingParameters(p *contracts.Protocol) {
