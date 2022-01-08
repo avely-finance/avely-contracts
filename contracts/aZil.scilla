@@ -645,7 +645,7 @@ transition ClaimAdmin()
 end
 
 transition SetHolderAddress(address: ByStr20)
-  (* TODO RequirePaused; ?*)
+  RequireAdmin;
   var_holder_addr <- holder_address;
   is_holder_empty = builtin eq var_holder_addr bystr20_zero;
   match is_holder_empty with

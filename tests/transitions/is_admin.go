@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -15,6 +16,8 @@ func (tr *Transitions) IsAdmin() {
 	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, _ := p.Aimpl.ChangeAdmin(sdk.Cfg.Addr3)
+	AssertError(tx, "AdminValidationFailed")
+	tx, _ = p.Aimpl.SetHolderAddress(core.ZeroAddr)
 	AssertError(tx, "AdminValidationFailed")
 	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr}
 	tx, _ = p.Aimpl.ChangeBuffers(new_buffers)
