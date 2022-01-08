@@ -1,70 +1,70 @@
 package transitions
 
 import (
-	"github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
 func (tr *Transitions) DrainBuffer() {
-	//TODO fix tests
-	return
-
-	Start("CompleteWithdrawal - success")
+	Start("DrainBuffer")
 
 	p := tr.DeployAndUpgrade()
 
-	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
-
+	//try to drain not buffer address, expecting error
 	txn, _ := p.Aimpl.DrainBuffer(p.Aimpl.Addr)
 	AssertError(txn, "BufferAddrUnknown")
+
+	//active buffer is p.Buffer[0] now, delegate
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(100)))
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 	sdk.IncreaseBlocknum(10)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+	//active buffer is p.Buffers[1] now
 	sdk.IncreaseBlocknum(10)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
-	txn, _ = p.Aimpl.DrainBuffer(p.GetBuffer().Addr)
+	//we don't repeat complicated reward calculation logic from ssnlist#UpdateStakeReward
+	//instead we took already calculated values for the current setup and stakes
+	expectedBufferRewards := "4"
+	expectedHolderRewards := "97"
+
+	//active buffer is p.Buffers[0] now
+	//we are at the very beginning of next reward cycle, stakes weren't delegated yet
+	BufferToDrain := p.Buffers[0]
+	txn, _ = p.Aimpl.DrainBuffer(BufferToDrain.Addr)
 
 	AssertTransition(txn, Transition{
 		p.Aimpl.Addr,       //sender
 		"ClaimRewards",     //tag
-		p.GetBuffer().Addr, //recipient
+		BufferToDrain.Addr, //recipient
 		"0",                //amount
 		ParamsMap{},
 	})
 
-	// ssnlist#UpdateStakeReward has complex logic based on a fee and comission calculations
-	// since we use extra small numbers (not QA 10 ^ 12) all calculations are rounded
-	// and all assigned rewards are credited to one SSN node
-	bufferRewards := StrAdd(sdk.Cfg.AzilSsnRewardShare, sdk.Cfg.AzilSsnRewardShare)
-	AssertEqual(bufferRewards, "100")
-
 	AssertTransition(txn, Transition{
 		p.Zimpl.Addr, //sender
 		"AddFunds",
-		p.GetBuffer().Addr,
-		bufferRewards,
+		BufferToDrain.Addr,
+		expectedBufferRewards,
 		ParamsMap{},
 	})
 
 	AssertTransition(txn, Transition{
 		p.Zimpl.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
-		p.GetBuffer().Addr,
+		BufferToDrain.Addr,
 		"0",
-		ParamsMap{"rewards": bufferRewards},
+		ParamsMap{"rewards": expectedBufferRewards},
 	})
 
 	// Holder rewards for initial funds
-	holderRewards := "49"
 	AssertTransition(txn, Transition{
 		p.Zimpl.Addr, //sender
 		"AddFunds",
 		p.Holder.Addr,
-		holderRewards,
+		expectedHolderRewards,
 		ParamsMap{},
 	})
 
@@ -73,11 +73,11 @@ func (tr *Transitions) DrainBuffer() {
 		"WithdrawStakeRewardsSuccessCallBack",
 		p.Holder.Addr,
 		"0",
-		ParamsMap{"rewards": holderRewards},
+		ParamsMap{"rewards": expectedHolderRewards},
 	})
 
 	// Check aZIL balance
-	totalRewards := "149" // "100" from Buffer + "49" from Holder[]
+	totalRewards := StrAdd(expectedHolderRewards, expectedBufferRewards)
 	AssertEqual(p.Aimpl.Field("_balance"), totalRewards)
 	AssertEqual(p.Aimpl.Field("autorestakeamount"), totalRewards)
 
@@ -98,11 +98,12 @@ func (tr *Transitions) DrainBuffer() {
 		ParamsMap{"requestor": p.GetBuffer().Addr},
 	})
 
-	//try to drain buffer, not existent at main staking contract
+	//after buffer has been drained, it disappears from Zimpl state
+	AssertEqual("", p.Zimpl.Field("ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, BufferToDrain.Addr))
+
+	//try to drain buffer, not existent at Zimpl
 	//error should not be thrown
-	//new_buffers := []string{core.ZeroAddr}
-	//AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
-	txn, _ = p.Aimpl.DrainBuffer(core.ZeroAddr)
+	txn, _ = p.Aimpl.DrainBuffer(BufferToDrain.Addr)
 	AssertTransition(txn, Transition{
 		p.Aimpl.Addr, //sender
 		"ClaimRewards",
