@@ -662,7 +662,7 @@ transition SetHolderAddress(address: ByStr20)
 end
 
 transition SetBuffers(new_buffers: List ByStr20)
-  (* TODO RequirePaused; ?*)
+  RequireAdmin;
 
   var_buffers_addrs <- buffers_addresses;
   blen =
