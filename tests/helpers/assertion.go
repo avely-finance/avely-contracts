@@ -78,7 +78,7 @@ func AssertError(txn *transaction.Transaction, code string) {
 	AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
 }
 
-func AssertSsnlistError(txn *transaction.Transaction, code int32) {
+func AssertZimplError(txn *transaction.Transaction, code int32) {
 	_, file, no, _ := runtime.Caller(1)
 
 	if txn.Receipt.Success && txn.Status == core.Confirmed {
