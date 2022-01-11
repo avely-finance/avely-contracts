@@ -56,50 +56,6 @@ func (b *BufferContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*
 	return b.Call("DelegateStakeSuccessCallBack", args, "0")
 }
 
-func (b *BufferContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeZproxyAddress", args, "0")
-}
-
-func (b *BufferContract) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeZimplAddress", args, "0")
-}
-
-func (b *BufferContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeAzilSSNAddress", args, "0")
-}
-
-func (b *BufferContract) ChangeAimplAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeAimplAddress", args, "0")
-}
-
 func (b *BufferContract) DelegateStake() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return b.Call("DelegateStake", args, "0")
@@ -179,10 +135,6 @@ func buildBufferContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string)
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
-		}, {
-			VName: "init_admin_address",
-			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
