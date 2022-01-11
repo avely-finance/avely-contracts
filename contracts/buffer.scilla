@@ -8,7 +8,6 @@ library Buffer
 let uint128_zero = Uint128 0
 
 type Error =
-  | AdminValidationFailed
   | AimplValidationFailed
   | ClaimRewardsBufferFundsMismatch
   | ZimplValidationFailed
@@ -17,7 +16,6 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AdminValidationFailed           => "AdminValidationFailed"
       | AimplValidationFailed           => "AimplValidationFailed"
       | ClaimRewardsBufferFundsMismatch => "ClaimRewardsBufferFundsMismatch"
       | ZimplValidationFailed           => "ZimplValidationFailed"
@@ -35,14 +33,12 @@ let one_msg =
 (***************************************************)
 
 contract Buffer(
-  init_admin_address        : ByStr20,
   init_azil_ssn_address     : ByStr20,
   init_aimpl_address        : ByStr20,
   init_zproxy_address       : ByStr20,
   init_zimpl_address        : ByStr20
 )
 
-field contractadmin_address : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field aimpl_address         : ByStr20 = init_aimpl_address
 field zproxy_address        : ByStr20 = init_zproxy_address
@@ -81,17 +77,6 @@ procedure RequireZimpl()
   end
 end
 
-procedure RequireAdmin()
-  contractadmin_tmp <- contractadmin_address;
-  is_admin = builtin eq _sender contractadmin_tmp;
-  match is_admin with
-  | True  =>
-  | False =>
-    e = AdminValidationFailed;
-    ThrowError e
-  end
-end
-
 (* @dev : To delegate the stake to the contract. *)
 (* @param ssnaddr: The address of the SSN to which the deleg wants to stake *)
 procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: Uint128)
@@ -114,38 +99,6 @@ procedure ProxyRequestDelegatorSwap(proxy_contract_addr: ByStr20, new_deleg_addr
   msg = {_tag: "RequestDelegatorSwap"; _recipient: proxy_contract_addr; _amount: uint128_zero; new_deleg_addr: new_deleg_addr};
   msgs = one_msg msg;
   send msgs
-end
-
-(************************************************************)
-(* @dev: Admin actions                                      *)
-(************************************************************)
-
-transition ChangeAzilSSNAddress(address: ByStr20)
-  RequireAdmin;
-  azil_ssn_address := address;
-  e = { _eventname: "ChangeAzilSSNAddress"; address: address };
-  event e
-end
-
-transition ChangeAimplAddress(address: ByStr20)
-  RequireAdmin;
-  aimpl_address := address;
-  e = { _eventname: "ChangeAimplAddress"; address: address };
-  event e
-end
-
-transition ChangeZimplAddress(address: ByStr20)
-  RequireAdmin;
-  zimpl_address := address;
-  e = { _eventname: "ChangeZimplAddress"; address: address };
-  event e
-end
-
-transition ChangeZproxyAddress(address: ByStr20)
-  RequireAdmin;
-  zproxy_address := address;
-  e = { _eventname: "ChangeZproxyAddress"; address: address };
-  event e
 end
 
 (************************************************************)

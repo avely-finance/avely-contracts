@@ -105,50 +105,6 @@ func (b *HolderContract) WithdrawStakeAmt(amount string) (*transaction.Transacti
 	return b.Call("WithdrawStakeAmt", args, "0")
 }
 
-func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeZproxyAddress", args, "0")
-}
-
-func (b *HolderContract) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeZimplAddress", args, "0")
-}
-
-func (b *HolderContract) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeAzilSSNAddress", args, "0")
-}
-
-func (b *HolderContract) ChangeAimplAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return b.Call("ChangeAimplAddress", args, "0")
-}
-
 func (b *HolderContract) CompleteWithdrawal() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return b.Call("CompleteWithdrawal", args, "0")
@@ -231,10 +187,6 @@ func buildHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string)
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
-		}, {
-			VName: "init_admin_address",
-			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
 		}, {
 			VName: "init_aimpl_address",
 			Type:  "ByStr20",
