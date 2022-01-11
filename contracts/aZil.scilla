@@ -911,6 +911,9 @@ transition CompleteWithdrawalSuccessCallBack()
 
 end
 
+transition CompleteTransfer()
+end
+
 (************************************************************)
 (* @dev: Returns an account zil amount                      *)
 (************************************************************)

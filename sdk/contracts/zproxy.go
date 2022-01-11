@@ -55,6 +55,13 @@ func (p *Zproxy) AssignStakeReward(ssn, reward string) (*transaction.Transaction
 	return p.Call("AssignStakeReward", args, reward)
 }
 
+func (p *Zproxy) Key(key string) *Zproxy {
+	wallet := account.NewWallet()
+	wallet.AddByPrivateKey(key)
+	p.Contract.Wallet = wallet
+	return p
+}
+
 func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -96,6 +103,17 @@ func (p *Zproxy) DelegateStake(ssnaddr, amount string) (*transaction.Transaction
 		},
 	}
 	return p.Call("DelegateStake", args, amount)
+}
+
+func (p *Zproxy) RequestDelegatorSwap(new_deleg_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_deleg_addr",
+			"ByStr20",
+			new_deleg_addr,
+		},
+	}
+	return p.Call("RequestDelegatorSwap", args, "0")
 }
 
 func (p *Zproxy) Unpause() (*transaction.Transaction, error) {
@@ -141,6 +159,17 @@ func (p *Zproxy) UpdateVerifierRewardAddr(newAddr string) (*transaction.Transact
 		newAddr,
 	}}
 	return p.Call("UpdateVerifierRewardAddr", args, "0")
+}
+
+func (p *Zproxy) WithdrawStakeRewards(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return p.Call("WithdrawStakeRewards", args, "0")
 }
 
 func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
