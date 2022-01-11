@@ -87,6 +87,17 @@ func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, err
 	return p.Call("AddSSN", args, "0")
 }
 
+func (p *Zproxy) DelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return p.Call("DelegateStake", args, amount)
+}
+
 func (p *Zproxy) Unpause() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return p.Call("UnPause", args, "0")
