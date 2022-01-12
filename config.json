@@ -55,5 +55,34 @@
       "0x585d6813924c3e623ac8750339d1706b25c2af69"
     ],
     "HolderAddr": "0x8578d2fa8c707e0b16f872e358e87364a173ee74"
+  },
+  "mainnet": {
+    "ApiUrl": "https://api.zilliqa.com",
+    "ChainId": 1,
+    "TxConfrimMaxAttempts": 15,
+    "TxConfirmIntervalSec": 30,
+    "AzilSsnAddress": "0x2afe9e18EdD39D927d0FffF8990612FC4aFa2295",
+    "AzilSsnRewardShare": "50",
+    "HolderInitialDelegateZil": "1000",
+    "Admin":"",
+    "AdminKey": "",
+    "Key1": "",
+    "Addr1": "",
+    "Key2": "",
+    "Addr2": "0xec902fe17d90203d0bddd943d97b29576ece3177",
+    "Key3": "",
+    "Addr3": "0xc2035715831ab100ec42e562ce341b834bed1f4c",
+    "VerifierKey": "",
+    "Verifier": "0x10200e3da08ee88729469d6eabc055cb225821e7",
+
+    "GzilAddr": "0xa845C1034CD077bD8D32be0447239c7E4be6cb21",
+    "ZproxyAddr": "0x62A9d5D611CDCaE8D78005F31635898330e06B93",
+    "ZimplAddr": "0xa7C67D49C82c7dc1B73D231640B2e4d0661D37c1",
+    "AzilAddr": "0x28989f5d6915dc28477ec52991babbaa158bc667",
+    "BufferAddrs": [
+      "0xdb92bfb7c48a040593f21eba0660e88212a890d3",
+      "0x585d6813924c3e623ac8750339d1706b25c2af69"
+    ],
+    "HolderAddr": "0x8578d2fa8c707e0b16f872e358e87364a173ee74"
   }
 }
