@@ -6,17 +6,42 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
-func (tr *Transitions) Transfer() {
-	Start("Transfer")
+func (tr *Transitions) TransferAimplErrors() {
+	Start("Transfer Aimpl Errors")
 
 	p := tr.DeployAndUpgrade()
 
 	transferSetupSSN(p)
-	transferNextRewardCycle(p)
-	transferErrors(p)
 
-	//key1 tries to transfer, expecting success
-	//e = { _eventname: "RequestDelegatorSwap"; initial_deleg: initiator; new_deleg: new_deleg_addr };
+	key1, addr1, ssn1, ssn2, _, userStake := transferDefineParams(p)
+
+	//key1 delegates to main contract
+	AssertSuccess(p.Zproxy.Key(key1).DelegateStake(ssn1, userStake))
+
+	//key1 waits 2 reward cycles
+	transferNextRewardCycle(p)
+	AssertSuccess(p.Aimpl.Key(sdk.Cfg.AdminKey).DrainBuffer(p.GetBuffer().Addr))
+	transferNextRewardCycle(p)
+	AssertSuccess(p.Aimpl.Key(sdk.Cfg.AdminKey).DrainBuffer(p.GetBuffer().Addr))
+
+	//key1 claims rewards
+	AssertSuccess(p.Zproxy.Key(key1).WithdrawStakeRewards(ssn1))
+
+	tx, _ := p.Aimpl.Key(key1).CompleteTransfer(addr1)
+	AssertError(tx, "CompleteTransferSwapRequestNotFound")
+
+	//key1 requests swap with NOT Holder address
+	tx, _ = AssertSuccess(p.Zproxy.Key(key1).RequestDelegatorSwap(ssn2))
+
+	tx, _ = p.Aimpl.Key(key1).CompleteTransfer(addr1)
+	AssertError(tx, "CompleteTransferSwapRequestNotHolder")
+
+	//key1 requests swap with holder
+	tx, _ = AssertSuccess(p.Zproxy.Key(key1).RequestDelegatorSwap(p.Holder.Addr))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
+
+	tx, _ = p.Aimpl.Key(key1).CompleteTransfer(addr1)
+	AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteTransfer", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
 
 	//key1 have withdraw requests and tries to transfer, expecting RejectDelegatorSwap
 
@@ -30,6 +55,16 @@ func (tr *Transitions) Transfer() {
 
 	//tests for user, which was previously registered at Azil
 
+	//what if user has some redelegate requests?
+}
+
+func (tr *Transitions) TransferZimplErrors() {
+	Start("Transfer Zimpl Errors")
+
+	p := tr.DeployAndUpgrade()
+
+	transferSetupSSN(p)
+	transferZimplErrors(p)
 }
 
 func transferDefineParams(p *contracts.Protocol) (string, string, string, string, string, string) {
@@ -42,7 +77,7 @@ func transferDefineParams(p *contracts.Protocol) (string, string, string, string
 	return key1, addr1, ssn1, ssn2, minStake, userStake
 }
 
-func transferErrors(p *contracts.Protocol) {
+func transferZimplErrors(p *contracts.Protocol) {
 	key1, addr1, ssn1, _, _, userStake := transferDefineParams(p)
 
 	//key1 delegates to main contract, expecting success
