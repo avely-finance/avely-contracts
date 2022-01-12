@@ -19,6 +19,44 @@ type Zproxy struct {
 	Contract
 }
 
+func (p *Zproxy) AssignStakeRewardList(rewards map[string]string, amount string) (*transaction.Transaction, error) {
+
+	type Constructor struct {
+		Constructor string   `json:"constructor"`
+		ArgTypes    []string `json:"argtypes"`
+		Arguments   []string `json:"arguments"`
+	}
+
+	ats := []string{
+		"ByStr20",
+		"Uint128",
+	}
+
+	var Value []Constructor
+	for ssn, rewardFactor := range rewards {
+		ars := []string{
+			ssn,
+			rewardFactor,
+		}
+		cons := Constructor{
+			Constructor: "Pair",
+			ArgTypes:    ats,
+			Arguments:   ars,
+		}
+		Value = append(Value, cons)
+	}
+
+	args := []core.ContractValue{
+		{
+			VName: "ssnreward_list",
+			Type:  "List (Pair ByStr20 Uint128)",
+			Value: Value,
+		},
+	}
+
+	return p.Call("AssignStakeReward", args, amount)
+}
+
 func (p *Zproxy) AssignStakeReward(ssn, reward string) (*transaction.Transaction, error) {
 
 	type Constructor struct {
