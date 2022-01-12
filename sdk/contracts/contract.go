@@ -88,6 +88,14 @@ func (c *Contract) State() string {
 	return state
 }
 
+func (c *Contract) SubState(params ...interface{}) string {
+	rsp, _ := c.Provider.GetSmartContractSubState(c.Addr, params...)
+	// result, _ := json.MarshalIndent(rsp, "", "     ")
+	result, _ := json.Marshal(rsp)
+	state := string(result)
+	return state
+}
+
 func (c *Contract) stateParse() {
 	if c.TxIdStateParsed == c.Sdk.TxLast.ID {
 		return
