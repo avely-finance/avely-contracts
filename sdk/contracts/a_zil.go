@@ -103,8 +103,14 @@ func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, e
 	return a.Contract.Call("ChangeHolderAddress", args, "0")
 }
 
-func (a *AZil) CompleteTransfer() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (a *AZil) CompleteTransfer(delegator string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"delegator",
+			"ByStr20",
+			delegator,
+		},
+	}
 	return a.Call("CompleteTransfer", args, "0")
 }
 

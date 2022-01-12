@@ -18,6 +18,9 @@ type Error =
   | CantFetchZimplBufferExistsAtSSN
   | CantFetchZimplFields
   | ClaimWithdrawalNoUnbonded
+  | CompleteTransferCantFetchRemote
+  | CompleteTransferSwapRequestNotFound
+  | CompleteTransferSwapRequestNotHolder
   | CompleteWithdrawalFundsMismatch
   | DelegAddrUnknown
   | DelegDoesNotExistAtSSN
@@ -35,25 +38,28 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AdminValidationFailed           => "AdminValidationFailed"
-      | BufferAddrUnknown               => "BufferAddrUnknown"
-      | BufferNoActive                  => "BufferNoActive"
-      | BufferOrHolderValidationFailed  => "BufferOrHolderValidationFailed"
-      | CantFetchZimplBufferExistsAtSSN => "CantFetchZimplBufferExistsAtSSN"
-      | CantFetchZimplFields            => "CantFetchZimplFields"
-      | ClaimWithdrawalNoUnbonded       => "ClaimWithdrawalNoUnbonded"
-      | CompleteWithdrawalFundsMismatch => "CompleteWithdrawalFundsMismatch"
-      | DelegAddrUnknown                => "DelegAddrUnknown"
-      | DelegDoesNotExistAtSSN          => "DelegDoesNotExistAtSSN"
-      | DelegHasBufferedDeposit         => "DelegHasBufferedDeposit"
-      | DelegHasNoSufficientAmt         => "DelegHasNoSufficientAmt"
-      | DelegStakeFundsMismatch         => "DelegStakeFundsMismatch"
-      | DelegStakeNotEnough             => "DelegStakeNotEnough"
-      | InvalidTotalAmt                 => "InvalidTotalAmt"
-      | Paused                          => "Paused"
-      | NotPaused                       => "NotPaused"
-      | StagingAdminNotExists           => "StagingAdminNotExists"
-      | StagingAdminValidationFailed    => "StagingAdminValidationFailed"
+      | AdminValidationFailed                => "AdminValidationFailed"
+      | BufferAddrUnknown                    => "BufferAddrUnknown"
+      | BufferNoActive                       => "BufferNoActive"
+      | BufferOrHolderValidationFailed       => "BufferOrHolderValidationFailed"
+      | CantFetchZimplBufferExistsAtSSN      => "CantFetchZimplBufferExistsAtSSN"
+      | CantFetchZimplFields                 => "CantFetchZimplFields"
+      | ClaimWithdrawalNoUnbonded            => "ClaimWithdrawalNoUnbonded"
+      | CompleteTransferCantFetchRemote      => "CompleteTransferCantFetchRemote"
+      | CompleteTransferSwapRequestNotFound  => "CompleteTransferSwapRequestNotFound"
+      | CompleteTransferSwapRequestNotHolder => "CompleteTransferSwapRequestNotHolder"
+      | CompleteWithdrawalFundsMismatch      => "CompleteWithdrawalFundsMismatch"
+      | DelegAddrUnknown                     => "DelegAddrUnknown"
+      | DelegDoesNotExistAtSSN               => "DelegDoesNotExistAtSSN"
+      | DelegHasBufferedDeposit              => "DelegHasBufferedDeposit"
+      | DelegHasNoSufficientAmt              => "DelegHasNoSufficientAmt"
+      | DelegStakeFundsMismatch              => "DelegStakeFundsMismatch"
+      | DelegStakeNotEnough                  => "DelegStakeNotEnough"
+      | InvalidTotalAmt                      => "InvalidTotalAmt"
+      | Paused                               => "Paused"
+      | NotPaused                            => "NotPaused"
+      | StagingAdminNotExists                => "StagingAdminNotExists"
+      | StagingAdminValidationFailed         => "StagingAdminValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }
@@ -276,6 +282,32 @@ procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
     end
   | None =>
       e = CantFetchZimplBufferExistsAtSSN;
+      ThrowError e
+  end
+end
+
+procedure CompleteTransferFetchRemote(delegator: ByStr20)
+  var_zimpl_address <- zimpl_address;
+  o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract field deleg_swap_request: Map ByStr20 ByStr20 end;
+  match o_zimpl_addr_test with
+  | Some zimpl =>
+    o_deleg_swap_request <- & zimpl.deleg_swap_request[delegator];
+    match o_deleg_swap_request with
+    | Some new_deleg =>
+      holder_addr <- holder_address;
+      is_holder = builtin eq new_deleg holder_addr;
+      match is_holder with
+      | True =>
+      | False =>
+        e = CompleteTransferSwapRequestNotHolder;
+        ThrowError e
+      end
+    | None =>
+      e = CompleteTransferSwapRequestNotFound;
+      ThrowError e
+    end
+  | None =>
+      e = CompleteTransferCantFetchRemote;
       ThrowError e
   end
 end
@@ -911,7 +943,21 @@ transition CompleteWithdrawalSuccessCallBack()
 
 end
 
-transition CompleteTransfer()
+transition CompleteTransfer(delegator: ByStr20)
+  CompleteTransferFetchRemote delegator;
+  holder_addr <- holder_address;
+  e = { _eventname: "CompleteTransfer"; initial_deleg: delegator; new_deleg: holder_addr };
+  event e
+(*
+  //is swap request present?
+  //pending withdrawals?
+  read_remote_state(zimpl, deleg_ssn_amount[delegator])
+  proxy.call(:confirm_swap, delegator)
+  foreach deleg_ssn_amount[delegator] as from_ssn => amount
+    proxy.call(:redelegate, delegator, from_ssn, amount)
+    total+=amount
+  increaseAzilBalance(delegator, total)
+*)
 end
 
 (************************************************************)
