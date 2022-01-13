@@ -68,9 +68,6 @@ func (tr *Transitions) TransferSuccess() {
 	AssertEqual(p.Zimpl.Field("ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, p.Holder.Addr), StrAdd(ssnDelegAmt, userStake, userStake2))
 	AssertEqual(p.Aimpl.Field("totalstakeamount"), StrAdd(totalstakeamount, userStakeThroughAimpl, userStake, userStake2))
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), StrAdd(totaltokenamount, p.Aimpl.Field("balances", addr1)))
-
-	//TODO: what if user has some redelegate requests?
-
 }
 
 func (tr *Transitions) TransferAimplErrors() {
