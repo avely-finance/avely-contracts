@@ -96,8 +96,11 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	AssertEqual(p.Aimpl.Field("totalstakeamount"), StrAdd(ToZil(1000), newDelegBalanceZil))
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1010))
 	AssertEqual(p.Aimpl.Field("balances", sdk.Cfg.Addr2), ToAzil(10))
-	AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum1, sdk.Cfg.Addr2, "0"), ToAzil(5))
-	AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum1, sdk.Cfg.Addr2, "1"), ToZil(5))
+
+	withdrawal := Dig(p.Aimpl, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
+
+	AssertEqual(withdrawal.TokenAmount.String(), ToAzil(5))
+	AssertEqual(withdrawal.StakeAmount.String(), ToAzil(5))
 
 	/*******************************************************************************
 	 * 3B. delegator withdrawing all remaining deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -116,11 +119,15 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	//there is holder's initial stake
 	//t.AssertEqual(p.Zproxy.Field("totalstakeamount"), "0")
 	if bnum1 == bnum2 {
-		AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum1, sdk.Cfg.Addr2, "0"), ToAzil(15))
-		AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum1, sdk.Cfg.Addr2, "1"), ToZil(15))
+		withdrawal := Dig(p.Aimpl, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
+
+		AssertEqual(withdrawal.TokenAmount.String(), ToAzil(15))
+		AssertEqual(withdrawal.StakeAmount.String(), ToAzil(15))
 	} else {
 		//second withdrawal happened in next block
-		AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum2, sdk.Cfg.Addr2, "0"), ToAzil(10))
-		AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum2, sdk.Cfg.Addr2, "1"), ToZil(10))
+		withdrawal := Dig(p.Aimpl, "withdrawal_pending", bnum2, sdk.Cfg.Addr2).Withdrawal()
+
+		AssertEqual(withdrawal.TokenAmount.String(), ToAzil(10))
+		AssertEqual(withdrawal.StakeAmount.String(), ToAzil(10))
 	}
 }
