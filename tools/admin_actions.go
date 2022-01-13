@@ -54,6 +54,8 @@ func main() {
 			showTx(p, addr)
 		case "deploy_buffer":
 			deployBuffer(p)
+		case "unpause":
+			unpause(p)
 		case "sync_buffers":
 			syncBuffers(p)
 		case "drain_buffer":
@@ -110,6 +112,15 @@ func deployBuffer(p *Protocol) {
 		log.Fatalf("Buffer deploy failed with error: ", err)
 	}
 	log.Success("Buffer deploy is successfully compelted. Address: " + buffer.Addr)
+}
+
+func unpause(p *Protocol) {
+	_, err := p.Aimpl.Unpause()
+
+	if err != nil {
+		log.Fatalf("Unpause AZil failed with error: ", err)
+	}
+	log.Success("Unpause AZil is successfully compelted")
 }
 
 func syncBuffers(p *Protocol) {
