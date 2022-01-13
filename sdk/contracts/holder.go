@@ -147,6 +147,27 @@ func (b *HolderContract) ReDelegateStake(ssnaddr, amount string) (*transaction.T
 	return b.Call("ReDelegateStake", args, "0")
 }
 
+func (b *HolderContract) ReDelegateStakeSuccessCallBack(ssnaddr, to_ssn, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+		{
+			"to_ssn",
+			"ByStr20",
+			to_ssn,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("ReDelegateStakeSuccessCallBack", args, "0")
+}
+
 func NewHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (*HolderContract, error) {
 	contract := buildHolderContract(sdk, aimplAddr, zproxyAddr, zimplAddr)
 

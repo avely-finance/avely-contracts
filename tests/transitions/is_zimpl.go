@@ -26,6 +26,8 @@ func (tr *Transitions) IsZimpl() {
 	AssertError(tx, "ZimplValidationFailed")
 	tx, _ = p.Holder.DelegateStakeSuccessCallBack(sdk.Cfg.AzilSsnAddress, ToZil(10))
 	AssertError(tx, "ZimplValidationFailed")
+	tx, _ = p.Holder.ReDelegateStakeSuccessCallBack(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnAddress, ToZil(10))
+	AssertError(tx, "ZimplValidationFailed")
 	tx, _ = p.Holder.WithdrawStakeAmtSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))
 	AssertError(tx, "ZimplValidationFailed")
 	tx, _ = p.Holder.WithdrawStakeRewardsSuccessCallBack(sdk.Cfg.Addr2, ToZil(10))

@@ -234,6 +234,11 @@ transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
   send msgs
 end
 
+transition ReDelegateStakeSuccessCallBack(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
+  RequireZimpl
+  (* nop *)
+end
+
 (* Purpose of this transition is one-time min_deleg_stake delegate from Holder after its deploy *)
 (* Else Zimpl will not know anything about Holder and will return DelegDoesNotExistAtSSN error *)
 transition DelegateStake()
