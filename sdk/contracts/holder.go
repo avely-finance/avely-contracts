@@ -141,14 +141,12 @@ func NewHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (
 	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
-		stateFieldTypes := make(StateFieldTypes)
 		sdkContract := Contract{
-			Sdk:             sdk,
-			Provider:        *contract.Provider,
-			Addr:            "0x" + tx.ContractAddress,
-			Bech32:          b32,
-			Wallet:          contract.Signer,
-			StateFieldTypes: stateFieldTypes,
+			Sdk:      sdk,
+			Provider: *contract.Provider,
+			Addr:     "0x" + tx.ContractAddress,
+			Bech32:   b32,
+			Wallet:   contract.Signer,
 		}
 		return &HolderContract{Contract: sdkContract}, nil
 	} else {
@@ -165,14 +163,12 @@ func RestoreHolderContract(sdk *AvelySDK, contractAddress, aimplAddr, zproxyAddr
 		return nil, errors.New("Config has invalid Holder address")
 	}
 
-	stateFieldTypes := make(StateFieldTypes)
 	sdkContract := Contract{
-		Sdk:             sdk,
-		Provider:        *contract.Provider,
-		Addr:            contractAddress,
-		Bech32:          b32,
-		Wallet:          contract.Signer,
-		StateFieldTypes: stateFieldTypes,
+		Sdk:      sdk,
+		Provider: *contract.Provider,
+		Addr:     contractAddress,
+		Bech32:   b32,
+		Wallet:   contract.Signer,
 	}
 	return &HolderContract{Contract: sdkContract}, nil
 }

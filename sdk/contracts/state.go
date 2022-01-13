@@ -11,6 +11,11 @@ type SSNCycleInfoType struct {
 	TotalRewards *big.Int
 }
 
+type WithdrawalType struct {
+	TokenAmount *big.Int
+	StakeAmount *big.Int
+}
+
 type StateItem struct {
 	gjson.Result
 }
@@ -42,6 +47,25 @@ func (i *StateItem) SSNCycleInfo() *SSNCycleInfoType {
 		TotalStaking: totalStaking,
 		TotalRewards: totalRewards,
 	}
+}
+
+func (i *StateItem) Withdrawal() *WithdrawalType {
+	tokenAmt := big.NewInt(0)
+	stakeAmt := big.NewInt(0)
+
+	if i.Get("arguments").Exists() {
+		tokenAmt = stringToBigInt(i.Get("arguments.0").String())
+		stakeAmt = stringToBigInt(i.Get("arguments.1").String())
+	}
+
+	return &WithdrawalType{
+		TokenAmount: tokenAmt,
+		StakeAmount: stakeAmt,
+	}
+}
+
+func (i *StateItem) ToTrue() bool {
+	return i.Get("constructor").String() == "True"
 }
 
 func (i *StateItem) BigInt() *big.Int {

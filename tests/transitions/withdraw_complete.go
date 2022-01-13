@@ -40,7 +40,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tx, _ = p.Aimpl.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, "ClaimWithdrawalNoUnbonded")
 
-	delta, _ := strconv.ParseInt(StrAdd(p.Zimpl.Field("bnum_req"), "1"), 10, 32)
+	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
 	sdk.IncreaseBlocknum(int32(delta))
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
@@ -81,10 +81,11 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 		ParamsMap{},
 	})
 
-	AssertEqual(ToZil(1000), p.Aimpl.Field("totalstakeamount"))
-	AssertEqual(ToAzil(1000), p.Aimpl.Field("totaltokenamount"))
-	AssertEqual("0", p.Aimpl.Field("tmp_complete_withdrawal_available"))
-	AssertEqual(p.Aimpl.Field("balances", sdk.Cfg.Admin), ToAzil(1000))
-	AssertEqual("empty", p.Aimpl.Field("withdrawal_unbonded"))
-	AssertEqual("empty", p.Aimpl.Field("withdrawal_pending"))
+	AssertEqual(Field(p.Aimpl, "totalstakeamount"), ToZil(1000))
+	AssertEqual(Field(p.Aimpl, "totaltokenamount"), ToAzil(1000))
+	AssertEqual(Field(p.Aimpl, "tmp_complete_withdrawal_available"), "0")
+	AssertEqual(Field(p.Aimpl, "balances", sdk.Cfg.Admin), ToAzil(1000))
+
+	AssertEqual(Field(p.Aimpl, "withdrawal_unbonded"), "{}")
+	AssertEqual(Field(p.Aimpl, "withdrawal_pending"), "{}")
 }
