@@ -20,8 +20,6 @@ func (tr *Transitions) Pause() {
 	//pause contract, expecting success
 	tx, _ := AssertSuccess(p.Aimpl.Pause())
 	AssertEvent(tx, Event{p.Aimpl.Addr, "Pause", ParamsMap{"is_paused": "1"}})
-	GetLog().Success(Dig(p.Aimpl, "is_paused").ToTrue())
-	// AssertEqual(Field(p.Aimpl, "is_paused"), "True")
 	AssertEqual(Field(p.Aimpl, "is_paused"), "True")
 
 	//unpause contract, expecting success
