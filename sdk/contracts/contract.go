@@ -211,7 +211,7 @@ func stateFieldMap(v interface{}) map[string]interface{} {
 
 func stateFieldMapMap(v interface{}) map[string]interface{} {
 	tmp, _ := json.Marshal(v)
-	var field map[string](map[string](map[string]interface{}))
+	var field map[string](map[string]interface{})
 	json.Unmarshal([]byte(tmp), &field)
 	res := make(map[string]interface{})
 	for i, w := range field {
