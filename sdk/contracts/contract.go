@@ -17,7 +17,7 @@ import (
 
 // Basic type for all protocol contracts
 type ProtocolContract interface {
-	State() (string)
+	State() string
 }
 
 type Pair struct {
@@ -67,25 +67,25 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	return tx, nil
 }
 
-func (c *Contract) Field(key ...string) string {
-	return NewState(c.State()).Field(key...)
-	// c.stateParse()
-	// src := c.StateMap
-	// for _, v := range key {
-	// 	val, ok := src[v]
-	// 	if !ok {
-	// 		//key not found in map
-	// 		return ""
-	// 	} else if reflect.String == reflect.ValueOf(val).Kind() {
-	// 		return val.(string)
-	// 	} else if reflect.Map == reflect.ValueOf(val).Kind() && 0 == len(val.(map[string]interface{})) {
-	// 		//empty map
-	// 		return "empty"
-	// 	}
-	// 	src = val.(map[string]interface{})
-	// }
-	// return "map"
-}
+// func (c *Contract) Field(key ...string) string {
+// 	return NewState(c.State()).Field(key...)
+// c.stateParse()
+// src := c.StateMap
+// for _, v := range key {
+// 	val, ok := src[v]
+// 	if !ok {
+// 		//key not found in map
+// 		return ""
+// 	} else if reflect.String == reflect.ValueOf(val).Kind() {
+// 		return val.(string)
+// 	} else if reflect.Map == reflect.ValueOf(val).Kind() && 0 == len(val.(map[string]interface{})) {
+// 		//empty map
+// 		return "empty"
+// 	}
+// 	src = val.(map[string]interface{})
+// }
+// return "map"
+// }
 
 func (c *Contract) State() string {
 	rsp, _ := c.Provider.GetSmartContractState(c.Addr[2:])

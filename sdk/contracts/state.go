@@ -30,25 +30,6 @@ func NewState(raw string) *State {
 	}
 }
 
-func (s *State) Field(path ...string) string {
-	item := s.Dig(path...)
-
-	if item.Get("constructor").Exists() {
-		if item.Get("constructor").String() == "True" {
-			return "True"
-		}
-		if item.Get("constructor").String() == "False" {
-			return "False"
-		}
-	}
-
-	if item.Get("arguments").Exists() {
-		return item.Get("arguments.0").String()
-	}
-
-	return item.String()
-}
-
 func (s *State) Dig(path ...string) *StateItem {
 	return &StateItem{gjson.Get(s.raw, strings.Join(path[:], "."))}
 }
