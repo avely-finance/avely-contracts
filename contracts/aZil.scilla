@@ -201,6 +201,7 @@ field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
 field tmp_buffer_exists_at_ssn: Uint32 = uint32_zero
 field tmp_map_ssn_amt: Map ByStr20 Uint128 = Emp ByStr20 Uint128
+field tmp_total_redeleg_amt: Uint128 = uint128_zero
 
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
@@ -291,6 +292,79 @@ procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
   end
 end
 
+(************************************************************)
+(* @dev: Holder & Buffer actions                            *)
+(************************************************************)
+
+procedure HolderWithdrawStakeAmt(amount: Uint128)
+  holder_addr <- holder_address;
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure HolderConfirmDelegatorSwap(requestor: ByStr20)
+  holder_addr <- holder_address;
+  msg = { _tag: "ConfirmDelegatorSwap"; _recipient: holder_addr; _amount: uint128_zero; requestor: requestor };
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure HolderCompleteWithdrawal()
+  holder_addr <- holder_address;
+  msg = { _tag: "CompleteWithdrawal"; _recipient: holder_addr; _amount: uint128_zero };
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure HolderReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
+  holder_addr <- holder_address;
+  msg = { _tag: "ReDelegateStake"; _recipient: holder_addr; _amount: uint128_zero; ssnaddr: ssnaddr; amount: amount };
+  msgs = one_msg msg;
+  send msgs
+end
+
+
+(* @dev : To delegate the stake to the contract through buffer. *)
+procedure BufferDelegate(amount: Uint128)
+  FetchRemoteZimplFields;
+  cycle <- local_lastrewardcycle;
+  buffer_addrs <- buffers_addresses;
+  buffer = get_active_buffer_addr buffer_addrs cycle;
+
+  match buffer with
+  | None =>
+    e = BufferNoActive;
+    ThrowError e
+  | Some buffer_addr =>
+    msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
+    msgs = one_msg msg;
+    send msgs
+  end
+end
+
+procedure ClaimRewards(addr: ByStr20)
+  msg = { _tag: "ClaimRewards"; _recipient: addr; _amount: uint128_zero };
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure RequestDelegatorSwap(from: ByStr20, to: ByStr20)
+  msg = { _tag: "RequestDelegatorSwap"; _recipient: from; _amount: uint128_zero; new_deleg_addr: to};
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure ConfirmDelegatorSwap(from: ByStr20, to: ByStr20)
+  msg = { _tag: "ConfirmDelegatorSwap"; _recipient: to; _amount: uint128_zero; requestor: from};
+  msgs = one_msg msg;
+  send msgs
+end
+
+(************************************************************)
+(* @dev: aZil actions                                       *)
+(************************************************************)
+
 procedure CompleteTransferFetchRemote(delegator: ByStr20)
   var_zimpl_address <- zimpl_address;
 
@@ -345,70 +419,16 @@ procedure CompleteTransferFetchRemote(delegator: ByStr20)
   end
 end
 
-(************************************************************)
-(* @dev: Holder & Buffer actions                            *)
-(************************************************************)
-
-procedure HolderWithdrawStakeAmt(amount: Uint128)
-  holder_addr <- holder_address;
-  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
-
-procedure HolderConfirmDelegatorSwap(requestor: ByStr20)
-  holder_addr <- holder_address;
-  msg = { _tag: "ConfirmDelegatorSwap"; _recipient: holder_addr; _amount: uint128_zero; requestor: requestor };
-  msgs = one_msg msg;
-  send msgs
-end
-
-procedure HolderCompleteWithdrawal()
-  holder_addr <- holder_address;
-  msg = { _tag: "CompleteWithdrawal"; _recipient: holder_addr; _amount: uint128_zero };
-  msgs = one_msg msg;
-  send msgs
-end
-
-(* @dev : To delegate the stake to the contract through buffer. *)
-procedure BufferDelegate(amount: Uint128)
-  FetchRemoteZimplFields;
-  cycle <- local_lastrewardcycle;
-  buffer_addrs <- buffers_addresses;
-  buffer = get_active_buffer_addr buffer_addrs cycle;
-
-  match buffer with
-  | None =>
-    e = BufferNoActive;
-    ThrowError e
-  | Some buffer_addr =>
-    msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
-    msgs = one_msg msg;
-    send msgs
+procedure CompleteTransferReDelegate(ssn_amount: Pair ByStr20 Uint128)
+  match ssn_amount with
+  | Pair ssn amount =>
+    (* update total redelegate amount *)
+    total_redeleg_amt <- tmp_total_redeleg_amt;
+    total_redeleg_amt = builtin add total_redeleg_amt amount;
+    tmp_total_redeleg_amt := total_redeleg_amt;
+    HolderReDelegateStake ssn amount
   end
 end
-
-procedure ClaimRewards(addr: ByStr20)
-  msg = { _tag: "ClaimRewards"; _recipient: addr; _amount: uint128_zero };
-  msgs = one_msg msg;
-  send msgs
-end
-
-procedure RequestDelegatorSwap(from: ByStr20, to: ByStr20)
-  msg = { _tag: "RequestDelegatorSwap"; _recipient: from; _amount: uint128_zero; new_deleg_addr: to};
-  msgs = one_msg msg;
-  send msgs
-end
-
-procedure ConfirmDelegatorSwap(from: ByStr20, to: ByStr20)
-  msg = { _tag: "ConfirmDelegatorSwap"; _recipient: to; _amount: uint128_zero; requestor: from};
-  msgs = one_msg msg;
-  send msgs
-end
-
-(************************************************************)
-(* @dev: aZil actions                                       *)
-(************************************************************)
 
 procedure IsDelegStakeSufficient(amount: Uint128)
   mindelegstake_l <- mindelegstake;
@@ -985,17 +1005,19 @@ end
 
 transition CompleteTransfer(delegator: ByStr20)
   CompleteTransferFetchRemote delegator;
-  HolderConfirmDelegatorSwap delegator
+  HolderConfirmDelegatorSwap delegator;
 
-  (*
-    foreach tmp_map_ssn_amt as from_ssn => amount
-      proxy.call(:redelegate, delegator, from_ssn, amount)
-      total+=amount
-    UpdateTokenBalance delegator total
-  *)
+  map_ssn_amt <- tmp_map_ssn_amt;
+  list_ssn_amt = builtin to_list map_ssn_amt;
+  forall list_ssn_amt CompleteTransferReDelegate;
+
+  total_redeleg_amt <- tmp_total_redeleg_amt;
+  UpdateTokenBalance delegator total_redeleg_amt;
 
   (* Reset tmp variables *)
-  (* tmp_map_ssn_amt := Emp ByStr20 Uint128; *)
+  empty_map = Emp ByStr20 Uint128;
+  tmp_map_ssn_amt := empty_map;
+  tmp_total_redeleg_amt := uint128_zero
 end
 
 (************************************************************)

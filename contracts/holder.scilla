@@ -234,7 +234,7 @@ transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
   send msgs
 end
 
-transition ReDelegateStakeSuccessCallBack(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
+transition ReDelegateStakeSuccessCallBack(ssnaddr: ByStr20, tossn: ByStr20, amount: Uint128)
   RequireZimpl
   (* nop *)
 end
