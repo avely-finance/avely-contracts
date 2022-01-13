@@ -365,7 +365,7 @@ end
 (* @dev: aZil actions                                       *)
 (************************************************************)
 
-procedure CompleteTransferFetchRemote(delegator: ByStr20)
+procedure CompleteTransferFetchCheckRemote(delegator: ByStr20)
   var_zimpl_address <- zimpl_address;
 
   o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract
@@ -403,6 +403,7 @@ procedure CompleteTransferFetchRemote(delegator: ByStr20)
     | None =>
     end;
 
+    (* fetch delegator's stakes for each ssn *)
     o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
     match o_deposit_amt_deleg with
     | Some map_ssn_amt =>
@@ -411,7 +412,6 @@ procedure CompleteTransferFetchRemote(delegator: ByStr20)
       e = CompleteTransferStakeNotFound;
       ThrowError e
     end
-
 
   | None =>
     e = CompleteTransferCantFetchRemote;
@@ -1004,7 +1004,7 @@ transition CompleteWithdrawalSuccessCallBack()
 end
 
 transition CompleteTransfer(delegator: ByStr20)
-  CompleteTransferFetchRemote delegator;
+  CompleteTransferFetchCheckRemote delegator;
   HolderConfirmDelegatorSwap delegator;
 
   map_ssn_amt <- tmp_map_ssn_amt;
