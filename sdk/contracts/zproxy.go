@@ -210,6 +210,22 @@ func (p *Zproxy) WithdrawStakeRewards(ssnaddr string) (*transaction.Transaction,
 	return p.Call("WithdrawStakeRewards", args, "0")
 }
 
+func (p *Zproxy) WithdrawStakeAmt(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+		{
+			"amt",
+			"Uint128",
+			amount,
+		},
+	}
+	return p.Call("WithdrawStakeAmt", args, "0")
+}
+
 func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
 	contract := buildZproxyContract(sdk)
 
