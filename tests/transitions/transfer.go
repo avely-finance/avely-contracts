@@ -41,6 +41,20 @@ func (tr *Transitions) TransferSuccess() {
 	//call CompleteTransfer, expecting success
 	tx, _ = AssertSuccess(p.Aimpl.Key(key1).CompleteTransfer(addr1))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
+	AssertTransition(tx, Transition{
+		p.Zimpl.Addr, //sender
+		"ReDelegateStakeSuccessCallBack",
+		p.Holder.Addr,
+		"0",
+		ParamsMap{"ssnaddr": ssn1, "tossn": sdk.Cfg.AzilSsnAddress, "amount": userStake},
+	})
+	AssertTransition(tx, Transition{
+		p.Zimpl.Addr, //sender
+		"ReDelegateStakeSuccessCallBack",
+		p.Holder.Addr,
+		"0",
+		ParamsMap{"ssnaddr": ssn2, "tossn": sdk.Cfg.AzilSsnAddress, "amount": userStake2},
+	})
 	AssertEqual(p.Zimpl.Field("deposit_amt_deleg", addr1), "")
 	AssertEqual(p.Zimpl.Field("deposit_amt_deleg", p.Holder.Addr, sdk.Cfg.AzilSsnAddress), StrAdd(depositAmtDeleg, userStake, userStake2))
 	AssertEqual(p.Zimpl.Field("ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, p.Holder.Addr), StrAdd(ssnDelegAmt, userStake, userStake2))
