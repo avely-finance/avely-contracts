@@ -83,15 +83,12 @@ func NewGzil(sdk *AvelySDK) (*Gzil, error) {
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
-		stateFieldTypes := make(StateFieldTypes)
-
 		contract := Contract{
-			Sdk:             sdk,
-			Provider:        *contract.Provider,
-			Addr:            "0x" + tx.ContractAddress,
-			Bech32:          b32,
-			Wallet:          wallet,
-			StateFieldTypes: stateFieldTypes,
+			Sdk:      sdk,
+			Provider: *contract.Provider,
+			Addr:     "0x" + tx.ContractAddress,
+			Bech32:   b32,
+			Wallet:   wallet,
 		}
 
 		return &Gzil{Contract: contract}, nil
