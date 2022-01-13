@@ -14,10 +14,18 @@ func (tr *Transitions) TransferSuccess() {
 	transferSetupSSN(p)
 
 	key1, addr1, ssn1, ssn2, _, userStake := transferDefineParams(p)
+	totaltokenamount := p.Aimpl.Field("totaltokenamount")
+	totalstakeamount := p.Aimpl.Field("totalstakeamount")
+	userStakeThroughAimpl := userStake
+
+	//key1 delegates through Aimpl
+	AssertSuccess(p.Aimpl.Key(key1).DelegateStake(userStakeThroughAimpl))
+	transferNextRewardCycle(p)
+	transferNextRewardCycle(p)
+	AssertSuccess(p.Aimpl.Key(sdk.Cfg.AdminKey).DrainBuffer(p.GetBuffer().Addr))
+
 	depositAmtDeleg := p.Zimpl.Field("deposit_amt_deleg", p.Holder.Addr, sdk.Cfg.AzilSsnAddress)
 	ssnDelegAmt := p.Zimpl.Field("ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, p.Holder.Addr)
-	totalstakeamount := p.Aimpl.Field("totalstakeamount")
-	totaltokenamount := p.Aimpl.Field("totaltokenamount")
 
 	//key1 delegates to main contract
 	AssertSuccess(p.Zproxy.Key(key1).DelegateStake(ssn1, userStake))
@@ -58,10 +66,8 @@ func (tr *Transitions) TransferSuccess() {
 	AssertEqual(p.Zimpl.Field("deposit_amt_deleg", addr1), "")
 	AssertEqual(p.Zimpl.Field("deposit_amt_deleg", p.Holder.Addr, sdk.Cfg.AzilSsnAddress), StrAdd(depositAmtDeleg, userStake, userStake2))
 	AssertEqual(p.Zimpl.Field("ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, p.Holder.Addr), StrAdd(ssnDelegAmt, userStake, userStake2))
-	AssertEqual(p.Aimpl.Field("totalstakeamount"), StrAdd(totalstakeamount, userStake, userStake2))
+	AssertEqual(p.Aimpl.Field("totalstakeamount"), StrAdd(totalstakeamount, userStakeThroughAimpl, userStake, userStake2))
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), StrAdd(totaltokenamount, p.Aimpl.Field("balances", addr1)))
-
-	//TODO: tests for user, which was previously registered at Azil
 
 	//TODO: what if user has some redelegate requests?
 
