@@ -61,9 +61,9 @@ func (tr *Transitions) TransferSuccess() {
 	AssertEqual(p.Aimpl.Field("totalstakeamount"), StrAdd(totalstakeamount, userStake, userStake2))
 	AssertEqual(p.Aimpl.Field("totaltokenamount"), StrAdd(totaltokenamount, p.Aimpl.Field("balances", addr1)))
 
-	//tests for user, which was previously registered at Azil
+	//TODO: tests for user, which was previously registered at Azil
 
-	//what if user has some redelegate requests?
+	//TODO: what if user has some redelegate requests?
 
 }
 
