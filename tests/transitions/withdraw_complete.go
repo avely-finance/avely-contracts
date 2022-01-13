@@ -81,10 +81,11 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 		ParamsMap{},
 	})
 
-	AssertEqual(ToZil(1000), p.Aimpl.Field("totalstakeamount"))
-	AssertEqual(ToAzil(1000), p.Aimpl.Field("totaltokenamount"))
-	AssertEqual("0", p.Aimpl.Field("tmp_complete_withdrawal_available"))
+	AssertEqual(p.Aimpl.Field("totalstakeamount"), ToZil(1000))
+	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1000))
+	AssertEqual(p.Aimpl.Field("tmp_complete_withdrawal_available"), "0")
 	AssertEqual(p.Aimpl.Field("balances", sdk.Cfg.Admin), ToAzil(1000))
-	AssertEqual("empty", p.Aimpl.Field("withdrawal_unbonded"))
-	AssertEqual("empty", p.Aimpl.Field("withdrawal_pending"))
+
+	AssertEqual(p.Aimpl.Field("withdrawal_unbonded"), "{}")
+	AssertEqual(p.Aimpl.Field("withdrawal_pending"), "{}")
 }
