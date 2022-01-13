@@ -155,7 +155,7 @@ func (b *HolderContract) ReDelegateStakeSuccessCallBack(ssnaddr, to_ssn, amount 
 			ssnaddr,
 		},
 		{
-			"to_ssn",
+			"tossn",
 			"ByStr20",
 			to_ssn,
 		},
