@@ -54,12 +54,16 @@ func main() {
 			showTx(p, addr)
 		case "deploy_buffer":
 			deployBuffer(p)
+		case "unpause":
+			unpause(p)
 		case "sync_buffers":
 			syncBuffers(p)
 		case "drain_buffer":
 			drainBuffer(p, addr)
 		case "show_rewards":
 			showRewards(p, ssn, addr)
+		case "perform_autorestake":
+			performAutorestake(p)
 		default:
 			log.Fatal("Unknown command")
 		}
@@ -108,6 +112,15 @@ func deployBuffer(p *Protocol) {
 		log.Fatalf("Buffer deploy failed with error: ", err)
 	}
 	log.Success("Buffer deploy is successfully compelted. Address: " + buffer.Addr)
+}
+
+func unpause(p *Protocol) {
+	_, err := p.Aimpl.Unpause()
+
+	if err != nil {
+		log.Fatalf("Unpause AZil failed with error: ", err)
+	}
+	log.Success("Unpause AZil is successfully compelted")
 }
 
 func syncBuffers(p *Protocol) {
@@ -180,4 +193,34 @@ func showRewards(p *Protocol, ssn, deleg string) {
 		fmt.Println("The cycle is: " + cycle.String() + "; Total reward: " + cycleRewardsDeleg.String())
 		fmt.Println("    cur_opt: " + curOpt.String() + "; buf_opt: " + bufOpt.String())
 	}
+}
+
+func performAutorestake(p *Protocol) {
+	state := NewState(p.Aimpl.Contract.State())
+
+	autorestakeamount := state.Dig("autorestakeamount").BigInt()
+
+	if autorestakeamount.Cmp(big.NewInt(0)) == 0 { // == 0
+		log.Fatal("Nothing to auto restake")
+	}
+
+	totaltokenamount := state.Dig("totaltokenamount").BigFloat()
+	totalstakeamount := state.Dig("totalstakeamount").BigFloat()
+
+	priceBefore := DivBF(totalstakeamount, totaltokenamount)
+
+	tx, err := p.Aimpl.PerformAutoRestake()
+
+	if err != nil {
+		log.Fatalf("AutoRestake failed with error: ", err)
+	}
+
+	state = NewState(p.Aimpl.Contract.State())
+
+	totalstakeamount = state.Dig("totalstakeamount").BigFloat()
+
+	priceAfter := DivBF(totalstakeamount, totaltokenamount)
+
+	log.Success("Drain is successfully compelted. Tx: " + tx.ID)
+	log.Success("Restaked amount: " + autorestakeamount.String() + "; PriceBefore: " + priceBefore.String() + "; PriceAfter: " + priceAfter.String())
 }

@@ -32,7 +32,7 @@
     "ChainId": 333,
     "TxConfrimMaxAttempts": 15,
     "TxConfirmIntervalSec": 30,
-    "AzilSsnAddress": "0x2afe9e18EdD39D927d0FffF8990612FC4aFa2295",
+    "AzilSsnAddress": "0x73f16753ea97C770201Fd6Ae04073348c483239f",
     "AzilSsnRewardShare": "50",
     "HolderInitialDelegateZil": "1000",
     "Admin":"",
@@ -49,12 +49,11 @@
     "GzilAddr": "0x4b68ebd5c54ae9ad1f069260b4c89f0d3be70a45",
     "ZproxyAddr": "0x351a37e2841A45c7F2De18Ee45F968E106416273",
     "ZimplAddr": "0xA2e4657de8108dd3730EB51f05a1d486D77bE2Df",
-    "AzilAddr": "0x28989f5d6915dc28477ec52991babbaa158bc667",
+    "AzilAddr": "0x67e61129f506690c7d8b621028a2b3d056031bad",
     "BufferAddrs": [
-      "0xdb92bfb7c48a040593f21eba0660e88212a890d3",
-      "0x585d6813924c3e623ac8750339d1706b25c2af69"
+      "0x80b8a7954863e23aa65417e956d48b71b4ee56c2"
     ],
-    "HolderAddr": "0x8578d2fa8c707e0b16f872e358e87364a173ee74"
+    "HolderAddr": "0x46d9d11edd84fef9d6ce4dd0ec3304bc9d704ec8"
   },
   "mainnet": {
     "ApiUrl": "https://api.zilliqa.com",

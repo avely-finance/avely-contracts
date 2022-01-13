@@ -48,11 +48,25 @@ func (i *StateItem) BigInt() *big.Int {
 	return stringToBigInt(i.String())
 }
 
+func (i *StateItem) BigFloat() *big.Float {
+	return stringToBigFloat(i.String())
+}
+
 func stringToBigInt(v string) *big.Int {
 	n := new(big.Int)
 	n, ok := n.SetString(v, 10)
 	if !ok {
 		return big.NewInt(0)
+	}
+
+	return n
+}
+
+func stringToBigFloat(v string) *big.Float {
+	n := new(big.Float)
+	n, ok := n.SetString(v)
+	if !ok {
+		return big.NewFloat(0)
 	}
 
 	return n
@@ -64,6 +78,10 @@ func AddBI(a, b *big.Int) *big.Int {
 
 func SubBI(a, b *big.Int) *big.Int {
 	return big.NewInt(0).Sub(a, b)
+}
+
+func DivBF(a, b *big.Float) *big.Float {
+	return big.NewFloat(0).Quo(a, b)
 }
 
 func SubOneToZero(a *big.Int) *big.Int {
