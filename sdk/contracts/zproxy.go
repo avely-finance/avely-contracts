@@ -143,15 +143,12 @@ func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
-		stateFieldTypes := make(StateFieldTypes)
-
 		sdkContract := Contract{
-			Sdk:             sdk,
-			Provider:        *contract.Provider,
-			Addr:            "0x" + tx.ContractAddress,
-			Bech32:          b32,
-			Wallet:          contract.Signer,
-			StateFieldTypes: stateFieldTypes,
+			Sdk:      sdk,
+			Provider: *contract.Provider,
+			Addr:     "0x" + tx.ContractAddress,
+			Bech32:   b32,
+			Wallet:   contract.Signer,
 		}
 
 		return &Zproxy{Contract: sdkContract}, nil
@@ -170,15 +167,12 @@ func RestoreZproxy(sdk *AvelySDK, contractAddress string) (*Zproxy, error) {
 		return nil, errors.New("Config has invalid Zproxy address")
 	}
 
-	stateFieldTypes := make(StateFieldTypes)
-
 	sdkContract := Contract{
-		Sdk:             sdk,
-		Provider:        *contract.Provider,
-		Addr:            contractAddress,
-		Bech32:          b32,
-		Wallet:          contract.Signer,
-		StateFieldTypes: stateFieldTypes,
+		Sdk:      sdk,
+		Provider: *contract.Provider,
+		Addr:     contractAddress,
+		Bech32:   b32,
+		Wallet:   contract.Signer,
 	}
 
 	return &Zproxy{Contract: sdkContract}, nil

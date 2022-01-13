@@ -16,7 +16,6 @@ const ZeroAddr = "0x0000000000000000000000000000000000000000"
 
 type AvelySDK struct {
 	Cfg    Config
-	TxLast *transaction2.Transaction
 }
 
 func NewAvelySDK(config Config) *AvelySDK {
@@ -66,8 +65,6 @@ func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction,
 	}
 	tx, err := c.Deploy(parameter)
 
-	sdk.TxLast = tx
-
 	return tx, err
 }
 
@@ -86,8 +83,6 @@ func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []co
 		SenderPubKey: "",
 	}
 	tx, err := c.Call(transition, args, params, priority)
-
-	sdk.TxLast = tx
 
 	return tx, err
 }
