@@ -19,6 +19,7 @@ type Error =
   | CantFetchZimplFields
   | ClaimWithdrawalNoUnbonded
   | CompleteTransferCantFetchRemote
+  | CompleteTransferPendingWithdrawal
   | CompleteTransferSwapRequestNotFound
   | CompleteTransferSwapRequestNotHolder
   | CompleteWithdrawalFundsMismatch
@@ -46,6 +47,7 @@ let make_error =
       | CantFetchZimplFields                 => "CantFetchZimplFields"
       | ClaimWithdrawalNoUnbonded            => "ClaimWithdrawalNoUnbonded"
       | CompleteTransferCantFetchRemote      => "CompleteTransferCantFetchRemote"
+      | CompleteTransferPendingWithdrawal    => "CompleteTransferPendingWithdrawal"
       | CompleteTransferSwapRequestNotFound  => "CompleteTransferSwapRequestNotFound"
       | CompleteTransferSwapRequestNotHolder => "CompleteTransferSwapRequestNotHolder"
       | CompleteWithdrawalFundsMismatch      => "CompleteWithdrawalFundsMismatch"
@@ -288,9 +290,16 @@ end
 
 procedure CompleteTransferFetchRemote(delegator: ByStr20)
   var_zimpl_address <- zimpl_address;
-  o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract field deleg_swap_request: Map ByStr20 ByStr20 end;
+
+  o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract
+    field deleg_swap_request: Map ByStr20 ByStr20,
+    field withdrawal_pending: Map ByStr20 (Map BNum Uint128)
+  end;
+
   match o_zimpl_addr_test with
   | Some zimpl =>
+
+    (* delegator should RequestDelegatorSwap with holder before *)
     o_deleg_swap_request <- & zimpl.deleg_swap_request[delegator];
     match o_deleg_swap_request with
     | Some new_deleg =>
@@ -305,10 +314,20 @@ procedure CompleteTransferFetchRemote(delegator: ByStr20)
     | None =>
       e = CompleteTransferSwapRequestNotFound;
       ThrowError e
-    end
-  | None =>
-      e = CompleteTransferCantFetchRemote;
+    end;
+
+    (* delegator shouldn't have pending withdrawals *)
+    o_withdrawal <- & zimpl.withdrawal_pending[delegator];
+    match o_withdrawal with
+    | Some withdrawal =>
+      e = CompleteTransferPendingWithdrawal;
       ThrowError e
+    | None =>
+    end
+
+  | None =>
+    e = CompleteTransferCantFetchRemote;
+    ThrowError e
   end
 end
 

@@ -6,6 +6,47 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
+func (tr *Transitions) TransferSuccess() {
+	Start("Transfer Success")
+
+	p := tr.DeployAndUpgrade()
+
+	transferSetupSSN(p)
+
+	key1, addr1, ssn1, _, _, userStake := transferDefineParams(p)
+
+	//key1 delegates to main contract
+	AssertSuccess(p.Zproxy.Key(key1).DelegateStake(ssn1, userStake))
+
+	//key1 waits 2 reward cycles
+	transferNextRewardCycle(p)
+	AssertSuccess(p.Aimpl.Key(sdk.Cfg.AdminKey).DrainBuffer(p.GetBuffer().Addr))
+	transferNextRewardCycle(p)
+	AssertSuccess(p.Aimpl.Key(sdk.Cfg.AdminKey).DrainBuffer(p.GetBuffer().Addr))
+
+	//key1 claims rewards
+	AssertSuccess(p.Zproxy.Key(key1).WithdrawStakeRewards(ssn1))
+
+	//key1 withdraws some amount, then requests swap with holder
+	tx, _ := AssertSuccess(p.Zproxy.Key(key1).RequestDelegatorSwap(p.Holder.Addr))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
+
+	//call CompleteTransfer, expecting success
+	tx, _ = AssertSuccess(p.Aimpl.Key(key1).CompleteTransfer(addr1))
+	AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteTransfer", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
+
+	//key1 tries to transfer, expecting success
+	//p.Aimpl.UpdateWallet(key1)
+	//AssertSuccess(p.Aimpl.CompleteTransfer(ssn1, userStake))
+
+	//compare previous user's balance at Zimpl with user's current balance at Aimpl
+
+	//tests for user, which was previously registered at Azil
+
+	//what if user has some redelegate requests?
+
+}
+
 func (tr *Transitions) TransferAimplErrors() {
 	Start("Transfer Aimpl Errors")
 
@@ -27,35 +68,25 @@ func (tr *Transitions) TransferAimplErrors() {
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.Key(key1).WithdrawStakeRewards(ssn1))
 
+	//call CompleteTransfer for addr1, expecting error
 	tx, _ := p.Aimpl.Key(key1).CompleteTransfer(addr1)
 	AssertError(tx, "CompleteTransferSwapRequestNotFound")
 
 	//key1 requests swap with NOT Holder address
 	tx, _ = AssertSuccess(p.Zproxy.Key(key1).RequestDelegatorSwap(ssn2))
 
+	//call CompleteTransfer for addr1, expecting error
 	tx, _ = p.Aimpl.Key(key1).CompleteTransfer(addr1)
 	AssertError(tx, "CompleteTransferSwapRequestNotHolder")
 
-	//key1 requests swap with holder
+	//key1 withdraws some amount, then requests swap with holder
+	AssertSuccess(p.Zproxy.Key(key1).WithdrawStakeAmt(ssn1, userStake))
 	tx, _ = AssertSuccess(p.Zproxy.Key(key1).RequestDelegatorSwap(p.Holder.Addr))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
 
+	//call CompleteTransfer for addr1, expecting error
 	tx, _ = p.Aimpl.Key(key1).CompleteTransfer(addr1)
-	AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteTransfer", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
-
-	//key1 have withdraw requests and tries to transfer, expecting RejectDelegatorSwap
-
-	//key1 tries to transfer, expecting success
-	//p.Aimpl.UpdateWallet(key1)
-	//AssertSuccess(p.Aimpl.CompleteTransfer(ssn1, userStake))
-
-	//case when key1 called CompleteTransfer without initial call of RequestDelegatorSwap, or requested swap with otner address (not holder)
-
-	//compare previous user's balance at Zimpl with user's current balance at Aimpl
-
-	//tests for user, which was previously registered at Azil
-
-	//what if user has some redelegate requests?
+	AssertError(tx, "CompleteTransferPendingWithdrawal")
 }
 
 func (tr *Transitions) TransferZimplErrors() {
