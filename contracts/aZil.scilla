@@ -20,6 +20,7 @@ type Error =
   | ClaimWithdrawalNoUnbonded
   | CompleteTransferCantFetchRemote
   | CompleteTransferPendingWithdrawal
+  | CompleteTransferStakeNotFound
   | CompleteTransferSwapRequestNotFound
   | CompleteTransferSwapRequestNotHolder
   | CompleteWithdrawalFundsMismatch
@@ -48,6 +49,7 @@ let make_error =
       | ClaimWithdrawalNoUnbonded            => "ClaimWithdrawalNoUnbonded"
       | CompleteTransferCantFetchRemote      => "CompleteTransferCantFetchRemote"
       | CompleteTransferPendingWithdrawal    => "CompleteTransferPendingWithdrawal"
+      | CompleteTransferStakeNotFound        => "CompleteTransferStakeNotFound"
       | CompleteTransferSwapRequestNotFound  => "CompleteTransferSwapRequestNotFound"
       | CompleteTransferSwapRequestNotHolder => "CompleteTransferSwapRequestNotHolder"
       | CompleteWithdrawalFundsMismatch      => "CompleteWithdrawalFundsMismatch"
@@ -198,6 +200,7 @@ field tmp_delegator: Option ByStr20 = None {ByStr20}
 field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
 field tmp_buffer_exists_at_ssn: Uint32 = uint32_zero
+field tmp_map_ssn_amt: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
@@ -293,7 +296,8 @@ procedure CompleteTransferFetchRemote(delegator: ByStr20)
 
   o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract
     field deleg_swap_request: Map ByStr20 ByStr20,
-    field withdrawal_pending: Map ByStr20 (Map BNum Uint128)
+    field withdrawal_pending: Map ByStr20 (Map BNum Uint128),
+    field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128)
   end;
 
   match o_zimpl_addr_test with
@@ -323,7 +327,17 @@ procedure CompleteTransferFetchRemote(delegator: ByStr20)
       e = CompleteTransferPendingWithdrawal;
       ThrowError e
     | None =>
+    end;
+
+    o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
+    match o_deposit_amt_deleg with
+    | Some map_ssn_amt =>
+      tmp_map_ssn_amt := map_ssn_amt
+    | None =>
+      e = CompleteTransferStakeNotFound;
+      ThrowError e
     end
+
 
   | None =>
     e = CompleteTransferCantFetchRemote;
@@ -338,6 +352,13 @@ end
 procedure HolderWithdrawStakeAmt(amount: Uint128)
   holder_addr <- holder_address;
   msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure HolderConfirmDelegatorSwap(requestor: ByStr20)
+  holder_addr <- holder_address;
+  msg = { _tag: "ConfirmDelegatorSwap"; _recipient: holder_addr; _amount: uint128_zero; requestor: requestor };
   msgs = one_msg msg;
   send msgs
 end
@@ -964,19 +985,17 @@ end
 
 transition CompleteTransfer(delegator: ByStr20)
   CompleteTransferFetchRemote delegator;
-  holder_addr <- holder_address;
-  e = { _eventname: "CompleteTransfer"; initial_deleg: delegator; new_deleg: holder_addr };
-  event e
-(*
-  //is swap request present?
-  //pending withdrawals?
-  read_remote_state(zimpl, deleg_ssn_amount[delegator])
-  proxy.call(:confirm_swap, delegator)
-  foreach deleg_ssn_amount[delegator] as from_ssn => amount
-    proxy.call(:redelegate, delegator, from_ssn, amount)
-    total+=amount
-  increaseAzilBalance(delegator, total)
-*)
+  HolderConfirmDelegatorSwap delegator
+
+  (*
+    foreach tmp_map_ssn_amt as from_ssn => amount
+      proxy.call(:redelegate, delegator, from_ssn, amount)
+      total+=amount
+    UpdateTokenBalance delegator total
+  *)
+
+  (* Reset tmp variables *)
+  (* tmp_map_ssn_amt := Emp ByStr20 Uint128; *)
 end
 
 (************************************************************)
