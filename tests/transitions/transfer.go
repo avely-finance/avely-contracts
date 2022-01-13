@@ -13,10 +13,11 @@ func (tr *Transitions) TransferSuccess() {
 
 	transferSetupSSN(p)
 
-	key1, addr1, ssn1, _, _, userStake := transferDefineParams(p)
+	key1, addr1, ssn1, ssn2, _, userStake := transferDefineParams(p)
 
 	//key1 delegates to main contract
 	AssertSuccess(p.Zproxy.Key(key1).DelegateStake(ssn1, userStake))
+	AssertSuccess(p.Zproxy.Key(key1).DelegateStake(ssn2, StrAdd(userStake, userStake)))
 
 	//key1 waits 2 reward cycles
 	transferNextRewardCycle(p)
@@ -26,6 +27,7 @@ func (tr *Transitions) TransferSuccess() {
 
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.Key(key1).WithdrawStakeRewards(ssn1))
+	AssertSuccess(p.Zproxy.Key(key1).WithdrawStakeRewards(ssn2))
 
 	//key1 withdraws some amount, then requests swap with holder
 	tx, _ := AssertSuccess(p.Zproxy.Key(key1).RequestDelegatorSwap(p.Holder.Addr))
@@ -33,17 +35,21 @@ func (tr *Transitions) TransferSuccess() {
 
 	//call CompleteTransfer, expecting success
 	tx, _ = AssertSuccess(p.Aimpl.Key(key1).CompleteTransfer(addr1))
-	AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteTransfer", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
+	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
+	AssertEqual(p.Zimpl.Field("deposit_amt_deleg", p.Holder.Addr, ssn1), userStake)
+	AssertEqual(p.Zimpl.Field("deposit_amt_deleg", p.Holder.Addr, ssn2), StrAdd(userStake, userStake))
+	AssertEqual(p.Zimpl.Field("ssn_deleg_amt", ssn1, p.Holder.Addr), userStake)
+	AssertEqual(p.Zimpl.Field("ssn_deleg_amt", ssn2, p.Holder.Addr), StrAdd(userStake, userStake))
 
-	//key1 tries to transfer, expecting success
-	//p.Aimpl.UpdateWallet(key1)
-	//AssertSuccess(p.Aimpl.CompleteTransfer(ssn1, userStake))
+	////////////////////////AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteTransfer", ParamsMap{"initial_deleg": addr1, "new_deleg": p.Holder.Addr}})
 
 	//compare previous user's balance at Zimpl with user's current balance at Aimpl
 
 	//tests for user, which was previously registered at Azil
 
 	//what if user has some redelegate requests?
+
+	//compare azil/holder states for transfered depo with depo, initially delegated throw Azil
 
 }
 

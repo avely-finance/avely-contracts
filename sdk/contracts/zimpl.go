@@ -105,6 +105,8 @@ func buildZimplStateFields() StateFieldTypes {
 	stateFieldTypes := make(StateFieldTypes)
 	stateFieldTypes["buff_deposit_deleg"] = "StateFieldMapMapMap"
 	stateFieldTypes["direct_deposit_deleg"] = "StateFieldMapMapMap"
+	stateFieldTypes["deposit_amt_deleg"] = "StateFieldMapMap"
+	stateFieldTypes["ssn_deleg_amt"] = "StateFieldMapMap"
 
 	return stateFieldTypes
 }
