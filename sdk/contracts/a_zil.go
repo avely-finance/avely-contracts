@@ -20,7 +20,7 @@ type AZil struct {
 	Contract
 }
 
-func (a *AZil) Key(key string) *AZil {
+func (a *AZil) WithUser(key string) *AZil {
 	wallet := account.NewWallet()
 	wallet.AddByPrivateKey(key)
 	a.Contract.Wallet = wallet
