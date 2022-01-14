@@ -58,7 +58,7 @@ func (tr *Transitions) RunAll() {
 	tr.DrainBuffer()
 	tr.Pause()
 	tr.PerformAutoRestake()
-	tr.TransferStakeSuccess()
-	tr.TransferStakeZimplErrors()
-	tr.TransferStakeAimplErrors()
+	tr.ReAssignStakeSuccess()
+	tr.ReAssignStakeZimplErrors()
+	tr.ReAssignStakeAimplErrors()
 }

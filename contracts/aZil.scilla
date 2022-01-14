@@ -18,11 +18,6 @@ type Error =
   | CantFetchZimplBufferExistsAtSSN
   | CantFetchZimplFields
   | ClaimWithdrawalNoUnbonded
-  | CompleteTransferCantFetchRemote
-  | CompleteTransferPendingWithdrawal
-  | CompleteTransferStakeNotFound
-  | CompleteTransferSwapRequestNotFound
-  | CompleteTransferSwapRequestNotHolder
   | CompleteWithdrawalFundsMismatch
   | DelegAddrUnknown
   | DelegDoesNotExistAtSSN
@@ -33,6 +28,11 @@ type Error =
   | InvalidTotalAmt
   | NotPaused
   | Paused
+  | ReAssignStakeCantFetchRemote
+  | ReAssignStakePendingWithdrawal
+  | ReAssignStakeStakeNotFound
+  | ReAssignStakeSwapRequestNotFound
+  | ReAssignStakeSwapRequestNotHolder
   | StagingAdminNotExists
   | StagingAdminValidationFailed
 
@@ -40,30 +40,30 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AdminValidationFailed                => "AdminValidationFailed"
-      | BufferAddrUnknown                    => "BufferAddrUnknown"
-      | BufferNoActive                       => "BufferNoActive"
-      | BufferOrHolderValidationFailed       => "BufferOrHolderValidationFailed"
-      | CantFetchZimplBufferExistsAtSSN      => "CantFetchZimplBufferExistsAtSSN"
-      | CantFetchZimplFields                 => "CantFetchZimplFields"
-      | ClaimWithdrawalNoUnbonded            => "ClaimWithdrawalNoUnbonded"
-      | CompleteTransferCantFetchRemote      => "CompleteTransferCantFetchRemote"
-      | CompleteTransferPendingWithdrawal    => "CompleteTransferPendingWithdrawal"
-      | CompleteTransferStakeNotFound        => "CompleteTransferStakeNotFound"
-      | CompleteTransferSwapRequestNotFound  => "CompleteTransferSwapRequestNotFound"
-      | CompleteTransferSwapRequestNotHolder => "CompleteTransferSwapRequestNotHolder"
-      | CompleteWithdrawalFundsMismatch      => "CompleteWithdrawalFundsMismatch"
-      | DelegAddrUnknown                     => "DelegAddrUnknown"
-      | DelegDoesNotExistAtSSN               => "DelegDoesNotExistAtSSN"
-      | DelegHasBufferedDeposit              => "DelegHasBufferedDeposit"
-      | DelegHasNoSufficientAmt              => "DelegHasNoSufficientAmt"
-      | DelegStakeFundsMismatch              => "DelegStakeFundsMismatch"
-      | DelegStakeNotEnough                  => "DelegStakeNotEnough"
-      | InvalidTotalAmt                      => "InvalidTotalAmt"
-      | Paused                               => "Paused"
-      | NotPaused                            => "NotPaused"
-      | StagingAdminNotExists                => "StagingAdminNotExists"
-      | StagingAdminValidationFailed         => "StagingAdminValidationFailed"
+      | AdminValidationFailed             => "AdminValidationFailed"
+      | BufferAddrUnknown                 => "BufferAddrUnknown"
+      | BufferNoActive                    => "BufferNoActive"
+      | BufferOrHolderValidationFailed    => "BufferOrHolderValidationFailed"
+      | CantFetchZimplBufferExistsAtSSN   => "CantFetchZimplBufferExistsAtSSN"
+      | CantFetchZimplFields              => "CantFetchZimplFields"
+      | ClaimWithdrawalNoUnbonded         => "ClaimWithdrawalNoUnbonded"
+      | CompleteWithdrawalFundsMismatch   => "CompleteWithdrawalFundsMismatch"
+      | DelegAddrUnknown                  => "DelegAddrUnknown"
+      | DelegDoesNotExistAtSSN            => "DelegDoesNotExistAtSSN"
+      | DelegHasBufferedDeposit           => "DelegHasBufferedDeposit"
+      | DelegHasNoSufficientAmt           => "DelegHasNoSufficientAmt"
+      | DelegStakeFundsMismatch           => "DelegStakeFundsMismatch"
+      | DelegStakeNotEnough               => "DelegStakeNotEnough"
+      | InvalidTotalAmt                   => "InvalidTotalAmt"
+      | Paused                            => "Paused"
+      | NotPaused                         => "NotPaused"
+      | ReAssignStakeCantFetchRemote      => "ReAssignStakeCantFetchRemote"
+      | ReAssignStakePendingWithdrawal    => "ReAssignStakePendingWithdrawal"
+      | ReAssignStakeStakeNotFound        => "ReAssignStakeStakeNotFound"
+      | ReAssignStakeSwapRequestNotFound  => "ReAssignStakeSwapRequestNotFound"
+      | ReAssignStakeSwapRequestNotHolder => "ReAssignStakeSwapRequestNotHolder"
+      | StagingAdminNotExists             => "StagingAdminNotExists"
+      | StagingAdminValidationFailed      => "StagingAdminValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }
@@ -365,7 +365,7 @@ end
 (* @dev: aZil actions                                       *)
 (************************************************************)
 
-procedure CompleteTransferFetchCheckRemote(delegator: ByStr20)
+procedure ReAssignStakeFetchCheckRemote(delegator: ByStr20)
   var_zimpl_address <- zimpl_address;
 
   o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract
@@ -386,11 +386,11 @@ procedure CompleteTransferFetchCheckRemote(delegator: ByStr20)
       match is_holder with
       | True =>
       | False =>
-        e = CompleteTransferSwapRequestNotHolder;
+        e = ReAssignStakeSwapRequestNotHolder;
         ThrowError e
       end
     | None =>
-      e = CompleteTransferSwapRequestNotFound;
+      e = ReAssignStakeSwapRequestNotFound;
       ThrowError e
     end;
 
@@ -398,7 +398,7 @@ procedure CompleteTransferFetchCheckRemote(delegator: ByStr20)
     o_withdrawal <- & zimpl.withdrawal_pending[delegator];
     match o_withdrawal with
     | Some withdrawal =>
-      e = CompleteTransferPendingWithdrawal;
+      e = ReAssignStakePendingWithdrawal;
       ThrowError e
     | None =>
     end;
@@ -409,17 +409,17 @@ procedure CompleteTransferFetchCheckRemote(delegator: ByStr20)
     | Some map_ssn_amt =>
       tmp_map_ssn_amt := map_ssn_amt
     | None =>
-      e = CompleteTransferStakeNotFound;
+      e = ReAssignStakeStakeNotFound;
       ThrowError e
     end
 
   | None =>
-    e = CompleteTransferCantFetchRemote;
+    e = ReAssignStakeCantFetchRemote;
     ThrowError e
   end
 end
 
-procedure CompleteTransferReDelegate(ssn_amount: Pair ByStr20 Uint128)
+procedure ReAssignStakeReDelegate(ssn_amount: Pair ByStr20 Uint128)
   match ssn_amount with
   | Pair ssn amount =>
     (* update total redelegate amount *)
@@ -1003,13 +1003,13 @@ transition CompleteWithdrawalSuccessCallBack()
 
 end
 
-transition CompleteTransfer(delegator: ByStr20)
-  CompleteTransferFetchCheckRemote delegator;
+transition ReAssignStake(delegator: ByStr20)
+  ReAssignStakeFetchCheckRemote delegator;
   HolderConfirmDelegatorSwap delegator;
 
   map_ssn_amt <- tmp_map_ssn_amt;
   list_ssn_amt = builtin to_list map_ssn_amt;
-  forall list_ssn_amt CompleteTransferReDelegate;
+  forall list_ssn_amt ReAssignStakeReDelegate;
 
   total_redeleg_amt <- tmp_total_redeleg_amt;
   UpdateTokenBalance delegator total_redeleg_amt;
