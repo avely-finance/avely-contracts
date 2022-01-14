@@ -14,8 +14,8 @@ func (tr *Transitions) TransferStakeSuccess() {
 	transferStakeSetupSSN(p)
 
 	key1, addr1, ssn1, ssn2, _, userStake := transferStakeDefineParams(p)
-	totaltokenamount := p.Aimpl.Field("totaltokenamount")
-	totalstakeamount := p.Aimpl.Field("totalstakeamount")
+	totaltokenamount := Field(p.Aimpl, "totaltokenamount")
+	totalstakeamount := Field(p.Aimpl, "totalstakeamount")
 	userStakeThroughAimpl := userStake
 
 	//key1 delegates through Aimpl
@@ -24,8 +24,8 @@ func (tr *Transitions) TransferStakeSuccess() {
 	transferStakeNextRewardCycle(p)
 	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).DrainBuffer(p.GetBuffer().Addr))
 
-	depositAmtDeleg := p.Zimpl.Field("deposit_amt_deleg", p.Holder.Addr, sdk.Cfg.AzilSsnAddress)
-	ssnDelegAmt := p.Zimpl.Field("ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, p.Holder.Addr)
+	depositAmtDeleg := Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, sdk.Cfg.AzilSsnAddress)
+	ssnDelegAmt := Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, p.Holder.Addr)
 
 	//key1 delegates to main contract
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn1, userStake))
@@ -63,11 +63,11 @@ func (tr *Transitions) TransferStakeSuccess() {
 		"0",
 		ParamsMap{"ssnaddr": ssn2, "tossn": sdk.Cfg.AzilSsnAddress, "amount": userStake2},
 	})
-	AssertEqual(p.Zimpl.Field("deposit_amt_deleg", addr1), "")
-	AssertEqual(p.Zimpl.Field("deposit_amt_deleg", p.Holder.Addr, sdk.Cfg.AzilSsnAddress), StrAdd(depositAmtDeleg, userStake, userStake2))
-	AssertEqual(p.Zimpl.Field("ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, p.Holder.Addr), StrAdd(ssnDelegAmt, userStake, userStake2))
-	AssertEqual(p.Aimpl.Field("totalstakeamount"), StrAdd(totalstakeamount, userStakeThroughAimpl, userStake, userStake2))
-	AssertEqual(p.Aimpl.Field("totaltokenamount"), StrAdd(totaltokenamount, p.Aimpl.Field("balances", addr1)))
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr1), "")
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, sdk.Cfg.AzilSsnAddress), StrAdd(depositAmtDeleg, userStake, userStake2))
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, p.Holder.Addr), StrAdd(ssnDelegAmt, userStake, userStake2))
+	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, userStakeThroughAimpl, userStake, userStake2))
+	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1)))
 }
 
 func (tr *Transitions) TransferStakeAimplErrors() {
@@ -159,7 +159,7 @@ func transferStakeDefineParams(p *contracts.Protocol) (string, string, string, s
 	addr1 := sdk.Cfg.Addr1
 	ssn1 := "0x0000000000000000000000000000000000000001"
 	ssn2 := "0x0000000000000000000000000000000000000002"
-	minStake := p.Zimpl.Field("minstake")
+	minStake := Field(p.Zimpl, "minstake")
 	userStake := ToZil(10)
 	return key1, addr1, ssn1, ssn2, minStake, userStake
 }
