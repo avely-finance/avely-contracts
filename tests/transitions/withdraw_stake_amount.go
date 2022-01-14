@@ -41,7 +41,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	txn, _ = p.Aimpl.WithdrawStakeAmt(ToAzil(1))
 
 	AssertError(txn, "DelegHasBufferedDeposit")
-	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
+	AssertEqual(Field(p.Aimpl, "totaltokenamount"), ToAzil(1015))
 
 	// Trigger switch to the next cycle
 	p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare)
@@ -54,7 +54,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	txn, _ = p.Aimpl.WithdrawStakeAmt(ToAzil(100))
 
 	AssertError(txn, "DelegHasNoSufficientAmt")
-	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
+	AssertEqual(Field(p.Aimpl, "totaltokenamount"), ToAzil(1015))
 
 	/*******************************************************************************
 	 * 2C. delegator send withdraw request, but it should fail because mindelegatestake
@@ -64,7 +64,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	txn, _ = p.Aimpl.WithdrawStakeAmt(ToAzil(10))
 
 	AssertError(txn, "DelegStakeNotEnough")
-	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1015))
+	AssertEqual(Field(p.Aimpl, "totaltokenamount"), ToAzil(1015))
 
 	/*******************************************************************************
 	 * 3A. delegator withdrawing part of his deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -93,11 +93,14 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	//TODO: we can check this only in local testing environment,
 	//and even in this case we need to monitor all incoming balances, including Holder initial delegate
 	//t.AssertEqual(p.Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
-	AssertEqual(p.Aimpl.Field("totalstakeamount"), StrAdd(ToZil(1000), newDelegBalanceZil))
-	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1010))
-	AssertEqual(p.Aimpl.Field("balances", sdk.Cfg.Addr2), ToAzil(10))
-	AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum1, sdk.Cfg.Addr2, "0"), ToAzil(5))
-	AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum1, sdk.Cfg.Addr2, "1"), ToZil(5))
+	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(ToZil(1000), newDelegBalanceZil))
+	AssertEqual(Field(p.Aimpl, "totaltokenamount"), ToAzil(1010))
+	AssertEqual(Field(p.Aimpl, "balances", sdk.Cfg.Addr2), ToAzil(10))
+
+	withdrawal := Dig(p.Aimpl, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
+
+	AssertEqual(withdrawal.TokenAmount.String(), ToAzil(5))
+	AssertEqual(withdrawal.StakeAmount.String(), ToAzil(5))
 
 	/*******************************************************************************
 	 * 3B. delegator withdrawing all remaining deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -109,18 +112,22 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	bnum2 := txn.Receipt.EpochNum
 	AssertEvent(txn, Event{p.Aimpl.Addr, "WithdrawStakeAmt",
 		ParamsMap{"withdraw_amount": ToAzil(10), "withdraw_stake_amount": ToZil(10)}})
-	AssertEqual(p.Aimpl.Field("totalstakeamount"), ToZil(1000))  //0
-	AssertEqual(p.Aimpl.Field("totaltokenamount"), ToAzil(1000)) //0
-	//t.AssertEqual(p.Aimpl.Field("balances"), "empty")
-	AssertEqual(p.Aimpl.Field("balances", sdk.Cfg.Admin), ToAzil(1000))
+	AssertEqual(Field(p.Aimpl, "totalstakeamount"), ToZil(1000))  //0
+	AssertEqual(Field(p.Aimpl, "totaltokenamount"), ToAzil(1000)) //0
+	//t.AssertEqual(Field(p.Aimpl, "balances"), "empty")
+	AssertEqual(Field(p.Aimpl, "balances", sdk.Cfg.Admin), ToAzil(1000))
 	//there is holder's initial stake
 	//t.AssertEqual(p.Zproxy.Field("totalstakeamount"), "0")
 	if bnum1 == bnum2 {
-		AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum1, sdk.Cfg.Addr2, "0"), ToAzil(15))
-		AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum1, sdk.Cfg.Addr2, "1"), ToZil(15))
+		withdrawal := Dig(p.Aimpl, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
+
+		AssertEqual(withdrawal.TokenAmount.String(), ToAzil(15))
+		AssertEqual(withdrawal.StakeAmount.String(), ToAzil(15))
 	} else {
 		//second withdrawal happened in next block
-		AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum2, sdk.Cfg.Addr2, "0"), ToAzil(10))
-		AssertEqual(p.Aimpl.Field("withdrawal_pending", bnum2, sdk.Cfg.Addr2, "1"), ToZil(10))
+		withdrawal := Dig(p.Aimpl, "withdrawal_pending", bnum2, sdk.Cfg.Addr2).Withdrawal()
+
+		AssertEqual(withdrawal.TokenAmount.String(), ToAzil(10))
+		AssertEqual(withdrawal.StakeAmount.String(), ToAzil(10))
 	}
 }

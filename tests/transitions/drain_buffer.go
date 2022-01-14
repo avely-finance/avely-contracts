@@ -75,8 +75,8 @@ func (tr *Transitions) DrainBuffer() {
 
 	// Check aZIL balance
 	totalRewards := "149" // "100" from Buffer + "49" from Holder[]
-	AssertEqual(p.Aimpl.Field("_balance"), totalRewards)
-	AssertEqual(p.Aimpl.Field("autorestakeamount"), totalRewards)
+	AssertEqual(Field(p.Aimpl, "_balance"), totalRewards)
+	AssertEqual(Field(p.Aimpl, "autorestakeamount"), totalRewards)
 
 	// Send Swap transactions
 	AssertTransition(txn, Transition{

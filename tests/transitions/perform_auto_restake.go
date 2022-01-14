@@ -10,7 +10,7 @@ func (tr *Transitions) PerformAutoRestake() {
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 
-	AssertEqual(p.Aimpl.Field("autorestakeamount"), ToZil(0))
+	AssertEqual(Field(p.Aimpl, "autorestakeamount"), ToZil(0))
 
 	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(1)))
 	txn, _ := p.Aimpl.PerformAutoRestake()
@@ -19,12 +19,12 @@ func (tr *Transitions) PerformAutoRestake() {
 	// increases to 100
 	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(99)))
 	restakeAmount := ToZil(100)
-	AssertEqual(p.Aimpl.Field("autorestakeamount"), restakeAmount)
+	AssertEqual(Field(p.Aimpl, "autorestakeamount"), restakeAmount)
 
 	txn, _ = p.Aimpl.PerformAutoRestake()
 
 	// should return to 0
-	AssertEqual(p.Aimpl.Field("autorestakeamount"), ToZil(0))
+	AssertEqual(Field(p.Aimpl, "autorestakeamount"), ToZil(0))
 
 	AssertTransition(txn, Transition{
 		p.GetBuffer().Addr, //sender

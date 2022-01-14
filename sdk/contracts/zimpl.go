@@ -29,12 +29,11 @@ func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
 		contract := Contract{
-			Sdk:             sdk,
-			Provider:        *contract.Provider,
-			Addr:            "0x" + tx.ContractAddress,
-			Bech32:          b32,
-			Wallet:          contract.Signer,
-			StateFieldTypes: buildZimplStateFields(),
+			Sdk:      sdk,
+			Provider: *contract.Provider,
+			Addr:     "0x" + tx.ContractAddress,
+			Bech32:   b32,
+			Wallet:   contract.Signer,
 		}
 
 		return &Zimpl{Contract: contract}, nil
@@ -54,12 +53,11 @@ func RestoreZimpl(sdk *AvelySDK, contractAddress, ZproxyAddr, GzilAddr string) (
 	}
 
 	sdkContract := Contract{
-		Sdk:             sdk,
-		Provider:        *contract.Provider,
-		Addr:            contractAddress,
-		Bech32:          b32,
-		Wallet:          contract.Signer,
-		StateFieldTypes: buildZimplStateFields(),
+		Sdk:      sdk,
+		Provider: *contract.Provider,
+		Addr:     contractAddress,
+		Bech32:   b32,
+		Wallet:   contract.Signer,
 	}
 
 	return &Zimpl{Contract: sdkContract}, nil
@@ -99,14 +97,4 @@ func buildZimplContract(sdk *AvelySDK, ZproxyAddr, GzilAddr string) contract2.Co
 		Init:     init,
 		Signer:   wallet,
 	}
-}
-
-func buildZimplStateFields() StateFieldTypes {
-	stateFieldTypes := make(StateFieldTypes)
-	stateFieldTypes["buff_deposit_deleg"] = "StateFieldMapMapMap"
-	stateFieldTypes["direct_deposit_deleg"] = "StateFieldMapMapMap"
-	stateFieldTypes["deposit_amt_deleg"] = "StateFieldMapMap"
-	stateFieldTypes["ssn_deleg_amt"] = "StateFieldMapMap"
-
-	return stateFieldTypes
 }
