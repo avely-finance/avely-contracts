@@ -57,5 +57,8 @@ func (tr *Transitions) RunAll() {
 	tr.IsBufferOrHolder()
 	tr.DrainBuffer()
 	tr.Pause()
-	tr.PerformAuoRestake()
+	tr.PerformAutoRestake()
+	tr.ReAssignStakeSuccess()
+	tr.ReAssignStakeZimplErrors()
+	tr.ReAssignStakeAimplErrors()
 }

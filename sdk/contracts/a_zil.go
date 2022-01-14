@@ -20,6 +20,13 @@ type AZil struct {
 	Contract
 }
 
+func (a *AZil) WithUser(key string) *AZil {
+	wallet := account.NewWallet()
+	wallet.AddByPrivateKey(key)
+	a.Contract.Wallet = wallet
+	return a
+}
+
 func (a *AZil) ChangeAdmin(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -94,6 +101,17 @@ func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, e
 		},
 	}
 	return a.Contract.Call("ChangeHolderAddress", args, "0")
+}
+
+func (a *AZil) ReAssignStake(delegator string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"delegator",
+			"ByStr20",
+			delegator,
+		},
+	}
+	return a.Call("ReAssignStake", args, "0")
 }
 
 func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {

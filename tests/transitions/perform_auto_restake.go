@@ -5,7 +5,7 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
-func (tr *Transitions) PerformAuoRestake() {
+func (tr *Transitions) PerformAutoRestake() {
 	p := tr.DeployAndUpgrade()
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
