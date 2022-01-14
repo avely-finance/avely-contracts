@@ -243,12 +243,11 @@ func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
 		sdkContract := Contract{
-			Sdk:             sdk,
-			Provider:        *contract.Provider,
-			Addr:            "0x" + tx.ContractAddress,
-			Bech32:          b32,
-			Wallet:          contract.Signer,
-			StateFieldTypes: buildAZilStateFields(),
+			Sdk:      sdk,
+			Provider: *contract.Provider,
+			Addr:     "0x" + tx.ContractAddress,
+			Bech32:   b32,
+			Wallet:   contract.Signer,
 		}
 		return &AZil{Contract: sdkContract}, nil
 	} else {
@@ -267,12 +266,11 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, zimplAddr string) (*AZi
 	}
 
 	sdkContract := Contract{
-		Sdk:             sdk,
-		Provider:        *contract.Provider,
-		Addr:            contractAddress,
-		Bech32:          b32,
-		Wallet:          contract.Signer,
-		StateFieldTypes: buildAZilStateFields(),
+		Sdk:      sdk,
+		Provider: *contract.Provider,
+		Addr:     contractAddress,
+		Bech32:   b32,
+		Wallet:   contract.Signer,
 	}
 	return &AZil{Contract: sdkContract}, nil
 }
@@ -315,17 +313,4 @@ func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
 		Init:     init,
 		Signer:   wallet,
 	}
-}
-
-func buildAZilStateFields() StateFieldTypes {
-	stateFieldTypes := make(StateFieldTypes)
-	stateFieldTypes["balances"] = "StateFieldMap"
-	stateFieldTypes["last_buf_deposit_cycle_deleg"] = "StateFieldMap"
-	stateFieldTypes["buffers_addresses"] = "StateFieldArray"
-	stateFieldTypes["withdrawal_pending"] = "StateFieldMapMapPair"
-	stateFieldTypes["withdrawal_unbonded"] = "StateFieldMapPair"
-	stateFieldTypes["staging_admin_address"] = "StateFieldOption"
-	stateFieldTypes["is_paused"] = "StateFieldBool"
-
-	return stateFieldTypes
 }
