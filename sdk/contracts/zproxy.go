@@ -19,6 +19,44 @@ type Zproxy struct {
 	Contract
 }
 
+func (p *Zproxy) AssignStakeRewardList(rewards map[string]string, amount string) (*transaction.Transaction, error) {
+
+	type Constructor struct {
+		Constructor string   `json:"constructor"`
+		ArgTypes    []string `json:"argtypes"`
+		Arguments   []string `json:"arguments"`
+	}
+
+	ats := []string{
+		"ByStr20",
+		"Uint128",
+	}
+
+	var Value []Constructor
+	for ssn, rewardFactor := range rewards {
+		ars := []string{
+			ssn,
+			rewardFactor,
+		}
+		cons := Constructor{
+			Constructor: "Pair",
+			ArgTypes:    ats,
+			Arguments:   ars,
+		}
+		Value = append(Value, cons)
+	}
+
+	args := []core.ContractValue{
+		{
+			VName: "ssnreward_list",
+			Type:  "List (Pair ByStr20 Uint128)",
+			Value: Value,
+		},
+	}
+
+	return p.Call("AssignStakeReward", args, amount)
+}
+
 func (p *Zproxy) AssignStakeReward(ssn, reward string) (*transaction.Transaction, error) {
 
 	type Constructor struct {
@@ -55,6 +93,13 @@ func (p *Zproxy) AssignStakeReward(ssn, reward string) (*transaction.Transaction
 	return p.Call("AssignStakeReward", args, reward)
 }
 
+func (p *Zproxy) WithUser(key string) *Zproxy {
+	wallet := account.NewWallet()
+	wallet.AddByPrivateKey(key)
+	p.Contract.Wallet = wallet
+	return p
+}
+
 func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -85,6 +130,28 @@ func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, err
 	}
 
 	return p.Call("AddSSN", args, "0")
+}
+
+func (p *Zproxy) DelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return p.Call("DelegateStake", args, amount)
+}
+
+func (p *Zproxy) RequestDelegatorSwap(new_deleg_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_deleg_addr",
+			"ByStr20",
+			new_deleg_addr,
+		},
+	}
+	return p.Call("RequestDelegatorSwap", args, "0")
 }
 
 func (p *Zproxy) Unpause() (*transaction.Transaction, error) {
@@ -130,6 +197,33 @@ func (p *Zproxy) UpdateVerifierRewardAddr(newAddr string) (*transaction.Transact
 		newAddr,
 	}}
 	return p.Call("UpdateVerifierRewardAddr", args, "0")
+}
+
+func (p *Zproxy) WithdrawStakeRewards(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return p.Call("WithdrawStakeRewards", args, "0")
+}
+
+func (p *Zproxy) WithdrawStakeAmt(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+		{
+			"amt",
+			"Uint128",
+			amount,
+		},
+	}
+	return p.Call("WithdrawStakeAmt", args, "0")
 }
 
 func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {

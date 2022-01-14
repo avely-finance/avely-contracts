@@ -28,6 +28,11 @@ type Error =
   | InvalidTotalAmt
   | NotPaused
   | Paused
+  | ReAssignStakeCantFetchRemote
+  | ReAssignStakePendingWithdrawal
+  | ReAssignStakeStakeNotFound
+  | ReAssignStakeSwapRequestNotFound
+  | ReAssignStakeSwapRequestNotHolder
   | StagingAdminNotExists
   | StagingAdminValidationFailed
 
@@ -35,25 +40,30 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AdminValidationFailed           => "AdminValidationFailed"
-      | BufferAddrUnknown               => "BufferAddrUnknown"
-      | BufferNoActive                  => "BufferNoActive"
-      | BufferOrHolderValidationFailed  => "BufferOrHolderValidationFailed"
-      | CantFetchZimplBufferExistsAtSSN => "CantFetchZimplBufferExistsAtSSN"
-      | CantFetchZimplFields            => "CantFetchZimplFields"
-      | ClaimWithdrawalNoUnbonded       => "ClaimWithdrawalNoUnbonded"
-      | CompleteWithdrawalFundsMismatch => "CompleteWithdrawalFundsMismatch"
-      | DelegAddrUnknown                => "DelegAddrUnknown"
-      | DelegDoesNotExistAtSSN          => "DelegDoesNotExistAtSSN"
-      | DelegHasBufferedDeposit         => "DelegHasBufferedDeposit"
-      | DelegHasNoSufficientAmt         => "DelegHasNoSufficientAmt"
-      | DelegStakeFundsMismatch         => "DelegStakeFundsMismatch"
-      | DelegStakeNotEnough             => "DelegStakeNotEnough"
-      | InvalidTotalAmt                 => "InvalidTotalAmt"
-      | Paused                          => "Paused"
-      | NotPaused                       => "NotPaused"
-      | StagingAdminNotExists           => "StagingAdminNotExists"
-      | StagingAdminValidationFailed    => "StagingAdminValidationFailed"
+      | AdminValidationFailed             => "AdminValidationFailed"
+      | BufferAddrUnknown                 => "BufferAddrUnknown"
+      | BufferNoActive                    => "BufferNoActive"
+      | BufferOrHolderValidationFailed    => "BufferOrHolderValidationFailed"
+      | CantFetchZimplBufferExistsAtSSN   => "CantFetchZimplBufferExistsAtSSN"
+      | CantFetchZimplFields              => "CantFetchZimplFields"
+      | ClaimWithdrawalNoUnbonded         => "ClaimWithdrawalNoUnbonded"
+      | CompleteWithdrawalFundsMismatch   => "CompleteWithdrawalFundsMismatch"
+      | DelegAddrUnknown                  => "DelegAddrUnknown"
+      | DelegDoesNotExistAtSSN            => "DelegDoesNotExistAtSSN"
+      | DelegHasBufferedDeposit           => "DelegHasBufferedDeposit"
+      | DelegHasNoSufficientAmt           => "DelegHasNoSufficientAmt"
+      | DelegStakeFundsMismatch           => "DelegStakeFundsMismatch"
+      | DelegStakeNotEnough               => "DelegStakeNotEnough"
+      | InvalidTotalAmt                   => "InvalidTotalAmt"
+      | Paused                            => "Paused"
+      | NotPaused                         => "NotPaused"
+      | ReAssignStakeCantFetchRemote      => "ReAssignStakeCantFetchRemote"
+      | ReAssignStakePendingWithdrawal    => "ReAssignStakePendingWithdrawal"
+      | ReAssignStakeStakeNotFound        => "ReAssignStakeStakeNotFound"
+      | ReAssignStakeSwapRequestNotFound  => "ReAssignStakeSwapRequestNotFound"
+      | ReAssignStakeSwapRequestNotHolder => "ReAssignStakeSwapRequestNotHolder"
+      | StagingAdminNotExists             => "StagingAdminNotExists"
+      | StagingAdminValidationFailed      => "StagingAdminValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }
@@ -190,6 +200,8 @@ field tmp_delegator: Option ByStr20 = None {ByStr20}
 field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
 field tmp_buffer_exists_at_ssn: Uint32 = uint32_zero
+field tmp_map_ssn_amt: Map ByStr20 Uint128 = Emp ByStr20 Uint128
+field tmp_total_redeleg_amt: Uint128 = uint128_zero
 
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
@@ -291,12 +303,27 @@ procedure HolderWithdrawStakeAmt(amount: Uint128)
   send msgs
 end
 
+procedure HolderConfirmDelegatorSwap(requestor: ByStr20)
+  holder_addr <- holder_address;
+  msg = { _tag: "ConfirmDelegatorSwap"; _recipient: holder_addr; _amount: uint128_zero; requestor: requestor };
+  msgs = one_msg msg;
+  send msgs
+end
+
 procedure HolderCompleteWithdrawal()
   holder_addr <- holder_address;
   msg = { _tag: "CompleteWithdrawal"; _recipient: holder_addr; _amount: uint128_zero };
   msgs = one_msg msg;
   send msgs
 end
+
+procedure HolderReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
+  holder_addr <- holder_address;
+  msg = { _tag: "ReDelegateStake"; _recipient: holder_addr; _amount: uint128_zero; ssnaddr: ssnaddr; amount: amount };
+  msgs = one_msg msg;
+  send msgs
+end
+
 
 (* @dev : To delegate the stake to the contract through buffer. *)
 procedure BufferDelegate(amount: Uint128)
@@ -337,6 +364,71 @@ end
 (************************************************************)
 (* @dev: aZil actions                                       *)
 (************************************************************)
+
+procedure ReAssignStakeFetchCheckRemote(delegator: ByStr20)
+  var_zimpl_address <- zimpl_address;
+
+  o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract
+    field deleg_swap_request: Map ByStr20 ByStr20,
+    field withdrawal_pending: Map ByStr20 (Map BNum Uint128),
+    field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128)
+  end;
+
+  match o_zimpl_addr_test with
+  | Some zimpl =>
+
+    (* delegator should RequestDelegatorSwap with holder before *)
+    o_deleg_swap_request <- & zimpl.deleg_swap_request[delegator];
+    match o_deleg_swap_request with
+    | Some new_deleg =>
+      holder_addr <- holder_address;
+      is_holder = builtin eq new_deleg holder_addr;
+      match is_holder with
+      | True =>
+      | False =>
+        e = ReAssignStakeSwapRequestNotHolder;
+        ThrowError e
+      end
+    | None =>
+      e = ReAssignStakeSwapRequestNotFound;
+      ThrowError e
+    end;
+
+    (* delegator shouldn't have pending withdrawals *)
+    o_withdrawal <- & zimpl.withdrawal_pending[delegator];
+    match o_withdrawal with
+    | Some withdrawal =>
+      e = ReAssignStakePendingWithdrawal;
+      ThrowError e
+    | None =>
+    end;
+
+    (* fetch delegator's stakes for each ssn *)
+    o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
+    match o_deposit_amt_deleg with
+    | Some map_ssn_amt =>
+      tmp_map_ssn_amt := map_ssn_amt
+    | None =>
+      e = ReAssignStakeStakeNotFound;
+      ThrowError e
+    end
+
+  | None =>
+    e = ReAssignStakeCantFetchRemote;
+    ThrowError e
+  end
+end
+
+procedure ReAssignStakeReDelegate(ssn_amount: Pair ByStr20 Uint128)
+  match ssn_amount with
+  | Pair ssn amount =>
+    (* update total redelegate amount *)
+    total_redeleg_amt <- tmp_total_redeleg_amt;
+    total_redeleg_amt = builtin add total_redeleg_amt amount;
+    tmp_total_redeleg_amt := total_redeleg_amt;
+    HolderReDelegateStake ssn amount
+  end
+end
 
 procedure IsDelegStakeSufficient(amount: Uint128)
   mindelegstake_l <- mindelegstake;
@@ -909,6 +1001,23 @@ transition CompleteWithdrawalSuccessCallBack()
 
   tmp_complete_withdrawal_available := uint128_zero
 
+end
+
+transition ReAssignStake(delegator: ByStr20)
+  ReAssignStakeFetchCheckRemote delegator;
+  HolderConfirmDelegatorSwap delegator;
+
+  map_ssn_amt <- tmp_map_ssn_amt;
+  list_ssn_amt = builtin to_list map_ssn_amt;
+  forall list_ssn_amt ReAssignStakeReDelegate;
+
+  total_redeleg_amt <- tmp_total_redeleg_amt;
+  UpdateTokenBalance delegator total_redeleg_amt;
+
+  (* Reset tmp variables *)
+  empty_map = Emp ByStr20 Uint128;
+  tmp_map_ssn_amt := empty_map;
+  tmp_total_redeleg_amt := uint128_zero
 end
 
 (************************************************************)

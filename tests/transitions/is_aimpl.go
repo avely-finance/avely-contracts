@@ -29,6 +29,8 @@ func (tr *Transitions) IsAimpl() {
 	AssertError(tx, "AimplValidationFailed")
 	tx, _ = p.Holder.ClaimRewards()
 	AssertError(tx, "AimplValidationFailed")
+	tx, _ = p.Holder.ReDelegateStake(p.Holder.Addr, ToZil(1))
+	AssertError(tx, "AimplValidationFailed")
 	tx, _ = p.Holder.ConfirmDelegatorSwap(p.GetBuffer().Addr)
 	AssertError(tx, "AimplValidationFailed")
 }
