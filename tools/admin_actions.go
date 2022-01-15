@@ -62,6 +62,8 @@ func main() {
 			drainBuffer(p, addr)
 		case "show_rewards":
 			showRewards(p, ssn, addr)
+		case "show_swap_requests":
+			showSwapRequests(p)
 		case "perform_autorestake":
 			performAutorestake(p)
 		default:
@@ -111,7 +113,7 @@ func deployBuffer(p *Protocol) {
 	if err != nil {
 		log.Fatalf("Buffer deploy failed with error: ", err)
 	}
-	log.Success("Buffer deploy is successfully compelted. Address: " + buffer.Addr)
+	log.Success("Buffer deploy is successfully completed. Address: " + buffer.Addr)
 }
 
 func unpause(p *Protocol) {
@@ -120,7 +122,7 @@ func unpause(p *Protocol) {
 	if err != nil {
 		log.Fatalf("Unpause AZil failed with error: ", err)
 	}
-	log.Success("Unpause AZil is successfully compelted")
+	log.Success("Unpause AZil is successfully completed")
 }
 
 func syncBuffers(p *Protocol) {
@@ -133,7 +135,7 @@ func drainBuffer(p *Protocol, buffer_addr string) {
 	if err != nil {
 		log.Fatalf("Drain failed with error: ", err)
 	}
-	log.Success("Drain is successfully compelted. Tx: " + tx.ID)
+	log.Success("Drain is successfully completed. Tx: " + tx.ID)
 }
 
 func showRewards(p *Protocol, ssn, deleg string) {
@@ -221,6 +223,19 @@ func performAutorestake(p *Protocol) {
 
 	priceAfter := DivBF(totalstakeamount, totaltokenamount)
 
-	log.Success("Drain is successfully compelted. Tx: " + tx.ID)
+	log.Success("Drain is successfully completed. Tx: " + tx.ID)
 	log.Success("Restaked amount: " + autorestakeamount.String() + "; PriceBefore: " + priceBefore.String() + "; PriceAfter: " + priceAfter.String())
+}
+
+func showSwapRequests(p *Protocol) {
+	state := NewState(p.Zimpl.Contract.State())
+	swapRequests := state.Dig("deleg_swap_request").Map()
+	i := 0
+	for initiator, new_deleg := range swapRequests {
+		if new_deleg.String() == p.Holder.Addr {
+			i++
+			log.Info(initiator)
+		}
+		log.Infof("Found %d swap request(s)", i)
+	}
 }
