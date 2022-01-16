@@ -51,7 +51,8 @@
     "ZimplAddr": "0xA2e4657de8108dd3730EB51f05a1d486D77bE2Df",
     "AzilAddr": "0x67e61129f506690c7d8b621028a2b3d056031bad",
     "BufferAddrs": [
-      "0x80b8a7954863e23aa65417e956d48b71b4ee56c2"
+      "0x80b8a7954863e23aa65417e956d48b71b4ee56c2",
+      "0x22a923a3ac1d312964872f87eb5dfd1b732e28fc"
     ],
     "HolderAddr": "0x46d9d11edd84fef9d6ce4dd0ec3304bc9d704ec8"
   },
