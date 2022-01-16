@@ -761,23 +761,6 @@ transition ChangeBuffers(new_buffers: List ByStr20)
   buffers_addresses := new_buffers
 end
 
-transition GetCurrentBuffer()
-  RequireAdmin;
-  FetchRemoteZimplFields;
-  cycle <- local_lastrewardcycle;
-  buffer_addrs <- buffers_addresses;
-  buffer = get_active_buffer_addr buffer_addrs cycle;
-
-  match buffer with
-  | None =>
-    e = {_eventname: "GetCurrentBufferFailure"};
-    event e
-  | Some buffer_addr =>
-    e = {_eventname: "GetCurrentBufferSuccess"; buffer: buffer_addr};
-    event e
-  end
-end
-
 transition DrainBuffer(buffer_addr: ByStr20)
   RequireAdmin;
   buffers_addrs <- buffers_addresses;
