@@ -4,7 +4,6 @@ import (
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
-	"strconv"
 )
 
 func (tr *Transitions) DelegateStakeSuccess() {
@@ -57,14 +56,21 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr, anotherBuffer.Addr}
 	AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
-	activeBufferAddr := calcActiveBufferAddr(p, new_buffers)
+
+	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
+	activeBufferAddr := calcActiveBufferAddr(2, new_buffers) // start from second cycle
+	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
 
 	//next reward cycle
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
-
-	activeBufferAddr = calcActiveBufferAddr(p, new_buffers)
+	activeBufferAddr = calcActiveBufferAddr(3, new_buffers)
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
+}
+
+func calcActiveBufferAddr(cycle int, buffers []string) string {
+	index := int(cycle) % len(buffers)
+	return buffers[index]
 }
