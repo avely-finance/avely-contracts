@@ -52,10 +52,24 @@ $ go run tools/admin_actions.go --chain=testnet --cmd=sync_buffers
 $ go run tools/admin_actions.go --chain=testnet --cmd=unpause
 ```
 
-6. Show swap request(s)
+6. Init Holder with min stake
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=init_holder
+```
+
+### Manual commands
+
+Show swap request(s)
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=show_swap_requests
+```
+
+Drain Buffer
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=drain_buffer --addr=<buffer addr>
 ```
 
 ### Get Info
