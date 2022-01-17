@@ -52,15 +52,45 @@ $ go run tools/admin_actions.go --chain=testnet --cmd=sync_buffers
 $ go run tools/admin_actions.go --chain=testnet --cmd=unpause
 ```
 
-6. Show swap request(s)
+6. Init Holder with min stake
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=init_holder
+```
+
+### Manual commands
+
+Show swap request(s)
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=show_swap_requests
 ```
 
-### Get Info
+Drain Buffer
 
-1. go run tools/admin_actions.go --chain=mainnet --cmd=show_rewards --ssn=0x2afe9e18EdD39D927d0FffF8990612FC4aFa2295 --addr=0x30B5259a4E89Dc12B6da7883A9D3cd691F03b386
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=drain_buffer --addr=<buffer addr>
+```
+
+
+Perform Autorestake
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=autorestake
+```
+
+Get Active Buffer
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=get_active_buffer
+```
+
+
+Show Stake Rewards on the main staking contract
+
+```sh
+$ go run tools/admin_actions.go --chain=mainnet --cmd=show_rewards --ssn=0x2afe9e18EdD39D927d0FffF8990612FC4aFa2295 --addr=0x30B5259a4E89Dc12B6da7883A9D3cd691F03b386
+```
 
 ## User commands
 

@@ -52,6 +52,10 @@ func main() {
 			convertToBech32Addr(addr)
 		case "show_tx":
 			showTx(p, addr)
+		case "get_active_buffer":
+			getActiveBuffer(p)
+		case "init_holder":
+			initHolder(p)
 		case "deploy_buffer":
 			deployBuffer(p)
 		case "unpause":
@@ -64,8 +68,8 @@ func main() {
 			showRewards(p, ssn, addr)
 		case "show_swap_requests":
 			showSwapRequests(p)
-		case "perform_autorestake":
-			performAutorestake(p)
+		case "autorestake":
+			autorestake(p)
 		default:
 			log.Fatal("Unknown command")
 		}
@@ -85,6 +89,22 @@ func showTx(p *Protocol, tx_addr string) {
 
 	log.Successf("Tx: ", tx)
 	log.Successf("Err: ", err)
+}
+
+func getActiveBuffer(p *Protocol) {
+	lrc, buffer := p.GetActiveBuffer()
+
+	log.Successf("lastrewardcycle: ", lrc)
+	log.Successf("Active buffer: ", buffer.Contract.Addr)
+}
+
+func initHolder(p *Protocol) {
+	_, err := p.InitHolder()
+
+	if err != nil {
+		log.Fatalf("Holder init failed with error: ", err)
+	}
+	log.Success("Holder init is successfully compeleted.")
 }
 
 func convertFromBech32Addr(addr32 string) {
@@ -197,7 +217,7 @@ func showRewards(p *Protocol, ssn, deleg string) {
 	}
 }
 
-func performAutorestake(p *Protocol) {
+func autorestake(p *Protocol) {
 	state := NewState(p.Aimpl.Contract.State())
 
 	autorestakeamount := state.Dig("autorestakeamount").BigInt()
