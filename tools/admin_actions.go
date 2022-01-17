@@ -69,8 +69,8 @@ func main() {
 			showRewards(p, ssn, addr)
 		case "show_swap_requests":
 			showSwapRequests(p)
-		case "perform_autorestake":
-			performAutorestake(p)
+		case "autorestake":
+			autorestake(p)
 		default:
 			log.Fatal("Unknown command")
 		}
@@ -226,7 +226,7 @@ func showRewards(p *Protocol, ssn, deleg string) {
 	}
 }
 
-func performAutorestake(p *Protocol) {
+func autorestake(p *Protocol) {
 	state := NewState(p.Aimpl.Contract.State())
 
 	autorestakeamount := state.Dig("autorestakeamount").BigInt()
