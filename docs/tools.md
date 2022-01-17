@@ -4,7 +4,7 @@
 
 Create and configure `.env.testnet` and `.env.mainnet`. Ask the team for private keys for shared admin and user accounts
 
-## Usefull Links
+## Useful Links
 
 Staking testnet Dashboard:
 https://testnet-stake.zilliqa.com/dashboard
@@ -50,6 +50,12 @@ $ go run tools/admin_actions.go --chain=testnet --cmd=sync_buffers
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=unpause
+```
+
+6. Show swap request(s)
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=show_swap_requests
 ```
 
 ### Get Info
