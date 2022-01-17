@@ -6,7 +6,6 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
-	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	"math/big"
 	"strings"
 )
@@ -100,7 +99,7 @@ func getActiveBuffer(p *Protocol) {
 }
 
 func initHolder(p *Protocol) {
-	_, err := p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil))
+	_, err := p.InitHolder()
 
 	if err != nil {
 		log.Fatalf("Holder init failed with error: ", err)

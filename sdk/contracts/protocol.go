@@ -2,6 +2,7 @@ package contracts
 
 import (
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	avelycore "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	"log"
@@ -50,6 +51,10 @@ func (p *Protocol) GetActiveBuffer() (int, *BufferContract) {
 	i := int(lrc) % len(buffers)
 
 	return int(lrc), buffers[i]
+}
+
+func (p *Protocol) InitHolder() (*transaction.Transaction, error) {
+	return p.Holder.DelegateStake(ToZil(p.Aimpl.Sdk.Cfg.HolderInitialDelegateZil))
 }
 
 func (p *Protocol) SyncBufferAndHolder() {
