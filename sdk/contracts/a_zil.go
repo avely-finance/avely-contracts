@@ -65,11 +65,6 @@ func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, er
 	return a.Contract.Call("ChangeBuffers", args, "0")
 }
 
-func (a *AZil) GetCurrentBuffer() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return a.Contract.Call("GetCurrentBuffer", args, "0")
-}
-
 func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
