@@ -38,6 +38,20 @@ func (p *Protocol) GetBuffer() *BufferContract {
 	return p.Buffers[0]
 }
 
+func (p *Protocol) GetActiveBuffer() (int, *BufferContract) {
+	rawState := p.Zimpl.Contract.State()
+
+	state := NewState(rawState)
+
+	lrc := state.Dig("lastrewardcycle").Int()
+
+	buffers := p.Buffers
+
+	i := int(lrc) % len(buffers)
+
+	return int(lrc), buffers[i]
+}
+
 func (p *Protocol) SyncBufferAndHolder() {
 	new_buffers := []string{}
 
