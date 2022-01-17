@@ -53,8 +53,8 @@ func main() {
 			convertToBech32Addr(addr)
 		case "show_tx":
 			showTx(p, addr)
-		case "get_current_buffer":
-			getCurrentBuffer(p)
+		case "get_active_buffer":
+			getActiveBuffer(p)
 		case "init_holder":
 			initHolder(p)
 		case "deploy_buffer":
@@ -92,23 +92,15 @@ func showTx(p *Protocol, tx_addr string) {
 	log.Successf("Err: ", err)
 }
 
-func getCurrentBuffer(p *Protocol) {
-	rawState := p.Zimpl.Contract.State()
-
-	state := NewState(rawState)
-
-	lrc := state.Dig("lastrewardcycle").Int()
-
-	buffers := p.Aimpl.Sdk.Cfg.BufferAddrs
-
-	i := int(lrc) % len(buffers)
+func getActiveBuffer(p *Protocol) {
+	lrc, buffer := p.GetActiveBuffer()
 
 	log.Successf("lastrewardcycle: ", lrc)
-	log.Successf("Current buffer: ", buffers[i])
+	log.Successf("Active buffer: ", buffer.Contract.Addr)
 }
 
 func initHolder(p *Protocol) {
-	_, err :=p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil))
+	_, err := p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil))
 
 	if err != nil {
 		log.Fatalf("Holder init failed with error: ", err)

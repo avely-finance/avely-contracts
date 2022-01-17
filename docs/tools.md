@@ -73,15 +73,24 @@ $ go run tools/admin_actions.go --chain=testnet --cmd=drain_buffer --addr=<buffe
 ```
 
 
-Autorestake
+Perform Autorestake
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=autorestake
 ```
 
-### Get Info
+Get Active Buffer
 
-1. go run tools/admin_actions.go --chain=mainnet --cmd=show_rewards --ssn=0x2afe9e18EdD39D927d0FffF8990612FC4aFa2295 --addr=0x30B5259a4E89Dc12B6da7883A9D3cd691F03b386
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=get_active_buffer
+```
+
+
+Show Stake Rewards on the main staking contract
+
+```sh
+$ go run tools/admin_actions.go --chain=mainnet --cmd=show_rewards --ssn=0x2afe9e18EdD39D927d0FffF8990612FC4aFa2295 --addr=0x30B5259a4E89Dc12B6da7883A9D3cd691F03b386
+```
 
 ## User commands
 
