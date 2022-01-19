@@ -40,16 +40,20 @@ func (p *Protocol) GetBuffer() *BufferContract {
 }
 
 func (p *Protocol) GetActiveBuffer() (int, *BufferContract) {
+	return p.GetBufferByOffset(0)
+}
+
+func (p *Protocol) GetBufferToDrain() (int, *BufferContract) {
+	return p.GetBufferByOffset(-2)
+}
+
+func (p *Protocol) GetBufferByOffset(offset int64) (int, *BufferContract) {
 	rawState := p.Zimpl.Contract.State()
-
 	state := NewState(rawState)
-
 	lrc := state.Dig("lastrewardcycle").Int()
-
+	lrc = lrc + offset
 	buffers := p.Buffers
-
 	i := int(lrc) % len(buffers)
-
 	return int(lrc), buffers[i]
 }
 

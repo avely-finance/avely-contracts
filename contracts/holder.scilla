@@ -223,22 +223,6 @@ transition ConfirmDelegatorSwap(requestor: ByStr20)
   send msgs
 end
 
-transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
-  RequireAimpl;
-
-  var_zproxy_address <- zproxy_address;
-  to_ssn <- azil_ssn_address;
-
-  msg = {_tag: "ReDelegateStake"; _recipient: var_zproxy_address; _amount: uint128_zero; ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount};
-  msgs = one_msg msg;
-  send msgs
-end
-
-transition ReDelegateStakeSuccessCallBack(ssnaddr: ByStr20, tossn: ByStr20, amount: Uint128)
-  RequireZimpl
-  (* nop *)
-end
-
 (* Purpose of this transition is one-time min_deleg_stake delegate from Holder after its deploy *)
 (* Else Zimpl will not know anything about Holder and will return DelegDoesNotExistAtSSN error *)
 transition DelegateStake()

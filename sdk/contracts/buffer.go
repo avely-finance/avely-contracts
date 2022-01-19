@@ -77,6 +77,43 @@ func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transacti
 	return b.Call("RequestDelegatorSwap", args, "0")
 }
 
+func (b *BufferContract) ReDelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("ReDelegateStake", args, "0")
+}
+
+func (b *BufferContract) ReDelegateStakeSuccessCallBack(ssnaddr, to_ssn, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+		{
+			"tossn",
+			"ByStr20",
+			to_ssn,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
+	return b.Call("ReDelegateStakeSuccessCallBack", args, "0")
+}
+
 func NewBufferContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (*BufferContract, error) {
 	contract := buildBufferContract(sdk, aimplAddr, zproxyAddr, zimplAddr)
 
