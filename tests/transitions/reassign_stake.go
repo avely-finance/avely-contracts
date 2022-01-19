@@ -37,7 +37,7 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	reassignStakeNextCycleOffchain(p)
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
-	swapAddr := reassignStakeGetSwapAddr(p)
+	nextBuffer := reassignStakeGetSwapAddr(p)
 
 	//key1, key2 claim rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn1))
@@ -45,31 +45,31 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	AssertSuccess(p.Zproxy.WithUser(key2).WithdrawStakeRewards(ssn1))
 
 	//key1 requests swap
-	tx, _ := AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(swapAddr))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": swapAddr}})
+	tx, _ := AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
 	//key2 requests swap
-	tx, _ = AssertSuccess(p.Zproxy.WithUser(key2).RequestDelegatorSwap(swapAddr))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": swapAddr}})
+	tx, _ = AssertSuccess(p.Zproxy.WithUser(key2).RequestDelegatorSwap(nextBuffer))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 
 	//offchain-tool calls ReAssignStake(addr1), expecting success
 	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStake(addr1))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": swapAddr}})
+	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr1), "")
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", swapAddr, ssn1), userStake)
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", swapAddr, ssn2), userStake2x)
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn1, swapAddr), userStake)
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn2, swapAddr), userStake2x)
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn1), userStake)
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn2), userStake2x)
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn1, nextBuffer), userStake)
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn2, nextBuffer), userStake2x)
 	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, userStakeThroughAimpl, userStake, userStake2x))
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1)))
 
 	//offchain-tool calls ReAssignStake(addr2), expecting success
 	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStake(addr2))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": swapAddr}})
+	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr2), "")
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", swapAddr, ssn1), StrAdd(userStake, userStake4x))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn1, swapAddr), StrAdd(userStake, userStake4x))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn2, swapAddr), userStake2x)
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn1), StrAdd(userStake, userStake4x))
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn1, nextBuffer), StrAdd(userStake, userStake4x))
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn2, nextBuffer), userStake2x)
 	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, userStakeThroughAimpl, userStake, userStake2x, userStake4x))
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1), Field(p.Aimpl, "balances", addr2)))
 
@@ -78,6 +78,11 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
+
+	//nextBuffer becomes active
+	_, activeBufferContract := p.GetActiveBuffer()
+	activeBuffer := activeBufferContract.Addr
+	AssertEqual(nextBuffer, activeBuffer)
 
 	//key2 delegates through Aimpl
 	//this isn't a part of transfer process, but delegate can happen before offchain-tool calls
@@ -88,19 +93,19 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	AssertTransition(tx, Transition{
 		p.Zimpl.Addr, //sender
 		"ReDelegateStakeSuccessCallBack",
-		swapAddr,
+		activeBuffer,
 		"0",
 		ParamsMap{"ssnaddr": ssn1, "tossn": sdk.Cfg.AzilSsnAddress, "amount": StrAdd(userStake, userStake4x)},
 	})
 	AssertTransition(tx, Transition{
 		p.Zimpl.Addr, //sender
 		"ReDelegateStakeSuccessCallBack",
-		swapAddr,
+		activeBuffer,
 		"0",
 		ParamsMap{"ssnaddr": ssn2, "tossn": sdk.Cfg.AzilSsnAddress, "amount": userStake2x},
 	})
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", swapAddr, sdk.Cfg.AzilSsnAddress), StrAdd(userStake, userStake2x, userStake4x, userStakeThroughAimpl))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, swapAddr), StrAdd(userStake, userStake2x, userStake4x, userStakeThroughAimpl))
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrAdd(userStake, userStake2x, userStake4x, userStakeThroughAimpl))
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, activeBuffer), StrAdd(userStake, userStake2x, userStake4x, userStakeThroughAimpl))
 }
 
 func (tr *Transitions) ReAssignStakeAimplErrors() {
@@ -120,7 +125,7 @@ func (tr *Transitions) ReAssignStakeAimplErrors() {
 	reassignStakeNextCycleOffchain(p)
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
-	swapAddr := reassignStakeGetSwapAddr(p)
+	nextBuffer := reassignStakeGetSwapAddr(p)
 
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn1))
@@ -146,8 +151,8 @@ func (tr *Transitions) ReAssignStakeAimplErrors() {
 
 	//key1 withdraws some amount, then requests swap
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeAmt(ssn1, userStake))
-	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(swapAddr))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": swapAddr}})
+	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
 	//call ReAssignStake for addr1, expecting error
 	tx, _ = p.Aimpl.WithUser(key1).ReAssignStake(addr1)
@@ -166,23 +171,23 @@ func (tr *Transitions) ReAssignStakeZimplErrors() {
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn1, userStake))
 
 	//key1 requests delegator swap, but he has buffered deposit, expecting DelegHasBufferedDeposit
-	swapAddr := reassignStakeGetSwapAddr(p)
-	tx, _ := p.Zproxy.RequestDelegatorSwap(swapAddr)
+	nextBuffer := reassignStakeGetSwapAddr(p)
+	tx, _ := p.Zproxy.RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -8)
 
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
-	swapAddr = reassignStakeGetSwapAddr(p)
+	nextBuffer = reassignStakeGetSwapAddr(p)
 
 	//key1 requests delegator swap, but he has buffered deposit in previous cycle, expecting DelegHasBufferedDeposit
-	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(swapAddr)
+	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -8)
 
 	reassignStakeNextCycle(p)
-	swapAddr = reassignStakeGetSwapAddr(p)
+	nextBuffer = reassignStakeGetSwapAddr(p)
 
 	//key1 requests delegator swap, but he has unclaimed rewards, expecting DelegHasUnwithdrawRewards
-	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(swapAddr)
+	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -12)
 
 	//key1 claims rewards
@@ -190,13 +195,13 @@ func (tr *Transitions) ReAssignStakeZimplErrors() {
 
 	//key1 requests delegator swap, but Holder has unclaimed rewards, expecting DelegHasUnwithdrawRewards
 	//workflow of this use case is: Verifier->AssignStakeReward, User->RequestDelegatorSwap, Aimpl->DrainBuffer
-	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(swapAddr)
+	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -12)
 
 	reassignStakeNextCycleOffchain(p)
 
-	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(swapAddr))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": swapAddr}})
+	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 }
 
 func reassignStakeDefineParams(p *contracts.Protocol) (string, string, string, string, string, string, string, string) {
