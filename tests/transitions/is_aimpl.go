@@ -19,6 +19,8 @@ func (tr *Transitions) IsAimpl() {
 	AssertError(tx, "AimplValidationFailed")
 	tx, _ = p.GetBuffer().RequestDelegatorSwap(p.Holder.Addr)
 	AssertError(tx, "AimplValidationFailed")
+	tx, _ = p.GetBuffer().ReDelegateStake(p.Holder.Addr, ToZil(1))
+	AssertError(tx, "AimplValidationFailed")
 
 	// Use non-admin user for p.Holder
 	p.Holder.UpdateWallet(sdk.Cfg.Key2)
@@ -28,8 +30,6 @@ func (tr *Transitions) IsAimpl() {
 	tx, _ = p.Holder.CompleteWithdrawal()
 	AssertError(tx, "AimplValidationFailed")
 	tx, _ = p.Holder.ClaimRewards()
-	AssertError(tx, "AimplValidationFailed")
-	tx, _ = p.Holder.ReDelegateStake(p.Holder.Addr, ToZil(1))
 	AssertError(tx, "AimplValidationFailed")
 	tx, _ = p.Holder.ConfirmDelegatorSwap(p.GetBuffer().Addr)
 	AssertError(tx, "AimplValidationFailed")
