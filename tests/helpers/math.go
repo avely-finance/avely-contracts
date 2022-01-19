@@ -35,3 +35,10 @@ func StrMulDiv(a, b, c string) string {
 	result = result.Div(result, C)
 	return result.String()
 }
+
+func StrMul(a, b string) string {
+	A, _ := new(big.Int).SetString(a, 10)
+	B, _ := new(big.Int).SetString(b, 10)
+	result := new(big.Int).Mul(A, B)
+	return result.String()
+}
