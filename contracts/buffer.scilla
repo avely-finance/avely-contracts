@@ -144,6 +144,25 @@ transition ClaimRewards()
   ProxyWithdrawStakeRewards ssnaddr var_zproxy_address
 end
 
+transition ClaimRewardsSsn(ssnaddr: ByStr20)
+  RequireAimpl;
+  tmp_added_funds := uint128_zero;
+
+  var_zproxy_address <- zproxy_address;
+
+  ProxyWithdrawStakeRewards ssnaddr var_zproxy_address
+end
+
+transition ConfirmDelegatorSwap(requestor: ByStr20)
+  RequireAimpl;
+
+  var_zproxy_address <- zproxy_address;
+
+  msg = {_tag: "ConfirmDelegatorSwap"; _recipient: var_zproxy_address; _amount: uint128_zero; requestor: requestor};
+  msgs = one_msg msg;
+  send msgs
+end
+
 transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint128)
   RequireZimpl;
   added_funds <- tmp_added_funds;
@@ -172,4 +191,20 @@ transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
   var_zproxy_address <- zproxy_address;
 
   ProxyRequestDelegatorSwap var_zproxy_address new_deleg_addr
+end
+
+transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
+  RequireAimpl;
+
+  var_zproxy_address <- zproxy_address;
+  to_ssn <- azil_ssn_address;
+
+  msg = {_tag: "ReDelegateStake"; _recipient: var_zproxy_address; _amount: uint128_zero; ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount};
+  msgs = one_msg msg;
+  send msgs
+end
+
+transition ReDelegateStakeSuccessCallBack(ssnaddr: ByStr20, tossn: ByStr20, amount: Uint128)
+  RequireZimpl
+  (* nop *)
 end
