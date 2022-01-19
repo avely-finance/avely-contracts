@@ -967,7 +967,7 @@ transition ReAssignStake(delegator: ByStr20)
   match o_zimpl_addr_test with
   | Some zimpl =>
 
-    (* delegator must call RequestDelegatorSwap *)
+    (* delegator must call RequestDelegatorSwap before *)
     o_deleg_swap_request <- & zimpl.deleg_swap_request[delegator];
     match o_deleg_swap_request with
     | Some new_deleg =>
