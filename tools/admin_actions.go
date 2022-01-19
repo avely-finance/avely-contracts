@@ -92,9 +92,9 @@ func showTx(p *Protocol, tx_addr string) {
 }
 
 func getActiveBuffer(p *Protocol) {
-	lrc, buffer := p.GetActiveBuffer()
+	buffer := p.GetActiveBuffer()
 
-	log.Successf("lastrewardcycle: ", lrc)
+	log.Successf("lastrewardcycle: ", p.GetLastRewardCycle())
 	log.Successf("Active buffer: ", buffer.Contract.Addr)
 }
 
