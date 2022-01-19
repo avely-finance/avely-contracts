@@ -16,21 +16,23 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	key1, addr1, key2, addr2, ssn1, ssn2, _, userStake := reassignStakeDefineParams(p)
 	totaltokenamount := Field(p.Aimpl, "totaltokenamount")
 	totalstakeamount := Field(p.Aimpl, "totalstakeamount")
-	userStakeThroughAimpl := userStake
-	userStake2x := StrAdd(userStake, userStake)
-	userStake4x := StrAdd(userStake2x, userStake2x)
+	stake1_azil := StrMul(userStake, "64")
+	stake2_azil := StrMul(userStake, "128")
+	stake1_1 := StrMul(userStake, "2")
+	stake1_2 := StrMul(userStake, "4")
+	stake2_1 := StrMul(userStake, "8")
 
 	//key1 delegates through Aimpl (this isn't a part of transfer process)
-	AssertSuccess(p.Aimpl.WithUser(key1).DelegateStake(userStakeThroughAimpl))
+	AssertSuccess(p.Aimpl.WithUser(key1).DelegateStake(stake1_azil))
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
 
 	//key1, key2 delegate to main contract
-	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn1, userStake))
-	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn2, userStake2x))
-	AssertSuccess(p.Zproxy.WithUser(key2).DelegateStake(ssn1, userStake4x))
+	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn1, stake1_1))
+	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn2, stake1_2))
+	AssertSuccess(p.Zproxy.WithUser(key2).DelegateStake(ssn1, stake2_1))
 
 	//key1, key2 wait 2 reward cycles (they should have no buffered depo in current/prev cycles, else swap request will fail)
 	reassignStakeNextCycle(p)
@@ -56,21 +58,21 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStake(addr1))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr1), "")
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn1), userStake)
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn2), userStake2x)
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn1, nextBuffer), userStake)
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn2, nextBuffer), userStake2x)
-	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, userStakeThroughAimpl, userStake, userStake2x))
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn1), stake1_1)
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn2), stake1_2)
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn1, nextBuffer), stake1_1)
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn2, nextBuffer), stake1_2)
+	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2))
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1)))
 
 	//offchain-tool calls ReAssignStake(addr2), expecting success
 	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStake(addr2))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr2), "")
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn1), StrAdd(userStake, userStake4x))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn1, nextBuffer), StrAdd(userStake, userStake4x))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn2, nextBuffer), userStake2x)
-	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, userStakeThroughAimpl, userStake, userStake2x, userStake4x))
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn1), StrAdd(stake1_1, stake2_1))
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn1, nextBuffer), StrAdd(stake1_1, stake2_1))
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn2, nextBuffer), stake1_2)
+	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2, stake2_1))
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1), Field(p.Aimpl, "balances", addr2)))
 
 	//call of ReAssignStakeReDelegate() will not break transfer process
@@ -86,7 +88,7 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 
 	//key2 delegates through Aimpl
 	//this isn't a part of transfer process, but delegate can happen before offchain-tool calls
-	AssertSuccess(p.Aimpl.WithUser(key2).DelegateStake(userStakeThroughAimpl))
+	AssertSuccess(p.Aimpl.WithUser(key2).DelegateStake(stake2_azil))
 
 	//offchain tool calls ReAssignStakeReDelegate once when new cycle starts
 	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate())
@@ -95,17 +97,19 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 		"ReDelegateStakeSuccessCallBack",
 		activeBuffer,
 		"0",
-		ParamsMap{"ssnaddr": ssn1, "tossn": sdk.Cfg.AzilSsnAddress, "amount": StrAdd(userStake, userStake4x)},
+		ParamsMap{"ssnaddr": ssn1, "tossn": sdk.Cfg.AzilSsnAddress, "amount": StrAdd(stake1_1, stake2_1)},
 	})
 	AssertTransition(tx, Transition{
 		p.Zimpl.Addr, //sender
 		"ReDelegateStakeSuccessCallBack",
 		activeBuffer,
 		"0",
-		ParamsMap{"ssnaddr": ssn2, "tossn": sdk.Cfg.AzilSsnAddress, "amount": userStake2x},
+		ParamsMap{"ssnaddr": ssn2, "tossn": sdk.Cfg.AzilSsnAddress, "amount": stake1_2},
 	})
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrAdd(userStake, userStake2x, userStake4x, userStakeThroughAimpl))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, activeBuffer), StrAdd(userStake, userStake2x, userStake4x, userStakeThroughAimpl))
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrAdd(stake1_1, stake1_2, stake2_1, stake2_azil))
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, activeBuffer), StrAdd(stake1_1, stake1_2, stake2_1, stake2_azil))
+	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2, stake2_1, stake2_azil))
+	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1), Field(p.Aimpl, "balances", addr2)))
 }
 
 func (tr *Transitions) ReAssignStakeAimplErrors() {
