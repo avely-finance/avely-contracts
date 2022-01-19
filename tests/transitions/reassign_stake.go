@@ -79,6 +79,10 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
 
+	//key2 delegates through Aimpl
+	//this isn't a part of transfer process, but delegate can happen before offchain-tool calls
+	AssertSuccess(p.Aimpl.WithUser(key2).DelegateStake(userStakeThroughAimpl))
+
 	//offchain tool calls ReAssignStakeReDelegate once when new cycle starts
 	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate())
 	AssertTransition(tx, Transition{
@@ -95,8 +99,8 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 		"0",
 		ParamsMap{"ssnaddr": ssn2, "tossn": sdk.Cfg.AzilSsnAddress, "amount": userStake2x},
 	})
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", swapAddr, sdk.Cfg.AzilSsnAddress), StrAdd(userStake, userStake2x, userStake4x))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, swapAddr), StrAdd(userStake, userStake2x, userStake4x))
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", swapAddr, sdk.Cfg.AzilSsnAddress), StrAdd(userStake, userStake2x, userStake4x, userStakeThroughAimpl))
+	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, swapAddr), StrAdd(userStake, userStake2x, userStake4x, userStakeThroughAimpl))
 }
 
 func (tr *Transitions) ReAssignStakeAimplErrors() {
