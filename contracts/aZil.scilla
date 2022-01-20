@@ -28,12 +28,12 @@ type Error =
   | InvalidTotalAmt
   | NotPaused
   | Paused
-  | ReAssignStakeCantFetchRemote
-  | ReAssignStakeDepositNotFound
-  | ReAssignStakePendingWithdrawal
-  | ReAssignStakeReDelegateAzilSsn
-  | ReAssignStakeSwapRequestNotFound
-  | ReAssignStakeSwapRequestWrongBuffer
+  | ChownStakeCantFetchRemote
+  | ChownStakeDepositNotFound
+  | ChownStakePendingWithdrawal
+  | ChownStakeReDelegateAzilSsn
+  | ChownStakeSwapRequestNotFound
+  | ChownStakeSwapRequestWrongBuffer
   | StagingAdminNotExists
   | StagingAdminValidationFailed
 
@@ -58,12 +58,12 @@ let make_error =
       | InvalidTotalAmt                     => "InvalidTotalAmt"
       | Paused                              => "Paused"
       | NotPaused                           => "NotPaused"
-      | ReAssignStakeCantFetchRemote        => "ReAssignStakeCantFetchRemote"
-      | ReAssignStakeDepositNotFound        => "ReAssignStakeDepositNotFound"
-      | ReAssignStakeReDelegateAzilSsn      => "ReAssignStakeReDelegateAzilSsn"
-      | ReAssignStakePendingWithdrawal      => "ReAssignStakePendingWithdrawal"
-      | ReAssignStakeSwapRequestNotFound    => "ReAssignStakeSwapRequestNotFound"
-      | ReAssignStakeSwapRequestWrongBuffer => "ReAssignStakeSwapRequestWrongBuffer"
+      | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
+      | ChownStakeDepositNotFound        => "ChownStakeDepositNotFound"
+      | ChownStakeReDelegateAzilSsn      => "ChownStakeReDelegateAzilSsn"
+      | ChownStakePendingWithdrawal      => "ChownStakePendingWithdrawal"
+      | ChownStakeSwapRequestNotFound    => "ChownStakeSwapRequestNotFound"
+      | ChownStakeSwapRequestWrongBuffer => "ChownStakeSwapRequestWrongBuffer"
       | StagingAdminNotExists               => "StagingAdminNotExists"
       | StagingAdminValidationFailed        => "StagingAdminValidationFailed"
       end
@@ -941,7 +941,7 @@ transition CompleteWithdrawalSuccessCallBack()
 
 end
 
-transition ReAssignStake(delegator: ByStr20)
+transition ChownStake(delegator: ByStr20)
   var_zimpl_address <- zimpl_address;
 
   o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract
@@ -981,7 +981,7 @@ transition ReAssignStake(delegator: ByStr20)
         is_next_buffer = builtin eq new_deleg next_buffer;
         match is_next_buffer with
         | False =>
-          e = ReAssignStakeSwapRequestWrongBuffer;
+          e = ChownStakeSwapRequestWrongBuffer;
           ThrowError e
         | True => (* nop *)
         end
@@ -991,7 +991,7 @@ transition ReAssignStake(delegator: ByStr20)
       o_withdrawal <- & zimpl.withdrawal_pending[delegator];
       match o_withdrawal with
       | Some withdrawal =>
-        e = ReAssignStakePendingWithdrawal;
+        e = ChownStakePendingWithdrawal;
         ThrowError e
       | None =>
       end;
@@ -1005,29 +1005,29 @@ transition ReAssignStake(delegator: ByStr20)
         total_redeleg_amt = sum_amount map_ssn_amt;
         UpdateTokenBalance delegator total_redeleg_amt
       | None =>
-        e = ReAssignStakeDepositNotFound;
+        e = ChownStakeDepositNotFound;
         ThrowError e
       end
 
     | None =>
-      e = ReAssignStakeSwapRequestNotFound;
+      e = ChownStakeSwapRequestNotFound;
       ThrowError e
     end
 
   | None =>
-    e = ReAssignStakeCantFetchRemote;
+    e = ChownStakeCantFetchRemote;
     ThrowError e
   end
 end
 
-transition ReAssignStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
+transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   FetchRemoteZimplFields;
 
   var_azil_ssn_addr <- azil_ssn_address;
   is_azil_ssn = builtin eq var_azil_ssn_addr from_ssn;
   match is_azil_ssn with
   | True =>
-    e = ReAssignStakeReDelegateAzilSsn;
+    e = ChownStakeReDelegateAzilSsn;
     ThrowError e
   | False =>
   end;
