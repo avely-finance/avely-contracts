@@ -23,38 +23,41 @@ func NewLog() *Log {
 }
 
 func (mylog *Log) Info(v ...interface{}) {
-	golog.Println(mylog.nice(v))
+	golog.Println(mylog.nice(v)...)
 }
 
 func (mylog *Log) Infof(format string, v ...interface{}) {
-	golog.Printf(format, mylog.nice(v))
+	golog.Printf(format, mylog.nice(v)...)
 }
 
 func (mylog *Log) Success(v ...interface{}) {
-	golog.Println("🟢", mylog.nice(v))
+	out := []interface{}{"🟢"}
+	golog.Println(append(out, mylog.nice(v)...)...)
 }
 
 func (mylog *Log) Successf(format string, v ...interface{}) {
-	golog.Printf("🟢 "+format, mylog.nice(v))
+	golog.Printf("🟢 "+format, mylog.nice(v)...)
 }
 
 func (mylog *Log) Error(v ...interface{}) {
-	golog.Println("🔴", mylog.nice(v))
+	out := []interface{}{"🔴"}
+	golog.Println(append(out, mylog.nice(v)...)...)
 }
 
 func (mylog *Log) Errorf(format string, v ...interface{}) {
-	golog.Printf("🔴 "+format, mylog.nice(v))
+	golog.Printf("🔴 "+format, mylog.nice(v)...)
 }
 
 func (mylog *Log) Fatal(v ...interface{}) {
-	golog.Fatal("💔", mylog.nice(v))
+	out := []interface{}{"💔"}
+	golog.Fatal(append(out, mylog.nice(v)...)...)
 }
 
 func (mylog *Log) Fatalf(format string, v ...interface{}) {
 	golog.Fatalf("💔 "+format, mylog.nice(v))
 }
 
-func (mylog *Log) nice(params []interface{}) interface{} {
+func (mylog *Log) nice(params []interface{}) []interface{} {
 	for i, value := range params {
 		if value == nil {
 			continue
@@ -71,9 +74,6 @@ func (mylog *Log) nice(params []interface{}) interface{} {
 		default:
 			break
 		}
-	}
-	if len(params) == 1 {
-		return params[0]
 	}
 	return params
 }
