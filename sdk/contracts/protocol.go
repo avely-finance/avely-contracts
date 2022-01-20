@@ -39,22 +39,31 @@ func (p *Protocol) GetBuffer() *BufferContract {
 	return p.Buffers[0]
 }
 
-func (p *Protocol) GetActiveBuffer() (int, *BufferContract) {
+func (p *Protocol) GetActiveBuffer() *BufferContract {
 	return p.GetBufferByOffset(0)
 }
 
-func (p *Protocol) GetBufferToDrain() (int, *BufferContract) {
+func (p *Protocol) GetBufferToDrain() *BufferContract {
 	return p.GetBufferByOffset(-2)
 }
 
-func (p *Protocol) GetBufferByOffset(offset int64) (int, *BufferContract) {
-	rawState := p.Zimpl.Contract.State()
-	state := NewState(rawState)
-	lrc := state.Dig("lastrewardcycle").Int()
+func (p *Protocol) GetBufferToSwapWith() *BufferContract {
+	return p.GetBufferByOffset(1)
+}
+
+func (p *Protocol) GetBufferByOffset(offset int) *BufferContract {
+	lrc := p.GetLastRewardCycle()
 	lrc = lrc + offset
 	buffers := p.Buffers
 	i := int(lrc) % len(buffers)
-	return int(lrc), buffers[i]
+	return buffers[i]
+}
+
+func (p *Protocol) GetLastRewardCycle() int {
+	rawState := p.Zimpl.Contract.State()
+	state := NewState(rawState)
+	lrc := state.Dig("lastrewardcycle").Int()
+	return int(lrc)
 }
 
 func (p *Protocol) InitHolder() (*transaction.Transaction, error) {

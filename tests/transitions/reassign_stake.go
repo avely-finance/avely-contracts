@@ -39,7 +39,7 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	reassignStakeNextCycleOffchain(p)
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
-	nextBuffer := reassignStakeGetSwapAddr(p)
+	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//key1, key2 claim rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn1))
@@ -82,8 +82,7 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	reassignStakeNextCycleOffchain(p)
 
 	//nextBuffer becomes active
-	_, activeBufferContract := p.GetActiveBuffer()
-	activeBuffer := activeBufferContract.Addr
+	activeBuffer := p.GetActiveBuffer().Addr
 	AssertEqual(nextBuffer, activeBuffer)
 
 	//key2 delegates through Aimpl
@@ -129,7 +128,7 @@ func (tr *Transitions) ReAssignStakeAimplErrors() {
 	reassignStakeNextCycleOffchain(p)
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
-	nextBuffer := reassignStakeGetSwapAddr(p)
+	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn1))
@@ -146,7 +145,7 @@ func (tr *Transitions) ReAssignStakeAimplErrors() {
 	AssertError(tx, "BufferAddrUnknown")
 
 	//key1 requests swap with NOT next buffer address
-	_, activeBuffer := p.GetActiveBuffer()
+	activeBuffer := p.GetActiveBuffer()
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(activeBuffer.Addr))
 
 	//call ReAssignStake for addr1, expecting error
@@ -175,20 +174,20 @@ func (tr *Transitions) ReAssignStakeZimplErrors() {
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn1, userStake))
 
 	//key1 requests delegator swap, but he has buffered deposit, expecting DelegHasBufferedDeposit
-	nextBuffer := reassignStakeGetSwapAddr(p)
+	nextBuffer := p.GetBufferToSwapWith().Addr
 	tx, _ := p.Zproxy.RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -8)
 
 	reassignStakeNextCycle(p)
 	reassignStakeNextCycleOffchain(p)
-	nextBuffer = reassignStakeGetSwapAddr(p)
+	nextBuffer = p.GetBufferToSwapWith().Addr
 
 	//key1 requests delegator swap, but he has buffered deposit in previous cycle, expecting DelegHasBufferedDeposit
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -8)
 
 	reassignStakeNextCycle(p)
-	nextBuffer = reassignStakeGetSwapAddr(p)
+	nextBuffer = p.GetBufferToSwapWith().Addr
 
 	//key1 requests delegator swap, but he has unclaimed rewards, expecting DelegHasUnwithdrawRewards
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
@@ -263,12 +262,7 @@ func reassignStakeNextCycle(p *contracts.Protocol) {
 }
 
 func reassignStakeNextCycleOffchain(p *contracts.Protocol) {
-	_, buffer := p.GetBufferToDrain()
+	buffer := p.GetBufferToDrain()
 	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).DrainBuffer(buffer.Addr))
 	//AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate())
-}
-
-func reassignStakeGetSwapAddr(p *contracts.Protocol) string {
-	_, buffer := p.GetBufferByOffset(1)
-	return buffer.Addr
 }
