@@ -92,9 +92,9 @@ func showTx(p *Protocol, tx_addr string) {
 }
 
 func getActiveBuffer(p *Protocol) {
-	lrc, buffer := p.GetActiveBuffer()
+	buffer := p.GetActiveBuffer()
 
-	log.Successf("lastrewardcycle: ", lrc)
+	log.Successf("lastrewardcycle: ", p.GetLastRewardCycle())
 	log.Successf("Active buffer: ", buffer.Contract.Addr)
 }
 
@@ -248,14 +248,30 @@ func autorestake(p *Protocol) {
 }
 
 func showSwapRequests(p *Protocol) {
+	i := 0
 	state := NewState(p.Zimpl.Contract.State())
 	swapRequests := state.Dig("deleg_swap_request").Map()
-	i := 0
-	for initiator, new_deleg := range swapRequests {
-		if new_deleg.String() == p.Holder.Addr {
-			i++
-			log.Info(initiator)
-		}
-		log.Infof("Found %d swap request(s)", i)
+	nextBuffer := p.GetBufferToSwapWith().Addr
+	buffers := make(map[string]bool)
+	for _, buffer := range p.Buffers {
+		buffers[buffer.Addr] = true
 	}
+	log.Infof("Active buffer: %s", p.GetActiveBuffer().Addr)
+	log.Infof("Next buffer: %s", nextBuffer)
+	for initiator, new_deleg := range swapRequests {
+		new_deleg_string := new_deleg.String()
+		status := ""
+		_, isBuffer := buffers[new_deleg_string]
+		if isBuffer {
+			i++
+			switch new_deleg_string {
+			case nextBuffer:
+				status = "OK"
+			default:
+				status = "WRONG BUFFER"
+			}
+			log.Infof("%s => %s, status=%s", initiator, new_deleg_string, status)
+		}
+	}
+	log.Infof("Found %d swap request(s)", i)
 }
