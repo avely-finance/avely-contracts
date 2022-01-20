@@ -941,7 +941,7 @@ transition CompleteWithdrawalSuccessCallBack()
 
 end
 
-transition ChownStake(delegator: ByStr20)
+transition ChownStakeConfirmSwap(delegator: ByStr20)
   var_zimpl_address <- zimpl_address;
 
   o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract
