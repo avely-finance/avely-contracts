@@ -109,8 +109,19 @@ func (a *AZil) ReAssignStake(delegator string) (*transaction.Transaction, error)
 	return a.Call("ReAssignStake", args, "0")
 }
 
-func (a *AZil) ReAssignStakeReDelegate() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (a *AZil) ReAssignStakeReDelegate(from_ssn, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"from_ssn",
+			"ByStr20",
+			from_ssn,
+		},
+		{
+			"amount",
+			"Uint128",
+			amount,
+		},
+	}
 	return a.Call("ReAssignStakeReDelegate", args, "0")
 }
 
