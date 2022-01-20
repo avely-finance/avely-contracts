@@ -17,6 +17,12 @@ type Error =
   | BufferOrHolderValidationFailed
   | CantFetchZimplBufferExistsAtSSN
   | CantFetchZimplFields
+  | ChownStakeCantFetchRemote
+  | ChownStakeDepositNotFound
+  | ChownStakePendingWithdrawal
+  | ChownStakeReDelegateAzilSsn
+  | ChownStakeSwapRequestNotFound
+  | ChownStakeSwapRequestWrongBuffer
   | ClaimWithdrawalNoUnbonded
   | CompleteWithdrawalFundsMismatch
   | DelegAddrUnknown
@@ -28,12 +34,6 @@ type Error =
   | InvalidTotalAmt
   | NotPaused
   | Paused
-  | ChownStakeCantFetchRemote
-  | ChownStakeDepositNotFound
-  | ChownStakePendingWithdrawal
-  | ChownStakeReDelegateAzilSsn
-  | ChownStakeSwapRequestNotFound
-  | ChownStakeSwapRequestWrongBuffer
   | StagingAdminNotExists
   | StagingAdminValidationFailed
 
@@ -41,31 +41,31 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AdminValidationFailed               => "AdminValidationFailed"
-      | BufferAddrUnknown                   => "BufferAddrUnknown"
-      | BufferNoActive                      => "BufferNoActive"
-      | BufferOrHolderValidationFailed      => "BufferOrHolderValidationFailed"
-      | CantFetchZimplBufferExistsAtSSN     => "CantFetchZimplBufferExistsAtSSN"
-      | CantFetchZimplFields                => "CantFetchZimplFields"
-      | ClaimWithdrawalNoUnbonded           => "ClaimWithdrawalNoUnbonded"
-      | CompleteWithdrawalFundsMismatch     => "CompleteWithdrawalFundsMismatch"
-      | DelegAddrUnknown                    => "DelegAddrUnknown"
-      | DelegDoesNotExistAtSSN              => "DelegDoesNotExistAtSSN"
-      | DelegHasBufferedDeposit             => "DelegHasBufferedDeposit"
-      | DelegHasNoSufficientAmt             => "DelegHasNoSufficientAmt"
-      | DelegStakeFundsMismatch             => "DelegStakeFundsMismatch"
-      | DelegStakeNotEnough                 => "DelegStakeNotEnough"
-      | InvalidTotalAmt                     => "InvalidTotalAmt"
-      | Paused                              => "Paused"
-      | NotPaused                           => "NotPaused"
+      | AdminValidationFailed            => "AdminValidationFailed"
+      | BufferAddrUnknown                => "BufferAddrUnknown"
+      | BufferNoActive                   => "BufferNoActive"
+      | BufferOrHolderValidationFailed   => "BufferOrHolderValidationFailed"
+      | CantFetchZimplBufferExistsAtSSN  => "CantFetchZimplBufferExistsAtSSN"
+      | CantFetchZimplFields             => "CantFetchZimplFields"
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
       | ChownStakeDepositNotFound        => "ChownStakeDepositNotFound"
       | ChownStakeReDelegateAzilSsn      => "ChownStakeReDelegateAzilSsn"
       | ChownStakePendingWithdrawal      => "ChownStakePendingWithdrawal"
       | ChownStakeSwapRequestNotFound    => "ChownStakeSwapRequestNotFound"
       | ChownStakeSwapRequestWrongBuffer => "ChownStakeSwapRequestWrongBuffer"
-      | StagingAdminNotExists               => "StagingAdminNotExists"
-      | StagingAdminValidationFailed        => "StagingAdminValidationFailed"
+      | ClaimWithdrawalNoUnbonded        => "ClaimWithdrawalNoUnbonded"
+      | CompleteWithdrawalFundsMismatch  => "CompleteWithdrawalFundsMismatch"
+      | DelegAddrUnknown                 => "DelegAddrUnknown"
+      | DelegDoesNotExistAtSSN           => "DelegDoesNotExistAtSSN"
+      | DelegHasBufferedDeposit          => "DelegHasBufferedDeposit"
+      | DelegHasNoSufficientAmt          => "DelegHasNoSufficientAmt"
+      | DelegStakeFundsMismatch          => "DelegStakeFundsMismatch"
+      | DelegStakeNotEnough              => "DelegStakeNotEnough"
+      | InvalidTotalAmt                  => "InvalidTotalAmt"
+      | Paused                           => "Paused"
+      | NotPaused                        => "NotPaused"
+      | StagingAdminNotExists            => "StagingAdminNotExists"
+      | StagingAdminValidationFailed     => "StagingAdminValidationFailed"
       end
     in
     { _exception: "Error"; code: result_code }
