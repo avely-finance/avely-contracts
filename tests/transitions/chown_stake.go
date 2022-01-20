@@ -55,8 +55,8 @@ func (tr *Transitions) ChownStakeSuccess() {
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key2).RequestDelegatorSwap(nextBuffer))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 
-	//offchain-tool calls ChownStake(addr1), expecting success
-	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStake(addr1))
+	//offchain-tool calls ChownStakeConfirmSwap(addr1), expecting success
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr1), "")
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn[1]), stake1_1)
@@ -66,8 +66,8 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2))
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1)))
 
-	//offchain-tool calls ChownStake(addr2), expecting success
-	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStake(addr2))
+	//offchain-tool calls ChownStakeConfirmSwap(addr2), expecting success
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr2))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr2), "")
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn[1]), StrAdd(stake1_1, stake2_1))
@@ -149,8 +149,8 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	tx, _ := AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
-	//offchain-tool calls ChownStake(addr1), expecting success
-	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStake(addr1))
+	//offchain-tool calls ChownStakeConfirmSwap(addr1), expecting success
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
 	chownStakeNextCycle(p)
@@ -199,15 +199,15 @@ func (tr *Transitions) ChownStakeAimplErrors() {
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[1]))
 
-	//offchain-tool calls ChownStake(addr1), but addr1 didn't called RequestDelegatorSwap before, expecting error
-	tx, _ := p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStake(addr1)
+	//offchain-tool calls ChownStakeConfirmSwap(addr1), but addr1 didn't called RequestDelegatorSwap before, expecting error
+	tx, _ := p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1)
 	AssertError(tx, "ChownStakeSwapRequestNotFound")
 
 	//key1 requests swap with NOT buffer address
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(ssn[2]))
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ChownStake(addr1)
+	tx, _ = p.Aimpl.WithUser(key1).ChownStakeConfirmSwap(addr1)
 	AssertError(tx, "BufferAddrUnknown")
 
 	//key1 requests swap with NOT next buffer address
@@ -215,7 +215,7 @@ func (tr *Transitions) ChownStakeAimplErrors() {
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(activeBuffer.Addr))
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ChownStake(addr1)
+	tx, _ = p.Aimpl.WithUser(key1).ChownStakeConfirmSwap(addr1)
 	AssertError(tx, "ChownStakeSwapRequestWrongBuffer")
 
 	//key1 withdraws some amount, then requests swap
@@ -224,7 +224,7 @@ func (tr *Transitions) ChownStakeAimplErrors() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ChownStake(addr1)
+	tx, _ = p.Aimpl.WithUser(key1).ChownStakeConfirmSwap(addr1)
 	AssertError(tx, "ChownStakePendingWithdrawal")
 }
 

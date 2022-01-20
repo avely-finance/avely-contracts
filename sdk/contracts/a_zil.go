@@ -98,7 +98,7 @@ func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, e
 	return a.Contract.Call("ChangeHolderAddress", args, "0")
 }
 
-func (a *AZil) ChownStake(delegator string) (*transaction.Transaction, error) {
+func (a *AZil) ChownStakeConfirmSwap(delegator string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"delegator",
@@ -106,7 +106,7 @@ func (a *AZil) ChownStake(delegator string) (*transaction.Transaction, error) {
 			delegator,
 		},
 	}
-	return a.Call("ChownStake", args, "0")
+	return a.Call("ChownStakeConfirmSwap", args, "0")
 }
 
 func (a *AZil) ChownStakeReDelegate(from_ssn, amount string) (*transaction.Transaction, error) {
