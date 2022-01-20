@@ -6,14 +6,14 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
-func (tr *Transitions) ReAssignStakeSuccess() {
-	Start("Transfer Stake Success")
+func (tr *Transitions) ChownStakeSuccess() {
+	Start("Chown Stake Success")
 
 	p := tr.DeployAndUpgrade()
 
-	reassignStakeSetup(p)
+	chownStakeSetup(p)
 
-	key1, addr1, key2, addr2, ssn, _, userStake := reassignStakeDefineParams(p)
+	key1, addr1, key2, addr2, ssn, _, userStake := chownStakeDefineParams(p)
 
 	totaltokenamount := Field(p.Aimpl, "totaltokenamount")
 	totalstakeamount := Field(p.Aimpl, "totalstakeamount")
@@ -25,10 +25,10 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 
 	//key1 delegates through Aimpl (this isn't a part of transfer process)
 	AssertSuccess(p.Aimpl.WithUser(key1).DelegateStake(stake1_azil))
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
 
 	//key1, key2 delegate to main contract
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], stake1_1))
@@ -36,10 +36,10 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	AssertSuccess(p.Zproxy.WithUser(key2).DelegateStake(ssn[1], stake2_1))
 
 	//key1, key2 wait 2 reward cycles (they should have no buffered depo in current/prev cycles, else swap request will fail)
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
 	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//key1, key2 claim rewards
@@ -55,8 +55,8 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key2).RequestDelegatorSwap(nextBuffer))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 
-	//offchain-tool calls ReAssignStake(addr1), expecting success
-	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStake(addr1))
+	//offchain-tool calls ChownStake(addr1), expecting success
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStake(addr1))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr1), "")
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn[1]), stake1_1)
@@ -66,8 +66,8 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2))
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1)))
 
-	//offchain-tool calls ReAssignStake(addr2), expecting success
-	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStake(addr2))
+	//offchain-tool calls ChownStake(addr2), expecting success
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStake(addr2))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr2), "")
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn[1]), StrAdd(stake1_1, stake2_1))
@@ -76,8 +76,8 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2, stake2_1))
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1), Field(p.Aimpl, "balances", addr2)))
 
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
 
 	//nextBuffer becomes active
 	activeBuffer := p.GetActiveBuffer().Addr
@@ -87,8 +87,8 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	//this isn't a part of transfer process, but delegate can happen before offchain-tool calls
 	AssertSuccess(p.Aimpl.WithUser(key2).DelegateStake(stake2_azil))
 
-	//offchain tool calls ReAssignStakeReDelegate for each SSN (excepting AzilSSN) when new cycle starts
-	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate(ssn[1], StrAdd(stake1_1, stake2_1)))
+	//offchain tool calls ChownStakeReDelegate for each SSN (excepting AzilSSN) when new cycle starts
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[1], StrAdd(stake1_1, stake2_1)))
 	AssertTransition(tx, Transition{
 		p.Zimpl.Addr, //sender
 		"ReDelegateStakeSuccessCallBack",
@@ -96,7 +96,7 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 		"0",
 		ParamsMap{"ssnaddr": ssn[1], "tossn": sdk.Cfg.AzilSsnAddress, "amount": StrAdd(stake1_1, stake2_1)},
 	})
-	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate(ssn[2], stake1_2))
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[2], stake1_2))
 	AssertTransition(tx, Transition{
 		p.Zimpl.Addr, //sender
 		"ReDelegateStakeSuccessCallBack",
@@ -111,14 +111,14 @@ func (tr *Transitions) ReAssignStakeSuccess() {
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Aimpl, "balances", addr1), Field(p.Aimpl, "balances", addr2)))
 }
 
-func (tr *Transitions) ReAssignStakeManySsnSuccess() {
-	Start("Transfer Stake Success")
+func (tr *Transitions) ChownStakeManySsnSuccess() {
+	Start("Chown Stake Success")
 
 	p := tr.DeployAndUpgrade()
 
-	reassignStakeSetup(p)
+	chownStakeSetup(p)
 
-	key1, addr1, _, _, ssn, _, userStake := reassignStakeDefineParams(p)
+	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
 	totaltokenamount := Field(p.Aimpl, "totaltokenamount")
 	totalstakeamount := Field(p.Aimpl, "totalstakeamount")
 
@@ -131,10 +131,10 @@ func (tr *Transitions) ReAssignStakeManySsnSuccess() {
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[5], userStake))
 
 	//key1 waits 2 reward cycles (they should have no buffered depo in current/prev cycles, else swap request will fail)
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
 	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//key1 claims rewards
@@ -149,25 +149,25 @@ func (tr *Transitions) ReAssignStakeManySsnSuccess() {
 	tx, _ := AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
-	//offchain-tool calls ReAssignStake(addr1), expecting success
-	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStake(addr1))
+	//offchain-tool calls ChownStake(addr1), expecting success
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStake(addr1))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
 
 	//nextBuffer becomes active
 	activeBuffer := p.GetActiveBuffer().Addr
 	AssertEqual(nextBuffer, activeBuffer)
 
-	//offchain tool calls ReAssignStakeReDelegate for each ssn/amount
-	tx, _ = p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate(sdk.Cfg.AzilSsnAddress, userStake)
-	AssertError(tx, "ReAssignStakeReDelegateAzilSsn")
-	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate(ssn[1], userStake))
-	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate(ssn[2], userStake))
-	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate(ssn[3], userStake))
-	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate(ssn[4], userStake))
-	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate(ssn[5], userStake))
+	//offchain tool calls ChownStakeReDelegate for each ssn/amount
+	tx, _ = p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(sdk.Cfg.AzilSsnAddress, userStake)
+	AssertError(tx, "ChownStakeReDelegateAzilSsn")
+	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[1], userStake))
+	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[2], userStake))
+	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[3], userStake))
+	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[4], userStake))
+	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[5], userStake))
 
 	//check balances
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrMul(userStake, "6"))
@@ -177,64 +177,64 @@ func (tr *Transitions) ReAssignStakeManySsnSuccess() {
 
 }
 
-func (tr *Transitions) ReAssignStakeAimplErrors() {
-	Start("Transfer Stake Aimpl Errors")
+func (tr *Transitions) ChownStakeAimplErrors() {
+	Start("Chown Stake Aimpl Errors")
 
 	p := tr.DeployAndUpgrade()
 
-	reassignStakeSetup(p)
+	chownStakeSetup(p)
 
-	key1, addr1, _, _, ssn, _, userStake := reassignStakeDefineParams(p)
+	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
 
 	//key1 delegates to main contract
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], userStake))
 
 	//key1 waits 2 reward cycles
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
 	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[1]))
 
-	//offchain-tool calls ReAssignStake(addr1), but addr1 didn't called RequestDelegatorSwap before, expecting error
-	tx, _ := p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStake(addr1)
-	AssertError(tx, "ReAssignStakeSwapRequestNotFound")
+	//offchain-tool calls ChownStake(addr1), but addr1 didn't called RequestDelegatorSwap before, expecting error
+	tx, _ := p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStake(addr1)
+	AssertError(tx, "ChownStakeSwapRequestNotFound")
 
 	//key1 requests swap with NOT buffer address
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(ssn[2]))
 
-	//call ReAssignStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ReAssignStake(addr1)
+	//call ChownStake for addr1, expecting error
+	tx, _ = p.Aimpl.WithUser(key1).ChownStake(addr1)
 	AssertError(tx, "BufferAddrUnknown")
 
 	//key1 requests swap with NOT next buffer address
 	activeBuffer := p.GetActiveBuffer()
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(activeBuffer.Addr))
 
-	//call ReAssignStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ReAssignStake(addr1)
-	AssertError(tx, "ReAssignStakeSwapRequestWrongBuffer")
+	//call ChownStake for addr1, expecting error
+	tx, _ = p.Aimpl.WithUser(key1).ChownStake(addr1)
+	AssertError(tx, "ChownStakeSwapRequestWrongBuffer")
 
 	//key1 withdraws some amount, then requests swap
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeAmt(ssn[1], userStake))
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
-	//call ReAssignStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ReAssignStake(addr1)
-	AssertError(tx, "ReAssignStakePendingWithdrawal")
+	//call ChownStake for addr1, expecting error
+	tx, _ = p.Aimpl.WithUser(key1).ChownStake(addr1)
+	AssertError(tx, "ChownStakePendingWithdrawal")
 }
 
-func (tr *Transitions) ReAssignStakeZimplErrors() {
-	Start("Transfer Stake Zimpl Errors")
+func (tr *Transitions) ChownStakeZimplErrors() {
+	Start("Chown Stake Zimpl Errors")
 
 	p := tr.DeployAndUpgrade()
 
-	reassignStakeSetup(p)
-	key1, addr1, _, _, ssn, _, userStake := reassignStakeDefineParams(p)
+	chownStakeSetup(p)
+	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
 
 	//key1 delegates to main contract, expecting success
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], userStake))
@@ -244,15 +244,15 @@ func (tr *Transitions) ReAssignStakeZimplErrors() {
 	tx, _ := p.Zproxy.RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -8)
 
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
 	nextBuffer = p.GetBufferToSwapWith().Addr
 
 	//key1 requests delegator swap, but he has buffered deposit in previous cycle, expecting DelegHasBufferedDeposit
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -8)
 
-	reassignStakeNextCycle(p)
+	chownStakeNextCycle(p)
 	nextBuffer = p.GetBufferToSwapWith().Addr
 
 	//key1 requests delegator swap, but he has unclaimed rewards, expecting DelegHasUnwithdrawRewards
@@ -267,13 +267,13 @@ func (tr *Transitions) ReAssignStakeZimplErrors() {
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -12)
 
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycleOffchain(p)
 
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 }
 
-func reassignStakeDefineParams(p *contracts.Protocol) (string, string, string, string, []string, string, string) {
+func chownStakeDefineParams(p *contracts.Protocol) (string, string, string, string, []string, string, string) {
 	key1 := sdk.Cfg.Key1
 	addr1 := sdk.Cfg.Addr1
 	key2 := sdk.Cfg.Key2
@@ -286,8 +286,8 @@ func reassignStakeDefineParams(p *contracts.Protocol) (string, string, string, s
 	return key1, addr1, key2, addr2, ssn, minStake, userStake
 }
 
-func reassignStakeSetup(p *contracts.Protocol) {
-	_, _, _, _, ssn, minStake, _ := reassignStakeDefineParams(p)
+func chownStakeSetup(p *contracts.Protocol) {
+	_, _, _, _, ssn, minStake, _ := chownStakeDefineParams(p)
 
 	prevWallet := p.Zproxy.Contract.Wallet
 
@@ -317,12 +317,12 @@ func reassignStakeSetup(p *contracts.Protocol) {
 	p.Zproxy.Contract.Wallet = prevWallet
 
 	//ssns will become active on the next cycle
-	reassignStakeNextCycle(p)
-	reassignStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
 }
 
-func reassignStakeNextCycle(p *contracts.Protocol) {
-	_, _, _, _, ssn, _, _ := reassignStakeDefineParams(p)
+func chownStakeNextCycle(p *contracts.Protocol) {
+	_, _, _, _, ssn, _, _ := chownStakeDefineParams(p)
 	prevWallet := p.Zproxy.Contract.Wallet
 
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
@@ -340,8 +340,8 @@ func reassignStakeNextCycle(p *contracts.Protocol) {
 	p.Zproxy.Contract.Wallet = prevWallet
 }
 
-func reassignStakeNextCycleOffchain(p *contracts.Protocol) {
+func chownStakeNextCycleOffchain(p *contracts.Protocol) {
 	buffer := p.GetBufferToDrain()
 	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).DrainBuffer(buffer.Addr))
-	//AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ReAssignStakeReDelegate())
+	//AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate())
 }

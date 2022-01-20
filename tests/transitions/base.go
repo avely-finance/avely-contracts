@@ -58,8 +58,8 @@ func (tr *Transitions) RunAll() {
 	tr.DrainBuffer()
 	tr.Pause()
 	tr.PerformAutoRestake()
-	tr.ReAssignStakeSuccess()
-	tr.ReAssignStakeManySsnSuccess()
-	tr.ReAssignStakeZimplErrors()
-	tr.ReAssignStakeAimplErrors()
+	tr.ChownStakeSuccess()
+	tr.ChownStakeManySsnSuccess()
+	tr.ChownStakeZimplErrors()
+	tr.ChownStakeAimplErrors()
 }
