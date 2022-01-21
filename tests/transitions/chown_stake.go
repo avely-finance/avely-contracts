@@ -207,7 +207,7 @@ func (tr *Transitions) ChownStakeAimplErrors() {
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(ssn[2]))
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ChownStakeConfirmSwap(addr1)
+	tx, _ = p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1)
 	AssertError(tx, "BufferAddrUnknown")
 
 	//key1 requests swap with NOT next buffer address
@@ -215,7 +215,7 @@ func (tr *Transitions) ChownStakeAimplErrors() {
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(activeBuffer.Addr))
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ChownStakeConfirmSwap(addr1)
+	tx, _ = p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1)
 	AssertError(tx, "ChownStakeSwapRequestWrongBuffer")
 
 	//key1 withdraws some amount, then requests swap
@@ -224,7 +224,7 @@ func (tr *Transitions) ChownStakeAimplErrors() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.Aimpl.WithUser(key1).ChownStakeConfirmSwap(addr1)
+	tx, _ = p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1)
 	AssertError(tx, "ChownStakePendingWithdrawal")
 }
 
