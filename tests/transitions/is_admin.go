@@ -37,4 +37,8 @@ func (tr *Transitions) IsAdmin() {
 	readyBlocks := []string{}
 	tx, _ = p.Aimpl.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, "AdminValidationFailed")
+	tx, _ = p.Aimpl.ChownStakeConfirmSwap(sdk.Cfg.Addr3)
+	AssertError(tx, "AdminValidationFailed")
+	tx, _ = p.Aimpl.ChownStakeReDelegate(sdk.Cfg.Addr3, ToZil(1))
+	AssertError(tx, "AdminValidationFailed")
 }
