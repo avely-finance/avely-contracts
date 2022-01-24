@@ -60,9 +60,7 @@ func (c *Contract) State() string {
 }
 
 func (c *Contract) SubState(params ...interface{}) string {
-	rsp, _ := c.Provider.GetSmartContractSubState(c.Addr, params...)
-	// result, _ := json.MarshalIndent(rsp, "", "     ")
-	result, _ := json.Marshal(rsp)
-	state := string(result)
+	rsp, _ := c.Provider.GetSmartContractSubState(c.Bech32, params...)
+	state := string(rsp)
 	return state
 }

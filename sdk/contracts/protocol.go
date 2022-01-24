@@ -60,9 +60,12 @@ func (p *Protocol) GetBufferByOffset(offset int) *BufferContract {
 }
 
 func (p *Protocol) GetLastRewardCycle() int {
-	rawState := p.Zimpl.Contract.State()
-	state := NewState(rawState)
-	lrc := state.Dig("lastrewardcycle").Int()
+	partialState := p.Zimpl.Contract.SubState("lastrewardcycle",  []string{})
+
+	state := NewState(partialState)
+
+	lrc := state.Dig("result.lastrewardcycle").Int()
+
 	return int(lrc)
 }
 
