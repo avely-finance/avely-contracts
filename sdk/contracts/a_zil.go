@@ -43,7 +43,7 @@ func (a *AZil) ClaimAdmin() (*transaction.Transaction, error) {
 	return a.Call("ClaimAdmin", args, "0")
 }
 
-func (b *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
+func (a *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -51,7 +51,16 @@ func (b *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, er
 			new_addr,
 		},
 	}
-	return b.Call("ChangeZimplAddress", args, "0")
+	return a.Call("ChangeZimplAddress", args, "0")
+}
+
+// returns
+// {"id":"1","jsonrpc":"2.0","result":{
+//			"balances":{"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6":"120000000000000",
+//                  "0xbfb3bbde860bcd17315ec0e171ac971de7bea9a3":"143327000000000"}
+// }
+func (a *AZil) GetDrainedBuffers() string {
+	return a.Contract.SubState("balances", []string{})
 }
 
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
