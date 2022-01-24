@@ -1,21 +1,53 @@
 package main
 
 import (
-	"github.com/tidwall/gjson"
 	"net/url"
-	. "github.com/avely-finance/avely-contracts/sdk/core"
-	. "github.com/avely-finance/avely-contracts/sdk/contracts"
+	"strconv"
+	"strings"
+
 	"github.com/Zilliqa/gozilliqa-sdk/subscription"
+	. "github.com/avely-finance/avely-contracts/sdk/contracts"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/tidwall/gjson"
 )
 
-func tryDrainBuffer(p *Protocol) {
-	// p.Aimpl.DrainBuffer(addr)
+var log *Log
+var sdk *AvelySDK
+
+func tryDrainBuffer(p *Protocol, lrc int) {
+	bufferToDrain := p.GetBufferToDrain()
+
+	state := NewState(p.Aimpl.GetDrainedBuffers())
+	buffers := state.Dig("result.balances").Map()
+	needDrain := false
+
+	if lastDrained, ok := buffers[strings.ToLower(bufferToDrain.Addr)]; ok {
+		if lastDrained.Int() != int64(lrc) {
+			needDrain = true
+		}
+	} else {
+		log.Success("Buffer is never drained; Let's do this first time")
+
+		needDrain = true
+	}
+
+	if needDrain {
+		tx, err := p.Aimpl.DrainBuffer(bufferToDrain.Addr)
+
+		if err != nil {
+			log.Fatal("Buffer drain is failed. Tx: " + tx.ID)
+		} else {
+			log.Success("Buffer successfully drained" + tx.ID)
+		}
+	} else {
+		log.Success("No need to drain buffer")
+	}
 }
 
 func main() {
-	log := NewLog()
+	log = NewLog()
 	config := NewConfig("testnet")
-	sdk := NewAvelySDK(*config)
+	sdk = NewAvelySDK(*config)
 	protocol := RestoreFromState(sdk, log)
 
 	currentLrc := -1 // default valus should be unreal
@@ -40,14 +72,13 @@ func main() {
 				blockNo := block.Get("BlockNum").String()
 				lrc := protocol.GetLastRewardCycle()
 
-				log.Success("New block #" + blockNo + " is mined")
-				log.Success("Current Last Reward Cycle is", lrc)
+				log.Success("New block #" + blockNo + " is mined. Current Last Reward Cycle is" + strconv.Itoa(lrc))
 
-				if (lrc == currentLrc) {
+				if lrc == currentLrc {
 					log.Success("Last Reward Cycle is not changed. Skip")
 				} else {
 					log.Success("New Last Reward Cycle!")
-					tryDrainBuffer(protocol)
+					tryDrainBuffer(protocol, lrc)
 
 					currentLrc = lrc
 				}
