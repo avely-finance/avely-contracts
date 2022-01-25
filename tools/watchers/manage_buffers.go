@@ -1,7 +1,7 @@
 package main
 
 import (
-	"net/url"
+	// "net/url"
 	"strconv"
 	"strings"
 
@@ -50,10 +50,10 @@ func main() {
 	sdk = NewAvelySDK(*config)
 	protocol := RestoreFromState(sdk, log)
 
-	currentLrc := -1 // default valus should be unreal
+	currentLrc := -1 // init value should be unreal
 
-	u := url.URL{Scheme: "wss", Host: "dev-ws.zilliqa.com", Path: ""}
-	subscriber := subscription.BuildNewBlockSubscriber(u)
+	url := sdk.GetWsURL()
+	subscriber := subscription.BuildNewBlockSubscriber(url)
 	_, ec, msg := subscriber.Start()
 	cancel := false
 
@@ -72,7 +72,7 @@ func main() {
 				blockNo := block.Get("BlockNum").String()
 				lrc := protocol.GetLastRewardCycle()
 
-				log.Success("New block #" + blockNo + " is mined. Current Last Reward Cycle is" + strconv.Itoa(lrc))
+				log.Success("New block #" + blockNo + " is mined. Current Last Reward Cycle is " + strconv.Itoa(lrc))
 
 				if lrc == currentLrc {
 					log.Success("Last Reward Cycle is not changed. Skip")

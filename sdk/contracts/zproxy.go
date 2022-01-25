@@ -11,7 +11,6 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
@@ -296,7 +295,7 @@ func buildZproxyContract(sdk *AvelySDK) contract2.Contract {
 	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
-		Provider: provider2.NewProvider(sdk.Cfg.ApiUrl),
+		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
 		Signer:   wallet,
