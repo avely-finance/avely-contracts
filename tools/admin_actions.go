@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/big"
+	"strings"
+
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
-	"math/big"
-	"strings"
 )
 
 var log *Log
@@ -218,18 +219,13 @@ func showRewards(p *Protocol, ssn, deleg string) {
 }
 
 func autorestake(p *Protocol) {
-	state := NewState(p.Aimpl.Contract.State())
-
-	autorestakeamount := state.Dig("autorestakeamount").BigInt()
+	autorestakeamount := p.Aimpl.GetAutorestakeAmount()
 
 	if autorestakeamount.Cmp(big.NewInt(0)) == 0 { // == 0
 		log.Fatal("Nothing to auto restake")
 	}
 
-	totaltokenamount := state.Dig("totaltokenamount").BigFloat()
-	totalstakeamount := state.Dig("totalstakeamount").BigFloat()
-
-	priceBefore := DivBF(totalstakeamount, totaltokenamount)
+	priceBefore := p.Aimpl.GetAzilPrice()
 
 	tx, err := p.Aimpl.PerformAutoRestake()
 
@@ -237,11 +233,7 @@ func autorestake(p *Protocol) {
 		log.Fatalf("AutoRestake failed with error: ", err)
 	}
 
-	state = NewState(p.Aimpl.Contract.State())
-
-	totalstakeamount = state.Dig("totalstakeamount").BigFloat()
-
-	priceAfter := DivBF(totalstakeamount, totaltokenamount)
+	priceAfter := p.Aimpl.GetAzilPrice()
 
 	log.Success("Drain is successfully completed. Tx: " + tx.ID)
 	log.Success("Restaked amount: " + autorestakeamount.String() + "; PriceBefore: " + priceBefore.String() + "; PriceAfter: " + priceAfter.String())

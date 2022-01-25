@@ -75,6 +75,16 @@ func (a *AZil) GetAutorestakeAmount() *big.Int {
 	return state.Dig("result.autorestakeamount").BigInt()
 }
 
+func (a *AZil) GetAzilPrice() *big.Float {
+	totaltokenamountRaw := a.Contract.SubState("totaltokenamount", []string{})
+	totalstakeamountRaw := a.Contract.SubState("totaltokenamount", []string{})
+
+	totaltokenamount := NewState(totaltokenamountRaw).Dig("result.totaltokenamount").BigFloat()
+	totalstakeamount := NewState(totalstakeamountRaw).Dig("result.totalstakeamount").BigFloat()
+
+	return DivBF(totalstakeamount, totaltokenamount)
+}
+
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
