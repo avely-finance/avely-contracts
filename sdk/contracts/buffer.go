@@ -66,6 +66,17 @@ func (b *BufferContract) ClaimRewards() (*transaction.Transaction, error) {
 	return b.Call("ClaimRewards", args, "0")
 }
 
+func (b *BufferContract) ClaimRewardsSsn(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return b.Call("ClaimRewardsSsn", args, "0")
+}
+
 func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
