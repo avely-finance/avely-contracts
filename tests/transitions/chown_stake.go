@@ -345,3 +345,48 @@ func chownStakeNextCycleOffchain(p *contracts.Protocol) {
 	AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).DrainBuffer(buffer.Addr))
 	//AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate())
 }
+
+func (tr *Transitions) ChownStakeRequireDrainBuffer() {
+	Start("Chown Stake Drain Buffer")
+
+	p := tr.DeployAndUpgrade()
+
+	chownStakeSetup(p)
+
+	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
+
+	//key1 delegates to main contract
+	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], userStake))
+
+	//after 3 cycles all buffers are empty
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
+	chownStakeNextCycle(p)
+	chownStakeNextCycleOffchain(p)
+
+	//next cycle
+	chownStakeNextCycle(p)
+	nextBuffer := p.GetBufferToSwapWith().Addr
+
+	//quick swap sequence!
+
+	//key1 claims rewards
+	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[1]))
+
+	//key1 requests swap
+	tx, _ := AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
+
+	//offchain-tool calls ChownStakeConfirmSwap(addr1) before DrainBuffer(), expecting error
+	tx, _ = p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1)
+	AssertError(tx, "BufferNotDrained")
+
+	//drain buffer
+	chownStakeNextCycleOffchain(p)
+
+	//offchain-tool re-calls ChownStakeConfirmSwap(addr1) after DrainBuffer(), expecting success
+	tx, _ = AssertSuccess(p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
+}
