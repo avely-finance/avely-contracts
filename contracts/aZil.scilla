@@ -15,6 +15,7 @@ type Error =
   | BufferAddrUnknown
   | BufferAlreadyDrained
   | BufferNoActive
+  | BufferNotDrained
   | BufferOrHolderValidationFailed
   | CantFetchZimplBufferExistsAtSSN
   | CantFetchZimplFields
@@ -46,6 +47,7 @@ let make_error =
       | BufferAddrUnknown                => "BufferAddrUnknown"
       | BufferAlreadyDrained             => "BufferAlreadyDrained"
       | BufferNoActive                   => "BufferNoActive"
+      | BufferNotDrained                 => "BufferNotDrained"
       | BufferOrHolderValidationFailed   => "BufferOrHolderValidationFailed"
       | CantFetchZimplBufferExistsAtSSN  => "CantFetchZimplBufferExistsAtSSN"
       | CantFetchZimplFields             => "CantFetchZimplFields"
@@ -269,6 +271,23 @@ procedure RequireNotDrainedBuffer(buffer_addr: ByStr20, cycle: Uint32)
       ThrowError e
     end
   | None =>
+  end
+end
+
+procedure RequireDrainedBuffer(buffer_addr: ByStr20, cycle: Uint32)
+  o_buffer_cycle <- buffer_drained_cycle[buffer_addr];
+  match o_buffer_cycle with
+  | Some buffer_cycle =>
+    is_not_drained = builtin lt buffer_cycle cycle;
+    match is_not_drained with
+    | True =>
+      e = BufferNotDrained;
+      ThrowError e
+    | False =>
+    end
+  | None =>
+    e = BufferNotDrained;
+    ThrowError e
   end
 end
 
@@ -1014,8 +1033,10 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
           e = ChownStakeSwapRequestWrongBuffer;
           ThrowError e
         | True => (* nop *)
-        end
+        end;
+        RequireDrainedBuffer next_buffer cycle
       end;
+
 
       (* delegator must have no pending withdrawals *)
       o_withdrawal <- & zimpl.withdrawal_pending[delegator];
