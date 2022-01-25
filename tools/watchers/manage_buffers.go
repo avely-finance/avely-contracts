@@ -17,8 +17,7 @@ var sdk *AvelySDK
 func tryDrainBuffer(p *Protocol, lrc int) {
 	bufferToDrain := p.GetBufferToDrain()
 
-	state := NewState(p.Aimpl.GetDrainedBuffers())
-	buffers := state.Dig("result.balances").Map()
+	buffers := p.Aimpl.GetDrainedBuffers()
 	needDrain := false
 
 	if lastDrained, ok := buffers[strings.ToLower(bufferToDrain.Addr)]; ok {

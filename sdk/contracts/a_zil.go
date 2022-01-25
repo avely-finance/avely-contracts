@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
+
+	"github.com/tidwall/gjson"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -58,8 +61,17 @@ func (a *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, er
 //			"balances":{"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6":"120000000000000",
 //                  "0xbfb3bbde860bcd17315ec0e171ac971de7bea9a3":"143327000000000"}
 // }
-func (a *AZil) GetDrainedBuffers() string {
-	return a.Contract.SubState("balances", []string{})
+func (a *AZil) GetDrainedBuffers() map[string]gjson.Result {
+	rawState := a.Contract.SubState("balances", []string{})
+	state := NewState(rawState)
+	return state.Dig("result.balances").Map()
+}
+
+func (a *AZil) GetAutorestakeAmount() *big.Int {
+	rawState := a.Contract.SubState("autorestakeamount", []string{})
+	state := NewState(rawState)
+
+	return state.Dig("result.autorestakeamount").BigInt()
 }
 
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
