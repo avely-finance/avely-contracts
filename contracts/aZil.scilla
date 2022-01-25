@@ -13,6 +13,7 @@ type Withdrawal =
 type Error =
   | AdminValidationFailed
   | BufferAddrUnknown
+  | BufferAlreadyDrained
   | BufferNoActive
   | BufferOrHolderValidationFailed
   | CantFetchZimplBufferExistsAtSSN
@@ -43,6 +44,7 @@ let make_error =
       match result with
       | AdminValidationFailed            => "AdminValidationFailed"
       | BufferAddrUnknown                => "BufferAddrUnknown"
+      | BufferAlreadyDrained             => "BufferAlreadyDrained"
       | BufferNoActive                   => "BufferNoActive"
       | BufferOrHolderValidationFailed   => "BufferOrHolderValidationFailed"
       | CantFetchZimplBufferExistsAtSSN  => "CantFetchZimplBufferExistsAtSSN"
@@ -214,6 +216,8 @@ field withdrawal_unbonded: Map ByStr20 Withdrawal = Emp ByStr20 Withdrawal
 (* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
 field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
 
+field buffer_drained_cycle: Map ByStr20 Uint32 = Emp ByStr20 Uint32
+
 field tmp_delegator: Option ByStr20 = None {ByStr20}
 field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
@@ -250,6 +254,21 @@ procedure RequireNotPaused()
   | True =>
     error = Paused;
     ThrowError error
+  end
+end
+
+procedure RequireNotDrainedBuffer(buffer_addr: ByStr20, cycle: Uint32)
+  o_buffer_cycle <- buffer_drained_cycle[buffer_addr];
+  match o_buffer_cycle with
+  | Some buffer_cycle =>
+    is_not_drained = builtin lt buffer_cycle cycle;
+    match is_not_drained with
+    | True =>
+    | False =>
+      e = BufferAlreadyDrained;
+      ThrowError e
+    end
+  | None =>
   end
 end
 
@@ -293,9 +312,14 @@ end
 
 procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
   implAddr <- zimpl_address;
-  implAddrTypeTest <- & implAddr as ByStr20 with contract field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128) end;
+  implAddrTypeTest <- & implAddr as ByStr20 with contract
+    field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128),
+    field lastrewardcycle: Uint32
+  end;
   match implAddrTypeTest with
   | Some z =>
+    lrc <- & z.lastrewardcycle;
+    local_lastrewardcycle := lrc;
     o_deposit_amt_deleg <- & z.deposit_amt_deleg[buffer_addr];
     match o_deposit_amt_deleg with
     | Some amt =>
@@ -724,6 +748,9 @@ transition DrainBuffer(buffer_addr: ByStr20)
   match is_buffer with
   | True =>
     FetchRemoteBufferExistsAtSSN buffer_addr;
+    (* local_lastrewardcycle updated in FetchRemoteBufferExistsAtSSN *)
+    lrc <- local_lastrewardcycle;
+    RequireNotDrainedBuffer buffer_addr lrc;
     var_buffer_exists <- tmp_buffer_exists_at_ssn;
     is_exists = builtin eq var_buffer_exists uint32_one;
     match is_exists with
@@ -741,6 +768,8 @@ transition DrainBuffer(buffer_addr: ByStr20)
     e = BufferAddrUnknown;
     ThrowError e
   end;
+  lrc <- local_lastrewardcycle;
+  buffer_drained_cycle[buffer_addr] := lrc;
   tmp_buffer_exists_at_ssn := uint32_zero
 end
 
