@@ -62,4 +62,5 @@ func (tr *Transitions) RunAll() {
 	tr.ChownStakeManySsnSuccess()
 	tr.ChownStakeZimplErrors()
 	tr.ChownStakeAimplErrors()
+	tr.ChownStakeRequireDrainBuffer()
 }
