@@ -1,14 +1,21 @@
 package core
 
 import (
+	"log"
+
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
-	"log"
 )
+
+type ApiConfig struct {
+	HttpUrl         string
+	WebsocketUrl    string
+	WebsocketSchema string
+}
 
 type Config struct {
 	Chain                    string
-	ApiUrl                   string
+	Api                      ApiConfig
 	ChainId                  int
 	TxConfrimMaxAttempts     int
 	TxConfirmIntervalSec     int

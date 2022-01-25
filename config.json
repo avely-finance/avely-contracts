@@ -1,6 +1,10 @@
 {
   "local": {
-    "ApiUrl": "http://zilliqa_server:5555",
+    "Api": {
+      "HttpUrl": "http://zilliqa_server:5555",
+      "WebsocketUrl": "dev-ws.zilliqa.com",
+      "WebsocketSchema": "wss"
+    },
     "ChainId": 222,
     "TxConfrimMaxAttempts": 5,
     "TxConfirmIntervalSec": 0,
@@ -28,7 +32,11 @@
     "HolderAddr": ""
   },
   "testnet": {
-    "ApiUrl": "https://dev-api.zilliqa.com",
+    "Api": {
+      "HttpUrl": "https://dev-api.zilliqa.com",
+      "WebsocketUrl": "dev-ws.zilliqa.com",
+      "WebsocketSchema": "wss"
+    },
     "ChainId": 333,
     "TxConfrimMaxAttempts": 15,
     "TxConfirmIntervalSec": 30,
@@ -58,7 +66,11 @@
     "HolderAddr": "0x46d9d11edd84fef9d6ce4dd0ec3304bc9d704ec8"
   },
   "mainnet": {
-    "ApiUrl": "https://api.zilliqa.com",
+    "Api": {
+      "HttpUrl": "https://api.zilliqa.com",
+      "WebsocketUrl": "api-ws.zilliqa.com",
+      "WebsocketSchema": "wss"
+    },
     "ChainId": 1,
     "TxConfrimMaxAttempts": 15,
     "TxConfirmIntervalSec": 30,

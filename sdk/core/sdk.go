@@ -1,6 +1,10 @@
 package core
 
 import (
+	"log"
+	"net/url"
+	"strconv"
+
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/keytools"
@@ -8,19 +12,29 @@ import (
 	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/ybbus/jsonrpc"
-	"log"
-	"strconv"
 )
 
 const ZeroAddr = "0x0000000000000000000000000000000000000000"
 
 type AvelySDK struct {
-	Cfg    Config
+	Cfg Config
 }
 
 func NewAvelySDK(config Config) *AvelySDK {
 	return &AvelySDK{
 		Cfg: config,
+	}
+}
+
+func (sdk *AvelySDK) InitProvider() *provider2.Provider {
+	return provider2.NewProvider(sdk.Cfg.Api.HttpUrl)
+}
+
+func (sdk *AvelySDK) GetWsURL() url.URL {
+	return url.URL{
+		Scheme: sdk.Cfg.Api.WebsocketSchema,
+		Host:   sdk.Cfg.Api.WebsocketUrl,
+		Path:   "",
 	}
 }
 
@@ -31,13 +45,13 @@ func (sdk *AvelySDK) IncreaseBlocknum(delta int32) {
 		log.Fatalf("Increasing block number available only for the local blockchain")
 	}
 
-	rpcClient := jsonrpc.NewClient(sdk.Cfg.ApiUrl)
+	rpcClient := jsonrpc.NewClient(sdk.Cfg.Api.HttpUrl)
 	params := []interface{}{delta}
 	rpcClient.Call("IncreaseBlocknum", params)
 }
 
 func (sdk *AvelySDK) GetBalance(addr string) string {
-	provider := provider2.NewProvider(sdk.Cfg.ApiUrl)
+	provider := sdk.InitProvider()
 	balAndNonce, err := provider.GetBalance(addr)
 	if err != nil {
 		panic(err)
@@ -69,7 +83,7 @@ func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction,
 }
 
 func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []core.ContractValue, priority bool, amount string) (*transaction2.Transaction, error) {
-	c.Provider = provider2.NewProvider(sdk.Cfg.ApiUrl)
+	c.Provider = sdk.InitProvider()
 	gasPrice, err := c.Provider.GetMinimumGasPrice()
 	if err != nil {
 		return nil, err
