@@ -23,7 +23,9 @@ func (tr *Transitions) DrainBuffer() {
 	sdk.IncreaseBlocknum(10)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
-	txn, _ = p.Aimpl.DrainBuffer(p.GetBuffer().Addr)
+	bufferAddr := p.GetBuffer().Addr
+	txn, _ = p.Aimpl.DrainBuffer(bufferAddr)
+	AssertEqual(Field(p.Zimpl, "lastrewardcycle"), Field(p.Aimpl, "buffer_drained_cycle", bufferAddr))
 
 	AssertTransition(txn, Transition{
 		p.Aimpl.Addr,       //sender
@@ -94,6 +96,10 @@ func (tr *Transitions) DrainBuffer() {
 		"0",
 		ParamsMap{"requestor": p.GetBuffer().Addr},
 	})
+
+	//repeat drain buffer, excepting error
+	txn, _ = p.Aimpl.DrainBuffer(bufferAddr)
+	AssertError(txn, "BufferAlreadyDrained")
 
 	//try to drain buffer, not existent at main staking contract
 	//error should not be thrown
