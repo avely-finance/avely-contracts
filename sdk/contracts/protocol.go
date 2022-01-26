@@ -1,12 +1,14 @@
 package contracts
 
 import (
+	"log"
+	"strconv"
+	"strings"
+
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	avelycore "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
-	"log"
-	"strconv"
 )
 
 type Protocol struct {
@@ -29,6 +31,10 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, aimpl *AZil, buffers []*BufferCon
 		Buffers: buffers,
 		Holder:  holder,
 	}
+}
+
+func (p *Protocol) GetAzilSsnAddress() string {
+	return strings.ToLower(p.Aimpl.Sdk.Cfg.AzilSsnAddress)
 }
 
 func (p *Protocol) DeployBuffer() (*BufferContract, error) {
@@ -60,7 +66,7 @@ func (p *Protocol) GetBufferByOffset(offset int) *BufferContract {
 }
 
 func (p *Protocol) GetLastRewardCycle() int {
-	partialState := p.Zimpl.Contract.SubState("lastrewardcycle",  []string{})
+	partialState := p.Zimpl.Contract.SubState("lastrewardcycle", []string{})
 
 	state := NewState(partialState)
 
