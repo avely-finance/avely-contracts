@@ -64,6 +64,9 @@ func tryAutorestake(p *Protocol) {
 	}
 }
 
+// If Last reward has been changed, then:
+//   1. Drain Buffer
+//   2. Autorestake funds
 func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 
