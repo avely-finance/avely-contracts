@@ -1,7 +1,8 @@
 package main
 
 import (
-	// "net/url"
+	"flag"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -43,9 +44,33 @@ func tryDrainBuffer(p *Protocol, lrc int) {
 	}
 }
 
+func tryAutorestake(p *Protocol) {
+	autorestakeamount := p.Aimpl.GetAutorestakeAmount()
+
+	if autorestakeamount.Cmp(big.NewInt(0)) == 0 { // autorestakeamount == 0
+		log.Success("Nothing to autorestake")
+	} else {
+		priceBefore := p.Aimpl.GetAzilPrice()
+		tx, err := p.Aimpl.PerformAutoRestake()
+
+		if err != nil {
+			log.Fatalf("AutoRestake failed with error: ", err)
+		}
+
+		priceAfter := p.Aimpl.GetAzilPrice()
+
+		log.Success("AutoRestake is successfully completed. Tx: " + tx.ID)
+		log.Success("Restaked amount: " + autorestakeamount.String() + "; PriceBefore: " + priceBefore.String() + "; PriceAfter: " + priceAfter.String())
+	}
+}
+
 func main() {
+	chainPtr := flag.String("chain", "local", "chain")
+
+	flag.Parse()
+
 	log = NewLog()
-	config := NewConfig("testnet")
+	config := NewConfig(*chainPtr)
 	sdk = NewAvelySDK(*config)
 	protocol := RestoreFromState(sdk, log)
 
@@ -78,6 +103,7 @@ func main() {
 				} else {
 					log.Success("New Last Reward Cycle!")
 					tryDrainBuffer(protocol, lrc)
+					tryAutorestake(protocol)
 
 					currentLrc = lrc
 				}
