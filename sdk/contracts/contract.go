@@ -1,8 +1,12 @@
 package contracts
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"net/http"
+	"strconv"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -62,5 +66,74 @@ func (c *Contract) State() string {
 func (c *Contract) SubState(params ...interface{}) string {
 	rsp, _ := c.Provider.GetSmartContractSubState(c.Bech32, params...)
 	state := string(rsp)
+
 	return state
+}
+
+func (c *Contract) BuildBatchParams(fields []string) [][]interface{} {
+	var params [][]interface{}
+
+	for _, v := range fields {
+		params = append(params, []interface{}{v, []string{}})
+	}
+
+	return params
+}
+
+// Inspired by https://github.com/Zilliqa/gozilliqa-sdk/blob/2ff222c97fc6fa2855ef2c5bffbd56faddd6291f/provider/provider.go#L877
+//
+// To build params use BuildBatchParams or:
+//   var params [][]interface{}
+//   params = append(params, []interface{}{"totaltokenamount", []string{}})
+//   params = append(params, []interface{}{"totalstakeamount", []string{}})
+func (c *Contract) BatchSubState(params [][]interface{}) (string, error) {
+	//we should hack here for now
+	type req struct {
+		Id      string      `json:"id"`
+		Jsonrpc string      `json:"jsonrpc"`
+		Method  string      `json:"method"`
+		Params  interface{} `json:"params"`
+	}
+
+	reqs := []*req{}
+
+	for i, param := range params {
+		p := []interface{}{
+			c.Bech32,
+		}
+
+		for _, v := range param {
+			p = append(p, v)
+		}
+
+		r := &req{
+			Id:      strconv.Itoa(i + 1),
+			Jsonrpc: "2.0",
+			Method:  "GetSmartContractSubState",
+			Params:  p,
+		}
+
+		reqs = append(reqs, r)
+	}
+
+	b, _ := json.Marshal(reqs)
+	reader := bytes.NewReader(b)
+	request, err := http.NewRequest("POST", c.Sdk.Cfg.Api.HttpUrl, reader)
+	if err != nil {
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	client := http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	result, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(result), nil
 }
