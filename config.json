@@ -1,6 +1,10 @@
 {
   "local": {
-    "ApiUrl": "http://zilliqa_server:5555",
+    "Api": {
+      "HttpUrl": "http://zilliqa_server:5555",
+      "WebsocketUrl": "dev-ws.zilliqa.com",
+      "WebsocketSchema": "wss"
+    },
     "ChainId": 222,
     "TxConfrimMaxAttempts": 5,
     "TxConfirmIntervalSec": 0,
@@ -28,13 +32,17 @@
     "HolderAddr": ""
   },
   "testnet": {
-    "ApiUrl": "https://dev-api.zilliqa.com",
+    "Api": {
+      "HttpUrl": "https://dev-api.zilliqa.com",
+      "WebsocketUrl": "dev-ws.zilliqa.com",
+      "WebsocketSchema": "wss"
+    },
     "ChainId": 333,
     "TxConfrimMaxAttempts": 15,
     "TxConfirmIntervalSec": 30,
     "AzilSsnAddress": "0x73f16753ea97C770201Fd6Ae04073348c483239f",
     "AzilSsnRewardShare": "50",
-    "HolderInitialDelegateZil": "1000",
+    "HolderInitialDelegateZil": "10",
     "Admin":"",
     "AdminKey": "",
     "Key1": "",
@@ -49,16 +57,20 @@
     "GzilAddr": "0x4b68ebd5c54ae9ad1f069260b4c89f0d3be70a45",
     "ZproxyAddr": "0x351a37e2841A45c7F2De18Ee45F968E106416273",
     "ZimplAddr": "0xA2e4657de8108dd3730EB51f05a1d486D77bE2Df",
-    "AzilAddr": "0x67e61129f506690c7d8b621028a2b3d056031bad",
+    "AzilAddr": "0x763588b8d54180a7e6d61582cb03c4ea13f1b461",
     "BufferAddrs": [
-      "0x80b8a7954863e23aa65417e956d48b71b4ee56c2",
-      "0x22a923a3ac1d312964872f87eb5dfd1b732e28fc",
-      "0x158fadbe0344881d64d9f176a7269501e285413d"
+      "0x95386628596e34d6b2f7d352a2d2cd9dbecd215f",
+      "0x0e7587d32ab87ade5aba6012c673fef7360c4252",
+      "0x2fb75fa804f9067ccf6c8e6ca2a9306ec0853baf"
     ],
-    "HolderAddr": "0x46d9d11edd84fef9d6ce4dd0ec3304bc9d704ec8"
+    "HolderAddr": "0x4d2fbb09a01019479601d899918cf9b3bff226c9"
   },
   "mainnet": {
-    "ApiUrl": "https://api.zilliqa.com",
+    "Api": {
+      "HttpUrl": "https://api.zilliqa.com",
+      "WebsocketUrl": "api-ws.zilliqa.com",
+      "WebsocketSchema": "wss"
+    },
     "ChainId": 1,
     "TxConfrimMaxAttempts": 15,
     "TxConfirmIntervalSec": 30,

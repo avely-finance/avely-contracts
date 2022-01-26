@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
+
+	"github.com/tidwall/gjson"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -12,7 +15,6 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
@@ -43,7 +45,7 @@ func (a *AZil) ClaimAdmin() (*transaction.Transaction, error) {
 	return a.Call("ClaimAdmin", args, "0")
 }
 
-func (b *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
+func (a *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -51,7 +53,26 @@ func (b *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, er
 			new_addr,
 		},
 	}
-	return b.Call("ChangeZimplAddress", args, "0")
+	return a.Call("ChangeZimplAddress", args, "0")
+}
+
+// returns
+// {"id":"1","jsonrpc":"2.0","result":{
+//			"buffer_drained_cycle":
+//	  						 {"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6":"123",
+//                  "0xbfb3bbde860bcd17315ec0e171ac971de7bea9a3":"124"}
+// }
+func (a *AZil) GetDrainedBuffers() map[string]gjson.Result {
+	rawState := a.Contract.SubState("buffer_drained_cycle", []string{})
+	state := NewState(rawState)
+	return state.Dig("result.buffer_drained_cycle").Map()
+}
+
+func (a *AZil) GetAutorestakeAmount() *big.Int {
+	rawState := a.Contract.SubState("autorestakeamount", []string{})
+	state := NewState(rawState)
+
+	return state.Dig("result.autorestakeamount").BigInt()
 }
 
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
@@ -319,7 +340,7 @@ func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
 	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
-		Provider: provider2.NewProvider(sdk.Cfg.ApiUrl),
+		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
 		Signer:   wallet,
