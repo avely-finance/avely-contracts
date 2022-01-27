@@ -1,8 +1,8 @@
-name: Tests
+name: CI & CD
 
 on:
   push:
-    branches: [ chore/ci  ]
+    branches: [ main  ]
   pull_request:
     branches: [ main ]
 
@@ -16,6 +16,12 @@ jobs:
       image: ezil/avely-dev:0.0.1
     steps:
     - uses: actions/checkout@v2
+
+    - name: Go fmt
+      run: |
+        output=$(gofmt -d -l -s .)
+        echo $output
+        test -z "$output"
 
     - id: go-cache-paths
       run: |
