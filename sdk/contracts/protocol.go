@@ -60,13 +60,27 @@ func (p *Protocol) GetBufferByOffset(offset int) *BufferContract {
 }
 
 func (p *Protocol) GetLastRewardCycle() int {
-	partialState := p.Zimpl.Contract.SubState("lastrewardcycle",  []string{})
+	partialState := p.Zimpl.Contract.SubState("lastrewardcycle", []string{})
 
 	state := NewState(partialState)
 
 	lrc := state.Dig("result.lastrewardcycle").Int()
 
 	return int(lrc)
+}
+
+func (p *Protocol) GetSwapRequestsForBuffer(bufferAddr string) []string {
+	partialState := p.Zimpl.Contract.SubState("deleg_swap_request", []string{})
+	state := NewState(partialState)
+	allSwapRequests := state.Dig("result.deleg_swap_request").Map()
+	bufferSwapRequests := []string{}
+	for initiator, newDeleg := range allSwapRequests {
+		newDelegStr := newDeleg.String()
+		if newDelegStr == bufferAddr {
+			bufferSwapRequests = append(bufferSwapRequests, initiator)
+		}
+	}
+	return bufferSwapRequests
 }
 
 func (p *Protocol) InitHolder() (*transaction.Transaction, error) {
