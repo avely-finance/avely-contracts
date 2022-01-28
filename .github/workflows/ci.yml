@@ -2,7 +2,7 @@ name: CI & CD
 
 on:
   push:
-    branches: [ chore/cd ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -59,7 +59,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build Image
-      run: docker build --rm=false -f docker/Dockerfile.dev -t ezil/avely-watchers:latest .
+      run: docker build --rm=false -f docker/Dockerfile.prod -t ezil/avely-watchers:latest .
 
     - name: Push Image
       run: |
