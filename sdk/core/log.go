@@ -54,7 +54,7 @@ func (mylog *Log) Fatal(v ...interface{}) {
 }
 
 func (mylog *Log) Fatalf(format string, v ...interface{}) {
-	golog.Fatalf("💔 "+format, mylog.nice(v))
+	golog.Fatalf("💔 "+format, mylog.nice(v)...)
 }
 
 func (mylog *Log) nice(params []interface{}) []interface{} {
