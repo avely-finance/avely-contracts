@@ -241,8 +241,9 @@ func autorestake(p *Protocol) {
 
 func showSwapRequests(p *Protocol) {
 	i := 0
-	state := NewState(p.Zimpl.Contract.State())
-	swapRequests := state.Dig("deleg_swap_request").Map()
+	partialState := p.Zimpl.Contract.SubState("deleg_swap_request", []string{})
+	state := NewState(partialState)
+	swapRequests := state.Dig("result.deleg_swap_request").Map()
 	nextBuffer := p.GetBufferToSwapWith().Addr
 	buffers := make(map[string]bool)
 	for _, buffer := range p.Buffers {
