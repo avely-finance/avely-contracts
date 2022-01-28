@@ -52,15 +52,14 @@ jobs:
         go run tests/main.go
 
   cd:
-    needs: ci
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
 
     - name: Build Image
-      run: docker build --rm=false -f docker/Dockerfile.dev -t ezil/avely:latest .
+      run: docker build --rm=false -f docker/Dockerfile.dev -t ezil/avely-watchers:latest .
 
     - name: Push Image
       run: |
-        docker login -u $DOCKER_USER -p $DOCKER_PASS
-        docker push ezil/avely:latest
+        docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+        docker push ezil/avely-watchers:latest
