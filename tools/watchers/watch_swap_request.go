@@ -4,9 +4,9 @@ import (
 	"flag"
 
 	"github.com/Zilliqa/gozilliqa-sdk/subscription"
+	"github.com/avely-finance/avely-contracts/sdk/actions"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
-	"github.com/avely-finance/avely-contracts/tools/actions"
 	"github.com/tidwall/gjson"
 )
 
@@ -45,7 +45,7 @@ func main() {
 			blockNum, found := getBlockNum(message)
 			if found && (blockNum-runAtBlock) > *gapPtr {
 				log.Successf("Mined block #%d", blockNum)
-				admin.ConfirmSwapRequests(protocol)
+				actions.ConfirmSwapRequests(protocol)
 				runAtBlock = blockNum
 			} else if found {
 				log.Successf("Mined block #%d, but gap=%d <= %d, skip", blockNum, (blockNum - runAtBlock), *gapPtr)

@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
+	"github.com/avely-finance/avely-contracts/sdk/actions"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
-	"github.com/avely-finance/avely-contracts/tools/actions"
 )
 
 var log *Log
@@ -71,7 +71,7 @@ func main() {
 		case "show_swap_requests":
 			showSwapRequests(p)
 		case "confirm_swap_requests":
-			admin.ConfirmSwapRequests(p)
+			actions.ConfirmSwapRequests(p)
 		case "autorestake":
 			autorestake(p)
 		default:

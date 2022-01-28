@@ -1,4 +1,4 @@
-package admin
+package actions
 
 import (
     . "github.com/avely-finance/avely-contracts/sdk/contracts"
