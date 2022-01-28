@@ -2,18 +2,17 @@ name: CI & CD
 
 on:
   push:
-    branches: [ main  ]
+    branches: [ chore/cd ]
   pull_request:
     branches: [ main ]
 
-env:
-  CI: "1"
-
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     container:
       image: ezil/avely-dev:0.0.1
+    env:
+      CI: "1"
     steps:
     - uses: actions/checkout@v2
 
@@ -51,3 +50,17 @@ jobs:
       run: |
         cat .env.local
         go run tests/main.go
+
+  cd:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build Image
+      run: docker build --rm=false -f docker/Dockerfile.dev -t ezil/avely:latest .
+
+    - name: Push Image
+      run: |
+        docker login -u $DOCKER_USER -p $DOCKER_PASS
+        docker push ezil/avely:latest
