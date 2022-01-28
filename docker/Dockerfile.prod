@@ -22,6 +22,6 @@ RUN apt-get update \
 COPY ./docker/docker-entrypoint.sh /sbin/
 RUN chmod +x /sbin/*.sh
 
-RUN go build -o ./bin/manage_buffers tools/watchers/manage_buffers.go
+RUN go build -o ./bin/watch_last_reward_cycle tools/watchers/watch_last_reward_cycle.go
 
 ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
