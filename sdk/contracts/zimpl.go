@@ -17,7 +17,7 @@ type Zimpl struct {
 	Contract
 }
 
-func (z *Zimpl) GetDeposiAmdDeleg(delegator string) (map[string]gjson.Result, error) {
+func (z *Zimpl) GetDeposiAmtDeleg(delegator string) (map[string]gjson.Result, error) {
 	rawState := z.Contract.SubState("deposit_amt_deleg", []string{delegator})
 	state := NewState(rawState)
 
