@@ -75,6 +75,20 @@ func (p *Protocol) GetLastRewardCycle() int {
 	return int(lrc)
 }
 
+func (p *Protocol) GetSwapRequestsForBuffer(bufferAddr string) []string {
+	partialState := p.Zimpl.Contract.SubState("deleg_swap_request", []string{})
+	state := NewState(partialState)
+	allSwapRequests := state.Dig("result.deleg_swap_request").Map()
+	bufferSwapRequests := []string{}
+	for initiator, newDeleg := range allSwapRequests {
+		newDelegStr := newDeleg.String()
+		if newDelegStr == bufferAddr {
+			bufferSwapRequests = append(bufferSwapRequests, initiator)
+		}
+	}
+	return bufferSwapRequests
+}
+
 func (p *Protocol) InitHolder() (*transaction.Transaction, error) {
 	return p.Holder.DelegateStake(ToZil(p.Aimpl.Sdk.Cfg.HolderInitialDelegateZil))
 }
