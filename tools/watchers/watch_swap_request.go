@@ -13,7 +13,7 @@ import (
 var log *Log
 var sdk *AvelySDK
 
-// Every N blocks watch Redelegate Stakes
+// Every N blocks watch delegator's swap requests, isseed by SSNList->RequestDelegatorSwap transition
 func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	gapPtr := flag.Int("gap", 5, "gap between blocks")
