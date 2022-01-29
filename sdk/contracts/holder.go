@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"strings"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -143,7 +144,7 @@ func NewHolderContract(sdk *AvelySDK, aimplAddr, zproxyAddr, zimplAddr string) (
 		sdkContract := Contract{
 			Sdk:      sdk,
 			Provider: *contract.Provider,
-			Addr:     "0x" + tx.ContractAddress,
+			Addr:     strings.ToLower("0x" + tx.ContractAddress),
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
@@ -165,7 +166,7 @@ func RestoreHolderContract(sdk *AvelySDK, contractAddress, aimplAddr, zproxyAddr
 	sdkContract := Contract{
 		Sdk:      sdk,
 		Provider: *contract.Provider,
-		Addr:     contractAddress,
+		Addr:     strings.ToLower(contractAddress),
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
