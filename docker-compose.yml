@@ -2,7 +2,7 @@ version: "3"
 x-app: &app
   build:
     context: .
-    dockerfile: ./docker/Dockerfile
+    dockerfile: ./docker/Dockerfile.dev
   image: avely-dev:0.0.22
 
 x-dapp: &dapp
