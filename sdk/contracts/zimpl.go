@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"math/big"
 	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
@@ -11,18 +12,17 @@ import (
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
-	"github.com/tidwall/gjson"
 )
 
 type Zimpl struct {
 	Contract
 }
 
-func (z *Zimpl) GetDeposiAmtDeleg(delegator string) (map[string]gjson.Result, error) {
+func (z *Zimpl) GetDepositAmtDeleg(delegator string) map[string]*big.Int {
 	rawState := z.Contract.SubState("deposit_amt_deleg", []string{delegator})
-	state := NewState(rawState)
-
-	return state.Dig("result.deposit_amt_deleg").Map(), nil
+	state := NewState(strings.ToLower(rawState))
+	stateItem := state.Dig("result.deposit_amt_deleg." + strings.ToLower(delegator))
+	return stateItem.MapAddressAmount()
 }
 
 func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
