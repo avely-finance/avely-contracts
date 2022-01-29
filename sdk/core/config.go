@@ -2,6 +2,7 @@ package core
 
 import (
 	"log"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -62,6 +63,7 @@ func NewConfig(chain string) *Config {
 
 	section := viper.Sub(chain)
 	section.AutomaticEnv()
+	section.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	if section == nil { // Sub returns nil if the key cannot be found
 		log.Fatalf("Chain %s not found in config", chain)
 	}
