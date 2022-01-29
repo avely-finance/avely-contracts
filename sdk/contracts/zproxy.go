@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"strings"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -239,7 +240,7 @@ func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
 		sdkContract := Contract{
 			Sdk:      sdk,
 			Provider: *contract.Provider,
-			Addr:     "0x" + tx.ContractAddress,
+			Addr:     strings.ToLower("0x" + tx.ContractAddress),
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
@@ -263,7 +264,7 @@ func RestoreZproxy(sdk *AvelySDK, contractAddress string) (*Zproxy, error) {
 	sdkContract := Contract{
 		Sdk:      sdk,
 		Provider: *contract.Provider,
-		Addr:     contractAddress,
+		Addr:     strings.ToLower(contractAddress),
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}

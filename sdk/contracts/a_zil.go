@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"strings"
 
 	"github.com/tidwall/gjson"
 
@@ -288,7 +289,7 @@ func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
 		sdkContract := Contract{
 			Sdk:      sdk,
 			Provider: *contract.Provider,
-			Addr:     "0x" + tx.ContractAddress,
+			Addr:     strings.ToLower("0x" + tx.ContractAddress),
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
@@ -311,7 +312,7 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, zimplAddr string) (*AZi
 	sdkContract := Contract{
 		Sdk:      sdk,
 		Provider: *contract.Provider,
-		Addr:     contractAddress,
+		Addr:     strings.ToLower(contractAddress),
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
