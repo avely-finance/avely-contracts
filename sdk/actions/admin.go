@@ -8,6 +8,35 @@ import (
 
 var log = helpers.GetLog()
 
+func DrainBuffer(p *Protocol, lrc int) {
+	bufferToDrain := p.GetBufferToDrain()
+
+	buffers := p.Aimpl.GetDrainedBuffers()
+	needDrain := false
+
+	if lastDrained, ok := buffers[bufferToDrain.Addr]; ok {
+		if lastDrained.Int() != int64(lrc) {
+			needDrain = true
+		}
+	} else {
+		log.Success("Buffer is never drained; Let's do this first time")
+
+		needDrain = true
+	}
+
+	if needDrain {
+		tx, err := p.Aimpl.DrainBuffer(bufferToDrain.Addr)
+
+		if err != nil {
+			log.Fatal("Buffer drain is failed. Tx: " + tx.ID)
+		} else {
+			log.Success("Buffer successfully drained" + tx.ID)
+		}
+	} else {
+		log.Success("No need to drain buffer")
+	}
+}
+
 func ChownStakeReDelegate(p *Protocol) {
 	activeBuffer := p.GetActiveBuffer()
 	aZilSsnAddr := p.GetAzilSsnAddress()
