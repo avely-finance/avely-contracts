@@ -1,7 +1,6 @@
 package core
 
 import (
-	"log"
 	"net/url"
 	"strconv"
 
@@ -40,14 +39,20 @@ func (sdk *AvelySDK) GetWsURL() url.URL {
 
 // IncreaseBlocknum can be called if isolated server works in "manual" mode:
 // https://github.com/Zilliqa/zilliqa-isolated-server#running-the-isolated-server-with-manual-block-increase
-func (sdk *AvelySDK) IncreaseBlocknum(delta int32) {
-	if sdk.Cfg.Chain != "local" {
-		log.Fatalf("Increasing block number available only for the local blockchain")
-	}
-
+func (sdk *AvelySDK) IncreaseBlocknum(delta int32) (*jsonrpc.RPCResponse, error) {
 	rpcClient := jsonrpc.NewClient(sdk.Cfg.Api.HttpUrl)
 	params := []interface{}{delta}
-	rpcClient.Call("IncreaseBlocknum", params)
+	tx, err := rpcClient.Call("IncreaseBlocknum", params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return tx, nil
 }
 
 func (sdk *AvelySDK) GetBalance(addr string) string {
@@ -66,6 +71,7 @@ func (sdk *AvelySDK) GetAddressFromPrivateKey(privateKey string) string {
 }
 
 func (sdk *AvelySDK) DeployTo(c *contract2.Contract) (*transaction2.Transaction, error) {
+	c.Provider = sdk.InitProvider()
 	gasPrice, err := c.Provider.GetMinimumGasPrice()
 	if err != nil {
 		return nil, err
