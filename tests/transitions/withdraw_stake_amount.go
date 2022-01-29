@@ -73,13 +73,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 3A")
 
-	_, err := sdk.IncreaseBlocknum(10)
-	if err != nil {
-		if IsCI() {
-			return
-		}
-		GetLog().Fatalf("Block increasing is broken", err)
-	}
+	sdk.IncreaseBlocknum(10)
 
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
