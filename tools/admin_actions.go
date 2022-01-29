@@ -72,6 +72,8 @@ func main() {
 			showSwapRequests(p)
 		case "confirm_swap_requests":
 			actions.ConfirmSwapRequests(p)
+		case "redelegate":
+			actions.ChownStakeReDelegate(p)
 		case "autorestake":
 			autorestake(p)
 		default:
