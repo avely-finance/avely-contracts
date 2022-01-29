@@ -75,7 +75,7 @@ func main() {
 		case "redelegate":
 			actions.ChownStakeReDelegate(p)
 		case "autorestake":
-			autorestake(p)
+			actions.AutoRestake(p)
 		default:
 			log.Fatal("Unknown command")
 		}
@@ -221,27 +221,6 @@ func showRewards(p *Protocol, ssn, deleg string) {
 		fmt.Println("The cycle is: " + cycle.String() + "; Total reward: " + cycleRewardsDeleg.String())
 		fmt.Println("    cur_opt: " + curOpt.String() + "; buf_opt: " + bufOpt.String())
 	}
-}
-
-func autorestake(p *Protocol) {
-	autorestakeamount := p.Aimpl.GetAutorestakeAmount()
-
-	if autorestakeamount.Cmp(big.NewInt(0)) == 0 { // == 0
-		log.Fatal("Nothing to auto restake")
-	}
-
-	priceBefore := p.Aimpl.GetAzilPrice()
-
-	tx, err := p.Aimpl.PerformAutoRestake()
-
-	if err != nil {
-		log.Fatalf("AutoRestake failed with error: ", err)
-	}
-
-	priceAfter := p.Aimpl.GetAzilPrice()
-
-	log.Success("Drain is successfully completed. Tx: " + tx.ID)
-	log.Success("Restaked amount: " + autorestakeamount.String() + "; PriceBefore: " + priceBefore.String() + "; PriceAfter: " + priceAfter.String())
 }
 
 func showSwapRequests(p *Protocol) {

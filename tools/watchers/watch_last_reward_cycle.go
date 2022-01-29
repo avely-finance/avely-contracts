@@ -45,26 +45,6 @@ func tryDrainBuffer(p *Protocol, lrc int) {
 	}
 }
 
-func tryAutorestake(p *Protocol) {
-	autorestakeamount := p.Aimpl.GetAutorestakeAmount()
-
-	if autorestakeamount.Cmp(big.NewInt(0)) == 0 { // autorestakeamount == 0
-		log.Success("Nothing to autorestake")
-	} else {
-		priceBefore := p.Aimpl.GetAzilPrice()
-		tx, err := p.Aimpl.PerformAutoRestake()
-
-		if err != nil {
-			log.Fatalf("AutoRestake failed with error: ", err)
-		}
-
-		priceAfter := p.Aimpl.GetAzilPrice()
-
-		log.Success("AutoRestake is successfully completed. Tx: " + tx.ID)
-		log.Success("Restaked amount: " + autorestakeamount.String() + "; PriceBefore: " + priceBefore.String() + "; PriceAfter: " + priceAfter.String())
-	}
-}
-
 // If Last reward has been changed, then:
 //   1. Drain Buffer
 //   2. ReDelegate stakes from other SSNs
@@ -109,7 +89,7 @@ func main() {
 					log.Success("New Last Reward Cycle!")
 					tryDrainBuffer(protocol, lrc)
 					actions.ChownStakeReDelegate(protocol)
-					tryAutorestake(protocol)
+					actions.AutoRestake(protocol)
 
 					currentLrc = lrc
 				}
