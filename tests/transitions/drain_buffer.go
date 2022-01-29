@@ -18,13 +18,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-	_, err := sdk.IncreaseBlocknum(10)
-	if err != nil {
-		if IsCI() {
-			return
-		}
-		GetLog().Fatalf("Block increasing is broken", err)
-	}
+	sdk.IncreaseBlocknum(10)
 
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 	sdk.IncreaseBlocknum(10)

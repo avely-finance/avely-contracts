@@ -1,10 +1,11 @@
 package transitions
 
 import (
+	"reflect"
+
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
-	"reflect"
 )
 
 var sdk *AvelySDK
@@ -48,14 +49,11 @@ func (tr *Transitions) RunAll() {
 	tr.Admin()
 	tr.DelegateStakeSuccess()
 	tr.DelegateStakeBuffersRotation()
-	tr.WithdrawStakeAmount()
-	tr.CompleteWithdrawalSuccess()
 	tr.ZilBalanceOf()
 	tr.IsAdmin()
 	tr.IsAimpl()
 	tr.IsZimpl()
 	tr.IsBufferOrHolder()
-	tr.DrainBuffer()
 	tr.Pause()
 	tr.PerformAutoRestake()
 	tr.ChownStakeSuccess()
@@ -63,4 +61,10 @@ func (tr *Transitions) RunAll() {
 	tr.ChownStakeZimplErrors()
 	tr.ChownStakeAimplErrors()
 	tr.ChownStakeRequireDrainBuffer()
+
+	if !IsCI() {
+		tr.DrainBuffer()
+		tr.CompleteWithdrawalSuccess()
+		tr.WithdrawStakeAmount()
+	}
 }
