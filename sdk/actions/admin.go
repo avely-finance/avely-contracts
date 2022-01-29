@@ -3,9 +3,38 @@ package actions
 import (
     . "github.com/avely-finance/avely-contracts/sdk/contracts"
     "github.com/avely-finance/avely-contracts/tests/helpers"
+    "strings"
 )
 
 var log = helpers.GetLog()
+
+func ChownStakeReDelegate(p *Protocol) {
+    activeBuffer := p.GetActiveBuffer()
+    aZilSsnAddr := p.GetAzilSsnAddress()
+
+    log.Success("Active Buffer is " + activeBuffer.Addr)
+    addr := strings.ToLower(activeBuffer.Addr)
+    deposits, _ := p.Zimpl.GetDeposiAmtDeleg(addr)
+
+    if value, found := deposits[addr]; found {
+        depositsMap := value.Map()
+        for ssn, amount := range depositsMap {
+            if ssn != aZilSsnAddr {
+                tx, err := p.Aimpl.ChownStakeReDelegate(ssn, amount.String())
+
+                if err != nil {
+                    log.Fatal("ChownStakeReDelegate is failed. Tx: " + tx.ID)
+                } else {
+                    log.Success("Successfully redelegate " + amount.String() + " from SSN " + ssn + "; Tx: " + tx.ID)
+                }
+            }
+
+            log.Success(ssn + " has " + amount.String())
+        }
+    } else {
+        log.Success("Buffer is empty")
+    }
+}
 
 func ConfirmSwapRequests(p *Protocol) {
     nextBuffer := p.GetBufferToSwapWith().Addr

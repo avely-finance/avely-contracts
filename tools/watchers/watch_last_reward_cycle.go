@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/subscription"
+	"github.com/avely-finance/avely-contracts/sdk/actions"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/tidwall/gjson"
@@ -64,34 +65,6 @@ func tryAutorestake(p *Protocol) {
 	}
 }
 
-func tryRedelegateStakes(p *Protocol) {
-	activeBuffer := p.GetActiveBuffer()
-	aZilSsnAddr := p.GetAzilSsnAddress()
-
-	log.Success("Active Buffer is " + activeBuffer.Addr)
-	addr := strings.ToLower(activeBuffer.Addr)
-	deposits, _ := p.Zimpl.GetDeposiAmtDeleg(addr)
-
-	if value, found := deposits[addr]; found {
-		depositsMap := value.Map()
-		for ssn, amount := range depositsMap {
-			if ssn != aZilSsnAddr {
-				tx, err := p.Aimpl.ChownStakeReDelegate(ssn, amount.String())
-
-				if err != nil {
-					log.Fatal("ChownStakeReDelegate is failed. Tx: " + tx.ID)
-				} else {
-					log.Success("Successfully redelegate " + amount.String() + " from SSN " + ssn + "; Tx: " + tx.ID)
-				}
-			}
-
-			log.Success(ssn + " has " + amount.String())
-		}
-	} else {
-		log.Success("Buffer is empty")
-	}
-}
-
 // If Last reward has been changed, then:
 //   1. Drain Buffer
 //   2. ReDelegate stakes from other SSNs
@@ -113,7 +86,7 @@ func main() {
 	_, ec, msg := subscriber.Start()
 	cancel := false
 
-	log.Success("Start subscribsion")
+	log.Success("Start subscription")
 
 	for {
 		if cancel {
@@ -135,7 +108,7 @@ func main() {
 				} else {
 					log.Success("New Last Reward Cycle!")
 					tryDrainBuffer(protocol, lrc)
-					tryRedelegateStakes(protocol)
+					actions.ChownStakeReDelegate(protocol)
 					tryAutorestake(protocol)
 
 					currentLrc = lrc
