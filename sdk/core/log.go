@@ -114,6 +114,9 @@ func (mylog *Log) highlightShortcuts(str string) string {
 	length := len(colors)
 	i := 0
 	for _, k := range keys {
+		if mylog.shortcuts[k] == "" {
+			continue
+		}
 		colorFunc := color.New(colors[i%length]).SprintFunc()
 		replacement := colorFunc(strings.ToUpper(k) + " " + mylog.shortcuts[k])
 		str = strings.ReplaceAll(str, mylog.shortcuts[k], replacement)
