@@ -49,6 +49,15 @@ func (i *StateItem) SSNCycleInfo() *SSNCycleInfoType {
 	}
 }
 
+func (i *StateItem) MapAddressAmount() map[string]*big.Int {
+	imap := i.Map()
+	out := make(map[string]*big.Int)
+	for addr, amount := range imap {
+		out[addr] = stringToBigInt(amount.String())
+	}
+	return out
+}
+
 func (i *StateItem) Withdrawal() *WithdrawalType {
 	tokenAmt := big.NewInt(0)
 	stakeAmt := big.NewInt(0)
