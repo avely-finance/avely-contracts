@@ -58,6 +58,15 @@ func (i *StateItem) MapAddressAmount() map[string]*big.Int {
 	return out
 }
 
+func (i *StateItem) ArrayInt() []int {
+	iarr := i.Array()
+	out := []int{}
+	for _, value := range iarr {
+		out = append(out, int(value.Int()))
+	}
+	return out
+}
+
 func (i *StateItem) Withdrawal() *WithdrawalType {
 	tokenAmt := big.NewInt(0)
 	stakeAmt := big.NewInt(0)
