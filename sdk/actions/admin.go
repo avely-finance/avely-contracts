@@ -4,6 +4,8 @@ import (
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
 	"math/big"
+	"strconv"
+	"strings"
 )
 
 var log = helpers.GetLog()
@@ -105,4 +107,17 @@ func AutoRestake(p *Protocol) {
 
 	log.Successf("AutoRestake is successfully completed. Tx: %s.", tx.ID)
 	log.Successf("Restaked amount: %s; PriceBefore: %s; PriceAfter: %s", autorestakeamount.String(), priceBefore, priceAfter)
+}
+
+func ShowUnbondedWithdrawalsBlocks(p *Protocol) {
+	blocks := p.GetUnbondedWithdrawalsBlocks()
+	if len(blocks) > 0 {
+		blocksStr := []string{}
+		for _, val := range blocks {
+			blocksStr = append(blocksStr, strconv.Itoa(val))
+		}
+		log.Successf("Blocks with unbonded withdrawals: %s.", strings.Join(blocksStr, ", "))
+	} else {
+		log.Successf("Blocks with unbonded withdrawals not found.")
+	}
 }

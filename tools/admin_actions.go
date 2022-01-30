@@ -70,6 +70,8 @@ func main() {
 			showRewards(p, ssn, addr)
 		case "show_swap_requests":
 			showSwapRequests(p)
+		case "show_withdraw_blocks":
+			actions.ShowUnbondedWithdrawalsBlocks(p)
 		case "confirm_swap_requests":
 			actions.ConfirmSwapRequests(p)
 		case "redelegate":
