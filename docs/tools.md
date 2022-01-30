@@ -60,52 +60,58 @@ $ go run tools/admin_actions.go --chain=testnet --cmd=init_holder
 
 ### Manual commands
 
-Drain Buffer
+1. Drain Buffer
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=drain_buffer --addr=<buffer addr>
 ```
 
-Perform Autorestake
+2. Perform Autorestake
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=autorestake
 ```
 
-Get Active Buffer
+3. Get Active Buffer
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=get_active_buffer
 ```
 
-Show Stake Rewards on the main staking contract
+4. Show Stake Rewards on the main staking contract
 
 ```sh
 $ go run tools/admin_actions.go --chain=mainnet --cmd=show_rewards --ssn=0x2afe9e18EdD39D927d0FffF8990612FC4aFa2295 --addr=0x30B5259a4E89Dc12B6da7883A9D3cd691F03b386
 ```
 
-Show swap request(s)
+5. Show swap request(s)
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=show_swap_requests
 ```
 
-Confirm swap request(s)
+6. Confirm swap request(s)
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=confirm_swap_requests
 ```
 
-ReDelegate stakes after swap requests confirmation (show-only mode)
+7. ReDelegate stakes after swap requests confirmation (show-only mode)
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=redelegate_show
 ```
 
-ReDelegate stakes after swap requests confirmation
+8. ReDelegate stakes after swap requests confirmation
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=redelegate
+```
+
+9. Show blocks with unbonded withdrawals
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=show_withdraw_blocks
 ```
 
 ## User commands
