@@ -2,50 +2,18 @@ package main
 
 import (
 	"flag"
-	"math/big"
-	"strconv"
-	"strings"
+	"github.com/tidwall/gjson"
 
 	"github.com/Zilliqa/gozilliqa-sdk/subscription"
 	"github.com/avely-finance/avely-contracts/sdk/actions"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
-	"github.com/tidwall/gjson"
 )
 
 var log *Log
 var sdk *AvelySDK
 
-func tryDrainBuffer(p *Protocol, lrc int) {
-	bufferToDrain := p.GetBufferToDrain()
-
-	buffers := p.Aimpl.GetDrainedBuffers()
-	needDrain := false
-
-	if lastDrained, ok := buffers[strings.ToLower(bufferToDrain.Addr)]; ok {
-		if lastDrained.Int() != int64(lrc) {
-			needDrain = true
-		}
-	} else {
-		log.Success("Buffer is never drained; Let's do this first time")
-
-		needDrain = true
-	}
-
-	if needDrain {
-		tx, err := p.Aimpl.DrainBuffer(bufferToDrain.Addr)
-
-		if err != nil {
-			log.Fatal("Buffer drain is failed. Tx: " + tx.ID)
-		} else {
-			log.Success("Buffer successfully drained" + tx.ID)
-		}
-	} else {
-		log.Success("No need to drain buffer")
-	}
-}
-
-// If Last reward has been changed, then:
+// If Last reward cycly has been changed, then:
 //   1. Drain Buffer
 //   2. ReDelegate stakes from other SSNs
 //   3. Autorestake funds
@@ -75,30 +43,37 @@ func main() {
 		}
 		select {
 		case message := <-msg:
-			block := gjson.Get(string(message), "values.0.value.TxBlock.header")
-
-			if block.Get("BlockNum").Exists() {
-				blockNo := block.Get("BlockNum").String()
-				lrc := protocol.GetLastRewardCycle()
-
-				log.Success("New block #" + blockNo + " is mined. Current Last Reward Cycle is " + strconv.Itoa(lrc))
-
-				if lrc == currentLrc {
-					log.Success("Last Reward Cycle is not changed. Skip")
-				} else {
-					log.Success("New Last Reward Cycle!")
-					tryDrainBuffer(protocol, lrc)
-					actions.ChownStakeReDelegate(protocol)
-					actions.AutoRestake(protocol)
-
-					currentLrc = lrc
-				}
+			blockNum, found := getBlockNum(message)
+			if !found {
+				continue
 			}
+			lrc := protocol.GetLastRewardCycle()
+			log.Successf("New block #%d is mined. Current Last Reward Cycle is %d", blockNum, lrc)
 
+			if lrc == currentLrc {
+				log.Success("Last Reward Cycle is not changed. Skip")
+			} else {
+				log.Success("New Last Reward Cycle!")
+				actions.DrainBuffer(protocol, lrc)
+				showOnly := false
+				actions.ChownStakeReDelegate(protocol, showOnly)
+				actions.AutoRestake(protocol)
+
+				currentLrc = lrc
+			}
 		case err := <-ec:
 			log.Success("Get error: ", err.Error())
 			cancel = true
 		}
 
 	}
+}
+
+func getBlockNum(message []byte) (int, bool) {
+	block := gjson.Get(string(message), "values.0.value.TxBlock.header")
+	if block.Get("BlockNum").Exists() {
+		blockNo := int(block.Get("BlockNum").Int())
+		return blockNo, true
+	}
+	return -1, false
 }

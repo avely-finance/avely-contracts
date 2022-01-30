@@ -73,7 +73,11 @@ func main() {
 		case "confirm_swap_requests":
 			actions.ConfirmSwapRequests(p)
 		case "redelegate":
-			actions.ChownStakeReDelegate(p)
+			showOnly := false
+			actions.ChownStakeReDelegate(p, showOnly)
+		case "redelegate_show":
+			showOnly := true
+			actions.ChownStakeReDelegate(p, showOnly)
 		case "autorestake":
 			actions.AutoRestake(p)
 		default:
