@@ -2,12 +2,14 @@ package core
 
 import (
 	"encoding/json"
-	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
-	"github.com/fatih/color"
 	golog "log"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
+
+	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
+	"github.com/fatih/color"
 )
 
 type Log struct {
@@ -20,6 +22,10 @@ func NewLog() *Log {
 	}
 
 	return log
+}
+
+func (mylog *Log) SetOutputStdout() {
+	golog.SetOutput(os.Stdout)
 }
 
 func (mylog *Log) Info(v ...interface{}) {

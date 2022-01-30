@@ -19,6 +19,7 @@ func (tr *Transitions) DrainBuffer() {
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 	sdk.IncreaseBlocknum(10)
+
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 	sdk.IncreaseBlocknum(10)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))

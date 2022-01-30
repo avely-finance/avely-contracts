@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"os"
+
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 )
 
@@ -25,4 +27,8 @@ func Field(c contracts.ProtocolContract, path ...string) string {
 
 func Dig(c contracts.ProtocolContract, path ...string) *contracts.StateItem {
 	return contracts.NewState(c.State()).Dig(path...)
+}
+
+func IsCI() bool {
+	return os.Getenv("CI") == "1"
 }
