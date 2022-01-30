@@ -105,5 +105,4 @@ func AutoRestake(p *Protocol) {
 
 	log.Successf("AutoRestake is successfully completed. Tx: %s.", tx.ID)
 	log.Successf("Restaked amount: %s; PriceBefore: %s; PriceAfter: %s", autorestakeamount.String(), priceBefore, priceAfter)
-
 }

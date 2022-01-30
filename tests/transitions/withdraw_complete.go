@@ -1,9 +1,10 @@
 package transitions
 
 import (
+	"strconv"
+
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
-	"strconv"
 )
 
 func (tr *Transitions) CompleteWithdrawalSuccess() {
@@ -19,6 +20,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	sdk.IncreaseBlocknum(10)
+
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
@@ -42,6 +44,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
 	sdk.IncreaseBlocknum(int32(delta))
+
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
