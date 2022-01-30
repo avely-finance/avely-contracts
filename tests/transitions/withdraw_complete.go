@@ -3,6 +3,7 @@ package transitions
 import (
 	"strconv"
 
+	"github.com/avely-finance/avely-contracts/sdk/actions"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -48,9 +49,9 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tx, err := p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare)
 	AssertSuccess(tx, err)
 
-	blockNumStr, _ := strconv.Atoi(tx.Receipt.EpochNum)
-	unbondedWithdrawalsBlocks := p.GetUnbondedWithdrawalsBlocks(blockNumStr)
+	unbondedWithdrawalsBlocks := p.GetUnbondedWithdrawalsBlocks()
 	AssertEqual(readyBlocks[0], strconv.Itoa(unbondedWithdrawalsBlocks[0]))
+	actions.ShowUnbondedWithdrawalsBlocks(p)
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 	tx, _ = p.Aimpl.ClaimWithdrawal(readyBlocks)

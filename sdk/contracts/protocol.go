@@ -75,7 +75,20 @@ func (p *Protocol) GetLastRewardCycle() int {
 	return int(lrc)
 }
 
-func (p *Protocol) GetUnbondedWithdrawalsBlocks(curBlockNum int) []int {
+func (p *Protocol) GetBlockHeight() int {
+	result := ""
+	if p.Aimpl.Sdk.Cfg.Chain == "local" {
+		tx, _ := p.Zproxy.UpdateVerifier(p.Aimpl.Sdk.Cfg.Verifier)
+		result = tx.Receipt.EpochNum
+	} else {
+		result, _ = p.Aimpl.Contract.Provider.GetNumTxBlocks()
+	}
+	blockHeight, _ := strconv.Atoi(result)
+	return blockHeight
+}
+
+func (p *Protocol) GetUnbondedWithdrawalsBlocks() []int {
+	curBlockNum := p.GetBlockHeight()
 	bnumReq := p.Zimpl.GetBnumReq()
 
 	//get all blocks with pending withdrawals
