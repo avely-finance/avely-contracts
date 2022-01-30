@@ -19,9 +19,10 @@ type Zimpl struct {
 }
 
 func (z *Zimpl) GetDepositAmtDeleg(delegator string) map[string]*big.Int {
+	delegator = strings.ToLower(delegator)
 	rawState := z.Contract.SubState("deposit_amt_deleg", []string{delegator})
-	state := NewState(strings.ToLower(rawState))
-	stateItem := state.Dig("result.deposit_amt_deleg." + strings.ToLower(delegator))
+	state := NewState(rawState)
+	stateItem := state.Dig("result.deposit_amt_deleg." + delegator)
 	return stateItem.MapAddressAmount()
 }
 
@@ -39,7 +40,7 @@ func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 		contract := Contract{
 			Sdk:      sdk,
 			Provider: *contract.Provider,
-			Addr:     strings.ToLower("0x" + tx.ContractAddress),
+			Addr:     "0x" + tx.ContractAddress,
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
@@ -63,7 +64,7 @@ func RestoreZimpl(sdk *AvelySDK, contractAddress, ZproxyAddr, GzilAddr string) (
 	sdkContract := Contract{
 		Sdk:      sdk,
 		Provider: *contract.Provider,
-		Addr:     strings.ToLower(contractAddress),
+		Addr:     contractAddress,
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
