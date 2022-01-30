@@ -23,5 +23,6 @@ COPY ./docker/docker-entrypoint.sh /sbin/
 RUN chmod +x /sbin/*.sh
 
 RUN go build -o ./bin/watch_last_reward_cycle tools/watchers/watch_last_reward_cycle.go
+RUN go build -o ./bin/watch_swap_request tools/watchers/watch_swap_request.go
 
 ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
