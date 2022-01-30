@@ -26,6 +26,13 @@ func (z *Zimpl) GetDepositAmtDeleg(delegator string) map[string]*big.Int {
 	return stateItem.MapAddressAmount()
 }
 
+func (z *Zimpl) GetBnumReq() int {
+	partialState := z.Contract.SubState("bnum_req", []string{})
+	state := NewState(partialState)
+	bnumReq := state.Dig("result.bnum_req").Int()
+	return int(bnumReq)
+}
+
 func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 	contract := buildZimplContract(sdk, ZproxyAddr, GzilAddr)
 

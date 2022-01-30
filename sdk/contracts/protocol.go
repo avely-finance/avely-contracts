@@ -75,6 +75,26 @@ func (p *Protocol) GetLastRewardCycle() int {
 	return int(lrc)
 }
 
+func (p *Protocol) GetUnbondedWithdrawalsBlocks(curBlockNum int) []int {
+	bnumReq := p.Zimpl.GetBnumReq()
+
+	//get all blocks with pending withdrawals
+	partialState := p.Aimpl.Contract.SubState("withdrawal_pending", []string{})
+	state := NewState(partialState)
+	allWithdrawBlocks := state.Dig("result.withdrawal_pending|@keys")
+	blocks := allWithdrawBlocks.ArrayInt()
+
+	//see leave_unbonded function in azil
+	unbonded := []int{}
+	for _, bnum := range blocks {
+		if bnum+bnumReq < curBlockNum {
+			unbonded = append(unbonded, bnum)
+		}
+	}
+
+	return unbonded
+}
+
 func (p *Protocol) GetSwapRequestsForBuffer(bufferAddr string) []string {
 	partialState := p.Zimpl.Contract.SubState("deleg_swap_request", []string{})
 	state := NewState(partialState)
