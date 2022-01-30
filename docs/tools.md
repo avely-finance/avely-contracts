@@ -96,12 +96,17 @@ Confirm swap request(s)
 $ go run tools/admin_actions.go --chain=testnet --cmd=confirm_swap_requests
 ```
 
+ReDelegate stakes after swap requests confirmation (show-only mode)
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=redelegate_show
+```
+
 ReDelegate stakes after swap requests confirmation
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=redelegate
 ```
-
 
 ## User commands
 

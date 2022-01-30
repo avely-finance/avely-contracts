@@ -37,7 +37,7 @@ func DrainBuffer(p *Protocol, lrc int) {
 	}
 }
 
-func ChownStakeReDelegate(p *Protocol) {
+func ChownStakeReDelegate(p *Protocol, showOnly bool) {
 	activeBuffer := p.GetActiveBuffer()
 	aZilSsnAddr := p.GetAzilSsnAddress()
 
@@ -52,8 +52,9 @@ func ChownStakeReDelegate(p *Protocol) {
 	for ssn, amount := range mapSsnAmount {
 		amountStr := amount.String()
 		if ssn != aZilSsnAddr {
-			tx, err := p.Aimpl.ChownStakeReDelegate(ssn, amountStr)
-			if err != nil {
+			if showOnly {
+				log.Successf("SSN %s has %s. Need to run ChownStakeReDelegate.", ssn, amountStr)
+			} else if tx, err := p.Aimpl.ChownStakeReDelegate(ssn, amountStr); err != nil {
 				log.Fatalf("ChownStakeReDelegate(%s, %s) ERROR. Tx: %s.", ssn, amountStr, tx.ID)
 			} else {
 				log.Successf("ChownStakeReDelegate(%s, %s) OK, Tx: %s.", ssn, amountStr, tx.ID)

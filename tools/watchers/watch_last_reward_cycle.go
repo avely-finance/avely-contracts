@@ -55,7 +55,8 @@ func main() {
 			} else {
 				log.Success("New Last Reward Cycle!")
 				actions.DrainBuffer(protocol, lrc)
-				actions.ChownStakeReDelegate(protocol)
+				showOnly := false
+				actions.ChownStakeReDelegate(protocol, showOnly)
 				actions.AutoRestake(protocol)
 
 				currentLrc = lrc
