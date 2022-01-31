@@ -108,10 +108,16 @@ $ go run tools/admin_actions.go --chain=testnet --cmd=redelegate_show
 $ go run tools/admin_actions.go --chain=testnet --cmd=redelegate
 ```
 
-9. Show blocks with unbonded withdrawals
+9. Show blocks with withdrawals, ready for claim
 
 ```sh
-$ go run tools/admin_actions.go --chain=testnet --cmd=show_withdraw_blocks
+$ go run tools/admin_actions.go --chain=testnet --cmd=show_claim_withdrawal
+```
+
+10. Claim withdrawals
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=claim_withdrawal
 ```
 
 ## User commands
