@@ -123,7 +123,7 @@ func ClaimWithdrawal(p *Protocol) {
 	blocks := p.GetClaimWithdrawalBlocks()
 	cnt := len(blocks)
 	if cnt == 0 {
-		log.Successf("Blocks with unbonded withdrawals not found.")
+		log.Successf("There are no blocks with unbonded withdrawals.")
 		return
 	}
 	blocksStr := utils.ArrayItoa(blocks)
