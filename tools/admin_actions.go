@@ -48,6 +48,17 @@ func main() {
 		ssn := strings.ToLower(*ssnPtr)
 
 		switch cmd {
+		//deploy
+		case "init_holder":
+			initHolder(p)
+		case "sync_buffers":
+			syncBuffers(p)
+		case "deploy_buffer":
+			deployBuffer(p)
+		case "unpause":
+			unpause(p)
+
+		//utils, information
 		case "from_bech32":
 			convertFromBech32Addr(addr)
 		case "to_bech32":
@@ -56,30 +67,33 @@ func main() {
 			showTx(p, addr)
 		case "get_active_buffer":
 			getActiveBuffer(p)
-		case "init_holder":
-			initHolder(p)
-		case "deploy_buffer":
-			deployBuffer(p)
-		case "unpause":
-			unpause(p)
-		case "sync_buffers":
-			syncBuffers(p)
-		case "drain_buffer":
-			drainBuffer(p, addr)
 		case "show_rewards":
 			showRewards(p, ssn, addr)
-		case "show_swap_requests":
-			showSwapRequests(p)
-		case "confirm_swap_requests":
-			actions.ConfirmSwapRequests(p)
+
+		//new reward cycle
+		case "drain_buffer":
+			drainBuffer(p, addr)
 		case "redelegate":
 			showOnly := false
 			actions.ChownStakeReDelegate(p, showOnly)
-		case "redelegate_show":
+		case "show_redelegate":
 			showOnly := true
 			actions.ChownStakeReDelegate(p, showOnly)
 		case "autorestake":
 			actions.AutoRestake(p)
+
+		//withdrawals
+		case "show_claim_withdrawal":
+			actions.ShowClaimWithdrawal(p)
+		case "claim_withdrawal":
+			actions.ClaimWithdrawal(p)
+
+		//swap requests (part of chown stake process)
+		case "show_swap_requests":
+			showSwapRequests(p)
+		case "confirm_swap_requests":
+			actions.ConfirmSwapRequests(p)
+
 		default:
 			log.Fatal("Unknown command")
 		}
@@ -96,23 +110,25 @@ func deployAvely() {
 func showTx(p *Protocol, tx_addr string) {
 	provider := p.Aimpl.Contract.Provider
 	tx, err := provider.GetTransaction(tx_addr)
-
-	log.Successf("Tx: ", tx)
-	log.Successf("Err: ", err)
+	if err != nil {
+		log.Successf("Err: %s", err)
+	} else {
+		log.Success(tx)
+	}
 }
 
 func getActiveBuffer(p *Protocol) {
 	buffer := p.GetActiveBuffer()
 
-	log.Successf("lastrewardcycle: ", p.GetLastRewardCycle())
-	log.Successf("Active buffer: ", buffer.Contract.Addr)
+	log.Successf("lastrewardcycle: %s", p.GetLastRewardCycle())
+	log.Successf("Active buffer: %s", buffer.Contract.Addr)
 }
 
 func initHolder(p *Protocol) {
 	_, err := p.InitHolder()
 
 	if err != nil {
-		log.Fatalf("Holder init failed with error: ", err)
+		log.Fatalf("Holder init failed with error: %s", err)
 	}
 	log.Success("Holder init is successfully compeleted.")
 }
@@ -121,20 +137,20 @@ func convertFromBech32Addr(addr32 string) {
 	addr, err := bech32.FromBech32Addr(addr32)
 
 	if err != nil {
-		log.Fatalf("Convert failed with err: ", err)
+		log.Fatalf("Convert failed with err: %s", err)
 	}
 
-	log.Success("Converted address: " + addr)
+	log.Successf("Converted address: %s", addr)
 }
 
 func convertToBech32Addr(addr32 string) {
 	addr, err := bech32.ToBech32Address(addr32)
 
 	if err != nil {
-		log.Fatalf("Convert failed with err: ", err)
+		log.Fatalf("Convert failed with err: %s", err)
 	}
 
-	log.Success("Converted address: " + addr)
+	log.Successf("Converted address: %s", addr)
 }
 
 func deployBuffer(p *Protocol) {

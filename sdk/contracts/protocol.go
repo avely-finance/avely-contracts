@@ -75,6 +75,42 @@ func (p *Protocol) GetLastRewardCycle() int {
 	return int(lrc)
 }
 
+func (p *Protocol) GetBlockHeight() int {
+	result := ""
+	if p.Aimpl.Sdk.Cfg.Chain == "local" {
+		//Isolated server has limited set of API methods: https://github.com/Zilliqa/zilliqa-isolated-server#available-apis
+		//GetNumTxBlocks is not available.
+		//So we'll take BlockNum from receipt of safe transaction.
+		tx, _ := p.Zproxy.UpdateVerifier(p.Aimpl.Sdk.Cfg.Verifier)
+		result = tx.Receipt.EpochNum
+	} else {
+		result, _ = p.Aimpl.Contract.Provider.GetNumTxBlocks()
+	}
+	blockHeight, _ := strconv.Atoi(result)
+	return blockHeight
+}
+
+func (p *Protocol) GetClaimWithdrawalBlocks() []int {
+	curBlockNum := p.GetBlockHeight()
+	bnumReq := p.Zimpl.GetBnumReq()
+
+	//get all blocks with pending withdrawals
+	partialState := p.Aimpl.Contract.SubState("withdrawal_pending", []string{})
+	state := NewState(partialState)
+	allWithdrawBlocks := state.Dig("result.withdrawal_pending|@keys")
+	blocks := allWithdrawBlocks.ArrayInt()
+
+	//see leave_unbonded function in azil
+	unbonded := []int{}
+	for _, bnum := range blocks {
+		if bnum+bnumReq < curBlockNum {
+			unbonded = append(unbonded, bnum)
+		}
+	}
+
+	return unbonded
+}
+
 func (p *Protocol) GetSwapRequestsForBuffer(bufferAddr string) []string {
 	partialState := p.Zimpl.Contract.SubState("deleg_swap_request", []string{})
 	state := NewState(partialState)

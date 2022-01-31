@@ -1,5 +1,15 @@
 # Tools
 
+- [Configuration](#configuration)
+- [Useful Links](#useful-links)
+- [User commands](#user-commands)
+- [Admin commands](#admin-commands)
+    - [Deploy](#deploy)
+    - [Utils, information](#utils-information)
+    - [New reward cycle](#new-reward-cycle)
+    - [Withdrawals](#withdrawals)
+    - [Swap requests \(part of chown stake process\)](#swap-requests-part-of-chown-stake-process)
+
 ## Configuration
 
 Create and configure `.env.testnet` and `.env.mainnet`. Ask the team for private keys for shared admin and user accounts
@@ -21,6 +31,10 @@ https://testnet-viewer.zilliqa.com/
 
 Admin account:
 https://viewblock.io/zilliqa/address/zil17c2804u3j3uwttl7r77e5rxuam5lmepdf2l87e?network=testnet
+
+## User commands
+
+1. go run tools/user_actions.go --chain=testnet --cmd=delegate --usr=1 --amount=100
 
 ## Admin commands
 
@@ -58,56 +72,88 @@ $ go run tools/admin_actions.go --chain=testnet --cmd=unpause
 $ go run tools/admin_actions.go --chain=testnet --cmd=init_holder
 ```
 
-### Manual commands
+### Utils, information
 
-Drain Buffer
-
-```sh
-$ go run tools/admin_actions.go --chain=testnet --cmd=drain_buffer --addr=<buffer addr>
-```
-
-Perform Autorestake
+1. Convert address from bech32 to base16
 
 ```sh
-$ go run tools/admin_actions.go --chain=testnet --cmd=autorestake
+$ go run tools/admin_actions.go --chain=testnet --cmd=from_bech32 --addr=<bech32 addr>
 ```
 
-Get Active Buffer
+2. Convert address from base16 to bech32
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=to_bech32 --addr=<base16 addr>
+```
+
+3. Show transaction
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=show_tx --addr=<transaction hash>
+```
+
+4. Get Active Buffer
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=get_active_buffer
 ```
 
-Show Stake Rewards on the main staking contract
+5. Show Stake Rewards on the main staking contract
 
 ```sh
 $ go run tools/admin_actions.go --chain=mainnet --cmd=show_rewards --ssn=0x2afe9e18EdD39D927d0FffF8990612FC4aFa2295 --addr=0x30B5259a4E89Dc12B6da7883A9D3cd691F03b386
 ```
 
-Show swap request(s)
+### New reward cycle
+
+1. Drain Buffer
 
 ```sh
-$ go run tools/admin_actions.go --chain=testnet --cmd=show_swap_requests
+$ go run tools/admin_actions.go --chain=testnet --cmd=drain_buffer --addr=<buffer addr>
 ```
 
-Confirm swap request(s)
+2. ReDelegate stakes after swap requests confirmation (show-only mode)
 
 ```sh
-$ go run tools/admin_actions.go --chain=testnet --cmd=confirm_swap_requests
+$ go run tools/admin_actions.go --chain=testnet --cmd=show_redelegate
 ```
 
-ReDelegate stakes after swap requests confirmation (show-only mode)
-
-```sh
-$ go run tools/admin_actions.go --chain=testnet --cmd=redelegate_show
-```
-
-ReDelegate stakes after swap requests confirmation
+3. ReDelegate stakes after swap requests confirmation
 
 ```sh
 $ go run tools/admin_actions.go --chain=testnet --cmd=redelegate
 ```
 
-## User commands
+4. Perform Autorestake
 
-1. go run tools/user_actions.go --chain=testnet --cmd=delegate --usr=1 --amount=100
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=autorestake
+```
+
+### Withdrawals
+
+1. Show blocks with withdrawals, ready for claim
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=show_claim_withdrawal
+```
+
+2. Claim withdrawals
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=claim_withdrawal
+```
+
+### Swap requests (part of chown stake process)
+
+1. Show swap request(s)
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=show_swap_requests
+```
+
+2. Confirm swap request(s)
+
+```sh
+$ go run tools/admin_actions.go --chain=testnet --cmd=confirm_swap_requests
+```
