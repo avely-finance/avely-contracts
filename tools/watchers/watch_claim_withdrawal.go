@@ -27,6 +27,7 @@ func main() {
 	config := core.NewConfig(*chainPtr)
 	sdk = core.NewAvelySDK(*config)
 	log = core.NewLog()
+	log.SetOutputStdout()
 	protocol = contracts.RestoreFromState(sdk, log)
 	url := sdk.GetWsURL()
 
