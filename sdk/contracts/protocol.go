@@ -90,7 +90,7 @@ func (p *Protocol) GetBlockHeight() int {
 	return blockHeight
 }
 
-func (p *Protocol) GetUnbondedWithdrawalsBlocks() []int {
+func (p *Protocol) GetClaimWithdrawalBlocks() []int {
 	curBlockNum := p.GetBlockHeight()
 	bnumReq := p.Zimpl.GetBnumReq()
 

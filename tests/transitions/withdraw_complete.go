@@ -49,9 +49,9 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tx, err := p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare)
 	AssertSuccess(tx, err)
 
-	unbondedWithdrawalsBlocks := p.GetUnbondedWithdrawalsBlocks()
+	unbondedWithdrawalsBlocks := p.GetClaimWithdrawalBlocks()
 	AssertEqual(readyBlocks[0], strconv.Itoa(unbondedWithdrawalsBlocks[0]))
-	actions.ShowUnbondedWithdrawalsBlocks(p)
+	actions.ShowClaimWithdrawal(p)
 
 	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
 	tx, _ = p.Aimpl.ClaimWithdrawal(readyBlocks)
