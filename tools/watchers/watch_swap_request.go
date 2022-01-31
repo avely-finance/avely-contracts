@@ -21,6 +21,7 @@ func main() {
 	flag.Parse()
 
 	log = NewLog()
+	log.SetOutputStdout()
 	config := NewConfig(*chainPtr)
 	sdk = NewAvelySDK(*config)
 	protocol := RestoreFromState(sdk, log)
