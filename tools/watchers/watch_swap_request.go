@@ -30,14 +30,14 @@ func main() {
 	protocol = contracts.RestoreFromState(sdk, log)
 	url := sdk.GetWsURL()
 
-	claimWatcher := &SwapRequestWatcher{
+	watcher := &SwapRequestWatcher{
 		gap:        *gapPtr,
 		runAtBlock: -1,
 	}
 
 	log.Success("Start swap request watcher")
 	blockWatcher := utils.CreateBlockWatcher(url)
-	blockWatcher.AddObserver(claimWatcher)
+	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()
 }
 
