@@ -2,8 +2,10 @@ package actions
 
 import (
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
 	"math/big"
+	"strings"
 )
 
 var log = helpers.GetLog()
@@ -28,9 +30,9 @@ func DrainBuffer(p *Protocol, lrc int) {
 		tx, err := p.Aimpl.DrainBuffer(bufferToDrain.Addr)
 
 		if err != nil {
-			log.Fatal("Buffer drain is failed. Tx: " + tx.ID)
+			log.Fatalf("Buffer drain is failed. Tx: %s", tx.ID)
 		} else {
-			log.Success("Buffer successfully drained" + tx.ID)
+			log.Successf("Buffer successfully drained. Tx: %s", tx.ID)
 		}
 	} else {
 		log.Success("No need to drain buffer")
@@ -105,4 +107,33 @@ func AutoRestake(p *Protocol) {
 
 	log.Successf("AutoRestake is successfully completed. Tx: %s.", tx.ID)
 	log.Successf("Restaked amount: %s; PriceBefore: %s; PriceAfter: %s", autorestakeamount.String(), priceBefore, priceAfter)
+}
+
+func ShowClaimWithdrawal(p *Protocol) {
+	blocks := p.GetClaimWithdrawalBlocks()
+	if len(blocks) > 0 {
+		blocksStr := utils.ArrayItoa(blocks)
+		log.Successf("Blocks with unbonded withdrawals: %s.", strings.Join(blocksStr, ", "))
+	} else {
+		log.Successf("Blocks with unbonded withdrawals not found.")
+	}
+}
+
+func ClaimWithdrawal(p *Protocol) {
+	blocks := p.GetClaimWithdrawalBlocks()
+	cnt := len(blocks)
+	if cnt == 0 {
+		log.Successf("There are no blocks with unbonded withdrawals.")
+		return
+	}
+	blocksStr := utils.ArrayItoa(blocks)
+	log.Successf("Found %d blocks with unbonded withdrawals: %s.", cnt, strings.Join(blocksStr, ", "))
+	tx, err := p.Aimpl.ClaimWithdrawal(blocksStr)
+
+	if err != nil {
+		log.Fatalf("Withdrawals claim failed. Tx: %s", tx.ID)
+	} else {
+		log.Successf("Withdrawals successfully claimed. Tx: %s", tx.ID)
+	}
+
 }
