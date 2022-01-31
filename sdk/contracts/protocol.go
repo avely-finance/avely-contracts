@@ -79,7 +79,7 @@ func (p *Protocol) GetBlockHeight() int {
 	result := ""
 	if p.Aimpl.Sdk.Cfg.Chain == "local" {
 		//Isolated server has limited set of API methods: https://github.com/Zilliqa/zilliqa-isolated-server#available-apis
-		//GetLatestTxBlock is not available in manual mode.
+		//GetNumTxBlocks is not available.
 		//So we'll take BlockNum from receipt of safe transaction.
 		tx, _ := p.Zproxy.UpdateVerifier(p.Aimpl.Sdk.Cfg.Verifier)
 		result = tx.Receipt.EpochNum
