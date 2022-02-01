@@ -71,7 +71,7 @@ func ChownStakeReDelegate(p *Protocol, showOnly bool) {
 func ConfirmSwapRequests(p *Protocol) {
 	nextBuffer := p.GetBufferToSwapWith().Addr
 	swapRequests := p.GetSwapRequestsForBuffer(nextBuffer)
-	log.Infof("Found %d swap requests for next buffer %s", len(swapRequests), nextBuffer)
+	log.Successf("Found %d swap requests for next buffer %s", len(swapRequests), nextBuffer)
 	errCnt := 0
 	okCnt := 0
 	for _, initiator := range swapRequests {
@@ -84,7 +84,7 @@ func ConfirmSwapRequests(p *Protocol) {
 			okCnt++
 		}
 	}
-	log.Infof("confirmSwapRequests completed, %d swaps confirmed, %d errors", okCnt, errCnt)
+	log.Successf("confirmSwapRequests completed, %d swaps confirmed, %d errors", okCnt, errCnt)
 }
 
 func AutoRestake(p *Protocol) {
