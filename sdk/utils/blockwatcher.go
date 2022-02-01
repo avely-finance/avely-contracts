@@ -24,6 +24,7 @@ var log *core.Log
 
 func CreateBlockWatcher(url url.URL) *BlockWatcher {
 	log = core.NewLog()
+	log.SetOutputStdout()
 	return &BlockWatcher{url: url}
 }
 
