@@ -8,7 +8,7 @@ import (
 	"github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
-type SwapRequestWatcher struct {
+type ClaimWithdrawalWatcher struct {
 	gap        int
 	runAtBlock int
 }
@@ -31,23 +31,22 @@ func main() {
 	protocol = contracts.RestoreFromState(sdk, log)
 	url := sdk.GetWsURL()
 
-	watcher := &SwapRequestWatcher{
+	claimWatcher := &ClaimWithdrawalWatcher{
 		gap:        *gapPtr,
 		runAtBlock: -1,
 	}
 
-	log.Success("Start swap request watcher")
 	blockWatcher := utils.CreateBlockWatcher(url)
-	blockWatcher.AddObserver(watcher)
+	blockWatcher.AddObserver(claimWatcher)
 	blockWatcher.Start()
 }
 
-func (w *SwapRequestWatcher) Notify(blockNum int) {
-	if (blockNum - w.runAtBlock) > w.gap {
+func (cww *ClaimWithdrawalWatcher) Notify(blockNum int) {
+	if (blockNum - cww.runAtBlock) > cww.gap {
 		log.Successf("Mined block #%d.", blockNum)
-		actions.ConfirmSwapRequests(protocol)
-		w.runAtBlock = blockNum
+		actions.ClaimWithdrawal(protocol)
+		cww.runAtBlock = blockNum
 	} else {
-		log.Successf("Mined block #%d, but gap=%d <= %d, skip.", blockNum, (blockNum - w.runAtBlock), w.gap)
+		log.Successf("Mined block #%d, but gap=%d <= %d, skip.", blockNum, (blockNum - cww.runAtBlock), cww.gap)
 	}
 }
