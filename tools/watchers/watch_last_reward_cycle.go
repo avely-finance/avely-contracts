@@ -2,80 +2,60 @@ package main
 
 import (
 	"flag"
-	"github.com/tidwall/gjson"
-
-	"github.com/Zilliqa/gozilliqa-sdk/subscription"
 	"github.com/avely-finance/avely-contracts/sdk/actions"
-	. "github.com/avely-finance/avely-contracts/sdk/contracts"
-	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
-var log *Log
-var sdk *AvelySDK
+type LastRewardCycleWatcher struct {
+	currentLrc int
+}
+
+var log *core.Log
+var sdk *core.AvelySDK
+var protocol *contracts.Protocol
+
+func main() {
+
+	chainPtr := flag.String("chain", "local", "chain")
+
+	flag.Parse()
+
+	config := core.NewConfig(*chainPtr)
+	sdk = core.NewAvelySDK(*config)
+	log = core.NewLog()
+	log.SetOutputStdout()
+	protocol = contracts.RestoreFromState(sdk, log)
+	url := sdk.GetWsURL()
+
+	watcher := &LastRewardCycleWatcher{
+		currentLrc: -1,
+	}
+
+	log.Success("Start last reward cycle watcher")
+	blockWatcher := utils.CreateBlockWatcher(url)
+	blockWatcher.AddObserver(watcher)
+	blockWatcher.Start()
+}
 
 // If Last reward cycly has been changed, then:
 //   1. Drain Buffer
 //   2. ReDelegate stakes from other SSNs
 //   3. Autorestake funds
-func main() {
-	chainPtr := flag.String("chain", "local", "chain")
+func (w *LastRewardCycleWatcher) Notify(blockNum int) {
+	lrc := protocol.GetLastRewardCycle()
+	log.Successf("New block #%d is mined. Current Last Reward Cycle is %d.", blockNum, lrc)
 
-	flag.Parse()
+	if lrc == w.currentLrc {
+		log.Success("Last Reward Cycle is not changed, skip.")
+	} else {
+		log.Success("New Last Reward Cycle!")
+		actions.DrainBuffer(protocol, lrc)
+		showOnly := false
+		actions.ChownStakeReDelegate(protocol, showOnly)
+		actions.AutoRestake(protocol)
 
-	log = NewLog()
-	log.SetOutputStdout()
-
-	config := NewConfig(*chainPtr)
-	sdk = NewAvelySDK(*config)
-	protocol := RestoreFromState(sdk, log)
-
-	currentLrc := -1 // init value should be unreal
-
-	url := sdk.GetWsURL()
-	subscriber := subscription.BuildNewBlockSubscriber(url)
-	_, ec, msg := subscriber.Start()
-	cancel := false
-
-	log.Success("Start subscription")
-
-	for {
-		if cancel {
-			_ = subscriber.Ws.Close()
-			break
-		}
-		select {
-		case message := <-msg:
-			blockNum, found := getBlockNum(message)
-			if !found {
-				continue
-			}
-			lrc := protocol.GetLastRewardCycle()
-			log.Successf("New block #%d is mined. Current Last Reward Cycle is %d", blockNum, lrc)
-
-			if lrc == currentLrc {
-				log.Success("Last Reward Cycle is not changed. Skip")
-			} else {
-				log.Success("New Last Reward Cycle!")
-				actions.DrainBuffer(protocol, lrc)
-				showOnly := false
-				actions.ChownStakeReDelegate(protocol, showOnly)
-				actions.AutoRestake(protocol)
-
-				currentLrc = lrc
-			}
-		case err := <-ec:
-			log.Success("Get error: ", err.Error())
-			cancel = true
-		}
-
+		w.currentLrc = lrc
 	}
-}
-
-func getBlockNum(message []byte) (int, bool) {
-	block := gjson.Get(string(message), "values.0.value.TxBlock.header")
-	if block.Get("BlockNum").Exists() {
-		blockNo := int(block.Get("BlockNum").Int())
-		return blockNo, true
-	}
-	return -1, false
 }
