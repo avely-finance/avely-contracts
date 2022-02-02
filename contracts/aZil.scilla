@@ -21,10 +21,8 @@ type Error =
   | CantFetchZimplFields
   | ChownStakeCantFetchRemote
   | ChownStakeDepositNotFound
-  | ChownStakePendingWithdrawal
   | ChownStakeReDelegateAzilSsn
   | ChownStakeSwapRequestNotFound
-  | ChownStakeSwapRequestWrongBuffer
   | ClaimWithdrawalNoUnbonded
   | CompleteWithdrawalFundsMismatch
   | DelegAddrUnknown
@@ -54,9 +52,7 @@ let make_error =
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
       | ChownStakeDepositNotFound        => "ChownStakeDepositNotFound"
       | ChownStakeReDelegateAzilSsn      => "ChownStakeReDelegateAzilSsn"
-      | ChownStakePendingWithdrawal      => "ChownStakePendingWithdrawal"
       | ChownStakeSwapRequestNotFound    => "ChownStakeSwapRequestNotFound"
-      | ChownStakeSwapRequestWrongBuffer => "ChownStakeSwapRequestWrongBuffer"
       | ClaimWithdrawalNoUnbonded        => "ClaimWithdrawalNoUnbonded"
       | CompleteWithdrawalFundsMismatch  => "CompleteWithdrawalFundsMismatch"
       | DelegAddrUnknown                 => "DelegAddrUnknown"
@@ -365,6 +361,12 @@ end
 
 procedure BufferConfirmDelegatorSwap(buffer_addr: ByStr20, requestor: ByStr20)
   msg = { _tag: "ConfirmDelegatorSwap"; _recipient: buffer_addr; _amount: uint128_zero; requestor: requestor };
+  msgs = one_msg msg;
+  send msgs
+end
+
+procedure BufferRejectDelegatorSwap(buffer_addr: ByStr20, requestor: ByStr20)
+  msg = { _tag: "RejectDelegatorSwap"; _recipient: buffer_addr; _amount: uint128_zero; requestor: requestor };
   msgs = one_msg msg;
   send msgs
 end
@@ -1022,42 +1024,51 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
       cycle <- & zimpl.lastrewardcycle;
       next_cycle = builtin add cycle uint32_one;
       next_buffer_o = get_active_buffer_addr var_buffers_addresses next_cycle;
+
       match next_buffer_o with
       | None =>
         e = BufferNoActive;
         ThrowError e
+
       | Some next_buffer =>
+        (* new_deleg must be next buffer *)
         is_next_buffer = builtin eq new_deleg next_buffer;
         match is_next_buffer with
         | False =>
-          e = ChownStakeSwapRequestWrongBuffer;
-          ThrowError e
-        | True => (* nop *)
-        end;
-        RequireDrainedBuffer next_buffer cycle
-      end;
+          (* we'll confirm swap requests only for next buffer, reject other *)
+          BufferRejectDelegatorSwap new_deleg delegator
 
+        | True =>
 
-      (* delegator must have no pending withdrawals *)
-      o_withdrawal <- & zimpl.withdrawal_pending[delegator];
-      match o_withdrawal with
-      | Some withdrawal =>
-        e = ChownStakePendingWithdrawal;
-        ThrowError e
-      | None =>
-      end;
+          (* throw error if next buffer has not been drained still *)
+          (* we'll confirm swap later *)
+          RequireDrainedBuffer next_buffer cycle;
 
-      BufferConfirmDelegatorSwap new_deleg delegator;
+          (* delegator must have no pending withdrawals *)
+          o_withdrawal <- & zimpl.withdrawal_pending[delegator];
+          match o_withdrawal with
+          | Some withdrawal =>
+            (* reject swap for delegator with pending withdrawals*)
+            BufferRejectDelegatorSwap new_deleg delegator
 
-      (* sum delegator's stakes for each ssn, update token balance *)
-      o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
-      match o_deposit_amt_deleg with
-      | Some map_ssn_amt =>
-        total_redeleg_amt = sum_amount map_ssn_amt;
-        UpdateTokenBalance delegator total_redeleg_amt
-      | None =>
-        e = ChownStakeDepositNotFound;
-        ThrowError e
+          | None =>
+
+            BufferConfirmDelegatorSwap new_deleg delegator;
+
+            (* sum delegator's stakes for each ssn, update token balance *)
+            o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
+            match o_deposit_amt_deleg with
+            | Some map_ssn_amt =>
+              total_redeleg_amt = sum_amount map_ssn_amt;
+              UpdateTokenBalance delegator total_redeleg_amt
+            | None =>
+              (* we won't be here, because delegator can't have no stake, but have swap request *)
+              e = ChownStakeDepositNotFound;
+              ThrowError e
+            end
+
+          end
+        end
       end
 
     | None =>
