@@ -201,7 +201,7 @@ func (tr *Transitions) ChownStakeAimplErrors() {
 	chownStakeNextCycleOffchain(p)
 	chownStakeNextCycle(p)
 	chownStakeNextCycleOffchain(p)
-	nextBuffer := p.GetBufferToSwapWith().Addr
+	nextBuffer := p.GetBufferToSwapWith()
 
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[1]))
@@ -223,16 +223,28 @@ func (tr *Transitions) ChownStakeAimplErrors() {
 
 	//call ChownStake for addr1, expecting error
 	tx, _ = p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1)
-	AssertError(tx, "ChownStakeSwapRequestWrongBuffer")
+	AssertTransition(tx, Transition{
+		activeBuffer.Addr, //sender
+		"RejectDelegatorSwap",
+		p.Zproxy.Addr,
+		"0",
+		ParamsMap{"requestor": addr1},
+	})
 
 	//key1 withdraws some amount, then requests swap
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeAmt(ssn[1], userStake))
-	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
+	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer.Addr))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer.Addr}})
 
 	//call ChownStake for addr1, expecting error
 	tx, _ = p.Aimpl.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1)
-	AssertError(tx, "ChownStakePendingWithdrawal")
+	AssertTransition(tx, Transition{
+		nextBuffer.Addr, //sender
+		"RejectDelegatorSwap",
+		p.Zproxy.Addr,
+		"0",
+		ParamsMap{"requestor": addr1},
+	})
 }
 
 func (tr *Transitions) ChownStakeZimplErrors() {

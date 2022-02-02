@@ -163,6 +163,16 @@ transition ConfirmDelegatorSwap(requestor: ByStr20)
   send msgs
 end
 
+transition RejectDelegatorSwap(requestor: ByStr20)
+  RequireAimpl;
+
+  var_zproxy_address <- zproxy_address;
+
+  msg = {_tag: "RejectDelegatorSwap"; _recipient: var_zproxy_address; _amount: uint128_zero; requestor: requestor};
+  msgs = one_msg msg;
+  send msgs
+end
+
 transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint128)
   RequireZimpl;
   added_funds <- tmp_added_funds;
