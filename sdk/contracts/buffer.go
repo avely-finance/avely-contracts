@@ -87,6 +87,17 @@ func (b *BufferContract) ConfirmDelegatorSwap(requestor string) (*transaction.Tr
 	return b.Call("ConfirmDelegatorSwap", args, "0")
 }
 
+func (b *BufferContract) RejectDelegatorSwap(requestor string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"requestor",
+			"ByStr20",
+			requestor,
+		},
+	}
+	return b.Call("RejectDelegatorSwap", args, "0")
+}
+
 func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
