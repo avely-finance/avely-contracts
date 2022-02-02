@@ -14,7 +14,6 @@ type Error =
   | AdminValidationFailed
   | BufferAddrUnknown
   | BufferAlreadyDrained
-  | BufferNoActive
   | BufferNotDrained
   | BufferOrHolderValidationFailed
   | BuffersEmpty
@@ -45,7 +44,6 @@ let make_error =
       | AdminValidationFailed            => "AdminValidationFailed"
       | BufferAddrUnknown                => "BufferAddrUnknown"
       | BufferAlreadyDrained             => "BufferAlreadyDrained"
-      | BufferNoActive                   => "BufferNoActive"
       | BufferNotDrained                 => "BufferNotDrained"
       | BufferOrHolderValidationFailed   => "BufferOrHolderValidationFailed"
       | BuffersEmpty                     => "BuffersEmpty"
@@ -134,6 +132,10 @@ let option_uint32_value =
   let f = @option_value Uint32 in
   f uint32_zero
 
+let option_bystr20_value =
+  let f = @option_value ByStr20 in
+  f bystr20_zero
+
 let list_bystr20_length =
   fun (l : List ByStr20) =>
     let flist_length = @list_length ByStr20 in
@@ -147,7 +149,8 @@ let get_active_buffer_addr =
     let l_length = list_bystr20_length l in
     let active = builtin rem lastrewardcycle l_length in
     let flist_nth = @list_nth ByStr20 in
-    flist_nth active l
+    let addr_o = flist_nth active l in
+    option_bystr20_value addr_o
 
 let leave_unbonded =
   fun (current_bnum: BNum) =>
@@ -412,17 +415,10 @@ procedure BufferDelegate(amount: Uint128)
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
-  buffer = get_active_buffer_addr buffer_addrs cycle;
-
-  match buffer with
-  | None =>
-    e = BufferNoActive;
-    ThrowError e
-  | Some buffer_addr =>
-    msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
-    msgs = one_msg msg;
-    send msgs
-  end
+  buffer_addr = get_active_buffer_addr buffer_addrs cycle;
+  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
+  msgs = one_msg msg;
+  send msgs
 end
 
 procedure ClaimRewards(addr: ByStr20)
@@ -1044,51 +1040,44 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
       (* new_deleg must be next buffer *)
       cycle <- & zimpl.lastrewardcycle;
       next_cycle = builtin add cycle uint32_one;
-      next_buffer_o = get_active_buffer_addr var_buffers_addresses next_cycle;
+      next_buffer = get_active_buffer_addr var_buffers_addresses next_cycle;
 
-      match next_buffer_o with
-      | None =>
-        e = BufferNoActive;
-        ThrowError e
+      (* new_deleg must be next buffer *)
+      is_next_buffer = builtin eq new_deleg next_buffer;
+      match is_next_buffer with
+      | False =>
+        (* we'll confirm swap requests only for next buffer, reject other *)
+        BufferRejectDelegatorSwap new_deleg delegator
 
-      | Some next_buffer =>
-        (* new_deleg must be next buffer *)
-        is_next_buffer = builtin eq new_deleg next_buffer;
-        match is_next_buffer with
-        | False =>
-          (* we'll confirm swap requests only for next buffer, reject other *)
+      | True =>
+
+        (* throw error if next buffer has not been drained still *)
+        (* we'll confirm swap later *)
+        RequireDrainedBuffer next_buffer cycle;
+
+        (* delegator must have no pending withdrawals *)
+        o_withdrawal <- & zimpl.withdrawal_pending[delegator];
+        match o_withdrawal with
+        | Some withdrawal =>
+          (* reject swap for delegator with pending withdrawals*)
           BufferRejectDelegatorSwap new_deleg delegator
 
-        | True =>
+        | None =>
 
-          (* throw error if next buffer has not been drained still *)
-          (* we'll confirm swap later *)
-          RequireDrainedBuffer next_buffer cycle;
+          BufferConfirmDelegatorSwap new_deleg delegator;
 
-          (* delegator must have no pending withdrawals *)
-          o_withdrawal <- & zimpl.withdrawal_pending[delegator];
-          match o_withdrawal with
-          | Some withdrawal =>
-            (* reject swap for delegator with pending withdrawals*)
-            BufferRejectDelegatorSwap new_deleg delegator
-
+          (* sum delegator's stakes for each ssn, update token balance *)
+          o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
+          match o_deposit_amt_deleg with
+          | Some map_ssn_amt =>
+            total_redeleg_amt = sum_amount map_ssn_amt;
+            UpdateTokenBalance delegator total_redeleg_amt
           | None =>
-
-            BufferConfirmDelegatorSwap new_deleg delegator;
-
-            (* sum delegator's stakes for each ssn, update token balance *)
-            o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
-            match o_deposit_amt_deleg with
-            | Some map_ssn_amt =>
-              total_redeleg_amt = sum_amount map_ssn_amt;
-              UpdateTokenBalance delegator total_redeleg_amt
-            | None =>
-              (* we won't be here, because delegator can't have no stake, but have swap request *)
-              e = ChownStakeDepositNotFound;
-              ThrowError e
-            end
-
+            (* we won't be here, because delegator can't have no stake, but have swap request *)
+            e = ChownStakeDepositNotFound;
+            ThrowError e
           end
+
         end
       end
 
@@ -1118,16 +1107,9 @@ transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
 
   var_buffers_addresses <- buffers_addresses;
   lrc <- local_lastrewardcycle;
-  active_buffer_o = get_active_buffer_addr var_buffers_addresses lrc;
-
-  match active_buffer_o with
-  | None =>
-    e = BufferNoActive;
-    ThrowError e
-  | Some active_buffer =>
-    BufferClaimRewardsSsn active_buffer from_ssn;
-    BufferReDelegate active_buffer from_ssn amount
-  end
+  active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
+  BufferClaimRewardsSsn active_buffer from_ssn;
+  BufferReDelegate active_buffer from_ssn amount
 end
 
 
