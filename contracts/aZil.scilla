@@ -17,6 +17,7 @@ type Error =
   | BufferNoActive
   | BufferNotDrained
   | BufferOrHolderValidationFailed
+  | BuffersEmpty
   | CantFetchZimplBufferExistsAtSSN
   | CantFetchZimplFields
   | ChownStakeCantFetchRemote
@@ -47,6 +48,7 @@ let make_error =
       | BufferNoActive                   => "BufferNoActive"
       | BufferNotDrained                 => "BufferNotDrained"
       | BufferOrHolderValidationFailed   => "BufferOrHolderValidationFailed"
+      | BuffersEmpty                     => "BuffersEmpty"
       | CantFetchZimplBufferExistsAtSSN  => "CantFetchZimplBufferExistsAtSSN"
       | CantFetchZimplFields             => "CantFetchZimplFields"
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
@@ -132,13 +134,17 @@ let option_uint32_value =
   let f = @option_value Uint32 in
   f uint32_zero
 
+let list_bystr20_length =
+  fun (l : List ByStr20) =>
+    let flist_length = @list_length ByStr20 in
+    flist_length l
+
 let addfunds_tag = "AddFunds"
 
 let get_active_buffer_addr =
   fun (l : List ByStr20) =>
   fun (lastrewardcycle : Uint32) =>
-    let flist_length = @list_length ByStr20 in
-    let l_length = flist_length l in
+    let l_length = list_bystr20_length l in
     let active = builtin rem lastrewardcycle l_length in
     let flist_nth = @list_nth ByStr20 in
     flist_nth active l
@@ -252,6 +258,17 @@ procedure RequireNotPaused()
   | True =>
     error = Paused;
     ThrowError error
+  end
+end
+
+procedure RequireBuffers(buffers: List ByStr20)
+  llen = list_bystr20_length buffers;
+  buffers_empty = builtin eq uint32_zero llen;
+  match buffers_empty with
+  | True =>
+    error = BuffersEmpty;
+    ThrowError error
+  | False =>
   end
 end
 
@@ -698,6 +715,9 @@ transition UnPause()
     ThrowError error
   end;
 
+  var_buffers <- buffers_addresses;
+  RequireBuffers var_buffers;
+
   is_paused := false;
   e = { _eventname: "UnPause"; is_paused: uint32_zero };
   event e
@@ -758,6 +778,7 @@ end
 
 transition ChangeBuffers(new_buffers: List ByStr20)
   RequireAdmin;
+  RequireBuffers new_buffers;
   buffers_addresses := new_buffers
 end
 

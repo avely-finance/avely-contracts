@@ -7,8 +7,9 @@ import (
 )
 
 func (tr *Transitions) Pause() {
-
 	Start("Pause/Unpause")
+
+	unPauseEmptyBuffers()
 
 	p := tr.DeployAndUpgrade()
 
@@ -26,6 +27,12 @@ func (tr *Transitions) Pause() {
 	tx, _ = AssertSuccess(p.Aimpl.Unpause())
 	AssertEvent(tx, Event{p.Aimpl.Addr, "UnPause", ParamsMap{"is_paused": "0"}})
 	AssertEqual(Field(p.Aimpl, "is_paused"), "False")
+}
+
+func unPauseEmptyBuffers() {
+	p := contracts.Deploy(sdk, GetLog())
+	tx, _ := p.Aimpl.Unpause()
+	AssertError(tx, "BuffersEmpty")
 }
 
 func callPauseUnpauseNonAdmin(p *contracts.Protocol) {
