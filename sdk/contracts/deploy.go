@@ -1,11 +1,12 @@
 package contracts
 
 import (
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"log"
 	"runtime"
 	"strconv"
+
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
 func Deploy(sdk *AvelySDK, log *Log) *Protocol {
@@ -153,4 +154,30 @@ func check(tx *transaction.Transaction, err error) (*transaction.Transaction, er
 		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 	return tx, err
+}
+
+func DeployZilSwap(sdk *AvelySDK, log *Log) *ZilSwap {
+	log.Info("start to deploy ZilSwap")
+
+	// deploy azil
+	zilSwap, err := NewZilSwap(sdk)
+	if err != nil {
+		log.Fatal("deploy zilSwap error = " + err.Error())
+	}
+	log.Success("deploy zilSwap succeed, address = " + zilSwap.Addr)
+
+	return zilSwap
+}
+
+func DeploySupraToken(sdk *AvelySDK, log *Log) *SupraToken {
+	log.Info("start to deploy SupraToken")
+
+	// deploy azil
+	supraToken, err := NewSupraToken(sdk)
+	if err != nil {
+		log.Fatal("deploy supraToken error = " + err.Error())
+	}
+	log.Success("deploy supraToken succeed, address = " + supraToken.Addr)
+
+	return supraToken
 }
