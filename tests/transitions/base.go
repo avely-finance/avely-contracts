@@ -35,6 +35,16 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	return p
 }
 
+func (tr *Transitions) DeployZilSwap() *ZilSwap {
+	log := GetLog()
+	return DeployZilSwap(sdk, log)
+}
+
+func (tr *Transitions) DeploySupraToken() *SupraToken {
+	log := GetLog()
+	return DeploySupraToken(sdk, log)
+}
+
 func (tr *Transitions) FocusOn(focus string) {
 	st := reflect.TypeOf(tr)
 	_, exists := st.MethodByName(focus)
