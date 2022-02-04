@@ -2,11 +2,12 @@ package core
 
 import (
 	"encoding/json"
-	golog "log"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
+
+	logrus "github.com/sirupsen/logrus"
 
 	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/fatih/color"
@@ -20,47 +21,49 @@ func NewLog() *Log {
 	log := &Log{
 		shortcuts: make(map[string]string),
 	}
-
+	logrus.SetFormatter(&logrus.TextFormatter{
+		DisableTimestamp: true,
+	})
 	return log
 }
 
 func (mylog *Log) SetOutputStdout() {
-	golog.SetOutput(os.Stdout)
+	logrus.SetOutput(os.Stdout)
 }
 
 func (mylog *Log) Info(v ...interface{}) {
-	golog.Println(mylog.nice(v)...)
+	logrus.Info(mylog.nice(v)...)
 }
 
 func (mylog *Log) Infof(format string, v ...interface{}) {
-	golog.Printf(format, mylog.nice(v)...)
+	logrus.Infof(format, mylog.nice(v)...)
 }
 
 func (mylog *Log) Success(v ...interface{}) {
 	out := []interface{}{"🟢"}
-	golog.Println(append(out, mylog.nice(v)...)...)
+	logrus.Info(append(out, mylog.nice(v)...)...)
 }
 
 func (mylog *Log) Successf(format string, v ...interface{}) {
-	golog.Printf("🟢 "+format, mylog.nice(v)...)
+	logrus.Infof("🟢 "+format, mylog.nice(v)...)
 }
 
 func (mylog *Log) Error(v ...interface{}) {
 	out := []interface{}{"🔴"}
-	golog.Println(append(out, mylog.nice(v)...)...)
+	logrus.Error(append(out, mylog.nice(v)...)...)
 }
 
 func (mylog *Log) Errorf(format string, v ...interface{}) {
-	golog.Printf("🔴 "+format, mylog.nice(v)...)
+	logrus.Errorf("🔴 "+format, mylog.nice(v)...)
 }
 
 func (mylog *Log) Fatal(v ...interface{}) {
 	out := []interface{}{"💔"}
-	golog.Fatal(append(out, mylog.nice(v)...)...)
+	logrus.Fatal(append(out, mylog.nice(v)...)...)
 }
 
 func (mylog *Log) Fatalf(format string, v ...interface{}) {
-	golog.Fatalf("💔 "+format, mylog.nice(v)...)
+	logrus.Fatalf("💔 "+format, mylog.nice(v)...)
 }
 
 func (mylog *Log) nice(params []interface{}) []interface{} {
