@@ -4,16 +4,41 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"math/big"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
 type SupraToken struct {
 	Contract
+}
+
+func (s *SupraToken) BalanceOf(addr string) *big.Int {
+	rawState := s.Contract.SubState("balances", []string{addr})
+	state := NewState(rawState)
+
+	return state.Dig("result.balances." + addr).BigInt()
+}
+
+func (s *SupraToken) IncreaseAllowance(spender, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "spender",
+			Type:  "ByStr20",
+			Value: spender,
+		}, {
+			VName: "amount",
+			Type:  "Uint128",
+			Value: amount,
+		},
+	}
+
+	return s.Call("IncreaseAllowance", args, "0")
 }
 
 func NewSupraToken(sdk *AvelySDK) (*SupraToken, error) {

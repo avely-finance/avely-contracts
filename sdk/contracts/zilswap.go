@@ -18,16 +18,24 @@ type ZilSwap struct {
 	Contract
 }
 
-func (z *ZilSwap) AddLiquidity(token *SupraToken, zilAmount, tokenAmount string) (*transaction.Transaction, error) {
+const blockShift = 3
+
+func (z *ZilSwap) Initialize() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+
+	return z.Call("Initialize", args, "0")
+}
+
+func (z *ZilSwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string) (*transaction.Transaction, error) {
 	blockNumStr, _ := z.Sdk.GetBlockNumber()
 	blockNum, _ := strconv.Atoi(blockNumStr)
-	deadline := blockNum + 3
+	deadline := blockNum + blockShift
 
 	args := []core.ContractValue{
 		{
 			VName: "token_address",
 			Type:  "ByStr20",
-			Value: token.Contract.Bech32,
+			Value: tokenAddr,
 		}, {
 			VName: "min_contribution_amount",
 			Type:  "Uint128",
@@ -43,6 +51,33 @@ func (z *ZilSwap) AddLiquidity(token *SupraToken, zilAmount, tokenAmount string)
 		},
 	}
 	return z.Call("AddLiquidity", args, zilAmount)
+}
+
+func (z *ZilSwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, recipientAddress string) (*transaction.Transaction, error) {
+	blockNumStr, _ := z.Sdk.GetBlockNumber()
+	blockNum, _ := strconv.Atoi(blockNumStr)
+	deadline := blockNum + blockShift
+
+	args := []core.ContractValue{
+		{
+			VName: "token_address",
+			Type:  "ByStr20",
+			Value: tokenAddr,
+		}, {
+			VName: "min_token_amount",
+			Type:  "Uint128",
+			Value: minTokenAmount,
+		}, {
+			VName: "deadline_block",
+			Type:  "BNum",
+			Value: strconv.Itoa(deadline),
+		}, {
+			VName: "recipient_address",
+			Type:  "ByStr20",
+			Value: recipientAddress,
+		},
+	}
+	return z.Call("SwapExactZILForTokens", args, zilAmount)
 }
 
 func NewZilSwap(sdk *AvelySDK) (*ZilSwap, error) {
