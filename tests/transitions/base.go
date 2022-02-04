@@ -37,12 +37,31 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 
 func (tr *Transitions) DeployZilSwap() *ZilSwap {
 	log := GetLog()
-	return DeployZilSwap(sdk, log)
+	zilSwap, err := NewZilSwap(sdk)
+	if err != nil {
+		log.Fatal("deploy zilSwap error = " + err.Error())
+	}
+
+	_, err = zilSwap.Initialize()
+	if err != nil {
+		log.Fatal("deploy zilSwap error = " + err.Error())
+	}
+
+	log.Success("deploy zilSwap succeed, address = " + zilSwap.Addr)
+
+	return zilSwap
 }
 
 func (tr *Transitions) DeploySupraToken() *SupraToken {
 	log := GetLog()
-	return DeploySupraToken(sdk, log)
+	supraToken, err := NewSupraToken(sdk)
+
+	if err != nil {
+		log.Fatal("deploy supraToken error = " + err.Error())
+	}
+	log.Success("deploy supraToken succeed, address = " + supraToken.Addr)
+
+	return supraToken
 }
 
 func (tr *Transitions) FocusOn(focus string) {

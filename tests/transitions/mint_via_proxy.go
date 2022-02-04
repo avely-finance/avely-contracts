@@ -11,8 +11,14 @@ func (tr *Transitions) MintViaProxy() {
 	zilSwap := tr.DeployZilSwap()
 	supraToken := tr.DeploySupraToken()
 
-	zilAmount := ToQA(100)
-	tokenAmount := ToQA(100)
+	zilLiqAmount := ToQA(1000)
+	tokenLiqAmount := ToQA(1000)
 
-	zilSwap.AddLiquidity(supraToken, zilAmount, tokenAmount)
+	AssertSuccess(supraToken.IncreaseAllowance(zilSwap.Contract.Addr, ToQA(10000)))
+	AssertSuccess(zilSwap.AddLiquidity(supraToken.Contract.Addr, zilLiqAmount, tokenLiqAmount))
+
+	recipient := sdk.Cfg.Addr1
+
+	AssertSuccess(zilSwap.SwapExactZILForTokens(supraToken.Contract.Addr, ToQA(10), "1", recipient))
+	AssertEqual(supraToken.BalanceOf(recipient).String(), "9871580343970")
 }
