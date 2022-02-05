@@ -26,9 +26,7 @@ func (z *ZilSwap) Initialize() (*transaction.Transaction, error) {
 	return z.Call("Initialize", args, "0")
 }
 
-func (z *ZilSwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string) (*transaction.Transaction, error) {
-	blockNumStr, _ := z.Sdk.GetBlockNumber()
-	blockNum, _ := strconv.Atoi(blockNumStr)
+func (z *ZilSwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNum int) (*transaction.Transaction, error) {
 	deadline := blockNum + blockShift
 
 	args := []core.ContractValue{
@@ -53,9 +51,7 @@ func (z *ZilSwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string) (*trans
 	return z.Call("AddLiquidity", args, zilAmount)
 }
 
-func (z *ZilSwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, recipientAddress string) (*transaction.Transaction, error) {
-	blockNumStr, _ := z.Sdk.GetBlockNumber()
-	blockNum, _ := strconv.Atoi(blockNumStr)
+func (z *ZilSwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, recipientAddress string, blockNum int) (*transaction.Transaction, error) {
 	deadline := blockNum + blockShift
 
 	args := []core.ContractValue{

@@ -64,10 +64,6 @@ func (sdk *AvelySDK) GetBalance(addr string) string {
 	return balAndNonce.Balance
 }
 
-func (sdk *AvelySDK) GetBlockNumber() (string, error) {
-	return sdk.InitProvider().GetNumDSBlocks()
-}
-
 func (sdk *AvelySDK) GetAddressFromPrivateKey(privateKey string) string {
 	publicKey := keytools.GetPublicKeyFromPrivateKey(util.DecodeHex(privateKey), true)
 	address := keytools.GetAddressFromPublic(publicKey)
