@@ -1,0 +1,54 @@
+scilla_version 0
+
+import IntUtils
+
+(***************************************************)
+(*               Associated library                *)
+(***************************************************)
+library MinterProxy
+
+let uint128_one = Uint128 1
+
+let one_msg =
+  fun (msg : Message) =>
+    let nil_msg = Nil {Message} in
+    Cons {Message} msg nil_msg
+
+contract MinterProxy(
+  init_azil_address         : ByStr20,
+  init_zilswap_address      : ByStr20
+)
+
+field azil_address          : ByStr20 = init_azil_address
+field zilswap_address       : ByStr20 = init_zilswap_address
+
+(************************************************************)
+(* @dev: Procedures                                         *)
+(************************************************************)
+
+(* procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
+end *)
+
+procedure SwapExactZILForTokens(amount: Uint128, min_token_amount: Uint128)
+  token_address <- azil_address;
+  zilswap_addr <- zilswap_address;
+
+  current_block <- & BLOCKNUMBER;
+  deadline_block = builtin badd current_block uint128_one;
+  recipient_address = _sender;
+
+  msg = {_tag: "SwapExactZILForTokens"; _recipient: zilswap_addr; _amount: amount;
+          token_address: token_address; min_token_amount: min_token_amount;
+          deadline_block: deadline_block; recipient_address: recipient_address};
+  msgs = one_msg msg;
+  send msgs
+end
+
+transition Mint()
+  accept;
+  min_token_amount = uint128_one;
+  amount = _amount;
+  SwapExactZILForTokens amount min_token_amount
+end
