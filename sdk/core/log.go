@@ -2,11 +2,13 @@ package core
 
 import (
 	"encoding/json"
+	"net/url"
 	"os"
 	"reflect"
 	"sort"
 	"strings"
 
+	"github.com/johntdyer/slackrus"
 	logrus "github.com/sirupsen/logrus"
 
 	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
@@ -27,6 +29,26 @@ func NewLog() *Log {
 	return log
 }
 
+func (mylog *Log) AddSlackHook(hookUrl, level string) {
+	_, err := url.ParseRequestURI(hookUrl)
+	if err != nil {
+		return
+	}
+
+	logrusLevel, err := logrus.ParseLevel(level)
+	if err != nil {
+		logrusLevel = logrus.ErrorLevel
+	}
+	logrus.AddHook(&slackrus.SlackrusHook{
+		HookURL:        hookUrl,
+		AcceptedLevels: slackrus.LevelThreshold(logrusLevel),
+		//Channel:        " #watcher-mainnet",
+		//IconEmoji:      ":ghost:",
+		//Username:       "Watcher",
+	})
+
+}
+
 func (mylog *Log) SetOutputStdout() {
 	logrus.SetOutput(os.Stdout)
 }
@@ -40,7 +62,7 @@ func (mylog *Log) Infof(format string, v ...interface{}) {
 }
 
 func (mylog *Log) Success(v ...interface{}) {
-	out := []interface{}{"🟢"}
+	out := []interface{}{"🟢 "}
 	logrus.Info(append(out, mylog.nice(v)...)...)
 }
 
@@ -49,7 +71,7 @@ func (mylog *Log) Successf(format string, v ...interface{}) {
 }
 
 func (mylog *Log) Error(v ...interface{}) {
-	out := []interface{}{"🔴"}
+	out := []interface{}{"🔴 "}
 	logrus.Error(append(out, mylog.nice(v)...)...)
 }
 
@@ -58,7 +80,7 @@ func (mylog *Log) Errorf(format string, v ...interface{}) {
 }
 
 func (mylog *Log) Fatal(v ...interface{}) {
-	out := []interface{}{"💔"}
+	out := []interface{}{"💔 "}
 	logrus.Fatal(append(out, mylog.nice(v)...)...)
 }
 

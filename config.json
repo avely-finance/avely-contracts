@@ -5,6 +5,10 @@
       "WebsocketUrl": "dev-ws.zilliqa.com",
       "WebsocketSchema": "wss"
     },
+    "Slack": {
+      "HookUrl": "",
+      "LogLevel": "fatal"
+    },
     "ChainId": 222,
     "TxConfrimMaxAttempts": 5,
     "TxConfirmIntervalSec": 0,
@@ -36,6 +40,10 @@
       "HttpUrl": "https://dev-api.zilliqa.com",
       "WebsocketUrl": "dev-ws.zilliqa.com",
       "WebsocketSchema": "wss"
+    },
+    "Slack": {
+      "HookUrl": "",
+      "LogLevel": "error"
     },
     "ChainId": 333,
     "TxConfrimMaxAttempts": 15,
@@ -70,6 +78,10 @@
       "HttpUrl": "https://api.zilliqa.com",
       "WebsocketUrl": "api-ws.zilliqa.com",
       "WebsocketSchema": "wss"
+    },
+    "Slack": {
+      "HookUrl": "",
+      "LogLevel": "error"
     },
     "ChainId": 1,
     "TxConfrimMaxAttempts": 15,
