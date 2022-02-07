@@ -64,6 +64,11 @@ func (tr *Transitions) DeploySupraToken() *SupraToken {
 	return supraToken
 }
 
+func (tr *Transitions) DeployMinterProxy(tokenAddr, zilSwapAddr string) *MinterProxy {
+	log := GetLog()
+	return DeployMinterProxy(sdk, tokenAddr, zilSwapAddr, log)
+}
+
 func (tr *Transitions) FocusOn(focus string) {
 	st := reflect.TypeOf(tr)
 	_, exists := st.MethodByName(focus)
