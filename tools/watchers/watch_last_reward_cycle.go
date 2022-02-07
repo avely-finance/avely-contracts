@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+
 	"github.com/avely-finance/avely-contracts/sdk/actions"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
@@ -26,6 +27,7 @@ func main() {
 	sdk = core.NewAvelySDK(*config)
 	log = core.NewLog()
 	log.SetOutputStdout()
+	log.AddSlackHook(sdk.Cfg.Slack.HookUrl, sdk.Cfg.Slack.LogLevel)
 	protocol = contracts.RestoreFromState(sdk, log)
 	url := sdk.GetWsURL()
 

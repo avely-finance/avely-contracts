@@ -14,9 +14,15 @@ type ApiConfig struct {
 	WebsocketSchema string
 }
 
+type SlackConfig struct {
+	HookUrl  string
+	LogLevel string
+}
+
 type Config struct {
 	Chain                    string
 	Api                      ApiConfig
+	Slack                    SlackConfig
 	ChainId                  int
 	TxConfrimMaxAttempts     int
 	TxConfirmIntervalSec     int
@@ -72,6 +78,5 @@ func NewConfig(chain string) *Config {
 	if err != nil {
 		log.Fatalf("Fatal error config file: %w \n", err)
 	}
-
 	return config
 }
