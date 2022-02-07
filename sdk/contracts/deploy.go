@@ -1,11 +1,12 @@
 package contracts
 
 import (
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"log"
 	"runtime"
 	"strconv"
+
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
 func Deploy(sdk *AvelySDK, log *Log) *Protocol {

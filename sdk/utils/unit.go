@@ -16,3 +16,7 @@ func ToZil(amount int) string {
 func ToAzil(amount int) string {
 	return ToZil(amount)
 }
+
+func ToQA(amount int) string {
+	return ToZil(amount)
+}
