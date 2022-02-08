@@ -61,14 +61,6 @@ func (mylog *Log) SetOutputStdout() {
 	mylog.SetOutput(os.Stdout)
 }
 
-func (mylog *Log) Success(v ...interface{}) {
-	mylog.Info(v...)
-}
-
-func (mylog *Log) Successf(format string, v ...interface{}) {
-	mylog.Infof(format, v...)
-}
-
 func (mylog *Log) AddShortcut(key, value string) {
 	mylog.shortcuts[key] = value
 }

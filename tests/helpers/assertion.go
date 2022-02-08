@@ -3,12 +3,13 @@ package helpers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	sdk "github.com/avely-finance/avely-contracts/sdk/core"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/Zilliqa/gozilliqa-sdk/core"
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	sdk "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
 type ParamsMap map[string]string
@@ -52,7 +53,7 @@ func AssertEqual(s1, s2 string) {
 		GetLog().Error("ACTUAL: " + s1)
 		GetLog().Fatal("TESTS ARE FAILED")
 	} else {
-		GetLog().Success("ASSERT_EQUAL SUCCESS")
+		GetLog().Info("ASSERT_EQUAL SUCCESS")
 	}
 }
 
@@ -98,7 +99,7 @@ func AssertContainRaw(code, s1, s2, file string, no int) {
 		GetLog().Error(s2)
 		GetLog().Fatal("TESTS ARE FAILED")
 	} else {
-		GetLog().Success(code)
+		GetLog().Info(code)
 	}
 }
 
@@ -133,7 +134,7 @@ func AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
 		}
 	}
 	if found {
-		GetLog().Success("ASSERT_TRANSITION SUCCESS")
+		GetLog().Info("ASSERT_TRANSITION SUCCESS")
 	} else {
 		_, file, no, _ := runtime.Caller(1)
 		GetLog().Error("ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
@@ -160,7 +161,7 @@ func AssertEvent(txn *transaction.Transaction, expectedEvent Event) {
 	}
 
 	if found {
-		GetLog().Success("ASSERT_EVENT SUCCESS")
+		GetLog().Info("ASSERT_EVENT SUCCESS")
 	} else {
 		_, file, no, _ := runtime.Caller(1)
 		GetLog().Error("ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
