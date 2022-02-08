@@ -47,7 +47,7 @@ func (cw *BlockWatcher) Start() {
 				cw.NotifyAll(blockNum)
 			}
 		case err := <-ec:
-			log.Errorf("Got error: %s", err)
+			log.Error("Got error: " + err.Error())
 			cancel = true
 		}
 
