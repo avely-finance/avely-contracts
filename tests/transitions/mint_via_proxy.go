@@ -1,6 +1,8 @@
 package transitions
 
 import (
+	"strconv"
+
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
@@ -39,7 +41,9 @@ func (tr *Transitions) MintViaProxy() {
 
 	minterProxy := tr.DeployMinterProxy(supraToken.Contract.Addr, zilSwap.Contract.Addr)
 
-	AssertSuccess(minterProxy.WithUser(sdk.Cfg.Key1).Mint(ToQA(10)))
+	blockNum := p.GetBlockHeight()
+
+	AssertSuccess(minterProxy.WithUser(sdk.Cfg.Key1).Mint(ToQA(10), swapOutput, strconv.Itoa(blockNum+1)))
 	AssertEqual(supraToken.BalanceOf(recipient).String(), swapOutput)
 }
 
