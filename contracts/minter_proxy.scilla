@@ -31,7 +31,7 @@ field zilswap_address       : ByStr20 = init_zilswap_address
   throw e
 end *)
 
-procedure SwapExactZILForTokens(amount: Uint128, min_token_amount: Uint128)
+procedure SwapExactZILForTokens(amount: Uint128, min_azil_amount: Uint128, deadline_block: BNum)
   token_address <- azil_address;
   zilswap_addr <- zilswap_address;
 
@@ -40,15 +40,23 @@ procedure SwapExactZILForTokens(amount: Uint128, min_token_amount: Uint128)
   recipient_address = _sender;
 
   msg = {_tag: "SwapExactZILForTokens"; _recipient: zilswap_addr; _amount: amount;
-          token_address: token_address; min_token_amount: min_token_amount;
+          token_address: token_address; min_token_amount: min_azil_amount;
           deadline_block: deadline_block; recipient_address: recipient_address};
   msgs = one_msg msg;
   send msgs
 end
 
-transition Mint()
+transition Mint(min_azil_amount: Uint128, deadline_block: BNum)
   accept;
-  min_token_amount = uint128_one;
   amount = _amount;
-  SwapExactZILForTokens amount min_token_amount
+
+  current_block <- & BLOCKNUMBER;
+  is_not_expired = builtin blt current_block deadline_block;
+  match is_not_expired with
+  | True =>
+    (*  *)
+    SwapExactZILForTokens amount min_azil_amount deadline_block
+  | False =>
+    (* Use AZil for direct stake *)
+  end
 end
