@@ -7,6 +7,7 @@ import (
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
+	"github.com/sirupsen/logrus"
 )
 
 var log = helpers.GetLog()
@@ -78,7 +79,7 @@ func ConfirmSwapRequests(p *Protocol) {
 	for _, initiator := range swapRequests {
 		tx, err := p.Aimpl.ChownStakeConfirmSwap(initiator)
 		if err != nil {
-			log.Errorf("Can't confirm swap: ChownStakeConfirmSwap(%s) error=%s, txid=%s", initiator, err, tx.ID)
+			log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": err.Error()}).Error("Can't confirm swap")
 			errCnt++
 		} else {
 			log.Infof("Swap confirmed: ChownStakeConfirmSwap(%s) OK, txid=%s", initiator, tx.ID)
