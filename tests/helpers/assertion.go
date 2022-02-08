@@ -37,7 +37,7 @@ type EventLog struct {
 }
 
 func Start(tag string) {
-	GetLog().Infof("⚙️  === Start to test %s === \n", tag)
+	GetLog().Infof("⚙️ === Start to test %s ===", tag)
 }
 
 func AssertContain(s1, s2 string) {
