@@ -99,7 +99,7 @@ func main() {
 		}
 	}
 
-	log.Success("Done")
+	log.Info("Done")
 }
 
 func deployAvely() {
@@ -111,17 +111,17 @@ func showTx(p *Protocol, tx_addr string) {
 	provider := p.Aimpl.Contract.Provider
 	tx, err := provider.GetTransaction(tx_addr)
 	if err != nil {
-		log.Successf("Err: %s", err)
+		log.Infof("Err: %s", err)
 	} else {
-		log.Success(tx)
+		log.Info(tx)
 	}
 }
 
 func getActiveBuffer(p *Protocol) {
 	buffer := p.GetActiveBuffer()
 
-	log.Successf("lastrewardcycle: %s", p.GetLastRewardCycle())
-	log.Successf("Active buffer: %s", buffer.Contract.Addr)
+	log.Infof("lastrewardcycle: %s", p.GetLastRewardCycle())
+	log.Infof("Active buffer: %s", buffer.Contract.Addr)
 }
 
 func initHolder(p *Protocol) {
@@ -130,7 +130,7 @@ func initHolder(p *Protocol) {
 	if err != nil {
 		log.Fatalf("Holder init failed with error: %s", err)
 	}
-	log.Success("Holder init is successfully compeleted.")
+	log.Info("Holder init is successfully compeleted.")
 }
 
 func convertFromBech32Addr(addr32 string) {
@@ -140,7 +140,7 @@ func convertFromBech32Addr(addr32 string) {
 		log.Fatalf("Convert failed with err: %s", err)
 	}
 
-	log.Successf("Converted address: %s", addr)
+	log.Infof("Converted address: %s", addr)
 }
 
 func convertToBech32Addr(addr32 string) {
@@ -150,7 +150,7 @@ func convertToBech32Addr(addr32 string) {
 		log.Fatalf("Convert failed with err: %s", err)
 	}
 
-	log.Successf("Converted address: %s", addr)
+	log.Infof("Converted address: %s", addr)
 }
 
 func deployBuffer(p *Protocol) {
@@ -159,7 +159,7 @@ func deployBuffer(p *Protocol) {
 	if err != nil {
 		log.Fatalf("Buffer deploy failed with error: ", err)
 	}
-	log.Success("Buffer deploy is successfully completed. Address: " + buffer.Addr)
+	log.Info("Buffer deploy is successfully completed. Address: " + buffer.Addr)
 }
 
 func unpause(p *Protocol) {
@@ -168,7 +168,7 @@ func unpause(p *Protocol) {
 	if err != nil {
 		log.Fatalf("Unpause AZil failed with error: ", err)
 	}
-	log.Success("Unpause AZil is successfully completed")
+	log.Info("Unpause AZil is successfully completed")
 }
 
 func syncBuffers(p *Protocol) {
@@ -181,7 +181,7 @@ func drainBuffer(p *Protocol, buffer_addr string) {
 	if err != nil {
 		log.Fatalf("Drain failed with error: ", err)
 	}
-	log.Success("Drain is successfully completed. Tx: " + tx.ID)
+	log.Info("Drain is successfully completed. Tx: " + tx.ID)
 }
 
 func showRewards(p *Protocol, ssn, deleg string) {
