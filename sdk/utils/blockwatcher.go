@@ -1,10 +1,11 @@
 package utils
 
 import (
+	"net/url"
+
 	"github.com/Zilliqa/gozilliqa-sdk/subscription"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/tidwall/gjson"
-	"net/url"
 )
 
 type Observer interface {
@@ -33,7 +34,7 @@ func (cw *BlockWatcher) Start() {
 	_, ec, msg := subscriber.Start()
 	cancel := false
 
-	log.Successf("Start block watcher, url=%s", cw.url.String())
+	log.Debugf("Start block watcher, url=%s", cw.url.String())
 
 	for {
 		if cancel {

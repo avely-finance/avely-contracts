@@ -38,7 +38,7 @@ func main() {
 		runAtBlock: -1,
 	}
 
-	log.Success("Start swap request watcher")
+	log.Info("Start swap request watcher")
 	blockWatcher := utils.CreateBlockWatcher(url)
 	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()
@@ -46,10 +46,10 @@ func main() {
 
 func (w *SwapRequestWatcher) Notify(blockNum int) {
 	if (blockNum - w.runAtBlock) > w.gap {
-		log.Successf("Mined block #%d.", blockNum)
+		log.Debugf("Mined block #%d.", blockNum)
 		actions.ConfirmSwapRequests(protocol)
 		w.runAtBlock = blockNum
 	} else {
-		log.Successf("Mined block #%d, but gap=%d <= %d, skip.", blockNum, (blockNum - w.runAtBlock), w.gap)
+		log.Debugf("Mined block #%d, but gap=%d <= %d, skip.", blockNum, (blockNum - w.runAtBlock), w.gap)
 	}
 }

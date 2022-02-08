@@ -35,7 +35,7 @@ func main() {
 		currentLrc: -1,
 	}
 
-	log.Success("Start last reward cycle watcher")
+	log.Info("Start last reward cycle watcher")
 	blockWatcher := utils.CreateBlockWatcher(url)
 	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()
@@ -47,12 +47,12 @@ func main() {
 //   3. Autorestake funds
 func (w *LastRewardCycleWatcher) Notify(blockNum int) {
 	lrc := protocol.GetLastRewardCycle()
-	log.Successf("New block #%d is mined. Current Last Reward Cycle is %d.", blockNum, lrc)
+	log.Debugf("New block #%d is mined. Current Last Reward Cycle is %d.", blockNum, lrc)
 
 	if lrc == w.currentLrc {
-		log.Success("Last Reward Cycle is not changed, skip.")
+		log.Debug("Last Reward Cycle is not changed, skip.")
 	} else {
-		log.Success("New Last Reward Cycle!")
+		log.Infof("New block #%d is mined. New Last Reward Cycle is %d.", blockNum, lrc)
 		actions.DrainBuffer(protocol, lrc)
 		showOnly := false
 		actions.ChownStakeReDelegate(protocol, showOnly)
