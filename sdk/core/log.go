@@ -20,6 +20,7 @@ type Log struct {
 func NewLog() *Log {
 	shortcuts := make(map[string]string)
 	lgr := logrus.New()
+	lgr.SetLevel(logrus.DebugLevel)
 	log := &Log{
 		lgr,
 		shortcuts,

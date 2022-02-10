@@ -155,7 +155,7 @@ func DeployMinterProxy(sdk *AvelySDK, tokenAddr, zilSwapAddr string, log *Log) *
 	if err != nil {
 		log.Fatal("deploy minter proxy error = " + err.Error())
 	}
-	log.Success("deploy minter proxy succeed, address = " + minterProxy.Addr)
+	log.Info("deploy minter proxy succeed, address = " + minterProxy.Addr)
 
 	return minterProxy
 }
