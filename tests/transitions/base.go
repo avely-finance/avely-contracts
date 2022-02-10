@@ -95,6 +95,8 @@ func (tr *Transitions) RunAll() {
 	tr.ChownStakeZimplErrors()
 	tr.ChownStakeAimplErrors()
 	tr.ChownStakeRequireDrainBuffer()
+	tr.AddToSwap()
+	tr.TransferFrom()
 
 	if !IsCI() {
 		tr.DrainBuffer()

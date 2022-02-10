@@ -24,8 +24,18 @@ func (m *MinterProxy) WithUser(key string) *MinterProxy {
 	return m
 }
 
-func (m *MinterProxy) Mint(zilAmount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (m *MinterProxy) Mint(zilAmount string, minAzilAmount string, deadlineBlock string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "min_azil_amount",
+			Type:  "Uint128",
+			Value: minAzilAmount,
+		}, {
+			VName: "deadline_block",
+			Type:  "BNum",
+			Value: deadlineBlock,
+		},
+	}
 
 	return m.Call("Mint", args, zilAmount)
 }
