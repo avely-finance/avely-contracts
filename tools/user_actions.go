@@ -75,7 +75,7 @@ func delegate(p *Protocol, amount int) {
 	tx, err := p.Aimpl.DelegateStake(utils.ToZil(amount))
 
 	if err != nil {
-		log.Fatalf("Delegate failed with error:", tx)
+		log.Fatal("Delegate failed with error:" + err.Error())
 	} else {
 		log.Info("Delegate is successfully compelted. Tx: " + tx.ID)
 	}

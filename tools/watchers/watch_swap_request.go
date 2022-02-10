@@ -7,6 +7,7 @@ import (
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type SwapRequestWatcher struct {
@@ -46,10 +47,14 @@ func main() {
 
 func (w *SwapRequestWatcher) Notify(blockNum int) {
 	if (blockNum - w.runAtBlock) > w.gap {
-		log.Debugf("Mined block #%d.", blockNum)
+		log.WithFields(logrus.Fields{"block_number": blockNum}).Debug("Mined block")
 		actions.ConfirmSwapRequests(protocol)
 		w.runAtBlock = blockNum
 	} else {
-		log.Debugf("Mined block #%d, but gap=%d <= %d, skip.", blockNum, (blockNum - w.runAtBlock), w.gap)
+		log.WithFields(logrus.Fields{
+			"block_number": blockNum,
+			"current_gap":  (blockNum - w.runAtBlock),
+			"expected_gap": w.gap,
+		}).Debug("Block mined, skip")
 	}
 }
