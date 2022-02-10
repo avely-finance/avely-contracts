@@ -20,6 +20,8 @@ func (tr *Transitions) IsAdmin() {
 	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Aimpl.ChangeAzilSSNAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "AdminValidationFailed")
+	tx, _ = p.Aimpl.ChangeTreasuryAddress(sdk.Cfg.Addr3)
+	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Aimpl.ChangeHolderAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "AdminValidationFailed")
 
