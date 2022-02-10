@@ -119,6 +119,17 @@ func (a *AZil) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, 
 	return a.Call("ChangeAzilSSNAddress", args, "0")
 }
 
+func (a *AZil) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			new_addr,
+		},
+	}
+	return a.Call("ChangeTreasuryAddress", args, "0")
+}
+
 func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
