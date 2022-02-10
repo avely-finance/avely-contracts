@@ -11,7 +11,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	p := tr.DeployAndUpgrade()
 	feeDenom := "10000"
-	rewardsFee := "1000" //10%
+	rewardsFee := "1990" //19.9%
 	treasuryAddr := sdk.Cfg.Addr3
 	totalFee := "0"
 	p.Aimpl.ChangeRewardsFee(rewardsFee)
