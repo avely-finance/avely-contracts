@@ -29,6 +29,29 @@ func (a *AZil) WithUser(key string) *AZil {
 	return a
 }
 
+func (s *AZil) BalanceOf(addr string) *big.Int {
+	rawState := s.Contract.SubState("balances", []string{addr})
+	state := NewState(rawState)
+
+	return state.Dig("result.balances." + addr).BigInt()
+}
+
+func (s *AZil) IncreaseAllowance(spender, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "spender",
+			Type:  "ByStr20",
+			Value: spender,
+		}, {
+			VName: "amount",
+			Type:  "Uint128",
+			Value: amount,
+		},
+	}
+
+	return s.Call("IncreaseAllowance", args, "0")
+}
+
 func (a *AZil) ChangeAdmin(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -366,6 +389,18 @@ func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
 			VName: "init_holder_address",
 			Type:  "ByStr20",
 			Value: "0xb2e2c996e6068f4ae11c4cc2c6a189b774819f79",
+		}, {
+			VName: "name",
+			Type:  "String",
+			Value: "AZIL",
+		}, {
+			VName: "symbol",
+			Type:  "String",
+			Value: "AZIL",
+		}, {
+			VName: "decimals",
+			Type:  "Uint32",
+			Value: "12",
 		},
 	}
 
