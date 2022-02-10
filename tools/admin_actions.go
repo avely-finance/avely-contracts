@@ -10,6 +10,7 @@ import (
 	"github.com/avely-finance/avely-contracts/sdk/actions"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/sirupsen/logrus"
 )
 
 var log *Log
@@ -99,7 +100,7 @@ func main() {
 		}
 	}
 
-	log.Success("Done")
+	log.Info("Done")
 }
 
 func deployAvely() {
@@ -111,64 +112,64 @@ func showTx(p *Protocol, tx_addr string) {
 	provider := p.Aimpl.Contract.Provider
 	tx, err := provider.GetTransaction(tx_addr)
 	if err != nil {
-		log.Successf("Err: %s", err)
+		log.Errorf("Err: %s", err)
 	} else {
-		log.Success(tx)
+		log.Info(tx)
 	}
 }
 
 func getActiveBuffer(p *Protocol) {
-	buffer := p.GetActiveBuffer()
-
-	log.Successf("lastrewardcycle: %s", p.GetLastRewardCycle())
-	log.Successf("Active buffer: %s", buffer.Contract.Addr)
+	log.WithFields(logrus.Fields{
+		"lrc":           p.GetLastRewardCycle(),
+		"active_buffer": p.GetActiveBuffer().Contract.Addr,
+	}).Info("Active buffer / lrc")
 }
 
 func initHolder(p *Protocol) {
 	_, err := p.InitHolder()
 
 	if err != nil {
-		log.Fatalf("Holder init failed with error: %s", err)
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Holder init failed")
 	}
-	log.Success("Holder init is successfully compeleted.")
+	log.Info("Holder init is successfully compeleted.")
 }
 
 func convertFromBech32Addr(addr32 string) {
 	addr, err := bech32.FromBech32Addr(addr32)
 
 	if err != nil {
-		log.Fatalf("Convert failed with err: %s", err)
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Convert failed")
 	}
 
-	log.Successf("Converted address: %s", addr)
+	log.WithFields(logrus.Fields{"addr": addr}).Info("Converted address")
 }
 
 func convertToBech32Addr(addr32 string) {
 	addr, err := bech32.ToBech32Address(addr32)
 
 	if err != nil {
-		log.Fatalf("Convert failed with err: %s", err)
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Convert failed")
 	}
 
-	log.Successf("Converted address: %s", addr)
+	log.WithFields(logrus.Fields{"addr": addr}).Info("Converted address")
 }
 
 func deployBuffer(p *Protocol) {
 	buffer, err := p.DeployBuffer()
 
 	if err != nil {
-		log.Fatalf("Buffer deploy failed with error: ", err)
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Buffer deploy failed")
 	}
-	log.Success("Buffer deploy is successfully completed. Address: " + buffer.Addr)
+	log.WithFields(logrus.Fields{"address": buffer.Addr}).Info("Buffer deploy is successfully completed")
 }
 
 func unpause(p *Protocol) {
 	_, err := p.Aimpl.Unpause()
 
 	if err != nil {
-		log.Fatalf("Unpause AZil failed with error: ", err)
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause AZil failed")
 	}
-	log.Success("Unpause AZil is successfully completed")
+	log.Info("Unpause AZil is successfully completed")
 }
 
 func syncBuffers(p *Protocol) {
@@ -179,9 +180,9 @@ func drainBuffer(p *Protocol, buffer_addr string) {
 	tx, err := p.Aimpl.DrainBuffer(buffer_addr)
 
 	if err != nil {
-		log.Fatalf("Drain failed with error: ", err)
+		log.WithFields(logrus.Fields{"buffer_addr": buffer_addr, "error": err.Error()}).Fatal("Drain buffer failed")
 	}
-	log.Success("Drain is successfully completed. Tx: " + tx.ID)
+	log.WithFields(logrus.Fields{"buffer_addr": buffer_addr, "tx": tx.ID}).Info("Drain is successfully completed")
 }
 
 func showRewards(p *Protocol, ssn, deleg string) {
@@ -253,8 +254,7 @@ func showSwapRequests(p *Protocol) {
 	for _, buffer := range p.Buffers {
 		buffers[buffer.Addr] = true
 	}
-	log.Infof("Active buffer: %s", p.GetActiveBuffer().Addr)
-	log.Infof("Next buffer: %s", nextBuffer)
+	log.WithFields(logrus.Fields{"active_buffer": p.GetActiveBuffer().Addr, "next_buffer": nextBuffer}).Info("Buffers")
 	for initiator, new_deleg := range swapRequests {
 		new_deleg_string := new_deleg.String()
 		status := ""
@@ -267,8 +267,8 @@ func showSwapRequests(p *Protocol) {
 			default:
 				status = "WRONG BUFFER"
 			}
-			log.Infof("%s => %s, status=%s", initiator, new_deleg_string, status)
+			log.WithFields(logrus.Fields{"initiator": initiator, "new_deleg": new_deleg_string, "status": status}).Info("Swap request")
 		}
 	}
-	log.Infof("Found %d swap request(s)", i)
+	log.WithFields(logrus.Fields{"count": i}).Info("Swap requests total")
 }

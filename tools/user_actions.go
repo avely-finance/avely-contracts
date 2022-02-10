@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
+	"reflect"
+
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
-	"reflect"
 )
 
 var log *Log
@@ -48,7 +49,7 @@ func main() {
 		log.Fatal("Unknown command")
 	}
 
-	log.Success("Done")
+	log.Info("Done")
 }
 
 func setupUsr(p *Protocol, usr string) {
@@ -63,7 +64,7 @@ func setupUsr(p *Protocol, usr string) {
 
 	p.Aimpl.UpdateWallet(key)
 
-	log.Success("Wallet has been updates to Key" + usr)
+	log.Info("Wallet has been updates to Key" + usr)
 }
 
 func delegate(p *Protocol, amount int) {
@@ -76,6 +77,6 @@ func delegate(p *Protocol, amount int) {
 	if err != nil {
 		log.Fatalf("Delegate failed with error:", tx)
 	} else {
-		log.Success("Delegate is successfully compelted. Tx: " + tx.ID)
+		log.Info("Delegate is successfully compelted. Tx: " + tx.ID)
 	}
 }

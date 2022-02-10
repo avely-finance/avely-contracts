@@ -38,6 +38,7 @@ func main() {
 		runAtBlock: -1,
 	}
 
+	log.Info("Start claim withdrawal watcher")
 	blockWatcher := utils.CreateBlockWatcher(url)
 	blockWatcher.AddObserver(claimWatcher)
 	blockWatcher.Start()
@@ -45,10 +46,10 @@ func main() {
 
 func (cww *ClaimWithdrawalWatcher) Notify(blockNum int) {
 	if (blockNum - cww.runAtBlock) > cww.gap {
-		log.Successf("Mined block #%d.", blockNum)
+		log.Debugf("Mined block #%d.", blockNum)
 		actions.ClaimWithdrawal(protocol)
 		cww.runAtBlock = blockNum
 	} else {
-		log.Successf("Mined block #%d, but gap=%d <= %d, skip.", blockNum, (blockNum - cww.runAtBlock), cww.gap)
+		log.Debugf("Mined block #%d, but gap=%d <= %d, skip.", blockNum, (blockNum - cww.runAtBlock), cww.gap)
 	}
 }

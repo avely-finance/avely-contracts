@@ -1,31 +1,39 @@
 package core
 
 import (
-	"encoding/json"
 	"net/url"
 	"os"
-	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/johntdyer/slackrus"
-	logrus "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
-	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/fatih/color"
 )
 
 type Log struct {
+	*logrus.Logger
 	shortcuts map[string]string
 }
 
 func NewLog() *Log {
+	shortcuts := make(map[string]string)
+	lgr := logrus.New()
 	log := &Log{
-		shortcuts: make(map[string]string),
+		lgr,
+		shortcuts,
 	}
-	logrus.SetFormatter(&logrus.TextFormatter{
+	lgr.SetFormatter(&logrus.TextFormatter{
 		DisableTimestamp: true,
 	})
+
+	colorAddressHook := &ColorAddressHook{log: log}
+	lgr.AddHook(colorAddressHook)
+
+	colorIconHook := new(ColorIconHook)
+	lgr.AddHook(colorIconHook)
+
 	return log
 }
 
@@ -39,7 +47,7 @@ func (mylog *Log) AddSlackHook(hookUrl, level string) {
 	if err != nil {
 		logrusLevel = logrus.ErrorLevel
 	}
-	logrus.AddHook(&slackrus.SlackrusHook{
+	mylog.AddHook(&slackrus.SlackrusHook{
 		HookURL:        hookUrl,
 		AcceptedLevels: slackrus.LevelThreshold(logrusLevel),
 		//Channel:        " #watcher-mainnet",
@@ -50,63 +58,7 @@ func (mylog *Log) AddSlackHook(hookUrl, level string) {
 }
 
 func (mylog *Log) SetOutputStdout() {
-	logrus.SetOutput(os.Stdout)
-}
-
-func (mylog *Log) Info(v ...interface{}) {
-	logrus.Info(mylog.nice(v)...)
-}
-
-func (mylog *Log) Infof(format string, v ...interface{}) {
-	logrus.Infof(format, mylog.nice(v)...)
-}
-
-func (mylog *Log) Success(v ...interface{}) {
-	out := []interface{}{"🟢 "}
-	logrus.Info(append(out, mylog.nice(v)...)...)
-}
-
-func (mylog *Log) Successf(format string, v ...interface{}) {
-	logrus.Infof("🟢 "+format, mylog.nice(v)...)
-}
-
-func (mylog *Log) Error(v ...interface{}) {
-	out := []interface{}{"🔴 "}
-	logrus.Error(append(out, mylog.nice(v)...)...)
-}
-
-func (mylog *Log) Errorf(format string, v ...interface{}) {
-	logrus.Errorf("🔴 "+format, mylog.nice(v)...)
-}
-
-func (mylog *Log) Fatal(v ...interface{}) {
-	out := []interface{}{"💔 "}
-	logrus.Fatal(append(out, mylog.nice(v)...)...)
-}
-
-func (mylog *Log) Fatalf(format string, v ...interface{}) {
-	logrus.Fatalf("💔 "+format, mylog.nice(v)...)
-}
-
-func (mylog *Log) nice(params []interface{}) []interface{} {
-	for i, value := range params {
-		if value == nil {
-			continue
-		}
-		typ := reflect.ValueOf(value).Type().String()
-		switch typ {
-		case "string":
-			params[i] = mylog.highlightShortcuts(value.(string))
-			break
-		case "*transaction.Transaction":
-			receipt, _ := json.MarshalIndent(value.(*transaction2.Transaction).Receipt, "", "     ")
-			params[i] = mylog.highlightShortcuts(string(receipt))
-			break
-		default:
-			break
-		}
-	}
-	return params
+	mylog.SetOutput(os.Stdout)
 }
 
 func (mylog *Log) AddShortcut(key, value string) {
@@ -154,4 +106,36 @@ func (mylog *Log) highlightShortcuts(str string) string {
 		i++
 	}
 	return str
+}
+
+type ColorAddressHook struct {
+	log *Log
+}
+
+func (hook *ColorAddressHook) Fire(entry *logrus.Entry) error {
+	entry.Message = hook.log.highlightShortcuts(entry.Message)
+	return nil
+}
+
+func (hook *ColorAddressHook) Levels() []logrus.Level {
+	return logrus.AllLevels
+}
+
+type ColorIconHook struct {
+}
+
+func (hook *ColorIconHook) Fire(entry *logrus.Entry) error {
+	switch entry.Level {
+	case logrus.InfoLevel:
+		entry.Message = "🟢 " + entry.Message
+	case logrus.FatalLevel:
+		entry.Message = "💔 " + entry.Message
+	case logrus.ErrorLevel:
+		entry.Message = "🔴 " + entry.Message
+	}
+	return nil
+}
+
+func (hook *ColorIconHook) Levels() []logrus.Level {
+	return []logrus.Level{logrus.FatalLevel, logrus.ErrorLevel, logrus.InfoLevel}
 }
