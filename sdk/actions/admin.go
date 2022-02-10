@@ -7,6 +7,7 @@ import (
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
+	"github.com/sirupsen/logrus"
 )
 
 var log = helpers.GetLog()
@@ -29,11 +30,11 @@ func DrainBuffer(p *Protocol, lrc int) {
 
 	if needDrain {
 		tx, err := p.Aimpl.DrainBuffer(bufferToDrain.Addr)
-
+		fields := logrus.Fields{"tx": tx.ID}
 		if err != nil {
-			log.Fatalf("Buffer drain is failed. Tx: %s", tx.ID)
+			log.WithFields(fields).Fatal("Buffer drain is failed")
 		} else {
-			log.Infof("Buffer successfully drained. Tx: %s", tx.ID)
+			log.WithFields(fields).Info("Buffer successfully drained")
 		}
 	} else {
 		log.Info("No need to drain buffer")
@@ -44,7 +45,7 @@ func ChownStakeReDelegate(p *Protocol, showOnly bool) {
 	activeBuffer := p.GetActiveBuffer()
 	aZilSsnAddr := p.GetAzilSsnAddress()
 
-	log.Infof("Active Buffer is %s", activeBuffer.Addr)
+	log.WithFields(logrus.Fields{"active_buffer": activeBuffer.Addr}).Info("Active Buffer")
 
 	mapSsnAmount := p.Zimpl.GetDepositAmtDeleg(activeBuffer.Addr)
 	if 0 == len(mapSsnAmount) {
@@ -56,14 +57,14 @@ func ChownStakeReDelegate(p *Protocol, showOnly bool) {
 		amountStr := amount.String()
 		if ssn != aZilSsnAddr {
 			if showOnly {
-				log.Debugf("SSN %s has %s. Need to run ChownStakeReDelegate.", ssn, amountStr)
+				log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Debug("Need to run ChownStakeReDelegate")
 			} else if tx, err := p.Aimpl.ChownStakeReDelegate(ssn, amountStr); err != nil {
-				log.Fatalf("ChownStakeReDelegate(%s, %s) ERROR. Tx: %s.", ssn, amountStr, tx.ID)
+				log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID}).Fatal("ChownStakeReDelegate Error")
 			} else {
-				log.Infof("ChownStakeReDelegate(%s, %s) OK, Tx: %s.", ssn, amountStr, tx.ID)
+				log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID}).Info("ChownStakeReDelegate OK")
 			}
 		} else {
-			log.Infof("AzilSSN %s has %s. Skip ChownStakeReDelegate.", ssn, amountStr)
+			log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Info("Skip ChownStakeReDelegate")
 		}
 	}
 
@@ -72,20 +73,20 @@ func ChownStakeReDelegate(p *Protocol, showOnly bool) {
 func ConfirmSwapRequests(p *Protocol) {
 	nextBuffer := p.GetBufferToSwapWith().Addr
 	swapRequests := p.GetSwapRequestsForBuffer(nextBuffer)
-	log.Debugf("Found %d swap requests for next buffer %s", len(swapRequests), nextBuffer)
+	log.WithFields(logrus.Fields{"swap_requests_count": len(swapRequests), "next_buffer": nextBuffer}).Debug("Swap request found")
 	errCnt := 0
 	okCnt := 0
 	for _, initiator := range swapRequests {
 		tx, err := p.Aimpl.ChownStakeConfirmSwap(initiator)
 		if err != nil {
-			log.Errorf("Can't confirm swap: ChownStakeConfirmSwap(%s) error=%s, txid=%s", initiator, err, tx.ID)
+			log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": err.Error()}).Error("Can't confirm swap")
 			errCnt++
 		} else {
-			log.Infof("Swap confirmed: ChownStakeConfirmSwap(%s) OK, txid=%s", initiator, tx.ID)
+			log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID}).Info("Swap confirmed")
 			okCnt++
 		}
 	}
-	log.Debugf("confirmSwapRequests completed, %d swaps confirmed, %d errors", okCnt, errCnt)
+	log.WithFields(logrus.Fields{"confirmed_swaps_count": okCnt, "errors_count": errCnt}).Debug("confirmSwapRequests completed")
 }
 
 func AutoRestake(p *Protocol) {
@@ -100,22 +101,26 @@ func AutoRestake(p *Protocol) {
 	tx, err := p.Aimpl.PerformAutoRestake()
 
 	if err != nil {
-		log.Fatalf("AutoRestake failed with error: %s", err)
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("AutoRestake failed")
 	}
 
 	priceAfter := p.Aimpl.GetAzilPrice().String()
 
-	log.Infof("AutoRestake is successfully completed. Tx: %s.", tx.ID)
-	log.Infof("Restaked amount: %s; PriceBefore: %s; PriceAfter: %s", autorestakeamount.String(), priceBefore, priceAfter)
+	log.WithFields(logrus.Fields{
+		"tx":           tx.ID,
+		"amount":       autorestakeamount.String(),
+		"price_before": priceBefore,
+		"price_after":  priceAfter,
+	}).Info("AutoRestake is successfully completed")
 }
 
 func ShowClaimWithdrawal(p *Protocol) {
 	blocks := p.GetClaimWithdrawalBlocks()
 	if len(blocks) > 0 {
 		blocksStr := utils.ArrayItoa(blocks)
-		log.Debugf("Blocks with unbonded withdrawals: %s.", strings.Join(blocksStr, ", "))
+		log.Debug("Blocks with unbonded withdrawals: " + strings.Join(blocksStr, ", "))
 	} else {
-		log.Debugf("Blocks with unbonded withdrawals not found.")
+		log.Debug("Blocks with unbonded withdrawals not found.")
 	}
 }
 
@@ -123,17 +128,17 @@ func ClaimWithdrawal(p *Protocol) {
 	blocks := p.GetClaimWithdrawalBlocks()
 	cnt := len(blocks)
 	if cnt == 0 {
-		log.Debugf("There are no blocks with unbonded withdrawals.")
+		log.Debug("There are no blocks with unbonded withdrawals.")
 		return
 	}
 	blocksStr := utils.ArrayItoa(blocks)
-	log.Debugf("Found %d blocks with unbonded withdrawals: %s.", cnt, strings.Join(blocksStr, ", "))
+	log.WithFields(logrus.Fields{"blocks_count": cnt, "blocks_list": strings.Join(blocksStr, ", ")}).Debug("Found blocks with unbonded withdrawals")
 	tx, err := p.Aimpl.ClaimWithdrawal(blocksStr)
 
 	if err != nil {
-		log.Fatalf("Withdrawals claim failed. Tx: %s", tx.ID)
+		log.WithFields(logrus.Fields{"tx": tx.ID}).Fatal("Withdrawals claim failed")
 	} else {
-		log.Infof("Withdrawals successfully claimed. Tx: %s", tx.ID)
+		log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Withdrawals successfully claimed")
 	}
 
 }

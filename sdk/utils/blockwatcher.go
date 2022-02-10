@@ -5,6 +5,7 @@ import (
 
 	"github.com/Zilliqa/gozilliqa-sdk/subscription"
 	"github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -34,7 +35,7 @@ func (cw *BlockWatcher) Start() {
 	_, ec, msg := subscriber.Start()
 	cancel := false
 
-	log.Debugf("Start block watcher, url=%s", cw.url.String())
+	log.WithFields(logrus.Fields{"url": cw.url.String()}).Debug("Start block watcher")
 
 	for {
 		if cancel {
@@ -47,7 +48,7 @@ func (cw *BlockWatcher) Start() {
 				cw.NotifyAll(blockNum)
 			}
 		case err := <-ec:
-			log.Errorf("Got error: %s", err)
+			log.Error("Got error: " + err.Error())
 			cancel = true
 		}
 
