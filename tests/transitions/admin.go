@@ -17,6 +17,7 @@ func (tr *Transitions) Admin() {
 	checkChangeHolderAddress(p)
 	checkChangeZimplAddress(p)
 	checkUpdateStakingParameters(p)
+	checkChangeRewardsFee(p)
 	checkChangeBuffersEmpty(p)
 
 	newAdminAddr := sdk.Cfg.Addr3
@@ -79,6 +80,17 @@ func checkUpdateStakingParameters(p *contracts.Protocol) {
 	AssertEvent(tx, Event{p.Aimpl.Addr, "UpdateStakingParameters", ParamsMap{"min_deleg_stake": testValue}})
 	AssertEqual(Field(p.Aimpl, "mindelegstake"), testValue)
 	AssertSuccess(p.Aimpl.UpdateStakingParameters(prevValue))
+}
+
+func checkChangeRewardsFee(p *contracts.Protocol) {
+	prevValue := Field(p.Aimpl, "rewards_fee")
+	//try to change fee, expecting error, because fee_denom=10000
+	tx, _ := p.Aimpl.ChangeRewardsFee("12345")
+	AssertError(tx, "InvalidRewardsFee")
+	goodValue := "2345"
+	AssertSuccess(p.Aimpl.ChangeRewardsFee(goodValue))
+	AssertEqual(Field(p.Aimpl, "rewards_fee"), goodValue)
+	AssertSuccess(p.Aimpl.ChangeRewardsFee(prevValue))
 }
 
 func checkChangeBuffersEmpty(p *contracts.Protocol) {

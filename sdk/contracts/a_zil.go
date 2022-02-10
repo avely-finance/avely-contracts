@@ -130,6 +130,17 @@ func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, e
 	return a.Contract.Call("ChangeHolderAddress", args, "0")
 }
 
+func (a *AZil) ChangeRewardsFee(new_fee string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_fee",
+			"Uint128",
+			new_fee,
+		},
+	}
+	return a.Call("ChangeRewardsFee", args, "0")
+}
+
 func (a *AZil) ChownStakeConfirmSwap(delegator string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
