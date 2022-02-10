@@ -1,58 +1,82 @@
 package transitions
 
 import (
-	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
 const swapOutput = "9871580343970"
 
-func (tr *Transitions) SwapOutput() {
+func (tr *Transitions) AddToSwap() {
 	Start("Swap via ZilSwap")
 
 	p := tr.DeployAndUpgrade()
 	zilSwap := tr.DeployZilSwap()
-	token := p.Aimpl
+	azil := p.Aimpl
 
 	liquidityAmount := ToQA(1000)
 
-	// supraToken := tr.DeploySupraToken()
-	// Success delegate 1000 ZIL for Liquidity
-	AssertSuccess(p.Aimpl.DelegateStake(liquidityAmount))
-
-	prepareZilSwap(p, zilSwap, token, liquidityAmount)
+	AssertSuccess(azil.DelegateStake(liquidityAmount))
 
 	blockNum := p.GetBlockHeight()
-	recipient := sdk.Cfg.Addr1
 
-	AssertSuccess(zilSwap.SwapExactZILForTokens(token.Contract.Addr, ToQA(10), "1", recipient, blockNum))
-	AssertEqual(token.BalanceOf(recipient).String(), swapOutput)
-}
-
-// func (tr *Transitions) MintViaProxy() {
-// 	Start("MintViaProxy")
-
-// 	p := tr.DeployAndUpgrade()
-
-// 	zilSwap := tr.DeployZilSwap()
-// 	supraToken := tr.DeploySupraToken()
-
-// 	prepareZilSwap(p, zilSwap, supraToken)
-
-// 	recipient := sdk.Cfg.Addr1
-
-// 	minterProxy := tr.DeployMinterProxy(supraToken.Contract.Addr, zilSwap.Contract.Addr)
-
-// 	blockNum := p.GetBlockHeight()
-
-// 	AssertSuccess(minterProxy.WithUser(sdk.Cfg.Key1).Mint(ToQA(10), swapOutput, strconv.Itoa(blockNum+1)))
-// 	AssertEqual(supraToken.BalanceOf(recipient).String(), swapOutput)
-// }
-
-func prepareZilSwap(p *contracts.Protocol, zilSwap *contracts.ZilSwap, azil *contracts.AZil, liquidityAmount string) {
-	blockNum := p.GetBlockHeight()
-
+	// Add AddLiquidity
 	AssertSuccess(azil.IncreaseAllowance(zilSwap.Contract.Addr, ToQA(10000)))
 	AssertSuccess(zilSwap.AddLiquidity(azil.Contract.Addr, liquidityAmount, liquidityAmount, blockNum))
+
+	// Do Swap
+	recipient := sdk.Cfg.Addr1
+	AssertSuccess(zilSwap.SwapExactZILForTokens(azil.Contract.Addr, ToQA(10), "1", recipient, blockNum))
+	AssertEqual(azil.BalanceOf(recipient).String(), swapOutput)
+}
+
+func (tr *Transitions) Transfer() {
+	Start("Transfer")
+
+	p := tr.DeployAndUpgrade()
+	azil := p.Aimpl
+
+	from := sdk.Cfg.Addr1
+	to := sdk.Cfg.Addr2
+	amount := ToQA(100)
+
+	tx, _ := azil.WithUser(sdk.Cfg.Key1).Transfer(to, amount)
+	AssertError(tx, "InsufficientFunds")
+
+	AssertSuccess(azil.WithUser(sdk.Cfg.Key1).DelegateStake(amount))
+
+	AssertEqual(azil.BalanceOf(from).String(), amount)
+	AssertEqual(azil.BalanceOf(to).String(), ToQA(0))
+
+	AssertSuccess(azil.WithUser(sdk.Cfg.Key1).Transfer(to, amount))
+
+	AssertEqual(azil.BalanceOf(from).String(), ToQA(0))
+	AssertEqual(azil.BalanceOf(to).String(), amount)
+}
+
+func (tr *Transitions) TransferFrom() {
+	Start("TransferFrom")
+
+	p := tr.DeployAndUpgrade()
+	azil := p.Aimpl
+
+	from := sdk.Cfg.Addr1
+	to := sdk.Cfg.Addr2
+
+	amount := ToQA(100)
+
+	AssertSuccess(azil.WithUser(sdk.Cfg.Key1).DelegateStake(amount))
+
+	AssertEqual(azil.BalanceOf(from).String(), amount)
+	AssertEqual(azil.BalanceOf(to).String(), ToQA(0))
+
+	tx, _ := azil.TransferFrom(from, to, amount)
+	AssertError(tx, "InsufficientAllowance")
+
+	// Allow admin user to spend User1 money
+	AssertSuccess(azil.WithUser(sdk.Cfg.Key1).IncreaseAllowance(sdk.Cfg.Admin, amount))
+	AssertSuccess(azil.WithUser(sdk.Cfg.AdminKey).TransferFrom(from, to, amount))
+
+	AssertEqual(azil.BalanceOf(from).String(), ToQA(0))
+	AssertEqual(azil.BalanceOf(to).String(), amount)
 }

@@ -52,6 +52,42 @@ func (s *AZil) IncreaseAllowance(spender, amount string) (*transaction.Transacti
 	return s.Call("IncreaseAllowance", args, "0")
 }
 
+func (s *AZil) Transfer(to, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "to",
+			Type:  "ByStr20",
+			Value: to,
+		}, {
+			VName: "amount",
+			Type:  "Uint128",
+			Value: amount,
+		},
+	}
+
+	return s.Call("Transfer", args, "0")
+}
+
+func (s *AZil) TransferFrom(from, to, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "from",
+			Type:  "ByStr20",
+			Value: from,
+		}, {
+			VName: "to",
+			Type:  "ByStr20",
+			Value: to,
+		}, {
+			VName: "amount",
+			Type:  "Uint128",
+			Value: amount,
+		},
+	}
+
+	return s.Call("TransferFrom", args, "0")
+}
+
 func (a *AZil) ChangeAdmin(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
