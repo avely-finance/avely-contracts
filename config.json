@@ -7,7 +7,7 @@
     },
     "Slack": {
       "HookUrl": "",
-      "LogLevel": "fatal"
+      "LogLevel": "info"
     },
     "ChainId": 222,
     "TxConfrimMaxAttempts": 5,
@@ -43,7 +43,7 @@
     },
     "Slack": {
       "HookUrl": "",
-      "LogLevel": "error"
+      "LogLevel": "info"
     },
     "ChainId": 333,
     "TxConfrimMaxAttempts": 15,
@@ -81,7 +81,7 @@
     },
     "Slack": {
       "HookUrl": "",
-      "LogLevel": "error"
+      "LogLevel": "info"
     },
     "ChainId": 1,
     "TxConfrimMaxAttempts": 15,

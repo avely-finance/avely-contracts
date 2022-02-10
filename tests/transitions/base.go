@@ -47,7 +47,7 @@ func (tr *Transitions) DeployZilSwap() *ZilSwap {
 		log.Fatal("deploy zilSwap error = " + err.Error())
 	}
 
-	log.Success("deploy zilSwap succeed, address = " + zilSwap.Addr)
+	log.Info("deploy zilSwap succeed, address = " + zilSwap.Addr)
 
 	return zilSwap
 }
@@ -59,7 +59,7 @@ func (tr *Transitions) DeploySupraToken() *SupraToken {
 	if err != nil {
 		log.Fatal("deploy supraToken error = " + err.Error())
 	}
-	log.Success("deploy supraToken succeed, address = " + supraToken.Addr)
+	log.Info("deploy supraToken succeed, address = " + supraToken.Addr)
 
 	return supraToken
 }
@@ -75,7 +75,7 @@ func (tr *Transitions) FocusOn(focus string) {
 	if exists {
 		reflect.ValueOf(tr).MethodByName(focus).Call([]reflect.Value{})
 	} else {
-		GetLog().Fatal(" A focus test suite does not exist")
+		GetLog().Fatal("A focus test suite does not exist")
 	}
 }
 
