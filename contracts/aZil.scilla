@@ -821,10 +821,19 @@ transition DrainBuffer(buffer_addr: ByStr20)
   tmp_buffer_exists_at_ssn := uint32_zero
 end
 
+
 transition ClaimRewardsSuccessCallBack()
   RequireBufferOrHolder;
   accept;
-  IncreaseAutoRestakeAmt _amount
+
+  (* take fee from rewards *)
+  var_rewards_fee <- rewards_fee;
+  var_treasury_addr <- treasury_address;
+  rewards_fee_value = muldiv var_rewards_fee _amount fee_denom;
+  TransferFunds addfunds_tag rewards_fee_value var_treasury_addr;
+  after_fee = builtin sub _amount rewards_fee_value;
+
+  IncreaseAutoRestakeAmt after_fee
 end
 
 transition PerformAutoRestake()
