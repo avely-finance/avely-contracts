@@ -7,6 +7,7 @@ import (
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type LastRewardCycleWatcher struct {
@@ -47,12 +48,17 @@ func main() {
 //   3. Autorestake funds
 func (w *LastRewardCycleWatcher) Notify(blockNum int) {
 	lrc := protocol.GetLastRewardCycle()
-	log.Debugf("New block #%d is mined. Current Last Reward Cycle is %d.", blockNum, lrc)
 
 	if lrc == w.currentLrc {
-		log.Debug("Last Reward Cycle is not changed, skip.")
+		log.WithFields(logrus.Fields{
+			"block_number": blockNum,
+			"lrc":          lrc,
+		}).Debug("Block mined, last reward cycle not changed.")
 	} else {
-		log.Infof("New block #%d is mined. New Last Reward Cycle is %d.", blockNum, lrc)
+		log.WithFields(logrus.Fields{
+			"block_number": blockNum,
+			"lrc":          lrc,
+		}).Info("Block mined, New Last Reward Cycle.")
 		actions.DrainBuffer(protocol, lrc)
 		showOnly := false
 		actions.ChownStakeReDelegate(protocol, showOnly)

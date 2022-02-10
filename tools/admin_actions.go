@@ -112,7 +112,7 @@ func showTx(p *Protocol, tx_addr string) {
 	provider := p.Aimpl.Contract.Provider
 	tx, err := provider.GetTransaction(tx_addr)
 	if err != nil {
-		log.Errorf("Err: %s", err)
+		log.Error("Err: " + err.Error())
 	} else {
 		log.Info(tx)
 	}

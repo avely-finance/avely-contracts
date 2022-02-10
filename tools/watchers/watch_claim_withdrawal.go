@@ -7,6 +7,7 @@ import (
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type ClaimWithdrawalWatcher struct {
@@ -46,10 +47,14 @@ func main() {
 
 func (cww *ClaimWithdrawalWatcher) Notify(blockNum int) {
 	if (blockNum - cww.runAtBlock) > cww.gap {
-		log.Debugf("Mined block #%d.", blockNum)
+		log.WithFields(logrus.Fields{"block_number": blockNum}).Debug("Mined block")
 		actions.ClaimWithdrawal(protocol)
 		cww.runAtBlock = blockNum
 	} else {
-		log.Debugf("Mined block #%d, but gap=%d <= %d, skip.", blockNum, (blockNum - cww.runAtBlock), cww.gap)
+		log.WithFields(logrus.Fields{
+			"block_number": blockNum,
+			"current_gap":  (blockNum - cww.runAtBlock),
+			"expected_gap": cww.gap,
+		}).Debug("Block mined, skip")
 	}
 }
