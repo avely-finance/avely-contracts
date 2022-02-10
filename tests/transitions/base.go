@@ -70,7 +70,7 @@ func (tr *Transitions) FocusOn(focus string) {
 	if exists {
 		reflect.ValueOf(tr).MethodByName(focus).Call([]reflect.Value{})
 	} else {
-		GetLog().Fatal(" A focus test suite does not exist")
+		GetLog().Fatal("A focus test suite does not exist")
 	}
 }
 
