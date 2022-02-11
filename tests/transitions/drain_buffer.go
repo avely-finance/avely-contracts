@@ -15,13 +15,13 @@ func (tr *Transitions) DrainBuffer() {
 	rewardsFee := "1000" //10% of feeDenom=10000
 	treasuryAddr := sdk.Cfg.Addr3
 	totalFee := "0"
-	p.Aimpl.ChangeRewardsFee(rewardsFee)
-	p.Aimpl.ChangeTreasuryAddress(treasuryAddr)
+	p.Azil.ChangeRewardsFee(rewardsFee)
+	p.Azil.ChangeTreasuryAddress(treasuryAddr)
 	treasuryBalance := sdk.GetBalance(treasuryAddr[2:])
 
-	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
+	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
 
-	txn, _ := p.Aimpl.DrainBuffer(p.Aimpl.Addr)
+	txn, _ := p.Azil.DrainBuffer(p.Azil.Addr)
 	AssertError(txn, "BufferAddrUnknown")
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
@@ -33,11 +33,11 @@ func (tr *Transitions) DrainBuffer() {
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	bufferAddr := p.GetBuffer().Addr
-	txn, _ = p.Aimpl.DrainBuffer(bufferAddr)
-	AssertEqual(strconv.Itoa(p.Zimpl.GetLastRewardCycle()), Field(p.Aimpl, "buffer_drained_cycle", bufferAddr))
+	txn, _ = p.Azil.DrainBuffer(bufferAddr)
+	AssertEqual(strconv.Itoa(p.Zimpl.GetLastRewardCycle()), Field(p.Azil, "buffer_drained_cycle", bufferAddr))
 
 	AssertTransition(txn, Transition{
-		p.Aimpl.Addr,       //sender
+		p.Azil.Addr,        //sender
 		"ClaimRewards",     //tag
 		p.GetBuffer().Addr, //recipient
 		"0",                //amount
@@ -73,12 +73,12 @@ func (tr *Transitions) DrainBuffer() {
 	AssertTransition(txn, Transition{
 		p.GetBuffer().Addr, //sender
 		"ClaimRewardsSuccessCallBack",
-		p.Aimpl.Addr,
+		p.Azil.Addr,
 		bufferRewards,
 		ParamsMap{},
 	})
 	AssertTransition(txn, Transition{
-		p.Aimpl.Addr, //sender
+		p.Azil.Addr, //sender
 		"AddFunds",
 		treasuryAddr,
 		rewardsFeeValue,
@@ -109,12 +109,12 @@ func (tr *Transitions) DrainBuffer() {
 	AssertTransition(txn, Transition{
 		p.GetBuffer().Addr, //sender
 		"ClaimRewardsSuccessCallBack",
-		p.Aimpl.Addr,
+		p.Azil.Addr,
 		bufferRewards,
 		ParamsMap{},
 	})
 	AssertTransition(txn, Transition{
-		p.Aimpl.Addr, //sender
+		p.Azil.Addr, //sender
 		"AddFunds",
 		treasuryAddr,
 		rewardsFeeValue,
@@ -124,8 +124,8 @@ func (tr *Transitions) DrainBuffer() {
 	// Check aZIL balance
 	totalRewards := "149" // "100" from Buffer + "49" from Holder[]
 	totalRewards = StrSub(totalRewards, totalFee)
-	AssertEqual(Field(p.Aimpl, "_balance"), totalRewards)
-	AssertEqual(Field(p.Aimpl, "autorestakeamount"), totalRewards)
+	AssertEqual(Field(p.Azil, "_balance"), totalRewards)
+	AssertEqual(Field(p.Azil, "autorestakeamount"), totalRewards)
 
 	// Send Swap transactions
 	AssertTransition(txn, Transition{
@@ -145,16 +145,16 @@ func (tr *Transitions) DrainBuffer() {
 	})
 
 	//repeat drain buffer, excepting error
-	txn, _ = p.Aimpl.DrainBuffer(bufferAddr)
+	txn, _ = p.Azil.DrainBuffer(bufferAddr)
 	AssertError(txn, "BufferAlreadyDrained")
 
 	//try to drain buffer, not existent at main staking contract
 	//error should not be thrown
 	new_buffers := []string{core.ZeroAddr}
-	AssertSuccess(p.Aimpl.ChangeBuffers(new_buffers))
-	txn, _ = p.Aimpl.DrainBuffer(core.ZeroAddr)
+	AssertSuccess(p.Azil.ChangeBuffers(new_buffers))
+	txn, _ = p.Azil.DrainBuffer(core.ZeroAddr)
 	AssertTransition(txn, Transition{
-		p.Aimpl.Addr, //sender
+		p.Azil.Addr, //sender
 		"ClaimRewards",
 		p.Holder.Addr,
 		"0",

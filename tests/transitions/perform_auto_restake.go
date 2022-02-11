@@ -8,23 +8,23 @@ import (
 func (tr *Transitions) PerformAutoRestake() {
 	p := tr.DeployAndUpgrade()
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
 
-	AssertEqual(Field(p.Aimpl, "autorestakeamount"), ToZil(0))
+	AssertEqual(Field(p.Azil, "autorestakeamount"), ToZil(0))
 
-	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(1)))
-	txn, _ := p.Aimpl.PerformAutoRestake()
+	AssertSuccess(p.Azil.IncreaseAutoRestakeAmount(ToZil(1)))
+	txn, _ := p.Azil.PerformAutoRestake()
 	AssertError(txn, "DelegStakeNotEnough")
 
 	// increases to 100
-	AssertSuccess(p.Aimpl.IncreaseAutoRestakeAmount(ToZil(99)))
+	AssertSuccess(p.Azil.IncreaseAutoRestakeAmount(ToZil(99)))
 	restakeAmount := ToZil(100)
-	AssertEqual(Field(p.Aimpl, "autorestakeamount"), restakeAmount)
+	AssertEqual(Field(p.Azil, "autorestakeamount"), restakeAmount)
 
-	txn, _ = p.Aimpl.PerformAutoRestake()
+	txn, _ = p.Azil.PerformAutoRestake()
 
 	// should return to 0
-	AssertEqual(Field(p.Aimpl, "autorestakeamount"), ToZil(0))
+	AssertEqual(Field(p.Azil, "autorestakeamount"), ToZil(0))
 
 	AssertTransition(txn, Transition{
 		p.GetBuffer().Addr, //sender

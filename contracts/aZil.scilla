@@ -958,8 +958,8 @@ end
 (********************************************************************************)
 (*                    ClaimWithdrawal Flow                                      *)
 (*                                                                              *)
-(* 1) Offchain worker calls Aimpl->ClaimWithdrawal()                            *)
-(* 1) Aimpl calls Holder->CompleteWithdrawal()                                  *)
+(* 1) Offchain worker calls Azil->ClaimWithdrawal()                             *)
+(* 1) Azil calls Holder->CompleteWithdrawal()                                   *)
 (* 2) Holder calls Zproxy->CompleteWithdrawal()                                 *)
 (* 3) Zimpl do its work, then few options are possible:                         *)
 (*   a) it issues NoPendingWithdrawal event                                     *)
@@ -975,7 +975,7 @@ end
 (*   b) ERROR => exception                                                      *)
 (*                                                                              *)
 (* Completely successful chaincall will looks like                              *)
-(* Worker->Aimpl->Holder->Zproxy->Zimpl->Holder->Aimpl                          *)
+(* Worker->Azil->Holder->Zproxy->Zimpl->Holder->Azil                            *)
 (*                                                                              *)
 (********************************************************************************)
 
@@ -1047,12 +1047,12 @@ transition CompleteWithdrawalSuccessCallBack()
   accept;
   amount = _amount;
 
-  (* check Aimpl-calculated withdrawal amount against of Zimpl *)
+  (* check Azil-calculated withdrawal amount against of Zimpl *)
   withdraw_amt <- tmp_complete_withdrawal_available;
   amount_eq = builtin eq withdraw_amt amount;
   match amount_eq with
   | False =>
-    e = { _eventname: "CompleteWithdrawalFundsMismatch"; amountAimpl: withdraw_amt; amounthZimpl: amount };
+    e = { _eventname: "CompleteWithdrawalFundsMismatch"; amountAzil: withdraw_amt; amounthZimpl: amount };
     event e;
     e = CompleteWithdrawalFundsMismatch;
     ThrowError e

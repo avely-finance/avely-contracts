@@ -12,7 +12,7 @@ func (tr *Transitions) AddToSwap() {
 
 	p := tr.DeployAndUpgrade()
 	zilSwap := tr.DeployZilSwap()
-	azil := p.Aimpl
+	azil := p.Azil
 
 	liquidityAmount := ToQA(1000)
 
@@ -34,7 +34,7 @@ func (tr *Transitions) Transfer() {
 	Start("Transfer")
 
 	p := tr.DeployAndUpgrade()
-	azil := p.Aimpl
+	azil := p.Azil
 
 	from := sdk.Cfg.Addr1
 	to := sdk.Cfg.Addr2
@@ -58,7 +58,7 @@ func (tr *Transitions) TransferFrom() {
 	Start("TransferFrom")
 
 	p := tr.DeployAndUpgrade()
-	azil := p.Aimpl
+	azil := p.Azil
 
 	from := sdk.Cfg.Addr1
 	to := sdk.Cfg.Addr2

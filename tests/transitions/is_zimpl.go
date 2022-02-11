@@ -6,7 +6,7 @@ import (
 )
 
 func (tr *Transitions) IsZimpl() {
-	Start("IsAimpl")
+	Start("IsAzil")
 
 	p := tr.DeployAndUpgrade()
 
