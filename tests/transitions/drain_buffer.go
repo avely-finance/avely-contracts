@@ -10,6 +10,12 @@ func (tr *Transitions) DrainBuffer() {
 	Start("CompleteWithdrawal - success")
 
 	p := tr.DeployAndUpgrade()
+	rewardsFee := "1000" //10% of feeDenom=10000
+	treasuryAddr := sdk.Cfg.Addr3
+	totalFee := "0"
+	p.Aimpl.ChangeRewardsFee(rewardsFee)
+	p.Aimpl.ChangeTreasuryAddress(treasuryAddr)
+	treasuryBalance := sdk.GetBalance(treasuryAddr[2:])
 
 	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
 
@@ -58,6 +64,25 @@ func (tr *Transitions) DrainBuffer() {
 		ParamsMap{"rewards": bufferRewards},
 	})
 
+	//transfer rewards fee to treasury
+	//rewardsFee * bufferRewards / feeDenom = 1000 * 100 / 10000 = 0.1 * 100 = 10
+	rewardsFeeValue := "10"
+	totalFee = StrAdd(totalFee, rewardsFeeValue)
+	AssertTransition(txn, Transition{
+		p.GetBuffer().Addr, //sender
+		"ClaimRewardsSuccessCallBack",
+		p.Aimpl.Addr,
+		bufferRewards,
+		ParamsMap{},
+	})
+	AssertTransition(txn, Transition{
+		p.Aimpl.Addr, //sender
+		"AddFunds",
+		treasuryAddr,
+		rewardsFeeValue,
+		ParamsMap{},
+	})
+
 	// Holder rewards for initial funds
 	holderRewards := "49"
 	AssertTransition(txn, Transition{
@@ -67,7 +92,6 @@ func (tr *Transitions) DrainBuffer() {
 		holderRewards,
 		ParamsMap{},
 	})
-
 	AssertTransition(txn, Transition{
 		p.Zimpl.Addr, //sender
 		"WithdrawStakeRewardsSuccessCallBack",
@@ -76,8 +100,28 @@ func (tr *Transitions) DrainBuffer() {
 		ParamsMap{"rewards": holderRewards},
 	})
 
+	//transfer rewards fee to treasury
+	//rewardsFee * holderRewards / feeDenom = 1000 * 49 / 10000 = 0.1 * 49 = 4.9 = 4
+	rewardsFeeValue = "4"
+	totalFee = StrAdd(totalFee, rewardsFeeValue)
+	AssertTransition(txn, Transition{
+		p.GetBuffer().Addr, //sender
+		"ClaimRewardsSuccessCallBack",
+		p.Aimpl.Addr,
+		bufferRewards,
+		ParamsMap{},
+	})
+	AssertTransition(txn, Transition{
+		p.Aimpl.Addr, //sender
+		"AddFunds",
+		treasuryAddr,
+		rewardsFeeValue,
+		ParamsMap{},
+	})
+
 	// Check aZIL balance
 	totalRewards := "149" // "100" from Buffer + "49" from Holder[]
+	totalRewards = StrSub(totalRewards, totalFee)
 	AssertEqual(Field(p.Aimpl, "_balance"), totalRewards)
 	AssertEqual(Field(p.Aimpl, "autorestakeamount"), totalRewards)
 
@@ -114,4 +158,7 @@ func (tr *Transitions) DrainBuffer() {
 		"0",
 		ParamsMap{},
 	})
+
+	//check if treasury balance increased properly
+	AssertEqual(StrAdd(treasuryBalance, totalFee), sdk.GetBalance(treasuryAddr[2:]))
 }
