@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -106,6 +107,8 @@ func main() {
 func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
 	p.SyncBufferAndHolder()
+
+	p.Aimpl.ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 }
 
 func showTx(p *Protocol, tx_addr string) {

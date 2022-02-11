@@ -29,6 +29,7 @@ type Config struct {
 	AzilSsnAddress           string
 	AzilSsnRewardShare       string
 	HolderInitialDelegateZil int
+	ProtocolRewardsFee       int
 	Admin                    string
 	AdminKey                 string
 	Addr1                    string
