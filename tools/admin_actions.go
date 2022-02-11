@@ -120,7 +120,7 @@ func showTx(p *Protocol, tx_addr string) {
 
 func getActiveBuffer(p *Protocol) {
 	log.WithFields(logrus.Fields{
-		"lrc":           p.GetLastRewardCycle(),
+		"lrc":           p.Zimpl.GetLastRewardCycle(),
 		"active_buffer": p.GetActiveBuffer().Contract.Addr,
 	}).Info("Active buffer / lrc")
 }
@@ -194,7 +194,7 @@ func showRewards(p *Protocol, ssn, deleg string) {
 
 	one := big.NewInt(1)
 	lastWithdrawCycle := state.Dig("last_withdraw_cycle_deleg", deleg, ssn).BigInt()
-	lrc := state.Dig("lastrewardcycle").BigInt()
+	lrc := big.NewInt(int64(p.Zimpl.GetLastRewardCycle()))
 
 	m := AddBI(lastWithdrawCycle, one) // + 1
 	n := lrc                           // iota should not include the last cycle since it does not completed yet

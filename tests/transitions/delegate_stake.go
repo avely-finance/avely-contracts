@@ -1,6 +1,8 @@
 package transitions
 
 import (
+	"strconv"
+
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
@@ -20,11 +22,11 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	// Success delegate
 	AssertSuccess(p.Aimpl.DelegateStake(ToZil(20)))
 
-	lastrewardcycle := Field(p.Zimpl, "lastrewardcycle")
+	lastrewardcycle := strconv.Itoa(p.Zimpl.GetLastRewardCycle())
 
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetBuffer().Addr, sdk.Cfg.AzilSsnAddress, lastrewardcycle), ToZil(20))
 
-	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetBuffer().Addr, sdk.Cfg.AzilSsnAddress, Field(p.Zimpl, "lastrewardcycle")), ToZil(20))
+	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetBuffer().Addr, sdk.Cfg.AzilSsnAddress, lastrewardcycle), ToZil(20))
 	AssertEqual(Field(p.Aimpl, "_balance"), "0")
 
 	AssertEqual(Field(p.Aimpl, "totalstakeamount"), ToZil(1020))

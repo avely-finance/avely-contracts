@@ -43,7 +43,7 @@ func DrainBuffer(p *Protocol, lrc int) {
 
 func ChownStakeReDelegate(p *Protocol, showOnly bool) {
 	activeBuffer := p.GetActiveBuffer()
-	aZilSsnAddr := p.GetAzilSsnAddress()
+	aZilSsnAddr := p.Aimpl.GetAzilSsnAddress()
 
 	log.WithFields(logrus.Fields{"active_buffer": activeBuffer.Addr}).Info("Active Buffer")
 

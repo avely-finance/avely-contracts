@@ -47,7 +47,7 @@ func main() {
 //   2. ReDelegate stakes from other SSNs
 //   3. Autorestake funds
 func (w *LastRewardCycleWatcher) Notify(blockNum int) {
-	lrc := protocol.GetLastRewardCycle()
+	lrc := protocol.Zimpl.GetLastRewardCycle()
 
 	if lrc == w.currentLrc {
 		log.WithFields(logrus.Fields{

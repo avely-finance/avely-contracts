@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"math/big"
+	"strings"
 
 	"github.com/tidwall/gjson"
 
@@ -142,6 +143,10 @@ func (a *AZil) GetAzilPrice() *big.Float {
 	totalstakeamount := state.Dig("1.result.totalstakeamount").BigFloat()
 
 	return DivBF(totalstakeamount, totaltokenamount)
+}
+
+func (a *AZil) GetAzilSsnAddress() string {
+	return strings.ToLower(a.Sdk.Cfg.AzilSsnAddress)
 }
 
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
