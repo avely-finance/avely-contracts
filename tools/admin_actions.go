@@ -109,7 +109,7 @@ func deployAvely() {
 }
 
 func showTx(p *Protocol, tx_addr string) {
-	provider := p.Aimpl.Contract.Provider
+	provider := p.Azil.Contract.Provider
 	tx, err := provider.GetTransaction(tx_addr)
 	if err != nil {
 		log.Error("Err: " + err.Error())
@@ -120,7 +120,7 @@ func showTx(p *Protocol, tx_addr string) {
 
 func getActiveBuffer(p *Protocol) {
 	log.WithFields(logrus.Fields{
-		"lrc":           p.GetLastRewardCycle(),
+		"lrc":           p.Zimpl.GetLastRewardCycle(),
 		"active_buffer": p.GetActiveBuffer().Contract.Addr,
 	}).Info("Active buffer / lrc")
 }
@@ -164,7 +164,7 @@ func deployBuffer(p *Protocol) {
 }
 
 func unpause(p *Protocol) {
-	_, err := p.Aimpl.Unpause()
+	_, err := p.Azil.Unpause()
 
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause AZil failed")
@@ -177,7 +177,7 @@ func syncBuffers(p *Protocol) {
 }
 
 func drainBuffer(p *Protocol, buffer_addr string) {
-	tx, err := p.Aimpl.DrainBuffer(buffer_addr)
+	tx, err := p.Azil.DrainBuffer(buffer_addr)
 
 	if err != nil {
 		log.WithFields(logrus.Fields{"buffer_addr": buffer_addr, "error": err.Error()}).Fatal("Drain buffer failed")
@@ -186,7 +186,7 @@ func drainBuffer(p *Protocol, buffer_addr string) {
 }
 
 func showRewards(p *Protocol, ssn, deleg string) {
-	// result := p.Aimpl.Contract.SubState("balances",  [1]string{"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6"})
+	// result := p.Azil.Contract.SubState("balances",  [1]string{"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6"})
 
 	rawState := p.Zimpl.Contract.State()
 
@@ -194,7 +194,7 @@ func showRewards(p *Protocol, ssn, deleg string) {
 
 	one := big.NewInt(1)
 	lastWithdrawCycle := state.Dig("last_withdraw_cycle_deleg", deleg, ssn).BigInt()
-	lrc := state.Dig("lastrewardcycle").BigInt()
+	lrc := big.NewInt(int64(p.Zimpl.GetLastRewardCycle()))
 
 	m := AddBI(lastWithdrawCycle, one) // + 1
 	n := lrc                           // iota should not include the last cycle since it does not completed yet

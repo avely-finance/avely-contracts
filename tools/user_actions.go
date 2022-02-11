@@ -62,7 +62,7 @@ func setupUsr(p *Protocol, usr string) {
 
 	key := keyValue.Interface().(string)
 
-	p.Aimpl.UpdateWallet(key)
+	p.Azil.UpdateWallet(key)
 
 	log.Info("Wallet has been updates to Key" + usr)
 }
@@ -72,7 +72,7 @@ func delegate(p *Protocol, amount int) {
 		log.Fatal("Amount should be greater than 0")
 	}
 
-	tx, err := p.Aimpl.DelegateStake(utils.ToZil(amount))
+	tx, err := p.Azil.DelegateStake(utils.ToZil(amount))
 
 	if err != nil {
 		log.Fatal("Delegate failed with error:" + err.Error())
