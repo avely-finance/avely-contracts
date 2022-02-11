@@ -37,7 +37,7 @@ func DrainBuffer(p *Protocol, lrc int) {
 			log.WithFields(fields).Info("Buffer successfully drained")
 		}
 	} else {
-		log.Info("No need to drain buffer")
+		log.Debug("No need to drain buffer")
 	}
 }
 
