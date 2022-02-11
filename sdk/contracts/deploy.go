@@ -147,19 +147,6 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	return NewProtocol(Zproxy, Zimpl, Aimpl, buffers, Holder)
 }
 
-func DeployMinterProxy(sdk *AvelySDK, tokenAddr, zilSwapAddr string, log *Log) *MinterProxy {
-	log.Info("start to deploy minter proxy")
-
-	minterProxy, err := NewMinterProxy(sdk, tokenAddr, zilSwapAddr)
-
-	if err != nil {
-		log.Fatal("deploy minter proxy error = " + err.Error())
-	}
-	log.Info("deploy minter proxy succeed, address = " + minterProxy.Addr)
-
-	return minterProxy
-}
-
 //TODO: move this function to core/sdk.go, rename to CheckTx
 func check(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	if err != nil {

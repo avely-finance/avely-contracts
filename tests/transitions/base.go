@@ -52,23 +52,6 @@ func (tr *Transitions) DeployZilSwap() *ZilSwap {
 	return zilSwap
 }
 
-func (tr *Transitions) DeploySupraToken() *SupraToken {
-	log := GetLog()
-	supraToken, err := NewSupraToken(sdk)
-
-	if err != nil {
-		log.Fatal("deploy supraToken error = " + err.Error())
-	}
-	log.Info("deploy supraToken succeed, address = " + supraToken.Addr)
-
-	return supraToken
-}
-
-func (tr *Transitions) DeployMinterProxy(tokenAddr, zilSwapAddr string) *MinterProxy {
-	log := GetLog()
-	return DeployMinterProxy(sdk, tokenAddr, zilSwapAddr, log)
-}
-
 func (tr *Transitions) FocusOn(focus string) {
 	st := reflect.TypeOf(tr)
 	_, exists := st.MethodByName(focus)
