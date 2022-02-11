@@ -34,14 +34,14 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	log.Info("deploy Zimpl succeed, address = " + Zimpl.Addr)
 
 	// deploy azil
-	Aimpl, err := NewAZilContract(sdk, Zimpl.Addr)
+	Azil, err := NewAZilContract(sdk, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy aZil error = " + err.Error())
 	}
-	log.Info("deploy aZil succeed, address = " + Aimpl.Addr)
+	log.Info("deploy aZil succeed, address = " + Azil.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	Buffer, err := NewBufferContract(sdk, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -49,13 +49,13 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	Holder, err := NewHolderContract(sdk, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
 	log.Info("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Aimpl, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, Azil, buffers, Holder)
 }
 
 // Restore ZProxy + Zimpl and deploy new versions of Azil, Buffer and Holder
@@ -77,14 +77,14 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	log.Info("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
 	// deploy azil
-	Aimpl, err := NewAZilContract(sdk, Zimpl.Addr)
+	Azil, err := NewAZilContract(sdk, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy aZil error = " + err.Error())
 	}
-	log.Info("deploy aZil succeed, address = " + Aimpl.Addr)
+	log.Info("deploy aZil succeed, address = " + Azil.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	Buffer, err := NewBufferContract(sdk, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -92,13 +92,13 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	Holder, err := NewHolderContract(sdk, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
 	log.Info("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Aimpl, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, Azil, buffers, Holder)
 }
 
 func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
@@ -119,16 +119,16 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	log.Info("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
 	// Restore azil
-	Aimpl, err := RestoreAZilContract(sdk, sdk.Cfg.AzilAddr, Zimpl.Addr)
+	Azil, err := RestoreAZilContract(sdk, sdk.Cfg.AzilAddr, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("Restore aZil error = " + err.Error())
 	}
-	log.Info("Restore aZil succeed, address = " + Aimpl.Addr)
+	log.Info("Restore aZil succeed, address = " + Azil.Addr)
 
 	// Restore buffers
 	buffers := []*BufferContract{}
 	for _, addr := range sdk.Cfg.BufferAddrs {
-		Buffer, err := RestoreBufferContract(sdk, addr, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+		Buffer, err := RestoreBufferContract(sdk, addr, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
 		if err != nil {
 			log.Fatal("Restore buffer error = " + err.Error())
 		}
@@ -138,13 +138,13 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 
 	// Restore holder
-	Holder, err := RestoreHolderContract(sdk, sdk.Cfg.HolderAddr, Aimpl.Addr, Zproxy.Addr, Zimpl.Addr)
+	Holder, err := RestoreHolderContract(sdk, sdk.Cfg.HolderAddr, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("Restore holder error = " + err.Error())
 	}
 	log.Info("Restore holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Aimpl, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, Azil, buffers, Holder)
 }
 
 //TODO: move this function to core/sdk.go, rename to CheckTx

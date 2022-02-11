@@ -15,8 +15,8 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	p := tr.DeployAndUpgrade()
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
-	AssertSuccess(p.Aimpl.DelegateStake(ToZil(10)))
+	p.Azil.UpdateWallet(sdk.Cfg.Key1)
+	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
 
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
@@ -24,23 +24,23 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
-	AssertSuccess(p.Aimpl.DrainBuffer(p.GetBuffer().Addr))
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	AssertSuccess(p.Azil.DrainBuffer(p.GetBuffer().Addr))
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
-	tx, _ := AssertSuccess(p.Aimpl.WithdrawStakeAmt(ToAzil(10)))
+	p.Azil.UpdateWallet(sdk.Cfg.Key1)
+	tx, _ := AssertSuccess(p.Azil.WithdrawStakeAmt(ToAzil(10)))
 
 	block1 := tx.Receipt.EpochNum
-	tx, _ = p.Aimpl.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Aimpl.Addr, "NoUnbondedStake", ParamsMap{}})
+	tx, _ = p.Azil.CompleteWithdrawal()
+	AssertEvent(tx, Event{p.Azil.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.Key2)
-	tx, _ = p.Aimpl.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Aimpl.Addr, "NoUnbondedStake", ParamsMap{}})
+	p.Azil.UpdateWallet(sdk.Cfg.Key2)
+	tx, _ = p.Azil.CompleteWithdrawal()
+	AssertEvent(tx, Event{p.Azil.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
 	readyBlocks = append(readyBlocks, block1)
-	tx, _ = p.Aimpl.ClaimWithdrawal(readyBlocks)
+	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, "ClaimWithdrawalNoUnbonded")
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
@@ -53,10 +53,10 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertEqual(readyBlocks[0], strconv.Itoa(unbondedWithdrawalsBlocks[0]))
 	actions.ShowClaimWithdrawal(p)
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.AdminKey)
-	tx, _ = p.Aimpl.ClaimWithdrawal(readyBlocks)
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)
 	AssertTransition(tx, Transition{
-		p.Aimpl.Addr,         //sender
+		p.Azil.Addr,          //sender
 		"CompleteWithdrawal", //tag
 		p.Holder.Addr,        //recipient
 		"0",                  //amount
@@ -67,34 +67,34 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertTransition(tx, Transition{
 		p.Holder.Addr,                       //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
-		p.Aimpl.Addr,                        //recipient
+		p.Azil.Addr,                         //recipient
 		ToZil(10),                           //amount
 		ParamsMap{},
 	})
 
-	p.Aimpl.UpdateWallet(sdk.Cfg.Key1)
-	tx, _ = p.Aimpl.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Aimpl.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(10), "delegator": sdk.Cfg.Addr1}})
+	p.Azil.UpdateWallet(sdk.Cfg.Key1)
+	tx, _ = p.Azil.CompleteWithdrawal()
+	AssertEvent(tx, Event{p.Azil.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(10), "delegator": sdk.Cfg.Addr1}})
 	AssertTransition(tx, Transition{
-		p.Aimpl.Addr,
+		p.Azil.Addr,
 		"CompleteWithdrawalSuccessCallBack",
 		sdk.Cfg.Addr1,
 		"0",
 		ParamsMap{"amount": ToZil(10)},
 	})
 	AssertTransition(tx, Transition{
-		p.Aimpl.Addr,
+		p.Azil.Addr,
 		"AddFunds",
 		sdk.Cfg.Addr1,
 		ToZil(10),
 		ParamsMap{},
 	})
 
-	AssertEqual(Field(p.Aimpl, "totalstakeamount"), ToZil(1000))
-	AssertEqual(Field(p.Aimpl, "totaltokenamount"), ToAzil(1000))
-	AssertEqual(Field(p.Aimpl, "tmp_complete_withdrawal_available"), "0")
-	AssertEqual(Field(p.Aimpl, "balances", sdk.Cfg.Admin), ToAzil(1000))
+	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1000))
+	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1000))
+	AssertEqual(Field(p.Azil, "tmp_complete_withdrawal_available"), "0")
+	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(1000))
 
-	AssertEqual(Field(p.Aimpl, "withdrawal_unbonded"), "{}")
-	AssertEqual(Field(p.Aimpl, "withdrawal_pending"), "{}")
+	AssertEqual(Field(p.Azil, "withdrawal_unbonded"), "{}")
+	AssertEqual(Field(p.Azil, "withdrawal_pending"), "{}")
 }

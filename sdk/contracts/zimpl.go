@@ -33,6 +33,16 @@ func (z *Zimpl) GetBnumReq() int {
 	return int(bnumReq)
 }
 
+func (z *Zimpl) GetLastRewardCycle() int {
+	partialState := z.Contract.SubState("lastrewardcycle", []string{})
+
+	state := NewState(partialState)
+
+	lrc := state.Dig("result.lastrewardcycle").Int()
+
+	return int(lrc)
+}
+
 func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 	contract := buildZimplContract(sdk, ZproxyAddr, GzilAddr)
 

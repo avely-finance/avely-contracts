@@ -5,8 +5,8 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
-func (tr *Transitions) IsAimpl() {
-	Start("IsAimpl")
+func (tr *Transitions) IsAzil() {
+	Start("IsAzil")
 
 	p := tr.DeployAndUpgrade()
 
@@ -14,29 +14,29 @@ func (tr *Transitions) IsAimpl() {
 	p.GetBuffer().UpdateWallet(sdk.Cfg.Key2)
 
 	tx, _ := p.GetBuffer().DelegateStake()
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.GetBuffer().ClaimRewards()
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.GetBuffer().ClaimRewardsSsn(sdk.Cfg.AzilSsnAddress)
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.GetBuffer().RequestDelegatorSwap(p.Holder.Addr)
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.GetBuffer().ConfirmDelegatorSwap(p.Holder.Addr)
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.GetBuffer().RejectDelegatorSwap(p.Holder.Addr)
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.GetBuffer().ReDelegateStake(p.Holder.Addr, ToZil(1))
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 
 	// Use non-admin user for p.Holder
 	p.Holder.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, _ = p.Holder.WithdrawStakeAmt(ToZil(1))
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.Holder.CompleteWithdrawal()
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.Holder.ClaimRewards()
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.Holder.ConfirmDelegatorSwap(p.GetBuffer().Addr)
-	AssertError(tx, "AimplValidationFailed")
+	AssertError(tx, "AzilValidationFailed")
 }
