@@ -66,7 +66,6 @@ func (tr *Transitions) RunAll() {
 	tr.Admin()
 	tr.DelegateStakeSuccess()
 	tr.DelegateStakeBuffersRotation()
-	tr.ZilBalanceOf()
 	tr.IsAdmin()
 	tr.IsAimpl()
 	tr.IsZimpl()

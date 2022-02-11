@@ -90,10 +90,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	})
 	bnum1 := txn.Receipt.EpochNum
 
-	newDelegBalanceZil, _ := p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr2)
-	//TODO: we can check this only in local testing environment,
-	//and even in this case we need to monitor all incoming balances, including Holder initial delegate
-	//t.AssertEqual(p.Zproxy.Field("totalstakeamount"), newDelegBalanceZil)
+	newDelegBalanceZil := p.Aimpl.ZilBalanceOf(sdk.Cfg.Addr2).String()
 	AssertEqual(Field(p.Aimpl, "totalstakeamount"), StrAdd(ToZil(1000), newDelegBalanceZil))
 	AssertEqual(Field(p.Aimpl, "totaltokenamount"), ToAzil(1010))
 	AssertEqual(Field(p.Aimpl, "balances", sdk.Cfg.Addr2), ToAzil(10))
