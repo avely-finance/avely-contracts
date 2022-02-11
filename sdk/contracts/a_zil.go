@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 
@@ -291,35 +290,16 @@ func (a *AZil) CompleteWithdrawal() (*transaction.Transaction, error) {
 	return a.Call("CompleteWithdrawal", args, "0")
 }
 
-func (a *AZil) ZilBalanceOf(addr string) (string, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			addr,
-		},
-	}
-	tx, err := a.Contract.Call("ZilBalanceOf", args, "0")
-	if err != nil {
-		return "", err
-	}
+func (a *AZil) ZilBalanceOf(addr string) *big.Int {
+	azilPriceFloat := a.GetAzilPrice()
+	balance := a.BalanceOf(addr)
+	balanceFloat := new(big.Float).SetInt(balance)
+	zilBalanceFloat := new(big.Float).Mul(azilPriceFloat, balanceFloat)
 
-	for _, transition := range tx.Receipt.Transitions {
-		if "ZilBalanceOfCallBack" != transition.Msg.Tag {
-			continue
-		}
-		for _, param := range transition.Msg.Params {
-			if param.VName == "address" && param.Value != addr {
-				//it's balance of some other address, it should not be so
-				return "", errors.New("Balance not found for addr=" + addr)
-			}
-			if param.VName == "balance" {
-				return fmt.Sprintf("%v", param.Value), nil
-			}
-		}
-		break
-	}
-	return "", errors.New("Balance not found")
+	result := new(big.Int)
+	zilBalanceFloat.Int(result) // store converted number in result
+
+	return result
 }
 
 func (a *AZil) ClaimRewardsSuccessCallBack() (*transaction.Transaction, error) {
