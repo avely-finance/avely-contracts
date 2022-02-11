@@ -1,6 +1,8 @@
 package transitions
 
 import (
+	"strconv"
+
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
@@ -32,7 +34,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	bufferAddr := p.GetBuffer().Addr
 	txn, _ = p.Aimpl.DrainBuffer(bufferAddr)
-	AssertEqual(Field(p.Zimpl, "lastrewardcycle"), Field(p.Aimpl, "buffer_drained_cycle", bufferAddr))
+	AssertEqual(strconv.Itoa(p.Zimpl.GetLastRewardCycle()), Field(p.Aimpl, "buffer_drained_cycle", bufferAddr))
 
 	AssertTransition(txn, Transition{
 		p.Aimpl.Addr,       //sender

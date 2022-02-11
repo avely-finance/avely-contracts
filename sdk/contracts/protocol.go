@@ -3,7 +3,6 @@ package contracts
 import (
 	"log"
 	"strconv"
-	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
@@ -33,10 +32,6 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, aimpl *AZil, buffers []*BufferCon
 	}
 }
 
-func (p *Protocol) GetAzilSsnAddress() string {
-	return strings.ToLower(p.Aimpl.Sdk.Cfg.AzilSsnAddress)
-}
-
 func (p *Protocol) DeployBuffer() (*BufferContract, error) {
 	return NewBufferContract(p.Aimpl.Sdk, p.Aimpl.Addr, p.Zproxy.Addr, p.Zimpl.Addr)
 }
@@ -58,21 +53,11 @@ func (p *Protocol) GetBufferToSwapWith() *BufferContract {
 }
 
 func (p *Protocol) GetBufferByOffset(offset int) *BufferContract {
-	lrc := p.GetLastRewardCycle()
+	lrc := p.Zimpl.GetLastRewardCycle()
 	lrc = lrc + offset
 	buffers := p.Buffers
 	i := int(lrc) % len(buffers)
 	return buffers[i]
-}
-
-func (p *Protocol) GetLastRewardCycle() int {
-	partialState := p.Zimpl.Contract.SubState("lastrewardcycle", []string{})
-
-	state := NewState(partialState)
-
-	lrc := state.Dig("result.lastrewardcycle").Int()
-
-	return int(lrc)
 }
 
 func (p *Protocol) GetBlockHeight() int {
