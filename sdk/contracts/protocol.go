@@ -13,12 +13,12 @@ import (
 type Protocol struct {
 	Zproxy  *Zproxy
 	Zimpl   *Zimpl
-	Aimpl   *AZil
+	Azil    *AZil
 	Buffers []*BufferContract
 	Holder  *HolderContract
 }
 
-func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, aimpl *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
+func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
 	if len(buffers) == 0 {
 		log.Fatal("Protocol should have at least one buffer")
 	}
@@ -26,14 +26,14 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, aimpl *AZil, buffers []*BufferCon
 	return &Protocol{
 		Zproxy:  zproxy,
 		Zimpl:   zimpl,
-		Aimpl:   aimpl,
+		Azil:    azil,
 		Buffers: buffers,
 		Holder:  holder,
 	}
 }
 
 func (p *Protocol) DeployBuffer() (*BufferContract, error) {
-	return NewBufferContract(p.Aimpl.Sdk, p.Aimpl.Addr, p.Zproxy.Addr, p.Zimpl.Addr)
+	return NewBufferContract(p.Azil.Sdk, p.Azil.Addr, p.Zproxy.Addr, p.Zimpl.Addr)
 }
 
 func (p *Protocol) GetBuffer() *BufferContract {
@@ -62,14 +62,14 @@ func (p *Protocol) GetBufferByOffset(offset int) *BufferContract {
 
 func (p *Protocol) GetBlockHeight() int {
 	result := ""
-	if p.Aimpl.Sdk.Cfg.Chain == "local" {
+	if p.Azil.Sdk.Cfg.Chain == "local" {
 		//Isolated server has limited set of API methods: https://github.com/Zilliqa/zilliqa-isolated-server#available-apis
 		//GetNumTxBlocks is not available.
 		//So we'll take BlockNum from receipt of safe transaction.
-		tx, _ := p.Zproxy.UpdateVerifier(p.Aimpl.Sdk.Cfg.Verifier)
+		tx, _ := p.Zproxy.UpdateVerifier(p.Azil.Sdk.Cfg.Verifier)
 		result = tx.Receipt.EpochNum
 	} else {
-		result, _ = p.Aimpl.Contract.Provider.GetNumTxBlocks()
+		result, _ = p.Azil.Contract.Provider.GetNumTxBlocks()
 	}
 	blockHeight, _ := strconv.Atoi(result)
 	return blockHeight
@@ -80,7 +80,7 @@ func (p *Protocol) GetClaimWithdrawalBlocks() []int {
 	bnumReq := p.Zimpl.GetBnumReq()
 
 	//get all blocks with pending withdrawals
-	partialState := p.Aimpl.Contract.SubState("withdrawal_pending", []string{})
+	partialState := p.Azil.Contract.SubState("withdrawal_pending", []string{})
 	state := NewState(partialState)
 	allWithdrawBlocks := state.Dig("result.withdrawal_pending|@keys")
 	blocks := allWithdrawBlocks.ArrayInt()
@@ -111,7 +111,7 @@ func (p *Protocol) GetSwapRequestsForBuffer(bufferAddr string) []string {
 }
 
 func (p *Protocol) InitHolder() (*transaction.Transaction, error) {
-	return p.Holder.DelegateStake(ToZil(p.Aimpl.Sdk.Cfg.HolderInitialDelegateZil))
+	return p.Holder.DelegateStake(ToZil(p.Azil.Sdk.Cfg.HolderInitialDelegateZil))
 }
 
 func (p *Protocol) SyncBufferAndHolder() {
@@ -121,16 +121,16 @@ func (p *Protocol) SyncBufferAndHolder() {
 		new_buffers = append(new_buffers, b.Addr)
 	}
 
-	check(p.Aimpl.ChangeBuffers(new_buffers))
-	check(p.Aimpl.ChangeHolderAddress(p.Holder.Addr))
+	check(p.Azil.ChangeBuffers(new_buffers))
+	check(p.Azil.ChangeHolderAddress(p.Holder.Addr))
 }
 
 func (p *Protocol) Unpause() {
-	check(p.Aimpl.Unpause())
+	check(p.Azil.Unpause())
 }
 
 func (p *Protocol) SetupZProxy() {
-	sdk := p.Aimpl.Sdk
+	sdk := p.Azil.Sdk
 	args := []core.ContractValue{
 		{
 			"newImplementation",
@@ -146,7 +146,7 @@ func (p *Protocol) SetupZProxy() {
 	check(p.Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake
-	check(p.Aimpl.DelegateStake(ToZil(1000)))
+	check(p.Azil.DelegateStake(ToZil(1000)))
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
 	check(p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil)))
@@ -162,7 +162,7 @@ func (p *Protocol) SetupZProxy() {
 func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
 	log.AddShortcut("Zproxy", p.Zproxy.Addr)
 	log.AddShortcut("Zimpl", p.Zimpl.Addr)
-	log.AddShortcut("Aimpl", p.Aimpl.Addr)
+	log.AddShortcut("Azil", p.Azil.Addr)
 	log.AddShortcut("Holder", p.Holder.Addr)
 
 	for i, b := range p.Buffers {
