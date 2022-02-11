@@ -39,7 +39,7 @@ func main() {
 		runAtBlock: -1,
 	}
 
-	log.Info("Start swap request watcher")
+	log.Debug("Start swap request watcher")
 	blockWatcher := utils.CreateBlockWatcher(url)
 	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()

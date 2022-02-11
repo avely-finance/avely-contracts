@@ -36,7 +36,7 @@ func main() {
 		currentLrc: -1,
 	}
 
-	log.Info("Start last reward cycle watcher")
+	log.Debug("Start last reward cycle watcher")
 	blockWatcher := utils.CreateBlockWatcher(url)
 	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()

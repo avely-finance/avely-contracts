@@ -39,7 +39,7 @@ func main() {
 		runAtBlock: -1,
 	}
 
-	log.Info("Start claim withdrawal watcher")
+	log.Debug("Start claim withdrawal watcher")
 	blockWatcher := utils.CreateBlockWatcher(url)
 	blockWatcher.AddObserver(claimWatcher)
 	blockWatcher.Start()
