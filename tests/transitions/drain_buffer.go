@@ -10,8 +10,7 @@ func (tr *Transitions) DrainBuffer() {
 	Start("CompleteWithdrawal - success")
 
 	p := tr.DeployAndUpgrade()
-	feeDenom := "10000"
-	rewardsFee := "1990" //19.9%
+	rewardsFee := "1000" //10% of feeDenom=10000
 	treasuryAddr := sdk.Cfg.Addr3
 	totalFee := "0"
 	p.Aimpl.ChangeRewardsFee(rewardsFee)
@@ -66,7 +65,8 @@ func (tr *Transitions) DrainBuffer() {
 	})
 
 	//transfer rewards fee to treasury
-	rewardsFeeValue := StrMulDiv(rewardsFee, bufferRewards, feeDenom)
+	//rewardsFee * bufferRewards / feeDenom = 1000 * 100 / 10000 = 0.1 * 100 = 10
+	rewardsFeeValue := "10"
 	totalFee = StrAdd(totalFee, rewardsFeeValue)
 	AssertTransition(txn, Transition{
 		p.GetBuffer().Addr, //sender
@@ -101,7 +101,8 @@ func (tr *Transitions) DrainBuffer() {
 	})
 
 	//transfer rewards fee to treasury
-	rewardsFeeValue = StrMulDiv(rewardsFee, holderRewards, feeDenom)
+	//rewardsFee * holderRewards / feeDenom = 1000 * 49 / 10000 = 0.1 * 49 = 4.9 = 4
+	rewardsFeeValue = "4"
 	totalFee = StrAdd(totalFee, rewardsFeeValue)
 	AssertTransition(txn, Transition{
 		p.GetBuffer().Addr, //sender
