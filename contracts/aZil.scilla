@@ -131,6 +131,7 @@ let uint128_zero = Uint128 0
 let uint128_one = Uint128 1
 let uint32_zero = Uint32 0
 let uint32_one = Uint32 1
+let empty_withdrawal_deleg_map = Emp ByStr20 Bool
 let bystr20_zero = 0x0000000000000000000000000000000000000000
 let fee_denom = Uint128 10000 (* fee denominated in basis points (1 b.p. = 0.01%) *)
 
@@ -243,7 +244,8 @@ field allowances: Map ByStr20 (Map ByStr20 Uint128)
   = Emp ByStr20 (Map ByStr20 Uint128)
 
 (* BlockNumber -> AddressOfDeleg ->  Withdrawal of Token:Uint128 Stake:Uint128 *)
-field withdrawal_pending: Map BNum (Map ByStr20 Withdrawal) = Emp BNum (Map ByStr20 Withdrawal)
+field withdrawal_pending:              Map BNum (Map ByStr20 Withdrawal) = Emp BNum (Map ByStr20 Withdrawal)
+field withdrawal_pending_of_delegator: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
 
 (* AddressOfDeleg ->  Deposit *)
 field withdrawal_unbonded: Map ByStr20 Withdrawal = Emp ByStr20 Withdrawal
@@ -259,6 +261,7 @@ field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
 field tmp_buffer_exists_at_ssn: Uint32 = uint32_zero
 field tmp_buffer: ByStr20 = bystr20_zero
+field tmp_withdrawal_deleg_map: Map ByStr20 Bool = Emp ByStr20 Bool
 
 field local_bnum_req: Uint128 = Uint128 35000
 field local_lastrewardcycle: Uint32 = uint32_one
@@ -626,10 +629,12 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
       new_withdraw_token_amt = builtin add token withdraw_token_amt;
       new_withdraw_stake_amt = builtin add stake withdraw_stake_amt;
       pending_withdrawal = Withdrawal new_withdraw_token_amt new_withdraw_stake_amt;
-      withdrawal_pending[withdrawal_bnum][initiator] := pending_withdrawal
+      withdrawal_pending[withdrawal_bnum][initiator] := pending_withdrawal;
+      withdrawal_pending_of_delegator[initiator][withdrawal_bnum] := pending_withdrawal
     | None =>
       pending_withdrawal = Withdrawal withdraw_token_amt withdraw_stake_amt;
-      withdrawal_pending[withdrawal_bnum][initiator] := pending_withdrawal
+      withdrawal_pending[withdrawal_bnum][initiator] := pending_withdrawal;
+      withdrawal_pending_of_delegator[initiator][withdrawal_bnum] := pending_withdrawal
     end;
 
     e = { _eventname: "WithdrawStakeAmt"; ssn_addr: azil_ssn_addr; deleg_address: initiator; withdraw_amount:withdraw_token_amt; withdraw_stake_amount:withdraw_stake_amt };
@@ -701,6 +706,34 @@ procedure CalculateTotalWithdrawalBlock(deleg_withdrawal: Pair ByStr20 Withdrawa
   end
 end
 
+
+procedure DeleteWithdrawalDelegBnum(pair_deleg_bnum: Pair ByStr20 BNum)
+  match pair_deleg_bnum with
+  | Pair deleg bnum =>
+    delete withdrawal_pending_of_delegator[deleg][bnum];
+    (* mark delegator as affected *)
+    tmp_withdrawal_deleg_map[deleg] := true
+  end
+end
+
+procedure CleanWithdrawalDeleg(pair_deleg: Pair ByStr20 Bool)
+  match pair_deleg with
+  | Pair deleg affected =>
+    o_withdrawal_pending_of_delegator <- withdrawal_pending_of_delegator[deleg];
+    match o_withdrawal_pending_of_delegator with
+    | Some var_withdrawal_pending_of_delegator =>
+      map_size = builtin size var_withdrawal_pending_of_delegator;
+      is_map_empty = builtin eq map_size uint32_zero;
+      match is_map_empty with
+      | True => (* empty map *)
+        delete withdrawal_pending_of_delegator[deleg]
+      | False => (* contains other records *)
+      end
+    | None => (* nothing to delete *)
+    end
+  end
+end
+
 (*
   foreach withdrawal_pending[bnum] as Pair deleg Withdrawal
   then delete withdrawal_pending[bnum]
@@ -710,7 +743,18 @@ procedure CalculateTotalWithdrawal(bnum: BNum)
   match map_deleg_amount_o with
   | Some map_deleg_amount =>
     list_deleg_amount = builtin to_list map_deleg_amount;
-    forall list_deleg_amount CalculateTotalWithdrawalBlock
+    forall list_deleg_amount CalculateTotalWithdrawalBlock;
+
+    (* transform list of Pair(delegator, Withdrawal) to list of Pair(delegator, bnum) *)
+    mapper = @list_map (Pair ByStr20 Withdrawal) (Pair ByStr20 BNum);
+    f = fun (pair_deleg_amt: Pair ByStr20 Withdrawal) =>
+      let fst = @fst ByStr20 Withdrawal in
+      let deleg = fst pair_deleg_amt in
+      Pair {(ByStr20) (BNum)} deleg bnum;
+    list_deleg_bnum = mapper f list_deleg_amount;
+    (* delete records from map withdrawal_pending_of_delegator[delegator][bnum] in cycle *)
+    forall list_deleg_bnum DeleteWithdrawalDelegBnum
+
   | None =>
   end;
   delete withdrawal_pending[bnum]
@@ -988,7 +1032,15 @@ transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
   unbonded = leave_unbonded current_bnum current_bnum_req blocks_to_withdraw;
 
   tmp_complete_withdrawal_available := uint128_zero;
+  tmp_withdrawal_deleg_map := empty_withdrawal_deleg_map;
+
   forall unbonded CalculateTotalWithdrawal;
+
+  (* clean maps of affected delegators *)
+  withdrawal_deleg_map <-tmp_withdrawal_deleg_map;
+  withdrawal_deleg_list = builtin to_list withdrawal_deleg_map;
+  forall withdrawal_deleg_list CleanWithdrawalDeleg;
+  tmp_withdrawal_deleg_map := empty_withdrawal_deleg_map;
 
   withdraw_stake_amt <- tmp_complete_withdrawal_available;
   zero_withdraw = builtin eq withdraw_stake_amt uint128_zero;
