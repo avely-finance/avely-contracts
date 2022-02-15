@@ -97,7 +97,6 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	withdrawal = Dig(p.Azil, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
 	AssertEqual(withdrawal.TokenAmount.String(), "0")
 	AssertEqual(withdrawal.StakeAmount.String(), "0")
-	AssertEqual(Field(p.Azil, "tmp_withdrawal_deleg_map"), "{}")
 
 	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1000))
 	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1000))
