@@ -108,7 +108,17 @@ func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
 	p.SyncBufferAndHolder()
 
-	p.Azil.ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
+	_, err := p.Azil.ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change rewards fee failed")
+	}
+	log.Info("aZIL Rewards Fee successfully changed")
+
+	_, err = p.Azil.ChangeTreasuryAddress(sdk.Cfg.TreasuryAddr)
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change Treasery address failed")
+	}
+	log.Info("aZIL Treasery address successfully changed")
 }
 
 func showTx(p *Protocol, tx_addr string) {

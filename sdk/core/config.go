@@ -41,12 +41,13 @@ type Config struct {
 	Verifier                 string
 	VerifierKey              string
 
-	ZproxyAddr  string
-	GzilAddr    string
-	ZimplAddr   string
-	AzilAddr    string
-	BufferAddrs []string
-	HolderAddr  string
+	ZproxyAddr   string
+	GzilAddr     string
+	ZimplAddr    string
+	AzilAddr     string
+	BufferAddrs  []string
+	HolderAddr   string
+	TreasuryAddr string
 }
 
 func NewConfig(chain string) *Config {
