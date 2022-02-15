@@ -34,7 +34,8 @@
     "BufferAddrs": [
       ""
     ],
-    "HolderAddr": ""
+    "HolderAddr": "",
+    "TreasuryAddr": ""
   },
   "testnet": {
     "Api": {
@@ -73,7 +74,8 @@
       "0x0e7587d32ab87ade5aba6012c673fef7360c4252",
       "0x2fb75fa804f9067ccf6c8e6ca2a9306ec0853baf"
     ],
-    "HolderAddr": "0x4d2fbb09a01019479601d899918cf9b3bff226c9"
+    "HolderAddr": "0x4d2fbb09a01019479601d899918cf9b3bff226c9",
+    "TreasuryAddr": "0x4dE9D0CF923119c2433391eA02Afa14701cB59A8"
   },
   "mainnet": {
     "Api": {
@@ -111,6 +113,7 @@
       "0xdb92bfb7c48a040593f21eba0660e88212a890d3",
       "0x585d6813924c3e623ac8750339d1706b25c2af69"
     ],
-    "HolderAddr": "0x8578d2fa8c707e0b16f872e358e87364a173ee74"
+    "HolderAddr": "0x8578d2fa8c707e0b16f872e358e87364a173ee74",
+    "TreasuryAddr": "0x4dE9D0CF923119c2433391eA02Afa14701cB59A8"
   }
 }
