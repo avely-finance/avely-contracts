@@ -13,45 +13,47 @@ import (
 type SwapRequestWatcher struct {
 	gap        int
 	runAtBlock int
+	protocol   *contracts.Protocol
+	log        *core.Log
 }
 
-var log *core.Log
-var sdk *core.AvelySDK
-var protocol *contracts.Protocol
-
 func main() {
-
 	chainPtr := flag.String("chain", "local", "chain")
 	gapPtr := flag.Int("gap", 5, "gap between blocks")
 
 	flag.Parse()
 
 	config := core.NewConfig(*chainPtr)
-	sdk = core.NewAvelySDK(*config)
-	log = core.NewLog()
+	sdk := core.NewAvelySDK(*config)
+	log := core.NewLog()
 	log.SetOutputStdout()
 	log.AddSlackHook(sdk.Cfg.Slack.HookUrl, sdk.Cfg.Slack.LogLevel)
-	protocol = contracts.RestoreFromState(sdk, log)
+	protocol := contracts.RestoreFromState(sdk, log)
 	url := sdk.GetWsURL()
 
 	watcher := &SwapRequestWatcher{
 		gap:        *gapPtr,
 		runAtBlock: -1,
+		protocol:   protocol,
+		log:        log,
 	}
 
 	log.Debug("Start swap request watcher")
-	blockWatcher := utils.CreateBlockWatcher(url)
+	blockWatcher := utils.CreateBlockWatcher(url, log)
 	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()
 }
 
 func (w *SwapRequestWatcher) Notify(blockNum int) {
+	protocol := w.protocol
+	action := actions.NewAdminActions(w.log)
+
 	if (blockNum - w.runAtBlock) > w.gap {
-		log.WithFields(logrus.Fields{"block_number": blockNum}).Debug("Mined block")
-		actions.ConfirmSwapRequests(protocol)
+		w.log.WithFields(logrus.Fields{"block_number": blockNum}).Debug("Mined block")
+		action.ConfirmSwapRequests(protocol)
 		w.runAtBlock = blockNum
 	} else {
-		log.WithFields(logrus.Fields{
+		w.log.WithFields(logrus.Fields{
 			"block_number": blockNum,
 			"current_gap":  (blockNum - w.runAtBlock),
 			"expected_gap": w.gap,
