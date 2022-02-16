@@ -23,8 +23,6 @@ type BlockWatcher struct {
 	log *core.Log
 }
 
-// var log *core.Log
-
 func CreateBlockWatcher(url url.URL, log *core.Log) *BlockWatcher {
 	return &BlockWatcher{url: url, log: log}
 }

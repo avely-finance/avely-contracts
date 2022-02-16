@@ -89,7 +89,7 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertSuccess(p.Azil.WithUser(key2).DelegateStake(stake2_azil))
 
 	showOnly := true
-	actions.ChownStakeReDelegate(p, showOnly)
+	actions.NewAdminActions(GetLog()).ChownStakeReDelegate(p, showOnly)
 
 	//offchain tool calls ChownStakeReDelegate for each SSN (excepting AzilSSN) when new cycle starts
 	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[1], StrAdd(stake1_1, stake2_1)))
@@ -165,7 +165,7 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	AssertEqual(nextBuffer, activeBuffer)
 
 	showOnly := true
-	actions.ChownStakeReDelegate(p, showOnly)
+	actions.NewAdminActions(GetLog()).ChownStakeReDelegate(p, showOnly)
 
 	//offchain tool calls ChownStakeReDelegate for each ssn/amount
 	tx, _ = p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(sdk.Cfg.AzilSsnAddress, userStake)
