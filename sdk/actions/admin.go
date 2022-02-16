@@ -37,13 +37,12 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int) error {
 
 	if needDrain {
 		tx, err := p.Azil.DrainBuffer(bufferToDrain.Addr)
-		fields := logrus.Fields{"tx": tx.ID}
 		if err != nil {
-			a.log.WithFields(fields).Error("Buffer drain is failed")
+			a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt}).Error("Buffer drain is failed")
 
 			return errors.New("Buffer drain is failed")
 		} else {
-			a.log.WithFields(fields).Info("Buffer successfully drained")
+			a.log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Buffer successfully drained")
 		}
 	} else {
 		a.log.Debug("No need to drain buffer")
@@ -70,7 +69,7 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 			if showOnly {
 				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Debug("Need to run ChownStakeReDelegate")
 			} else if tx, err := p.Azil.ChownStakeReDelegate(ssn, amountStr); err != nil {
-				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID}).Error("ChownStakeReDelegate failed")
+				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID, "error": tx.Receipt}).Error("ChownStakeReDelegate failed")
 
 				return errors.New("ChownStakeReDelegate failed")
 			} else {
@@ -93,7 +92,7 @@ func (a *AdminActions) ConfirmSwapRequests(p *Protocol) error {
 	for _, initiator := range swapRequests {
 		tx, err := p.Azil.ChownStakeConfirmSwap(initiator)
 		if err != nil {
-			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": err.Error()}).Error("Can't confirm swap")
+			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": tx.Receipt}).Error("Can't confirm swap")
 			errCnt++
 		} else {
 			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID}).Info("Swap confirmed")
@@ -121,7 +120,7 @@ func (a *AdminActions) AutoRestake(p *Protocol) error {
 	tx, err := p.Azil.PerformAutoRestake()
 
 	if err != nil {
-		a.log.WithFields(logrus.Fields{"error": err.Error()}).Error("AutoRestake failed")
+		a.log.WithFields(logrus.Fields{"txid": tx.ID, "error": tx.Receipt}).Error("AutoRestake failed")
 
 		return errors.New("AutoRestake failed")
 	}
@@ -160,7 +159,7 @@ func (a *AdminActions) ClaimWithdrawal(p *Protocol) error {
 	tx, err := p.Azil.ClaimWithdrawal(blocksStr)
 
 	if err != nil {
-		a.log.WithFields(logrus.Fields{"tx": tx.ID}).Error("Withdrawals claim failed")
+		a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt}).Error("Withdrawals claim failed")
 
 		return errors.New("Withdrawals claim failed")
 	} else {
