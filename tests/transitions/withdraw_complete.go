@@ -51,7 +51,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	unbondedWithdrawalsBlocks := p.GetClaimWithdrawalBlocks()
 	AssertEqual(readyBlocks[0], strconv.Itoa(unbondedWithdrawalsBlocks[0]))
-	actions.ShowClaimWithdrawal(p)
+	actions.NewAdminActions(GetLog()).ShowClaimWithdrawal(p)
 
 	withdrawal := Dig(p.Azil, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
 	AssertEqual(withdrawal.TokenAmount.String(), ToAzil(10))
