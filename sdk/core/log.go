@@ -26,14 +26,11 @@ func NewLog() *Log {
 		shortcuts,
 	}
 	lgr.SetFormatter(&logrus.TextFormatter{
-		DisableTimestamp: true,
+		FullTimestamp: true,
 	})
 
 	colorAddressHook := &ColorAddressHook{log: log}
 	lgr.AddHook(colorAddressHook)
-
-	colorIconHook := new(ColorIconHook)
-	lgr.AddHook(colorIconHook)
 
 	return log
 }
@@ -120,23 +117,4 @@ func (hook *ColorAddressHook) Fire(entry *logrus.Entry) error {
 
 func (hook *ColorAddressHook) Levels() []logrus.Level {
 	return logrus.AllLevels
-}
-
-type ColorIconHook struct {
-}
-
-func (hook *ColorIconHook) Fire(entry *logrus.Entry) error {
-	switch entry.Level {
-	case logrus.InfoLevel:
-		entry.Message = "🟢 " + entry.Message
-	case logrus.FatalLevel:
-		entry.Message = "💔 " + entry.Message
-	case logrus.ErrorLevel:
-		entry.Message = "🔴 " + entry.Message
-	}
-	return nil
-}
-
-func (hook *ColorIconHook) Levels() []logrus.Level {
-	return []logrus.Level{logrus.FatalLevel, logrus.ErrorLevel, logrus.InfoLevel}
 }
