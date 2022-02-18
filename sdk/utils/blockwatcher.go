@@ -2,12 +2,15 @@ package utils
 
 import (
 	"net/url"
+	"time"
 
 	"github.com/Zilliqa/gozilliqa-sdk/subscription"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
+
+const errElapse = float64(30.0)
 
 type Observer interface {
 	Notify(blockNum int)
@@ -27,28 +30,55 @@ func CreateBlockWatcher(url url.URL, log *core.Log) *BlockWatcher {
 	return &BlockWatcher{url: url, log: log}
 }
 
+type SocketError struct {
+	err       error
+	timestamp time.Time
+}
+
+func NewSocketError(e error) *SocketError {
+	return &SocketError{err: e, timestamp: time.Now()}
+}
+
+func (s *SocketError) Error() string {
+	return s.err.Error()
+}
+
+func (s *SocketError) isExpired() bool {
+	now := time.Now()
+	delta := now.Sub(s.timestamp)
+	return delta.Seconds() > errElapse
+}
+
 func (cw *BlockWatcher) Start() {
+	log := cw.log
 	subscriber := subscription.BuildNewBlockSubscriber(cw.url)
 	_, ec, msg := subscriber.Start()
-	cancel := false
+	var prevErr *SocketError
+	var err *SocketError
 
-	cw.log.WithFields(logrus.Fields{"url": cw.url.String()}).Debug("Start block watcher")
+	log.WithFields(logrus.Fields{"url": cw.url.String()}).Debug("Start block watcher")
 
 	for {
-		if cancel {
-			_ = subscriber.Ws.Close()
-			break
-		}
 		select {
 		case message := <-msg:
 			if blockNum, found := cw.getBlockNum(message); found {
 				cw.NotifyAll(blockNum)
 			}
-		case err := <-ec:
-			cw.log.Error("Got error: " + err.Error())
-			cancel = true
+		case e := <-ec:
+			err = NewSocketError(e)
+			_ = subscriber.Ws.Close()
+			if prevErr == nil || prevErr.isExpired() {
+				// reconnect
+				subscriber = subscription.BuildNewBlockSubscriber(cw.url)
+				_, ec, msg = subscriber.Start()
+				// re-assign prev error to the current
+				prevErr = err
+				err = nil
+			} else {
+				log.Error("Got fatal error: " + err.Error())
+				break
+			}
 		}
-
 	}
 }
 

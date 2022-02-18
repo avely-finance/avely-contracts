@@ -116,6 +116,11 @@ func (a *AdminActions) AutoRestake(p *Protocol) error {
 		return nil
 	}
 
+	if autorestakeamount.Cmp(big.NewInt(10000000000000)) < 1 { // autorestakeamount <= 10 ZIL
+		a.log.Info("Autorestake is lower than min delegate amount. " + autorestakeamount.String())
+		return nil
+	}
+
 	priceBefore := p.Azil.GetAzilPrice().String()
 	tx, err := p.Azil.PerformAutoRestake()
 
