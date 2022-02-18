@@ -59,7 +59,13 @@ func (cw *BlockWatcher) Start() {
 	log.WithFields(logrus.Fields{"url": cw.url.String()}).Debug("Start block watcher")
 
 	for {
-		if err != nil {
+		select {
+		case message := <-msg:
+			if blockNum, found := cw.getBlockNum(message); found {
+				cw.NotifyAll(blockNum)
+			}
+		case e := <-ec:
+			err = NewSocketError(e)
 			_ = subscriber.Ws.Close()
 			if prevErr == nil || prevErr.isExpired() {
 				// reconnect
@@ -72,14 +78,6 @@ func (cw *BlockWatcher) Start() {
 				log.Error("Got fatal error: " + err.Error())
 				break
 			}
-		}
-		select {
-		case message := <-msg:
-			if blockNum, found := cw.getBlockNum(message); found {
-				cw.NotifyAll(blockNum)
-			}
-		case e := <-ec:
-			err = NewSocketError(e)
 		}
 	}
 }
