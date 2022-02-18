@@ -20,14 +20,11 @@ type Observable struct {
 type BlockWatcher struct {
 	Observable
 	url url.URL
+	log *core.Log
 }
 
-var log *core.Log
-
-func CreateBlockWatcher(url url.URL) *BlockWatcher {
-	log = core.NewLog()
-	log.SetOutputStdout()
-	return &BlockWatcher{url: url}
+func CreateBlockWatcher(url url.URL, log *core.Log) *BlockWatcher {
+	return &BlockWatcher{url: url, log: log}
 }
 
 func (cw *BlockWatcher) Start() {
@@ -35,7 +32,7 @@ func (cw *BlockWatcher) Start() {
 	_, ec, msg := subscriber.Start()
 	cancel := false
 
-	log.WithFields(logrus.Fields{"url": cw.url.String()}).Debug("Start block watcher")
+	cw.log.WithFields(logrus.Fields{"url": cw.url.String()}).Debug("Start block watcher")
 
 	for {
 		if cancel {
@@ -48,7 +45,7 @@ func (cw *BlockWatcher) Start() {
 				cw.NotifyAll(blockNum)
 			}
 		case err := <-ec:
-			log.Error("Got error: " + err.Error())
+			cw.log.Error("Got error: " + err.Error())
 			cancel = true
 		}
 
@@ -67,6 +64,7 @@ func (cw *BlockWatcher) getBlockNum(message []byte) (int, bool) {
 func (o *Observable) AddObserver(obs Observer) {
 	o.Observers = append(o.Observers, obs)
 }
+
 func (o *Observable) NotifyAll(value int) {
 	for _, ob := range o.Observers {
 		ob.Notify(value)

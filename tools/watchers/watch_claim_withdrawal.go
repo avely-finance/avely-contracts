@@ -13,45 +13,47 @@ import (
 type ClaimWithdrawalWatcher struct {
 	gap        int
 	runAtBlock int
+	protocol   *contracts.Protocol
+	log        *core.Log
 }
 
-var log *core.Log
-var sdk *core.AvelySDK
-var protocol *contracts.Protocol
-
 func main() {
-
 	chainPtr := flag.String("chain", "local", "chain")
 	gapPtr := flag.Int("gap", 5, "gap between blocks")
 
 	flag.Parse()
 
 	config := core.NewConfig(*chainPtr)
-	sdk = core.NewAvelySDK(*config)
-	log = core.NewLog()
+	sdk := core.NewAvelySDK(*config)
+	log := core.NewLog()
 	log.SetOutputStdout()
 	log.AddSlackHook(sdk.Cfg.Slack.HookUrl, sdk.Cfg.Slack.LogLevel)
-	protocol = contracts.RestoreFromState(sdk, log)
+	protocol := contracts.RestoreFromState(sdk, log)
 	url := sdk.GetWsURL()
 
 	claimWatcher := &ClaimWithdrawalWatcher{
 		gap:        *gapPtr,
 		runAtBlock: -1,
+		protocol:   protocol,
+		log:        log,
 	}
 
-	log.Info("Start claim withdrawal watcher")
-	blockWatcher := utils.CreateBlockWatcher(url)
+	log.Debug("Start claim withdrawal watcher")
+	blockWatcher := utils.CreateBlockWatcher(url, log)
 	blockWatcher.AddObserver(claimWatcher)
 	blockWatcher.Start()
 }
 
 func (cww *ClaimWithdrawalWatcher) Notify(blockNum int) {
+	protocol := cww.protocol
+	action := actions.NewAdminActions(cww.log)
+
 	if (blockNum - cww.runAtBlock) > cww.gap {
-		log.WithFields(logrus.Fields{"block_number": blockNum}).Debug("Mined block")
-		actions.ClaimWithdrawal(protocol)
+		cww.log.WithFields(logrus.Fields{"block_number": blockNum}).Debug("Mined block")
+		action.ClaimWithdrawal(protocol)
 		cww.runAtBlock = blockNum
 	} else {
-		log.WithFields(logrus.Fields{
+		cww.log.WithFields(logrus.Fields{
 			"block_number": blockNum,
 			"current_gap":  (blockNum - cww.runAtBlock),
 			"expected_gap": cww.gap,

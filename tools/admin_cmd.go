@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -48,6 +49,8 @@ func main() {
 		addr := strings.ToLower(*addrPtr)
 		ssn := strings.ToLower(*ssnPtr)
 
+		action := actions.NewAdminActions(log)
+
 		switch cmd {
 		//deploy
 		case "init_holder":
@@ -76,24 +79,24 @@ func main() {
 			drainBuffer(p, addr)
 		case "redelegate":
 			showOnly := false
-			actions.ChownStakeReDelegate(p, showOnly)
+			action.ChownStakeReDelegate(p, showOnly)
 		case "show_redelegate":
 			showOnly := true
-			actions.ChownStakeReDelegate(p, showOnly)
+			action.ChownStakeReDelegate(p, showOnly)
 		case "autorestake":
-			actions.AutoRestake(p)
+			action.AutoRestake(p)
 
 		//withdrawals
 		case "show_claim_withdrawal":
-			actions.ShowClaimWithdrawal(p)
+			action.ShowClaimWithdrawal(p)
 		case "claim_withdrawal":
-			actions.ClaimWithdrawal(p)
+			action.ClaimWithdrawal(p)
 
 		//swap requests (part of chown stake process)
 		case "show_swap_requests":
 			showSwapRequests(p)
 		case "confirm_swap_requests":
-			actions.ConfirmSwapRequests(p)
+			action.ConfirmSwapRequests(p)
 
 		default:
 			log.Fatal("Unknown command")
@@ -106,6 +109,18 @@ func main() {
 func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
 	p.SyncBufferAndHolder()
+
+	_, err := p.Azil.ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change rewards fee failed")
+	}
+	log.Info("aZIL Rewards Fee successfully changed")
+
+	_, err = p.Azil.ChangeTreasuryAddress(sdk.Cfg.TreasuryAddr)
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change Treasery address failed")
+	}
+	log.Info("aZIL Treasery address successfully changed")
 }
 
 func showTx(p *Protocol, tx_addr string) {

@@ -1,18 +1,25 @@
 package actions
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
-	"github.com/avely-finance/avely-contracts/tests/helpers"
 	"github.com/sirupsen/logrus"
 )
 
-var log = helpers.GetLog()
+type AdminActions struct {
+	log *core.Log
+}
 
-func DrainBuffer(p *Protocol, lrc int) {
+func NewAdminActions(log *core.Log) *AdminActions {
+	return &AdminActions{log: log}
+}
+
+func (a *AdminActions) DrainBuffer(p *Protocol, lrc int) error {
 	bufferToDrain := p.GetBufferToDrain()
 
 	buffers := p.Azil.GetDrainedBuffers()
@@ -23,122 +30,141 @@ func DrainBuffer(p *Protocol, lrc int) {
 			needDrain = true
 		}
 	} else {
-		log.Info("Buffer is never drained; Let's do this first time")
+		a.log.Info("Buffer is never drained; Let's do this first time")
 
 		needDrain = true
 	}
 
 	if needDrain {
 		tx, err := p.Azil.DrainBuffer(bufferToDrain.Addr)
-		fields := logrus.Fields{"tx": tx.ID}
 		if err != nil {
-			log.WithFields(fields).Fatal("Buffer drain is failed")
+			a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt}).Error("Buffer drain is failed")
+
+			return errors.New("Buffer drain is failed")
 		} else {
-			log.WithFields(fields).Info("Buffer successfully drained")
+			a.log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Buffer successfully drained")
 		}
 	} else {
-		log.Info("No need to drain buffer")
+		a.log.Debug("No need to drain buffer")
 	}
+
+	return nil
 }
 
-func ChownStakeReDelegate(p *Protocol, showOnly bool) {
+func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 	activeBuffer := p.GetActiveBuffer()
 	aZilSsnAddr := p.Azil.GetAzilSsnAddress()
 
-	log.WithFields(logrus.Fields{"active_buffer": activeBuffer.Addr}).Info("Active Buffer")
+	a.log.WithFields(logrus.Fields{"active_buffer": activeBuffer.Addr}).Info("Active Buffer")
 
 	mapSsnAmount := p.Zimpl.GetDepositAmtDeleg(activeBuffer.Addr)
 	if 0 == len(mapSsnAmount) {
-		log.Info("Buffer is empty, nothing to redelegate.")
-		return
+		a.log.Info("Buffer is empty, nothing to redelegate.")
+		return nil
 	}
 
 	for ssn, amount := range mapSsnAmount {
 		amountStr := amount.String()
 		if ssn != aZilSsnAddr {
 			if showOnly {
-				log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Debug("Need to run ChownStakeReDelegate")
+				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Debug("Need to run ChownStakeReDelegate")
 			} else if tx, err := p.Azil.ChownStakeReDelegate(ssn, amountStr); err != nil {
-				log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID}).Fatal("ChownStakeReDelegate Error")
+				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID, "error": tx.Receipt}).Error("ChownStakeReDelegate failed")
+
+				return errors.New("ChownStakeReDelegate failed")
 			} else {
-				log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID}).Info("ChownStakeReDelegate OK")
+				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID}).Info("ChownStakeReDelegate OK")
 			}
 		} else {
-			log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Info("Skip ChownStakeReDelegate")
+			a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Info("Skip ChownStakeReDelegate")
 		}
 	}
 
+	return nil
 }
 
-func ConfirmSwapRequests(p *Protocol) {
+func (a *AdminActions) ConfirmSwapRequests(p *Protocol) error {
 	nextBuffer := p.GetBufferToSwapWith().Addr
 	swapRequests := p.GetSwapRequestsForBuffer(nextBuffer)
-	log.WithFields(logrus.Fields{"swap_requests_count": len(swapRequests), "next_buffer": nextBuffer}).Debug("Swap request found")
+	a.log.WithFields(logrus.Fields{"swap_requests_count": len(swapRequests), "next_buffer": nextBuffer}).Debug("Swap request found")
 	errCnt := 0
 	okCnt := 0
 	for _, initiator := range swapRequests {
 		tx, err := p.Azil.ChownStakeConfirmSwap(initiator)
 		if err != nil {
-			log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": err.Error()}).Error("Can't confirm swap")
+			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": tx.Receipt}).Error("Can't confirm swap")
 			errCnt++
 		} else {
-			log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID}).Info("Swap confirmed")
+			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID}).Info("Swap confirmed")
 			okCnt++
 		}
 	}
-	log.WithFields(logrus.Fields{"confirmed_swaps_count": okCnt, "errors_count": errCnt}).Debug("confirmSwapRequests completed")
+	a.log.WithFields(logrus.Fields{"confirmed_swaps_count": okCnt, "errors_count": errCnt}).Debug("confirmSwapRequests completed")
+
+	if errCnt > 0 {
+		return errors.New("ConfirmSwapRequests has failed items")
+	}
+
+	return nil
 }
 
-func AutoRestake(p *Protocol) {
+func (a *AdminActions) AutoRestake(p *Protocol) error {
 	autorestakeamount := p.Azil.GetAutorestakeAmount()
 
 	if autorestakeamount.Cmp(big.NewInt(0)) == 0 { // autorestakeamount == 0
-		log.Info("Nothing to autorestake")
-		return
+		a.log.Info("Nothing to autorestake")
+		return nil
 	}
 
 	priceBefore := p.Azil.GetAzilPrice().String()
 	tx, err := p.Azil.PerformAutoRestake()
 
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("AutoRestake failed")
+		a.log.WithFields(logrus.Fields{"txid": tx.ID, "error": tx.Receipt}).Error("AutoRestake failed")
+
+		return errors.New("AutoRestake failed")
 	}
 
 	priceAfter := p.Azil.GetAzilPrice().String()
 
-	log.WithFields(logrus.Fields{
+	a.log.WithFields(logrus.Fields{
 		"tx":           tx.ID,
 		"amount":       autorestakeamount.String(),
 		"price_before": priceBefore,
 		"price_after":  priceAfter,
 	}).Info("AutoRestake is successfully completed")
+
+	return nil
 }
 
-func ShowClaimWithdrawal(p *Protocol) {
+func (a *AdminActions) ShowClaimWithdrawal(p *Protocol) {
 	blocks := p.GetClaimWithdrawalBlocks()
 	if len(blocks) > 0 {
 		blocksStr := utils.ArrayItoa(blocks)
-		log.Debug("Blocks with unbonded withdrawals: " + strings.Join(blocksStr, ", "))
+		a.log.Debug("Blocks with unbonded withdrawals: " + strings.Join(blocksStr, ", "))
 	} else {
-		log.Debug("Blocks with unbonded withdrawals not found.")
+		a.log.Debug("Blocks with unbonded withdrawals not found.")
 	}
 }
 
-func ClaimWithdrawal(p *Protocol) {
+func (a *AdminActions) ClaimWithdrawal(p *Protocol) error {
 	blocks := p.GetClaimWithdrawalBlocks()
 	cnt := len(blocks)
 	if cnt == 0 {
-		log.Debug("There are no blocks with unbonded withdrawals.")
-		return
+		a.log.Debug("There are no blocks with unbonded withdrawals.")
+		return nil
 	}
 	blocksStr := utils.ArrayItoa(blocks)
-	log.WithFields(logrus.Fields{"blocks_count": cnt, "blocks_list": strings.Join(blocksStr, ", ")}).Debug("Found blocks with unbonded withdrawals")
+	a.log.WithFields(logrus.Fields{"blocks_count": cnt, "blocks_list": strings.Join(blocksStr, ", ")}).Debug("Found blocks with unbonded withdrawals")
 	tx, err := p.Azil.ClaimWithdrawal(blocksStr)
 
 	if err != nil {
-		log.WithFields(logrus.Fields{"tx": tx.ID}).Fatal("Withdrawals claim failed")
+		a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt}).Error("Withdrawals claim failed")
+
+		return errors.New("Withdrawals claim failed")
 	} else {
-		log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Withdrawals successfully claimed")
+		a.log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Withdrawals successfully claimed")
 	}
 
+	return nil
 }

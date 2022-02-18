@@ -12,32 +12,31 @@ import (
 
 type LastRewardCycleWatcher struct {
 	currentLrc int
+	protocol   *contracts.Protocol
+	log        *core.Log
 }
 
-var log *core.Log
-var sdk *core.AvelySDK
-var protocol *contracts.Protocol
-
 func main() {
-
 	chainPtr := flag.String("chain", "local", "chain")
 
 	flag.Parse()
 
 	config := core.NewConfig(*chainPtr)
-	sdk = core.NewAvelySDK(*config)
-	log = core.NewLog()
+	sdk := core.NewAvelySDK(*config)
+	log := core.NewLog()
 	log.SetOutputStdout()
 	log.AddSlackHook(sdk.Cfg.Slack.HookUrl, sdk.Cfg.Slack.LogLevel)
-	protocol = contracts.RestoreFromState(sdk, log)
+	protocol := contracts.RestoreFromState(sdk, log)
 	url := sdk.GetWsURL()
 
 	watcher := &LastRewardCycleWatcher{
 		currentLrc: -1,
+		protocol:   protocol,
+		log:        log,
 	}
 
-	log.Info("Start last reward cycle watcher")
-	blockWatcher := utils.CreateBlockWatcher(url)
+	log.Debug("Start last reward cycle watcher")
+	blockWatcher := utils.CreateBlockWatcher(url, log)
 	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()
 }
@@ -47,22 +46,25 @@ func main() {
 //   2. ReDelegate stakes from other SSNs
 //   3. Autorestake funds
 func (w *LastRewardCycleWatcher) Notify(blockNum int) {
+	protocol := w.protocol
+	action := actions.NewAdminActions(w.log)
 	lrc := protocol.Zimpl.GetLastRewardCycle()
 
 	if lrc == w.currentLrc {
-		log.WithFields(logrus.Fields{
+		w.log.WithFields(logrus.Fields{
 			"block_number": blockNum,
 			"lrc":          lrc,
 		}).Debug("Block mined, last reward cycle not changed.")
 	} else {
-		log.WithFields(logrus.Fields{
+		w.log.WithFields(logrus.Fields{
 			"block_number": blockNum,
 			"lrc":          lrc,
 		}).Info("Block mined, New Last Reward Cycle.")
-		actions.DrainBuffer(protocol, lrc)
+
+		action.DrainBuffer(protocol, lrc)
 		showOnly := false
-		actions.ChownStakeReDelegate(protocol, showOnly)
-		actions.AutoRestake(protocol)
+		action.ChownStakeReDelegate(protocol, showOnly)
+		action.AutoRestake(protocol)
 
 		w.currentLrc = lrc
 	}

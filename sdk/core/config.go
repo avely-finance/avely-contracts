@@ -29,6 +29,7 @@ type Config struct {
 	AzilSsnAddress           string
 	AzilSsnRewardShare       string
 	HolderInitialDelegateZil int
+	ProtocolRewardsFee       int
 	Admin                    string
 	AdminKey                 string
 	Addr1                    string
@@ -40,12 +41,13 @@ type Config struct {
 	Verifier                 string
 	VerifierKey              string
 
-	ZproxyAddr  string
-	GzilAddr    string
-	ZimplAddr   string
-	AzilAddr    string
-	BufferAddrs []string
-	HolderAddr  string
+	ZproxyAddr   string
+	GzilAddr     string
+	ZimplAddr    string
+	AzilAddr     string
+	BufferAddrs  []string
+	HolderAddr   string
+	TreasuryAddr string
 }
 
 func NewConfig(chain string) *Config {
