@@ -52,6 +52,16 @@ func (tr *Transitions) DeployZilSwap() *ZilSwap {
 	return zilSwap
 }
 
+func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *MultisigWallet {
+	log := GetLog()
+	multisig, err := NewMultisigContract(sdk, owners, signCount)
+	if err != nil {
+		log.Fatal("deploy MultisigContract error = " + err.Error())
+	}
+
+	return multisig
+}
+
 func (tr *Transitions) FocusOn(focus string) {
 	st := reflect.TypeOf(tr)
 	_, exists := st.MethodByName(focus)
