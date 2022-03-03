@@ -126,7 +126,8 @@ func (p *Protocol) SyncBufferAndHolder() {
 }
 
 func (p *Protocol) Unpause() {
-	check(p.Azil.Unpause())
+	check(p.Azil.UnpauseIn())
+	check(p.Azil.UnpauseOut())
 }
 
 func (p *Protocol) SetupZProxy() {
