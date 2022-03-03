@@ -16,7 +16,8 @@ func (tr *Transitions) DrainBuffer() {
 	treasuryAddr := sdk.Cfg.Addr3
 	totalFee := "0"
 	p.Azil.ChangeRewardsFee(rewardsFee)
-	p.Azil.ChangeTreasuryAddress(treasuryAddr)
+	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(treasuryAddr))
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
 	treasuryBalance := sdk.GetBalance(treasuryAddr[2:])
 
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))

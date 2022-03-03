@@ -912,7 +912,7 @@ transition ChangeAzilSSNAddress(address: ByStr20)
 end
 
 transition ChangeTreasuryAddress(address: ByStr20)
-  RequireAdmin;
+  RequireOwner;
   treasury_address := address
 end
 
