@@ -59,8 +59,12 @@ func main() {
 			syncBuffers(p)
 		case "deploy_buffer":
 			deployBuffer(p)
-		case "unpause":
-			unpause(p)
+		case "unpause_in":
+			unpauseIn(p)
+		case "unpause_out":
+			unpauseOut(p)
+		case "unpause_all":
+			unpauseAll(p)
 
 		//utils, information
 		case "from_bech32":
@@ -178,13 +182,35 @@ func deployBuffer(p *Protocol) {
 	log.WithFields(logrus.Fields{"address": buffer.Addr}).Info("Buffer deploy is successfully completed")
 }
 
-func unpause(p *Protocol) {
-	_, err := p.Azil.Unpause()
+func unpauseIn(p *Protocol) {
+	_, err := p.Azil.UnpauseIn()
 
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause AZil failed")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-in AZil failed")
 	}
-	log.Info("Unpause AZil is successfully completed")
+	log.Info("Unpause-in AZil is successfully completed")
+}
+
+func unpauseOut(p *Protocol) {
+	_, err := p.Azil.UnpauseOut()
+
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-out AZil failed")
+	}
+	log.Info("Unpause-out AZil is successfully completed")
+}
+
+func unpauseAll(p *Protocol) {
+	_, err := p.Azil.UnpauseIn()
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-in")
+	}
+	_, err = p.Azil.UnpauseOut()
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-out")
+	}
+
+	log.Info("Unpause-all AZil is successfully completed")
 }
 
 func syncBuffers(p *Protocol) {

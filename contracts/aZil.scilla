@@ -33,8 +33,10 @@ type Error =
   | DelegStakeNotEnough
   | InvalidTotalAmt
   | InvalidRewardsFee
-  | NotPaused
-  | Paused
+  | NotPausedIn
+  | PausedIn
+  | NotPausedOut
+  | PausedOut
   | StagingAdminNotExists
   | StagingAdminValidationFailed
   | IsSender
@@ -67,8 +69,10 @@ let make_error =
       | DelegStakeNotEnough              => "DelegStakeNotEnough"
       | InvalidRewardsFee                => "InvalidRewardsFee"
       | InvalidTotalAmt                  => "InvalidTotalAmt"
-      | Paused                           => "Paused"
-      | NotPaused                        => "NotPaused"
+      | PausedIn                         => "PausedIn"
+      | NotPausedIn                      => "NotPausedIn"
+      | PausedOut                        => "PausedOut"
+      | NotPausedOut                     => "NotPausedOut"
       | StagingAdminNotExists            => "StagingAdminNotExists"
       | StagingAdminValidationFailed     => "StagingAdminValidationFailed"
       | IsSender                         => "IsSender"
@@ -229,7 +233,8 @@ field holder_address        : ByStr20 = init_holder_address
 field buffers_addresses     : List ByStr20 = Nil {ByStr20}
 field staging_admin_address : Option ByStr20 = None {ByStr20}
 
-field is_paused: Bool = True
+field is_paused_in: Bool = True
+field is_paused_out: Bool = True
 
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake     : Uint128 = Uint128 10000000000000
@@ -285,12 +290,22 @@ procedure RequireAdmin()
   end
 end
 
-procedure RequireNotPaused()
-  paused <- is_paused;
+procedure RequireNotPausedIn()
+  paused <- is_paused_in;
   match paused with
   | False =>
   | True =>
-    error = Paused;
+    error = PausedIn;
+    ThrowError error
+  end
+end
+
+procedure RequireNotPausedOut()
+  paused <- is_paused_out;
+  match paused with
+  | False =>
+  | True =>
+    error = PausedOut;
     ThrowError error
   end
 end
@@ -750,31 +765,56 @@ end
 (* @dev: Admin actions                                      *)
 (************************************************************)
 
-transition Pause()
+transition PauseIn()
   RequireAdmin;
-  RequireNotPaused;
+  RequireNotPausedIn;
 
-  is_paused := true;
-  e = { _eventname: "Pause"; is_paused: uint32_one };
+  is_paused_in := true;
+  e = { _eventname: "PauseIn"; is_paused_in: uint32_one };
   event e
 end
 
-transition UnPause()
+transition UnPauseIn()
   RequireAdmin;
 
-  paused <- is_paused;
+  paused <- is_paused_in;
   match paused with
   | True =>
   | False =>
-    error = NotPaused;
+    error = NotPausedIn;
     ThrowError error
   end;
 
   var_buffers <- buffers_addresses;
   RequireBuffers var_buffers;
 
-  is_paused := false;
-  e = { _eventname: "UnPause"; is_paused: uint32_zero };
+  is_paused_in := false;
+  e = { _eventname: "UnPauseIn"; is_paused_in: uint32_zero };
+  event e
+end
+
+transition PauseOut()
+  RequireAdmin;
+  RequireNotPausedOut;
+
+  is_paused_out := true;
+  e = { _eventname: "PauseOut"; is_paused_out: uint32_one };
+  event e
+end
+
+transition UnPauseOut()
+  RequireAdmin;
+
+  paused <- is_paused_out;
+  match paused with
+  | True =>
+  | False =>
+    error = NotPausedOut;
+    ThrowError error
+  end;
+
+  is_paused_out := false;
+  e = { _eventname: "UnPauseOut"; is_paused_out: uint32_zero };
   event e
 end
 
@@ -945,7 +985,7 @@ end
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
 transition DelegateStake()
-  RequireNotPaused;
+  RequireNotPausedIn;
 
   accept;
   stake_amt = _amount;
@@ -1035,7 +1075,7 @@ end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
 transition WithdrawStakeAmt(amount: Uint128)
-  RequireNotPaused;
+  RequireNotPausedOut;
 
   azil_ssn_addr <- azil_ssn_address;
 
@@ -1049,7 +1089,7 @@ transition WithdrawStakeAmt(amount: Uint128)
 end
 
 transition CompleteWithdrawal()
-  RequireNotPaused;
+  RequireNotPausedOut;
 
   wu <- withdrawal_unbonded[_sender];
   match wu with
@@ -1096,6 +1136,7 @@ end
 
 transition ChownStakeConfirmSwap(delegator: ByStr20)
   RequireAdmin;
+  RequireNotPausedIn;
   var_zimpl_address <- zimpl_address;
 
   o_zimpl_addr_test <- & var_zimpl_address as ByStr20 with contract
