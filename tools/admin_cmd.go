@@ -63,6 +63,8 @@ func main() {
 			unpauseIn(p)
 		case "unpause_out":
 			unpauseOut(p)
+		case "unpause_zrc2":
+			unpauseZrc2(p)
 		case "unpause_all":
 			unpauseAll(p)
 
@@ -200,14 +202,27 @@ func unpauseOut(p *Protocol) {
 	log.Info("Unpause-out AZil is successfully completed")
 }
 
+func unpauseZrc2(p *Protocol) {
+	_, err := p.Azil.UnpauseZrc2()
+
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-zrc2 AZil failed")
+	}
+	log.Info("Unpause-zrc2 AZil is successfully completed")
+}
+
 func unpauseAll(p *Protocol) {
 	_, err := p.Azil.UnpauseIn()
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-in")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-in step")
 	}
 	_, err = p.Azil.UnpauseOut()
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-out")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-out step")
+	}
+	_, err = p.Azil.UnpauseZrc2()
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-zrc2 step")
 	}
 
 	log.Info("Unpause-all AZil is successfully completed")
