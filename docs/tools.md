@@ -60,7 +60,7 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_buffer
 $ go run tools/admin_cmd.go --chain=testnet --cmd=sync_buffers
 ```
 
-5. Unpause in/out/all AZil
+5. Unpause in/out/zrc2/all AZil
 
 ```sh
 $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_in
@@ -71,9 +71,12 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_out
 ```
 
 ```sh
-$ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_all
+$ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_zrc2
 ```
 
+```sh
+$ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_all
+```
 
 6. Init Holder with min stake
 
