@@ -330,14 +330,24 @@ func (a *AZil) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, er
 	return a.Call("CompleteWithdrawalSuccessCallBack", args, "0")
 }
 
-func (a *AZil) Pause() (*transaction.Transaction, error) {
+func (a *AZil) PauseIn() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
-	return a.Call("Pause", args, "0")
+	return a.Call("PauseIn", args, "0")
 }
 
-func (a *AZil) Unpause() (*transaction.Transaction, error) {
+func (a *AZil) UnpauseIn() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
-	return a.Call("UnPause", args, "0")
+	return a.Call("UnPauseIn", args, "0")
+}
+
+func (a *AZil) PauseOut() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("PauseOut", args, "0")
+}
+
+func (a *AZil) UnpauseOut() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("UnPauseOut", args, "0")
 }
 
 func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
