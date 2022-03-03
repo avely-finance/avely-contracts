@@ -17,4 +17,7 @@ func (tr *Transitions) IsOwner() {
     tx, _ := p.Azil.ChangeAzilSSNAddress(sdk.Cfg.Addr3)
     AssertError(tx, "OwnerValidationFailed")
 
+    tx, _ = p.Azil.ChangeTreasuryAddress(sdk.Cfg.Addr3)
+    AssertError(tx, "OwnerValidationFailed")
+
 }
