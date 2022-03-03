@@ -57,17 +57,17 @@ func (s *MultisigWallet) ExecuteTransaction(transactionId string) (*transaction.
 	return s.Call("ExecuteTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeAzilSSNAddressTransaction(address string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitChangeAzilSSNAddressTransaction(azilAddr, addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: s.Sdk.Cfg.AzilAddr,
+			Value: azilAddr,
 		},
 		{
 			VName: "address",
 			Type:  "ByStr20",
-			Value: address,
+			Value: addr,
 		},
 	}
 
