@@ -37,6 +37,8 @@ type Error =
   | PausedIn
   | NotPausedOut
   | PausedOut
+  | NotPausedZrc2
+  | PausedZrc2
   | StagingAdminNotExists
   | StagingAdminValidationFailed
   | IsSender
@@ -73,6 +75,8 @@ let make_error =
       | NotPausedIn                      => "NotPausedIn"
       | PausedOut                        => "PausedOut"
       | NotPausedOut                     => "NotPausedOut"
+      | PausedZrc2                       => "PausedZrc2"
+      | NotPausedZrc2                    => "NotPausedZrc2"
       | StagingAdminNotExists            => "StagingAdminNotExists"
       | StagingAdminValidationFailed     => "StagingAdminValidationFailed"
       | IsSender                         => "IsSender"
@@ -233,8 +237,9 @@ field holder_address        : ByStr20 = init_holder_address
 field buffers_addresses     : List ByStr20 = Nil {ByStr20}
 field staging_admin_address : Option ByStr20 = None {ByStr20}
 
-field is_paused_in: Bool = True
-field is_paused_out: Bool = True
+field is_paused_in  : Bool = True
+field is_paused_out : Bool = True
+field is_paused_zrc2: Bool = True
 
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake     : Uint128 = Uint128 10000000000000
@@ -306,6 +311,16 @@ procedure RequireNotPausedOut()
   | False =>
   | True =>
     error = PausedOut;
+    ThrowError error
+  end
+end
+
+procedure RequireNotPausedZrc2()
+  paused <- is_paused_zrc2;
+  match paused with
+  | False =>
+  | True =>
+    error = PausedZrc2;
     ThrowError error
   end
 end
@@ -818,6 +833,31 @@ transition UnPauseOut()
   event e
 end
 
+transition PauseZrc2()
+  RequireAdmin;
+  RequireNotPausedZrc2;
+
+  is_paused_zrc2 := true;
+  e = { _eventname: "PauseZrc2"; is_paused_zrc2: uint32_one };
+  event e
+end
+
+transition UnPauseZrc2()
+  RequireAdmin;
+
+  paused <- is_paused_zrc2;
+  match paused with
+  | True =>
+  | False =>
+    error = NotPausedZrc2;
+    ThrowError error
+  end;
+
+  is_paused_zrc2 := false;
+  e = { _eventname: "UnPauseZrc2"; is_paused_zrc2: uint32_zero };
+  event e
+end
+
 transition ChangeAdmin(new_admin: ByStr20)
   RequireAdmin;
   var_staging_admin = Some {ByStr20} new_admin;
@@ -1280,6 +1320,7 @@ end
 (* param spender:      Address of the designated approved_spender.                                                   *)
 (* param amount:       Number of tokens to be increased as allowance for the approved_spender.                       *)
 transition IncreaseAllowance(spender: ByStr20, amount: Uint128)
+  RequireNotPausedZrc2;
   RequireNotSender spender;
   some_current_allowance <- allowances[_sender][spender];
   current_allowance = get_val some_current_allowance;
@@ -1293,6 +1334,7 @@ end
 (* param spender:      Address of the designated approved_spender.                                                 *)
 (* param amount:       Number of tokens to be decreased as allowance for the approved_spender.                     *)
 transition DecreaseAllowance(spender: ByStr20, amount: Uint128)
+  RequireNotPausedZrc2;
   RequireNotSender spender;
   some_current_allowance <- allowances[_sender][spender];
   current_allowance = get_val some_current_allowance;
@@ -1312,6 +1354,7 @@ end
 (* @param to:  Address of the recipient whose balance is increased.                 *)
 (* @param amount:     Amount of tokens to be sent.                                  *)
 transition Transfer(to: ByStr20, amount: Uint128)
+  RequireNotPausedZrc2;
   AuthorizedMoveIfSufficientBalance _sender to amount;
   e = {_eventname : "TransferSuccess"; sender : _sender; recipient : to; amount : amount};
   event e;
@@ -1330,6 +1373,7 @@ end
 (* @param to:      Address of the recipient whose balance is increased.                                                                   *)
 (* @param amount:  Amount of tokens to be transferred.                                                                                    *)
 transition TransferFrom(from: ByStr20, to: ByStr20, amount: Uint128)
+  RequireNotPausedZrc2;
   o_spender_allowed <- allowances[from][_sender];
   allowed = get_val o_spender_allowed;
   can_do = uint128_le amount allowed;

@@ -52,6 +52,22 @@ func (s *AZil) IncreaseAllowance(spender, amount string) (*transaction.Transacti
 	return s.Call("IncreaseAllowance", args, "0")
 }
 
+func (s *AZil) DecreaseAllowance(spender, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "spender",
+			Type:  "ByStr20",
+			Value: spender,
+		}, {
+			VName: "amount",
+			Type:  "Uint128",
+			Value: amount,
+		},
+	}
+
+	return s.Call("DecreaseAllowance", args, "0")
+}
+
 func (s *AZil) Transfer(to, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -348,6 +364,16 @@ func (a *AZil) PauseOut() (*transaction.Transaction, error) {
 func (a *AZil) UnpauseOut() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("UnPauseOut", args, "0")
+}
+
+func (a *AZil) PauseZrc2() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("PauseZrc2", args, "0")
+}
+
+func (a *AZil) UnpauseZrc2() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("UnPauseZrc2", args, "0")
 }
 
 func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
