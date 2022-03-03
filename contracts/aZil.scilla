@@ -34,10 +34,11 @@ type Error =
   | InvalidTotalAmt
   | InvalidRewardsFee
   | NotPausedIn
-  | PausedIn
   | NotPausedOut
-  | PausedOut
   | NotPausedZrc2
+  | OwnerValidationFailed
+  | PausedIn
+  | PausedOut
   | PausedZrc2
   | StagingAdminNotExists
   | StagingAdminValidationFailed
@@ -71,12 +72,13 @@ let make_error =
       | DelegStakeNotEnough              => "DelegStakeNotEnough"
       | InvalidRewardsFee                => "InvalidRewardsFee"
       | InvalidTotalAmt                  => "InvalidTotalAmt"
-      | PausedIn                         => "PausedIn"
       | NotPausedIn                      => "NotPausedIn"
-      | PausedOut                        => "PausedOut"
       | NotPausedOut                     => "NotPausedOut"
-      | PausedZrc2                       => "PausedZrc2"
       | NotPausedZrc2                    => "NotPausedZrc2"
+      | OwnerValidationFailed            => "OwnerValidationFailed"
+      | PausedOut                        => "PausedOut"
+      | PausedIn                         => "PausedIn"
+      | PausedZrc2                       => "PausedZrc2"
       | StagingAdminNotExists            => "StagingAdminNotExists"
       | StagingAdminValidationFailed     => "StagingAdminValidationFailed"
       | IsSender                         => "IsSender"
@@ -220,6 +222,7 @@ let get_val =
 (***************************************************)
 
 contract AZil(
+  init_owner_address        : ByStr20,
   init_admin_address        : ByStr20,
   init_azil_ssn_address     : ByStr20,
   init_zimpl_address        : ByStr20,
@@ -229,6 +232,7 @@ contract AZil(
   decimals                  : Uint32
 )
 
+field owner_address         : ByStr20 = init_owner_address
 field admin_address         : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field treasury_address      : ByStr20 = init_azil_ssn_address
@@ -291,6 +295,17 @@ procedure RequireAdmin()
   | True  =>
   | False =>
     e = AdminValidationFailed;
+    ThrowError e
+  end
+end
+
+procedure RequireOwner()
+  owner <- owner_address;
+  is_owner = builtin eq _sender owner;
+  match is_owner with
+  | True  =>
+  | False =>
+    e = OwnerValidationFailed;
     ThrowError e
   end
 end
@@ -890,7 +905,7 @@ transition ClaimAdmin()
 end
 
 transition ChangeAzilSSNAddress(address: ByStr20)
-  RequireAdmin;
+  RequireOwner;
   azil_ssn_address := address;
   e = { _eventname: "ChangeAzilSSNAddress"; address: address };
   event e
