@@ -13,7 +13,6 @@ func (tr *Transitions) Admin() {
 
 	p := tr.DeployAndUpgrade()
 
-	checkChangeAzilSSNAddress(p)
 	checkChangeTreasuryAddress(p)
 	checkChangeHolderAddress(p)
 	checkChangeZimplAddress(p)
@@ -47,13 +46,6 @@ func (tr *Transitions) Admin() {
 	AssertEvent(tx, Event{p.Azil.Addr, "ClaimAdmin", ParamsMap{"new_admin": newAdminAddr}})
 	AssertEqual(Field(p.Azil, "admin_address"), newAdminAddr)
 	AssertEqual(Field(p.Azil, "staging_admin_address"), "")
-}
-
-func checkChangeAzilSSNAddress(p *contracts.Protocol) {
-	tx, _ := AssertSuccess(p.Azil.ChangeAzilSSNAddress(core.ZeroAddr))
-	AssertEvent(tx, Event{p.Azil.Addr, "ChangeAzilSSNAddress", ParamsMap{"address": core.ZeroAddr}})
-	AssertEqual(Field(p.Azil, "azil_ssn_address"), core.ZeroAddr)
-	AssertSuccess(p.Azil.ChangeAzilSSNAddress(sdk.Cfg.AzilSsnAddress))
 }
 
 func checkChangeTreasuryAddress(p *contracts.Protocol) {
