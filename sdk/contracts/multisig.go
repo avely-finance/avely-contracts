@@ -19,12 +19,12 @@ type MultisigWallet struct {
 	Contract
 }
 
-// func (a *AZil) WithUser(key string) *AZil {
-// 	wallet := account.NewWallet()
-// 	wallet.AddByPrivateKey(key)
-// 	a.Contract.Wallet = wallet
-// 	return a
-// }
+func (a *MultisigWallet) WithUser(key string) *MultisigWallet {
+	wallet := account.NewWallet()
+	wallet.AddByPrivateKey(key)
+	a.Contract.Wallet = wallet
+	return a
+}
 
 // func (s *AZil) BalanceOf(addr string) *big.Int {
 // 	rawState := s.Contract.SubState("balances", []string{addr})
@@ -33,24 +33,24 @@ type MultisigWallet struct {
 // 	return state.Dig("result.balances." + addr).BigInt()
 // }
 
-func (s *MultisigWallet) SignTransaction(transactionId string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SignTransaction(transactionId int) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "transactionId",
 			Type:  "Uint32",
-			Value: transactionId,
+			Value: strconv.Itoa(transactionId),
 		},
 	}
 
 	return s.Call("SignTransaction", args, "0")
 }
 
-func (s *MultisigWallet) ExecuteTransaction(transactionId string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) ExecuteTransaction(transactionId int) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "transactionId",
 			Type:  "Uint32",
-			Value: transactionId,
+			Value: strconv.Itoa(transactionId),
 		},
 	}
 
