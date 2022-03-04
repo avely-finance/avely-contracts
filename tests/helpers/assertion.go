@@ -88,6 +88,7 @@ func AssertMultisigSuccess(txn *transaction.Transaction, err error) {
 	if err != nil || strings.Contains(txnData, walletErrorCode) {
 		_, file, no, _ := runtime.Caller(1)
 		GetLog().Error(txn)
+		GetLog().Error(err)
 		GetLog().Fatal("ASSERT_MULTISIG_SUCCESS FAILED, " + file + ":" + strconv.Itoa(no))
 	}
 }
