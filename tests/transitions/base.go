@@ -73,7 +73,7 @@ func (tr *Transitions) FocusOn(focus string) {
 }
 
 func (tr *Transitions) RunAll() {
-	tr.Admin()
+	tr.ChangeAdmin()
 	tr.Owner()
 	tr.DelegateStakeSuccess()
 	tr.DelegateStakeBuffersRotation()
@@ -91,6 +91,7 @@ func (tr *Transitions) RunAll() {
 	tr.ChownStakeRequireDrainBuffer()
 	tr.AddToSwap()
 	tr.TransferFrom()
+	tr.MultisigWalletTests()
 
 	if !IsCI() {
 		tr.DrainBuffer()

@@ -72,6 +72,8 @@ type CalleeTransaction =
 (***************************************************)
 (* ChangeAzilSSNAddress(address: ByStr20)          *)
 | ChangeAzilSSNAddress of ByStr20
+(* ChangeAdmin(new_admin: ByStr20)                 *)
+| ChangeAdmin of ByStr20
 
 (* Type of (outstanding) transactions *)
 type Transaction =
@@ -113,12 +115,18 @@ let custom_transaction_msg_as_list =
   fun (calleeTransaction : CalleeTransaction) =>
     let msg =
       match calleeTransaction with
-        (* ChangeAzilSSNAddress(address: ByStr20) *)
+      (* ChangeAzilSSNAddress(address: ByStr20) *)
       | ChangeAzilSSNAddress address =>
         {_recipient: calleeContract ;
          _tag: "ChangeAzilSSNAddress";
          _amount: Uint128 0;
          address : address}
+      (* ChangeAdmin(new_admin: ByStr20) *)
+      | ChangeAdmin new_admin =>
+         {_recipient: calleeContract ;
+          _tag: "ChangeAdmin";
+          _amount: Uint128 0;
+          new_admin : new_admin}
       end
     in
     one_msg msg
@@ -316,6 +324,12 @@ end
 (* Submit a new ChangeAzilSSNAddress transaction for future signoff *)
 transition SubmitChangeAzilSSNAddressTransaction (calleeContract : ByStr20, address : ByStr20)
   transaction = ChangeAzilSSNAddress address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeAdmin transaction for future signoff *)
+transition SubmitChangeAdminTransaction (calleeContract : ByStr20, new_admin : ByStr20)
+  transaction = ChangeAdmin new_admin;
   SubmitCustomTransaction calleeContract transaction
 end
 
