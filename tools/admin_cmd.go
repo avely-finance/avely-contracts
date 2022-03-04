@@ -116,7 +116,7 @@ func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
 	p.SyncBufferAndHolder()
 
-	_, err := p.Azil.ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
+	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change rewards fee failed")
 	}
@@ -186,7 +186,7 @@ func deployBuffer(p *Protocol) {
 }
 
 func unpauseIn(p *Protocol) {
-	_, err := p.Azil.UnpauseIn()
+	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
 
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-in AZil failed")
@@ -195,7 +195,7 @@ func unpauseIn(p *Protocol) {
 }
 
 func unpauseOut(p *Protocol) {
-	_, err := p.Azil.UnpauseOut()
+	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseOut()
 
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-out AZil failed")
@@ -204,7 +204,7 @@ func unpauseOut(p *Protocol) {
 }
 
 func unpauseZrc2(p *Protocol) {
-	_, err := p.Azil.UnpauseZrc2()
+	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseZrc2()
 
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-zrc2 AZil failed")
@@ -213,15 +213,15 @@ func unpauseZrc2(p *Protocol) {
 }
 
 func unpauseAll(p *Protocol) {
-	_, err := p.Azil.UnpauseIn()
+	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-in step")
 	}
-	_, err = p.Azil.UnpauseOut()
+	_, err = p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseOut()
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-out step")
 	}
-	_, err = p.Azil.UnpauseZrc2()
+	_, err = p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseZrc2()
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-zrc2 step")
 	}
