@@ -73,7 +73,6 @@ func (tr *Transitions) FocusOn(focus string) {
 }
 
 func (tr *Transitions) RunAll() {
-	tr.ChangeAdmin()
 	tr.Owner()
 	tr.DelegateStakeSuccess()
 	tr.DelegateStakeBuffersRotation()

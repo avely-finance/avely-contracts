@@ -10,6 +10,7 @@ const txId = 0 // the test transition should be the first
 func (tr *Transitions) MultisigWalletTests() {
 	multisigGoldenFlowTest(tr)
 	multisigChangeAdminTest(tr)
+	multisigUpdateOwner(tr)
 }
 
 func multisigGoldenFlowTest(tr *Transitions) {
@@ -69,12 +70,34 @@ func multisigChangeAdminTest(tr *Transitions) {
 
 	// after submitting transaction it automatically signed by the _sender
 	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAdminTransaction(azil.Addr, newAdmin))
-
 	AssertMultisigSuccess(multisig.WithUser(owner1).ExecuteTransaction(txId))
+	AssertEqual(Field(azil, "admin_address"), newAdmin)
+}
 
-	rawState := azil.Contract.SubState("admin_address", []string{})
-	state := NewState(rawState)
-	expectedAdmin := state.Dig("result.admin_address").String()
+func multisigUpdateOwner(tr *Transitions) {
+	signCount := 1
 
-	AssertEqual(expectedAdmin, newAdmin)
+	owner1 := sdk.Cfg.Key1
+	owners := []string{sdk.Cfg.Addr1}
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	// deploy new multisig with new owners
+	owner2 := sdk.Cfg.Key2
+	newOwners := []string{sdk.Cfg.Addr2}
+	newMultisig := tr.DeployMultisigWallet(newOwners, signCount)
+
+	newOwner := newMultisig.Addr
+	p := tr.DeployAndUpgrade()
+
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+
+	// after submitting transaction it automatically signed by the _sender
+	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeOwnerTransaction(azil.Addr, newOwner))
+	AssertMultisigSuccess(multisig.WithUser(owner1).ExecuteTransaction(txId))
+	AssertEqual(Field(azil, "staging_owner_address"), newOwner)
+
+	// claim owner using; newMultisig has also the first tx in order
+	AssertMultisigSuccess(newMultisig.WithUser(owner2).SubmitClaimOwnerTransaction(azil.Addr))
+	AssertMultisigSuccess(newMultisig.WithUser(owner2).ExecuteTransaction(txId))
+	AssertEqual(Field(azil, "owner_address"), newOwner)
 }
