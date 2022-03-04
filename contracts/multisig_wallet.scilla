@@ -118,7 +118,7 @@ let custom_transaction_msg_as_list =
         {_recipient: calleeContract ;
          _tag: "ChangeAzilSSNAddress";
          _amount: Uint128 0;
-         newImplementation : address}
+         address : address}
       end
     in
     one_msg msg

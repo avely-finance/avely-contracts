@@ -15,10 +15,11 @@ func (tr *Transitions) MultisigWalletTests() {
 	signCount := 2
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
-	address := sdk.Cfg.Admin // as random address
+	p := tr.DeployAndUpgrade()
+	newSsnAddr := sdk.Cfg.Admin // any random address
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAzilSSNAddressTransaction(address, address))
+	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAzilSSNAddressTransaction(p.Azil.Addr, newSsnAddr))
 
 	txId := 0 // the test transition should be the first
 
@@ -29,7 +30,9 @@ func (tr *Transitions) MultisigWalletTests() {
 	AssertMultisigError(tx, "-2") // UnknownTransactionId
 
 	AssertMultisigSuccess(multisig.WithUser(owner2).SignTransaction(txId))
-	AssertMultisigSuccess(multisig.WithUser(owner2).SubmitChangeAzilSSNAddressTransaction(address, address))
 
-	// GetLog().Info(tx)
+	// should be changed after execution
+	AssertEqual(p.Azil.GetAzilSsnAddress(), sdk.Cfg.AzilSsnAddress)
+	AssertMultisigSuccess(multisig.WithUser(owner2).ExecuteTransaction(txId))
+	AssertEqual(p.Azil.GetAzilSsnAddress(), newSsnAddr)
 }

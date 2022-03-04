@@ -53,8 +53,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int) error {
 
 func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 	activeBuffer := p.GetActiveBuffer()
-	aZilSsnAddr := p.Azil.GetAzilSsnAddress()
-
+	aZilSsnAddr := p.Azil.Sdk.Cfg.AzilSsnAddress
 	a.log.WithFields(logrus.Fields{"active_buffer": activeBuffer.Addr}).Info("Active Buffer")
 
 	mapSsnAmount := p.Zimpl.GetDepositAmtDeleg(activeBuffer.Addr)
