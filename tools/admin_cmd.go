@@ -116,7 +116,7 @@ func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
 	p.SyncBufferAndHolder()
 
-	_, err := p.Azil.ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
+	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change rewards fee failed")
 	}
