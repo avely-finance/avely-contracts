@@ -315,7 +315,7 @@ func chownStakeSetup(p *contracts.Protocol) {
 	buffer2, _ := p.DeployBuffer()
 	buffer3, _ := p.DeployBuffer()
 	p.Buffers = append(p.Buffers, buffer2, buffer3)
-	p.SyncBufferAndHolder()
+	p.SyncBuffers()
 	p.SetupShortcuts(GetLog())
 
 	//add test SSNs to main staking contract

@@ -227,7 +227,7 @@ func (a *AZil) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction,
 	return a.Call("ChangeTreasuryAddress", args, "0")
 }
 
-func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, error) {
+func (a *AZil) SetHolderAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -235,7 +235,7 @@ func (a *AZil) ChangeHolderAddress(new_addr string) (*transaction.Transaction, e
 			new_addr,
 		},
 	}
-	return a.Contract.Call("ChangeHolderAddress", args, "0")
+	return a.Contract.Call("SetHolderAddress", args, "0")
 }
 
 func (a *AZil) ChangeRewardsFee(new_fee string) (*transaction.Transaction, error) {
@@ -463,10 +463,6 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
 			Value: zimplAddr,
-		}, {
-			VName: "init_holder_address",
-			Type:  "ByStr20",
-			Value: "0xb2e2c996e6068f4ae11c4cc2c6a189b774819f79",
 		}, {
 			VName: "name",
 			Type:  "String",
