@@ -796,7 +796,7 @@ end
 (************************************************************)
 
 transition PauseIn()
-  RequireAdmin;
+  RequireOwner;
   RequireNotPausedIn;
 
   is_paused_in := true;
@@ -805,7 +805,7 @@ transition PauseIn()
 end
 
 transition UnPauseIn()
-  RequireAdmin;
+  RequireOwner;
 
   paused <- is_paused_in;
   match paused with
@@ -824,7 +824,7 @@ transition UnPauseIn()
 end
 
 transition PauseOut()
-  RequireAdmin;
+  RequireOwner;
   RequireNotPausedOut;
 
   is_paused_out := true;
@@ -833,7 +833,7 @@ transition PauseOut()
 end
 
 transition UnPauseOut()
-  RequireAdmin;
+  RequireOwner;
 
   paused <- is_paused_out;
   match paused with
@@ -849,7 +849,7 @@ transition UnPauseOut()
 end
 
 transition PauseZrc2()
-  RequireAdmin;
+  RequireOwner;
   RequireNotPausedZrc2;
 
   is_paused_zrc2 := true;
@@ -858,7 +858,7 @@ transition PauseZrc2()
 end
 
 transition UnPauseZrc2()
-  RequireAdmin;
+  RequireOwner;
 
   paused <- is_paused_zrc2;
   match paused with

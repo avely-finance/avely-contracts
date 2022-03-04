@@ -128,9 +128,12 @@ func (p *Protocol) SyncBufferAndHolder() {
 }
 
 func (p *Protocol) Unpause() {
+	prevWallet := p.Azil.Wallet
+	p.Azil.UpdateWallet(p.Azil.Sdk.Cfg.OwnerKey)
 	check(p.Azil.UnpauseIn())
 	check(p.Azil.UnpauseOut())
 	check(p.Azil.UnpauseZrc2())
+	p.Azil.Wallet = prevWallet
 }
 
 func (p *Protocol) SetupZProxy() {
