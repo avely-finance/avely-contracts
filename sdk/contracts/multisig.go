@@ -45,6 +45,18 @@ func (s *MultisigWallet) SignTransaction(transactionId int) (*transaction.Transa
 	return s.Call("SignTransaction", args, "0")
 }
 
+func (s *MultisigWallet) RevokeSignature(transactionId int) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "transactionId",
+			Type:  "Uint32",
+			Value: strconv.Itoa(transactionId),
+		},
+	}
+
+	return s.Call("RevokeSignature", args, "0")
+}
+
 func (s *MultisigWallet) ExecuteTransaction(transactionId int) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

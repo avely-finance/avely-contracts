@@ -31,8 +31,16 @@ func (tr *Transitions) MultisigWalletTests() {
 
 	AssertMultisigSuccess(multisig.WithUser(owner2).SignTransaction(txId))
 
+	// revoke and sign again
+	AssertMultisigSuccess(multisig.WithUser(owner1).RevokeSignature(txId))
+	tx, _ = multisig.WithUser(owner2).ExecuteTransaction(txId)
+	AssertMultisigError(tx, "-9") // NotEnoughSignatures
+
 	// should be changed after execution
+	AssertMultisigSuccess(multisig.WithUser(owner1).SignTransaction(txId))
 	AssertEqual(p.Azil.GetAzilSsnAddress(), sdk.Cfg.AzilSsnAddress)
 	AssertMultisigSuccess(multisig.WithUser(owner2).ExecuteTransaction(txId))
 	AssertEqual(p.Azil.GetAzilSsnAddress(), newSsnAddr)
 }
+
+// RevokeSignature
