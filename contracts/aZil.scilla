@@ -40,8 +40,6 @@ type Error =
   | PausedIn
   | PausedOut
   | PausedZrc2
-  | StagingAdminNotExists
-  | StagingAdminValidationFailed
   | StagingOwnerNotExists
   | StagingOwnerValidationFailed
   | IsSender
@@ -81,8 +79,6 @@ let make_error =
       | PausedOut                        => "PausedOut"
       | PausedIn                         => "PausedIn"
       | PausedZrc2                       => "PausedZrc2"
-      | StagingAdminNotExists            => "StagingAdminNotExists"
-      | StagingAdminValidationFailed     => "StagingAdminValidationFailed"
       | StagingOwnerNotExists            => "StagingOwnerNotExists"
       | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
       | IsSender                         => "IsSender"
@@ -243,7 +239,6 @@ field treasury_address      : ByStr20 = init_azil_ssn_address
 field zimpl_address         : ByStr20 = init_zimpl_address
 field holder_address        : ByStr20 = init_holder_address
 field buffers_addresses     : List ByStr20 = Nil {ByStr20}
-field staging_admin_address : Option ByStr20 = None {ByStr20}
 field staging_owner_address : Option ByStr20 = None {ByStr20}
 
 field is_paused_in  : Bool = True
@@ -880,33 +875,10 @@ end
 
 transition ChangeAdmin(new_admin: ByStr20)
   RequireOwner;
-  var_staging_admin = Some {ByStr20} new_admin;
-  staging_admin_address := var_staging_admin;
   var_admin_address <- admin_address;
-  e = {_eventname: "ChangeAdmin"; current_admin: var_admin_address; new_admin: new_admin};
+  admin_address := new_admin;
+  e = {_eventname: "ChangeAdmin"; old_admin: var_admin_address; new_admin: new_admin};
   event e
-end
-
-transition ClaimAdmin()
-  staging_admin_o <- staging_admin_address;
-  match staging_admin_o with
-  | Some staging_admin =>
-    is_stagingadmin = builtin eq staging_admin _sender;
-    match is_stagingadmin with
-    | True =>
-      admin_address := _sender;
-      tmp_staging_admin = None {ByStr20};
-      staging_admin_address := tmp_staging_admin;
-      e = {_eventname: "ClaimAdmin"; new_admin: _sender};
-      event e
-    | False =>
-      e = StagingAdminValidationFailed;
-      ThrowError e
-    end
-  | None =>
-    e = StagingAdminNotExists;
-    ThrowError e
-  end
 end
 
 transition ChangeOwner(new_owner: ByStr20)

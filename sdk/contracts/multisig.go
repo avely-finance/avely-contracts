@@ -26,13 +26,6 @@ func (a *MultisigWallet) WithUser(key string) *MultisigWallet {
 	return a
 }
 
-// func (s *AZil) BalanceOf(addr string) *big.Int {
-// 	rawState := s.Contract.SubState("balances", []string{addr})
-// 	state := NewState(rawState)
-
-// 	return state.Dig("result.balances." + addr).BigInt()
-// }
-
 func (s *MultisigWallet) SignTransaction(transactionId int) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -84,6 +77,23 @@ func (s *MultisigWallet) SubmitChangeAzilSSNAddressTransaction(azilAddr, addr st
 	}
 
 	return s.Call("SubmitChangeAzilSSNAddressTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitChangeAdminTransaction(azilAddr, newAdmin string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "new_admin",
+			Type:  "ByStr20",
+			Value: newAdmin,
+		},
+	}
+
+	return s.Call("SubmitChangeAdminTransaction", args, "0")
 }
 
 func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
