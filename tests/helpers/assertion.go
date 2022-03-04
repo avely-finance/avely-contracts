@@ -36,6 +36,8 @@ type EventLog struct {
 	Params    []core.ContractValue `json:"params"`
 }
 
+const walletErrorCode = "WalletError"
+
 func Start(tag string) {
 	GetLog().Infof("⚙️ === Start to test %s ===", tag)
 }
@@ -77,6 +79,27 @@ func AssertError(txn *transaction.Transaction, code string) {
 	txError := string(receipt)
 	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (String \\\"%s\\\"))])", code)
 	AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
+}
+
+func AssertMultisigSuccess(txn *transaction.Transaction, err error) {
+	receipt, _ := json.Marshal(txn.Receipt)
+	txnData := string(receipt)
+
+	if err != nil || strings.Contains(txnData, walletErrorCode) {
+		_, file, no, _ := runtime.Caller(1)
+		GetLog().Error(txn)
+		GetLog().Fatal("ASSERT_MULTISIG_SUCCESS FAILED, " + file + ":" + strconv.Itoa(no))
+	}
+}
+
+func AssertMultisigError(txn *transaction.Transaction, code string) {
+	_, file, no, _ := runtime.Caller(1)
+
+	receipt, _ := json.Marshal(txn.Receipt)
+	txError := string(receipt)
+
+	AssertContainRaw("ASSERT_ERROR", txError, walletErrorCode, file, no)
+	AssertContainRaw("ASSERT_ERROR", txError, code, file, no)
 }
 
 func AssertZimplError(txn *transaction.Transaction, code int32) {
