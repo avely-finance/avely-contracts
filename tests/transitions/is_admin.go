@@ -26,8 +26,6 @@ func (tr *Transitions) IsAdmin() {
 	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Azil.PerformAutoRestake()
 	AssertError(tx, "AdminValidationFailed")
-	tx, _ = p.Azil.UpdateStakingParameters(ToZil(100))
-	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Azil.DrainBuffer(p.GetBuffer().Addr)
 	AssertError(tx, "AdminValidationFailed")
 	readyBlocks := []string{}
