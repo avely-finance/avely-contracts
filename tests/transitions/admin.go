@@ -1,7 +1,6 @@
 package transitions
 
 import (
-	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -10,8 +9,6 @@ func (tr *Transitions) Admin() {
 	Start("Azil contract admin transitions")
 
 	p := tr.DeployAndUpgrade()
-
-	checkChangeBuffersEmpty(p)
 
 	newAdminAddr := sdk.Cfg.Addr3
 	newAdminKey := sdk.Cfg.Key3
@@ -39,10 +36,4 @@ func (tr *Transitions) Admin() {
 	AssertEvent(tx, Event{p.Azil.Addr, "ClaimAdmin", ParamsMap{"new_admin": newAdminAddr}})
 	AssertEqual(Field(p.Azil, "admin_address"), newAdminAddr)
 	AssertEqual(Field(p.Azil, "staging_admin_address"), "")
-}
-
-func checkChangeBuffersEmpty(p *contracts.Protocol) {
-	new_buffers := []string{}
-	tx, _ := p.Azil.ChangeBuffers(new_buffers)
-	AssertError(tx, "BuffersEmpty")
 }

@@ -932,7 +932,7 @@ transition ChangeZimplAddress(address: ByStr20)
 end
 
 transition ChangeBuffers(new_buffers: List ByStr20)
-  RequireAdmin;
+  RequireOwner;
   RequireBuffers new_buffers;
   buffers_addresses := new_buffers
 end

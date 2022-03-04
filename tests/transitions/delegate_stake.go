@@ -57,7 +57,8 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	}
 
 	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr, anotherBuffer.Addr}
-	AssertSuccess(p.Azil.ChangeBuffers(new_buffers))
+	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
 
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
 	activeBufferAddr := calcActiveBufferAddr(2, new_buffers) // start from second cycle
