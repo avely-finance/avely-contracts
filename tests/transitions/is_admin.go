@@ -14,10 +14,7 @@ func (tr *Transitions) IsAdmin() {
 	// Use non-admin user for Azil, expecting errors
 	p.Azil.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, _ := p.Azil.ChangeAdmin(sdk.Cfg.Addr3)
-	AssertError(tx, "AdminValidationFailed")
-
-	tx, _ = p.Azil.IncreaseAutoRestakeAmount(ToZil(1))
+	tx, _ := p.Azil.IncreaseAutoRestakeAmount(ToZil(1))
 	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Azil.PerformAutoRestake()
 	AssertError(tx, "AdminValidationFailed")

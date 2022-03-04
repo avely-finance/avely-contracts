@@ -874,7 +874,7 @@ transition UnPauseZrc2()
 end
 
 transition ChangeAdmin(new_admin: ByStr20)
-  RequireAdmin;
+  RequireOwner;
   var_staging_admin = Some {ByStr20} new_admin;
   staging_admin_address := var_staging_admin;
   var_admin_address <- admin_address;
