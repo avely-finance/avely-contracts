@@ -15,6 +15,7 @@ func (tr *Transitions) Owner() {
 
 	checkChangeAzilSSNAddress(p)
 	checkChangeTreasuryAddress(p)
+	checkChangeZimplAddress(p)
 
 }
 
@@ -29,4 +30,12 @@ func checkChangeTreasuryAddress(p *contracts.Protocol) {
 	AssertSuccess(p.Azil.ChangeTreasuryAddress(core.ZeroAddr))
 	AssertEqual(Field(p.Azil, "treasury_address"), core.ZeroAddr)
 	AssertSuccess(p.Azil.ChangeTreasuryAddress(sdk.Cfg.AzilSsnAddress))
+}
+
+func checkChangeZimplAddress(p *contracts.Protocol) {
+	zimplAddr := p.Zimpl.Addr
+	tx, _ := AssertSuccess(p.Azil.ChangeZimplAddress(core.ZeroAddr))
+	AssertEvent(tx, Event{p.Azil.Addr, "ChangeZimplAddress", ParamsMap{"address": core.ZeroAddr}})
+	AssertEqual(Field(p.Azil, "zimpl_address"), core.ZeroAddr)
+	AssertSuccess(p.Azil.ChangeZimplAddress(zimplAddr))
 }
