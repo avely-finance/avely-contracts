@@ -42,6 +42,8 @@ type Error =
   | PausedZrc2
   | StagingAdminNotExists
   | StagingAdminValidationFailed
+  | StagingOwnerNotExists
+  | StagingOwnerValidationFailed
   | IsSender
   | InsufficientFunds
   | InsufficientAllowance
@@ -81,6 +83,8 @@ let make_error =
       | PausedZrc2                       => "PausedZrc2"
       | StagingAdminNotExists            => "StagingAdminNotExists"
       | StagingAdminValidationFailed     => "StagingAdminValidationFailed"
+      | StagingOwnerNotExists            => "StagingOwnerNotExists"
+      | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
       | IsSender                         => "IsSender"
       | InsufficientFunds                => "InsufficientFunds"
       | InsufficientAllowance            => "InsufficientAllowance"
@@ -240,6 +244,7 @@ field zimpl_address         : ByStr20 = init_zimpl_address
 field holder_address        : ByStr20 = init_holder_address
 field buffers_addresses     : List ByStr20 = Nil {ByStr20}
 field staging_admin_address : Option ByStr20 = None {ByStr20}
+field staging_owner_address : Option ByStr20 = None {ByStr20}
 
 field is_paused_in  : Bool = True
 field is_paused_out : Bool = True
@@ -900,6 +905,37 @@ transition ClaimAdmin()
     end
   | None =>
     e = StagingAdminNotExists;
+    ThrowError e
+  end
+end
+
+transition ChangeOwner(new_owner: ByStr20)
+  RequireOwner;
+  var_staging_owner = Some {ByStr20} new_owner;
+  staging_owner_address := var_staging_owner;
+  var_owner_address <- owner_address;
+  e = {_eventname: "ChangeOwner"; current_owner: var_owner_address; new_owner: new_owner};
+  event e
+end
+
+transition ClaimOwner()
+  staging_owner_o <- staging_owner_address;
+  match staging_owner_o with
+  | Some staging_owner =>
+    is_stagingowner = builtin eq staging_owner _sender;
+    match is_stagingowner with
+    | True =>
+      owner_address := _sender;
+      tmp_staging_owner = None {ByStr20};
+      staging_owner_address := tmp_staging_owner;
+      e = {_eventname: "ClaimOwner"; new_owner: _sender};
+      event e
+    | False =>
+      e = StagingOwnerValidationFailed;
+      ThrowError e
+    end
+  | None =>
+    e = StagingOwnerNotExists;
     ThrowError e
   end
 end
