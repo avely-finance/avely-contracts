@@ -1015,7 +1015,7 @@ transition IncreaseAutoRestakeAmount()
 end
 
 transition ChangeRewardsFee(new_fee: Uint128)
-  RequireAdmin;
+  RequireOwner;
   is_valid_fee = uint128_le new_fee fee_denom;
   match is_valid_fee with
   | False =>
