@@ -122,11 +122,12 @@ func deployAvely() {
 	}
 	log.Info("aZIL Rewards Fee successfully changed")
 
-	_, err = p.Azil.ChangeTreasuryAddress(sdk.Cfg.TreasuryAddr)
+	_, err = p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(sdk.Cfg.TreasuryAddr)
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change Treasery address failed")
 	}
 	log.Info("aZIL Treasery address successfully changed")
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
 }
 
 func showTx(p *Protocol, tx_addr string) {
