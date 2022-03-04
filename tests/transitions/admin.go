@@ -14,7 +14,6 @@ func (tr *Transitions) Admin() {
 	p := tr.DeployAndUpgrade()
 
 	checkChangeHolderAddress(p)
-	checkChangeZimplAddress(p)
 	checkUpdateStakingParameters(p)
 	checkChangeRewardsFee(p)
 	checkChangeBuffersEmpty(p)
@@ -54,15 +53,6 @@ func checkChangeHolderAddress(p *contracts.Protocol) {
 	AssertEvent(tx, Event{p.Azil.Addr, "ChangeHolderAddress", ParamsMap{"address": core.ZeroAddr}})
 	AssertEqual(Field(p.Azil, "holder_address"), core.ZeroAddr)
 	AssertSuccess(p.Azil.ChangeHolderAddress(holderAddr))
-}
-
-func checkChangeZimplAddress(p *contracts.Protocol) {
-	zimplAddr := p.Zimpl.Addr
-
-	tx, _ := AssertSuccess(p.Azil.ChangeZimplAddress(core.ZeroAddr))
-	AssertEvent(tx, Event{p.Azil.Addr, "ChangeZimplAddress", ParamsMap{"address": core.ZeroAddr}})
-	AssertEqual(Field(p.Azil, "zimpl_address"), core.ZeroAddr)
-	AssertSuccess(p.Azil.ChangeZimplAddress(zimplAddr))
 }
 
 func checkUpdateStakingParameters(p *contracts.Protocol) {
