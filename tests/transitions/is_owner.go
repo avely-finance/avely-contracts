@@ -1,7 +1,7 @@
 package transitions
 
 import (
-	//. "github.com/avely-finance/avely-contracts/sdk/utils"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -24,6 +24,9 @@ func (tr *Transitions) IsOwner() {
 	AssertError(tx, "OwnerValidationFailed")
 
 	tx, _ = p.Azil.ChangeZimplAddress(sdk.Cfg.Addr3)
+	AssertError(tx, "OwnerValidationFailed")
+
+	tx, _ = p.Azil.UpdateStakingParameters(ToZil(100))
 	AssertError(tx, "OwnerValidationFailed")
 
 }

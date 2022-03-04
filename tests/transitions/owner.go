@@ -3,6 +3,7 @@ package transitions
 import (
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -17,6 +18,7 @@ func (tr *Transitions) Owner() {
 	checkChangeRewardsFee(p)
 	checkChangeTreasuryAddress(p)
 	checkChangeZimplAddress(p)
+	checkUpdateStakingParameters(p)
 
 }
 
@@ -50,4 +52,13 @@ func checkChangeZimplAddress(p *contracts.Protocol) {
 	AssertEvent(tx, Event{p.Azil.Addr, "ChangeZimplAddress", ParamsMap{"address": core.ZeroAddr}})
 	AssertEqual(Field(p.Azil, "zimpl_address"), core.ZeroAddr)
 	AssertSuccess(p.Azil.ChangeZimplAddress(zimplAddr))
+}
+
+func checkUpdateStakingParameters(p *contracts.Protocol) {
+	prevValue := Field(p.Azil, "mindelegstake")
+	testValue := utils.ToZil(54321)
+	tx, _ := AssertSuccess(p.Azil.UpdateStakingParameters(testValue))
+	AssertEvent(tx, Event{p.Azil.Addr, "UpdateStakingParameters", ParamsMap{"min_deleg_stake": testValue}})
+	AssertEqual(Field(p.Azil, "mindelegstake"), testValue)
+	AssertSuccess(p.Azil.UpdateStakingParameters(prevValue))
 }

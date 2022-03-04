@@ -1029,7 +1029,7 @@ end
 (* @dev: Set the staking parameters of contract. *)
 (* @param min_deleg_stake: New mindelegstake value *)
 transition UpdateStakingParameters(min_deleg_stake: Uint128)
-  RequireAdmin;
+  RequireOwner;
   mindelegstake := min_deleg_stake;
 
   e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };
