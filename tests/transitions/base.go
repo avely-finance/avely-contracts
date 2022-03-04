@@ -28,6 +28,7 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p := Deploy(sdk, log)
 
 	p.SyncBufferAndHolder()
+
 	p.Unpause()
 	p.SetupZProxy()
 	p.SetupShortcuts(log)

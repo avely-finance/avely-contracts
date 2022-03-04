@@ -230,7 +230,7 @@ func unpauseAll(p *Protocol) {
 }
 
 func syncBuffers(p *Protocol) {
-	p.SyncBufferAndHolder()
+	p.SyncBuffers()
 }
 
 func drainBuffer(p *Protocol, buffer_addr string) {

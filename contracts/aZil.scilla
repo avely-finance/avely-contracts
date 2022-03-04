@@ -33,6 +33,7 @@ type Error =
   | DelegStakeNotEnough
   | InvalidTotalAmt
   | InvalidRewardsFee
+  | HolderAlreadySet
   | NotPausedIn
   | NotPausedOut
   | NotPausedZrc2
@@ -72,6 +73,7 @@ let make_error =
       | DelegStakeNotEnough              => "DelegStakeNotEnough"
       | InvalidRewardsFee                => "InvalidRewardsFee"
       | InvalidTotalAmt                  => "InvalidTotalAmt"
+      | HolderAlreadySet                 => "HolderAlreadySet"
       | NotPausedIn                      => "NotPausedIn"
       | NotPausedOut                     => "NotPausedOut"
       | NotPausedZrc2                    => "NotPausedZrc2"
@@ -226,7 +228,6 @@ contract AZil(
   init_admin_address        : ByStr20,
   init_azil_ssn_address     : ByStr20,
   init_zimpl_address        : ByStr20,
-  init_holder_address       : ByStr20,
   name                      : String,
   symbol                    : String,
   decimals                  : Uint32
@@ -237,7 +238,7 @@ field admin_address         : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field treasury_address      : ByStr20 = init_azil_ssn_address
 field zimpl_address         : ByStr20 = init_zimpl_address
-field holder_address        : ByStr20 = init_holder_address
+field holder_address        : ByStr20 = bystr20_zero
 field buffers_addresses     : List ByStr20 = Nil {ByStr20}
 field staging_owner_address : Option ByStr20 = None {ByStr20}
 
@@ -924,12 +925,19 @@ transition ChangeTreasuryAddress(address: ByStr20)
   treasury_address := address
 end
 
-transition ChangeHolderAddress(address: ByStr20)
+transition SetHolderAddress(address: ByStr20)
   RequireOwner;
-  holder_address := address;
-
-  e = { _eventname: "ChangeHolderAddress"; address: address };
-  event e
+  var_holder_addr <- holder_address;
+  is_holder_empty = builtin eq var_holder_addr bystr20_zero;
+  match is_holder_empty with
+  | True =>
+    holder_address := address;
+    e = { _eventname: "SetHolderAddress"; address: address };
+    event e
+  | False =>
+    e = HolderAlreadySet;
+    ThrowError e
+  end
 end
 
 transition ChangeZimplAddress(address: ByStr20)
