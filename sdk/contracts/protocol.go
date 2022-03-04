@@ -122,7 +122,9 @@ func (p *Protocol) SyncBufferAndHolder() {
 	}
 
 	check(p.Azil.ChangeBuffers(new_buffers))
-	check(p.Azil.ChangeHolderAddress(p.Holder.Addr))
+	prevWallet := p.Azil.Wallet
+	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeHolderAddress(p.Holder.Addr))
+	p.Azil.Wallet = prevWallet
 }
 
 func (p *Protocol) Unpause() {
