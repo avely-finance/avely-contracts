@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"math/big"
-	"strings"
 
 	"github.com/tidwall/gjson"
 
@@ -177,8 +176,11 @@ func (a *AZil) GetAzilPrice() *big.Float {
 	return DivBF(totalstakeamount, totaltokenamount)
 }
 
-func (a *AZil) GetAzilSsnAddress() string {
-	return strings.ToLower(a.Sdk.Cfg.AzilSsnAddress)
+func (s *AZil) GetAzilSsnAddress() string {
+	rawState := s.Contract.SubState("azil_ssn_address", []string{})
+	state := NewState(rawState)
+
+	return state.Dig("result.azil_ssn_address").String()
 }
 
 func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
@@ -392,8 +394,8 @@ func (a *AZil) UnpauseZrc2() (*transaction.Transaction, error) {
 	return a.Call("UnPauseZrc2", args, "0")
 }
 
-func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, zimplAddr)
+func NewAZilContract(sdk *AvelySDK, owner, zimplAddr string) (*AZil, error) {
+	contract := buildAZilContract(sdk, owner, zimplAddr)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -417,8 +419,8 @@ func NewAZilContract(sdk *AvelySDK, zimplAddr string) (*AZil, error) {
 	}
 }
 
-func RestoreAZilContract(sdk *AvelySDK, contractAddress, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, zimplAddr)
+func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string) (*AZil, error) {
+	contract := buildAZilContract(sdk, owner, zimplAddr)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -436,7 +438,7 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, zimplAddr string) (*AZi
 	return &AZil{Contract: sdkContract}, nil
 }
 
-func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
+func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
 	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
@@ -448,7 +450,7 @@ func buildAZilContract(sdk *AvelySDK, zimplAddr string) contract2.Contract {
 		}, {
 			VName: "init_owner_address",
 			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(sdk.Cfg.OwnerKey),
+			Value: owner,
 		}, {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
