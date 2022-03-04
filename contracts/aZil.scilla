@@ -917,7 +917,7 @@ transition ChangeTreasuryAddress(address: ByStr20)
 end
 
 transition ChangeHolderAddress(address: ByStr20)
-  RequireAdmin;
+  RequireOwner;
   holder_address := address;
 
   e = { _eventname: "ChangeHolderAddress"; address: address };

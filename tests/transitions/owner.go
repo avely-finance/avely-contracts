@@ -15,6 +15,7 @@ func (tr *Transitions) Owner() {
 	p.Azil.UpdateWallet(sdk.Cfg.OwnerKey)
 
 	checkChangeAzilSSNAddress(p)
+	checkChangeHolderAddress(p)
 	checkChangeRewardsFee(p)
 	checkChangeTreasuryAddress(p)
 	checkChangeZimplAddress(p)
@@ -27,6 +28,15 @@ func checkChangeAzilSSNAddress(p *contracts.Protocol) {
 	AssertEvent(tx, Event{p.Azil.Addr, "ChangeAzilSSNAddress", ParamsMap{"address": core.ZeroAddr}})
 	AssertEqual(Field(p.Azil, "azil_ssn_address"), core.ZeroAddr)
 	AssertSuccess(p.Azil.ChangeAzilSSNAddress(sdk.Cfg.AzilSsnAddress))
+}
+
+func checkChangeHolderAddress(p *contracts.Protocol) {
+	holderAddr := p.Holder.Addr
+
+	tx, _ := AssertSuccess(p.Azil.ChangeHolderAddress(core.ZeroAddr))
+	AssertEvent(tx, Event{p.Azil.Addr, "ChangeHolderAddress", ParamsMap{"address": core.ZeroAddr}})
+	AssertEqual(Field(p.Azil, "holder_address"), core.ZeroAddr)
+	AssertSuccess(p.Azil.ChangeHolderAddress(holderAddr))
 }
 
 func checkChangeRewardsFee(p *contracts.Protocol) {
