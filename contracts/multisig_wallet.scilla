@@ -74,6 +74,10 @@ type CalleeTransaction =
 | ChangeAzilSSNAddress of ByStr20
 (* ChangeAdmin(new_admin: ByStr20)                 *)
 | ChangeAdmin of ByStr20
+(* ChangeOwner(new_owner: ByStr20)                 *)
+| ChangeOwner of ByStr20
+(* ClaimOwner()                                    *)
+| ClaimOwner
 
 (* Type of (outstanding) transactions *)
 type Transaction =
@@ -123,10 +127,21 @@ let custom_transaction_msg_as_list =
          address : address}
       (* ChangeAdmin(new_admin: ByStr20) *)
       | ChangeAdmin new_admin =>
-         {_recipient: calleeContract ;
-          _tag: "ChangeAdmin";
-          _amount: Uint128 0;
-          new_admin : new_admin}
+        {_recipient: calleeContract ;
+         _tag: "ChangeAdmin";
+         _amount: Uint128 0;
+         new_admin : new_admin}
+      (* ChangeOwner(new_owner: ByStr20) *)
+      | ChangeOwner new_owner =>
+        {_recipient: calleeContract ;
+         _tag: "ChangeOwner";
+         _amount: Uint128 0;
+         new_owner : new_owner}
+      (* ClaimOwner() *)
+      | ClaimOwner =>
+        {_recipient: calleeContract ;
+         _tag: "ClaimOwner";
+         _amount: Uint128 0}
       end
     in
     one_msg msg
@@ -330,6 +345,18 @@ end
 (* Submit a new ChangeAdmin transaction for future signoff *)
 transition SubmitChangeAdminTransaction (calleeContract : ByStr20, new_admin : ByStr20)
   transaction = ChangeAdmin new_admin;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeOwner transaction for future signoff *)
+transition SubmitChangeOwnerTransaction (calleeContract : ByStr20, new_owner : ByStr20)
+  transaction = ChangeOwner new_owner;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ClaimOwner transaction for future signoff *)
+transition SubmitClaimOwnerTransaction (calleeContract : ByStr20)
+  transaction = ClaimOwner;
   SubmitCustomTransaction calleeContract transaction
 end
 
