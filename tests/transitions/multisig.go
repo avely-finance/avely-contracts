@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -16,10 +17,13 @@ func (tr *Transitions) MultisigWalletTests() {
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
 	p := tr.DeployAndUpgrade()
+
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+
 	newSsnAddr := sdk.Cfg.Admin // any random address
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAzilSSNAddressTransaction(p.Azil.Addr, newSsnAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAzilSSNAddressTransaction(azil.Addr, newSsnAddr))
 
 	txId := 0 // the test transition should be the first
 
@@ -38,9 +42,7 @@ func (tr *Transitions) MultisigWalletTests() {
 
 	// should be changed after execution
 	AssertMultisigSuccess(multisig.WithUser(owner1).SignTransaction(txId))
-	AssertEqual(p.Azil.GetAzilSsnAddress(), sdk.Cfg.AzilSsnAddress)
+	AssertEqual(azil.GetAzilSsnAddress(), sdk.Cfg.AzilSsnAddress)
 	AssertMultisigSuccess(multisig.WithUser(owner2).ExecuteTransaction(txId))
-	AssertEqual(p.Azil.GetAzilSsnAddress(), newSsnAddr)
+	AssertEqual(azil.GetAzilSsnAddress(), newSsnAddr)
 }
-
-// RevokeSignature
