@@ -19,7 +19,7 @@ func (tr *Transitions) Admin() {
 	AssertError(tx, "StagingAdminNotExists")
 
 	//change admin, expecting success
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	p.Azil.UpdateWallet(sdk.Cfg.OwnerKey)
 	tx, _ = AssertSuccess(p.Azil.ChangeAdmin(newAdminAddr))
 	AssertEvent(tx, Event{p.Azil.Addr, "ChangeAdmin", ParamsMap{"current_admin": sdk.Cfg.Admin, "new_admin": newAdminAddr}})
 	AssertEqual(Field(p.Azil, "staging_admin_address"), newAdminAddr)

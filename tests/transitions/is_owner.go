@@ -14,7 +14,10 @@ func (tr *Transitions) IsOwner() {
 	// Use non-owner user for Azil, expecting errors
 	p.Azil.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, _ := p.Azil.ChangeAzilSSNAddress(sdk.Cfg.Addr3)
+	tx, _ := p.Azil.ChangeAdmin(sdk.Cfg.Addr3)
+	AssertError(tx, "OwnerValidationFailed")
+
+	tx, _ = p.Azil.ChangeAzilSSNAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "OwnerValidationFailed")
 
 	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr}
