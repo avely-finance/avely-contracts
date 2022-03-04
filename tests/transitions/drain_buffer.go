@@ -15,9 +15,9 @@ func (tr *Transitions) DrainBuffer() {
 	rewardsFee := "1000" //10% of feeDenom=10000
 	treasuryAddr := sdk.Cfg.Addr3
 	totalFee := "0"
-	p.Azil.ChangeRewardsFee(rewardsFee)
+	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
 	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(treasuryAddr))
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
 	treasuryBalance := sdk.GetBalance(treasuryAddr[2:])
 
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
@@ -152,8 +152,8 @@ func (tr *Transitions) DrainBuffer() {
 	//try to drain buffer, not existent at main staking contract
 	//error should not be thrown
 	new_buffers := []string{core.ZeroAddr}
-	AssertSuccess(p.Azil.ChangeBuffers(new_buffers))
-	txn, _ = p.Azil.DrainBuffer(core.ZeroAddr)
+	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	txn, _ = p.Azil.WithUser(sdk.Cfg.AdminKey).DrainBuffer(core.ZeroAddr)
 	AssertTransition(txn, Transition{
 		p.Azil.Addr, //sender
 		"ClaimRewards",
