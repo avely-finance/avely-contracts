@@ -152,8 +152,8 @@ func (tr *Transitions) DrainBuffer() {
 	//try to drain buffer, not existent at main staking contract
 	//error should not be thrown
 	new_buffers := []string{core.ZeroAddr}
-	AssertSuccess(p.Azil.ChangeBuffers(new_buffers))
-	txn, _ = p.Azil.DrainBuffer(core.ZeroAddr)
+	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	txn, _ = p.Azil.WithUser(sdk.Cfg.AdminKey).DrainBuffer(core.ZeroAddr)
 	AssertTransition(txn, Transition{
 		p.Azil.Addr, //sender
 		"ClaimRewards",
