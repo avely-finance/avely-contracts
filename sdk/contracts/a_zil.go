@@ -131,6 +131,22 @@ func (a *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, er
 	return a.Call("ChangeZimplAddress", args, "0")
 }
 
+func (a *AZil) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_owner",
+			"ByStr20",
+			new_addr,
+		},
+	}
+	return a.Call("ChangeOwner", args, "0")
+}
+
+func (a *AZil) ClaimOwner() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("ClaimOwner", args, "0")
+}
+
 // returns
 // {"id":"1","jsonrpc":"2.0","result":{
 //			"buffer_drained_cycle":
