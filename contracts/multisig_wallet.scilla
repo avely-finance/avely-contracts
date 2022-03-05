@@ -67,23 +67,25 @@ let transaction_inc = one
 (* Type of transactions. *)
 (* All calls are made to the aZIL contract *)
 type CalleeTransaction =
-(***************************************************)
-(*               Proxy Transition                  *)
-(***************************************************)
-(* ChangeAzilSSNAddress(address: ByStr20)          *)
+(*****************************************************)
+(*               Proxy Transition                    *)
+(*****************************************************)
+(* ChangeAzilSSNAddress(address: ByStr20)            *)
 | ChangeAzilSSNAddress of ByStr20
-(* ChangeAdmin(new_admin: ByStr20)                 *)
+(* ChangeAdmin(new_admin: ByStr20)                   *)
 | ChangeAdmin of ByStr20
-(* ChangeOwner(new_owner: ByStr20)                 *)
+(* ChangeOwner(new_owner: ByStr20)                   *)
 | ChangeOwner of ByStr20
-(* ClaimOwner()                                    *)
+(* ClaimOwner()                                      *)
 | ClaimOwner
-(* ChangeTreasuryAddress(address: ByStr20)         *)
+(* ChangeTreasuryAddress(address: ByStr20)           *)
 | ChangeTreasuryAddress of ByStr20
-(* ChangeZimplAddress(address: ByStr20)            *)
+(* ChangeZimplAddress(address: ByStr20)              *)
 | ChangeZimplAddress of ByStr20
-(* ChangeRewardsFee(new_fee: Uint128)              *)
+(* ChangeRewardsFee(new_fee: Uint128)                *)
 | ChangeRewardsFee of Uint128
+(* UpdateStakingParameters(min_deleg_stake: Uint128) *)
+| UpdateStakingParameters of Uint128
 
 (* Type of (outstanding) transactions *)
 type Transaction =
@@ -166,7 +168,12 @@ let custom_transaction_msg_as_list =
          _tag: "ChangeRewardsFee";
          _amount: Uint128 0;
          new_fee : new_fee }
-
+      (* UpdateStakingParameters(min_deleg_stake: Uint128) *)
+      | UpdateStakingParameters min_deleg_stake=>
+        {_recipient: calleeContract ;
+         _tag: "UpdateStakingParameters";
+         _amount: Uint128 0;
+         min_deleg_stake : min_deleg_stake }
       end
     in
     one_msg msg
@@ -400,6 +407,12 @@ end
 (* Submit a new ChangeRewardsFee transaction for future signoff *)
 transition SubmitChangeRewardsFeeTransaction (calleeContract : ByStr20, new_fee : Uint128)
   transaction = ChangeRewardsFee new_fee;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new UpdateStakingParameters transaction for future signoff *)
+transition SubmitUpdateStakingParametersTransaction (calleeContract : ByStr20, min_deleg_stake : Uint128)
+  transaction = UpdateStakingParameters min_deleg_stake;
   SubmitCustomTransaction calleeContract transaction
 end
 

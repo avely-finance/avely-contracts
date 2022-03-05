@@ -119,4 +119,5 @@ func multisigManagableActions(tr *Transitions) {
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeTreasuryAddressTransaction(azil.Addr, newAddr))
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeZimplAddressTransaction(azil.Addr, newAddr))
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeRewardsFeeTransaction(azil.Addr, "1"))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateStakingParametersTransaction(azil.Addr, "1"))
 }
