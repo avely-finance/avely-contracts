@@ -8,9 +8,9 @@ import (
 const txId = 0 // the test transition should be the first
 
 func (tr *Transitions) MultisigWalletTests() {
-	// multisigGoldenFlowTest(tr)
-	// multisigChangeAdminTest(tr)
-	// multisigUpdateOwner(tr)
+	multisigGoldenFlowTest(tr)
+	multisigChangeAdminTest(tr)
+	multisigUpdateOwner(tr)
 	multisigManagableActions(tr)
 }
 
@@ -128,4 +128,6 @@ func multisigManagableActions(tr *Transitions) {
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseInTransaction(azil.Addr))
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseOutTransaction(azil.Addr))
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseZrc2Transaction(azil.Addr))
+
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetHolderAddressTransaction(azil.Addr, newAddr))
 }

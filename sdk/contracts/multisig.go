@@ -193,6 +193,23 @@ func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(azilAddr strin
 	return s.Call("SubmitUpdateStakingParametersTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitSetHolderAddressTransaction(azilAddr string, addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "address",
+			Type:  "ByStr20",
+			Value: addr,
+		},
+	}
+
+	return s.Call("SubmitSetHolderAddressTransaction", args, "0")
+}
+
 func (s *MultisigWallet) SubmitPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
