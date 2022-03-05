@@ -8,9 +8,10 @@ import (
 const txId = 0 // the test transition should be the first
 
 func (tr *Transitions) MultisigWalletTests() {
-	multisigGoldenFlowTest(tr)
-	multisigChangeAdminTest(tr)
-	multisigUpdateOwner(tr)
+	// multisigGoldenFlowTest(tr)
+	// multisigChangeAdminTest(tr)
+	// multisigUpdateOwner(tr)
+	multisigManagableActions(tr)
 }
 
 func multisigGoldenFlowTest(tr *Transitions) {
@@ -28,7 +29,7 @@ func multisigGoldenFlowTest(tr *Transitions) {
 
 	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
-	newSsnAddr := sdk.Cfg.Admin // any random address
+	newSsnAddr := sdk.Cfg.Admin // could be any random address
 
 	// after submitting transaction it automatically signed by the _sender
 	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAzilSSNAddressTransaction(azil.Addr, newSsnAddr))
@@ -100,4 +101,20 @@ func multisigUpdateOwner(tr *Transitions) {
 	AssertMultisigSuccess(newMultisig.WithUser(owner2).SubmitClaimOwnerTransaction(azil.Addr))
 	AssertMultisigSuccess(newMultisig.WithUser(owner2).ExecuteTransaction(txId))
 	AssertEqual(Field(azil, "owner_address"), newOwner)
+}
+
+func multisigManagableActions(tr *Transitions) {
+	owner := sdk.Cfg.Key1
+
+	owners := []string{sdk.Cfg.Addr1}
+	signCount := 1
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	p := tr.DeployAndUpgrade()
+
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+
+	newAddr := sdk.Cfg.Admin // could be any random address
+
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeTreasuryAddressTransaction(azil.Addr, newAddr))
 }
