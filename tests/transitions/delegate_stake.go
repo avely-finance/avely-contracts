@@ -35,15 +35,9 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(1000))
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Addr1), ToAzil(20))
 
-	AssertEqual(Field(p.Azil, "last_buf_deposit_cycle_deleg", sdk.Cfg.Addr1), lastrewardcycle)
-
 	// Check delegate to the next cycle
 	p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare)
 	p.Azil.DelegateStake(ToZil(20))
-
-	nextCycleStr := StrAdd(lastrewardcycle, "1")
-
-	AssertEqual(Field(p.Azil, "last_buf_deposit_cycle_deleg", sdk.Cfg.Addr1), nextCycleStr)
 }
 
 func (tr *Transitions) DelegateStakeBuffersRotation() {
