@@ -176,6 +176,23 @@ func (s *MultisigWallet) SubmitChangeRewardsFeeTransaction(azilAddr string, newF
 	return s.Call("SubmitChangeRewardsFeeTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(azilAddr string, minDelegStake string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "min_deleg_stake",
+			Type:  "Uint128",
+			Value: minDelegStake,
+		},
+	}
+
+	return s.Call("SubmitUpdateStakingParametersTransaction", args, "0")
+}
+
 func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
 	// TOOD: add requiredSignaturesCount validation
 	contract := buildMultisigContract(sdk, owners, strconv.Itoa(requiredSignaturesCount))
