@@ -34,20 +34,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	p.Azil.UpdateWallet(sdk.Cfg.Key2)
 
 	/*******************************************************************************
-	 * 2A. delegator trying to withdraw in the current cycle where he has a buffered deposit
-	 *******************************************************************************/
-
-	Start("WithdwarStakeAmount, step 2A")
-	txn, _ = p.Azil.WithdrawStakeAmt(ToAzil(1))
-
-	AssertError(txn, "DelegHasBufferedDeposit")
-	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1015))
-
-	// Trigger switch to the next cycle
-	p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare)
-
-	/*******************************************************************************
-	 * 2B. delegator trying to withdraw more than staked, should fail
+	 * 2A. delegator trying to withdraw more than staked, should fail
 	 *******************************************************************************/
 
 	Start("WithdwarStakeAmount, step 2A")
@@ -57,7 +44,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1015))
 
 	/*******************************************************************************
-	 * 2C. delegator send withdraw request, but it should fail because mindelegatestake
+	 * 2B. delegator send withdraw request, but it should fail because mindelegatestake
 	 * TODO: how to be sure about size of mindelegatestake here?
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 2C")
@@ -69,17 +56,11 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	/*******************************************************************************
 	 * 3A. delegator withdrawing part of his deposit, it should success with "_eventname": "WithdrawStakeAmt"
 	 * Also check that withdrawal_pending field contains correct information about requested withdrawal
-	 * balances field should be correct
+	 * balances field should be correct.
+	 * Delegator able to init withdrawal in same cycle when deposit was done.
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 3A")
 
-	sdk.IncreaseBlocknum(10)
-
-	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
-	AssertSuccess(p.Azil.DrainBuffer(p.GetBuffer().Addr))
-
-	p.Azil.UpdateWallet(sdk.Cfg.Key2)
 	txn, _ = p.Azil.WithdrawStakeAmt(ToAzil(5))
 	AssertTransition(txn, Transition{
 		p.Azil.Addr,
