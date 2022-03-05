@@ -120,4 +120,12 @@ func multisigManagableActions(tr *Transitions) {
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeZimplAddressTransaction(azil.Addr, newAddr))
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeRewardsFeeTransaction(azil.Addr, "1"))
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateStakingParametersTransaction(azil.Addr, "1"))
+
+	// pause actions
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseInTransaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseOutTransaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseZrc2Transaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseInTransaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseOutTransaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseZrc2Transaction(azil.Addr))
 }

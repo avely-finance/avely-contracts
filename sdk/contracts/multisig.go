@@ -193,6 +193,78 @@ func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(azilAddr strin
 	return s.Call("SubmitUpdateStakingParametersTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitPauseInTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitPauseOutTransaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitPauseOutTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitPauseZrc2Transaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitPauseZrc2Transaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitUnPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitUnPauseInTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitUnPauseOutTransaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitUnPauseOutTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitUnPauseZrc2Transaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitUnPauseZrc2Transaction", args, "0")
+}
+
 func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
 	// TOOD: add requiredSignaturesCount validation
 	contract := buildMultisigContract(sdk, owners, strconv.Itoa(requiredSignaturesCount))
