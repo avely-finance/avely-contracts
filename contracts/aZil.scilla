@@ -1148,12 +1148,11 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
 
         | None =>
 
-          BufferConfirmDelegatorSwap new_deleg delegator;
-
           (* sum delegator's stakes for each ssn, update token balance *)
           o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
           match o_deposit_amt_deleg with
           | Some map_ssn_amt =>
+            BufferConfirmDelegatorSwap new_deleg delegator;
             total_redeleg_amt = sum_amount map_ssn_amt;
             UpdateTokenBalance delegator total_redeleg_amt
           | None =>
