@@ -183,12 +183,12 @@ func (s *AZil) GetAzilSsnAddress() string {
 	return state.Dig("result.azil_ssn_address").String()
 }
 
-func (a *AZil) ChangeBuffers(new_buffers []string) (*transaction.Transaction, error) {
+func (a *AZil) ChangeBuffers(newBuffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"new_buffers",
 			"List ByStr20",
-			new_buffers,
+			newBuffers,
 		},
 	}
 	return a.Contract.Call("ChangeBuffers", args, "0")

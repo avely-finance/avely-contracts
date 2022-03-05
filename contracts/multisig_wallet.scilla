@@ -86,6 +86,8 @@ type CalleeTransaction =
 | ChangeRewardsFee of Uint128
 (* UpdateStakingParameters(min_deleg_stake: Uint128) *)
 | UpdateStakingParameters of Uint128
+(* SetHolderAddress(address: ByStr20)                *)
+| SetHolderAddress of ByStr20
 (* PauseIn()                                         *)
 | PauseIn
 (* PauseOut()                                        *)
@@ -175,17 +177,23 @@ let custom_transaction_msg_as_list =
          _amount: Uint128 0;
          address : address }
       (* ChangeRewardsFee(new_fee: Uint128) *)
-      | ChangeRewardsFee new_fee=>
+      | ChangeRewardsFee new_fee =>
         {_recipient: calleeContract ;
          _tag: "ChangeRewardsFee";
          _amount: Uint128 0;
          new_fee : new_fee }
       (* UpdateStakingParameters(min_deleg_stake: Uint128) *)
-      | UpdateStakingParameters min_deleg_stake=>
+      | UpdateStakingParameters min_deleg_stake =>
         {_recipient: calleeContract ;
          _tag: "UpdateStakingParameters";
          _amount: Uint128 0;
          min_deleg_stake : min_deleg_stake }
+      (* SetHolderAddress(address: ByStr20) *)
+      | SetHolderAddress address =>
+        {_recipient: calleeContract ;
+         _tag: "SetHolderAddress";
+         _amount: Uint128 0;
+         address : address }
       (* PauseIn() *)
       | PauseIn =>
         {_recipient: calleeContract ; _tag: "PauseIn"; _amount: Uint128 0 }
@@ -443,6 +451,12 @@ end
 (* Submit a new UpdateStakingParameters transaction for future signoff *)
 transition SubmitUpdateStakingParametersTransaction (calleeContract : ByStr20, min_deleg_stake : Uint128)
   transaction = UpdateStakingParameters min_deleg_stake;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SetHolderAddress transaction for future signoff *)
+transition SubmitSetHolderAddressTransaction (calleeContract : ByStr20, address : ByStr20)
+  transaction = SetHolderAddress address;
   SubmitCustomTransaction calleeContract transaction
 end
 
