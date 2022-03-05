@@ -82,6 +82,8 @@ type CalleeTransaction =
 | ChangeTreasuryAddress of ByStr20
 (* ChangeZimplAddress(address: ByStr20)            *)
 | ChangeZimplAddress of ByStr20
+(* ChangeRewardsFee(new_fee: Uint128)              *)
+| ChangeRewardsFee of Uint128
 
 (* Type of (outstanding) transactions *)
 type Transaction =
@@ -158,6 +160,12 @@ let custom_transaction_msg_as_list =
          _tag: "ChangeZimplAddress";
          _amount: Uint128 0;
          address : address }
+      (* ChangeRewardsFee(new_fee: Uint128) *)
+      | ChangeRewardsFee new_fee=>
+        {_recipient: calleeContract ;
+         _tag: "ChangeRewardsFee";
+         _amount: Uint128 0;
+         new_fee : new_fee }
 
       end
     in
@@ -386,6 +394,12 @@ end
 (* Submit a new ChangeZimplAddress transaction for future signoff *)
 transition SubmitChangeZimplAddressTransaction (calleeContract : ByStr20, address : ByStr20)
   transaction = ChangeZimplAddress address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeRewardsFee transaction for future signoff *)
+transition SubmitChangeRewardsFeeTransaction (calleeContract : ByStr20, new_fee : Uint128)
+  transaction = ChangeRewardsFee new_fee;
   SubmitCustomTransaction calleeContract transaction
 end
 
