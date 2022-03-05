@@ -1176,7 +1176,6 @@ transition CompleteWithdrawalSuccessCallBack()
 end
 
 transition ChownStakeConfirmSwap(delegator: ByStr20)
-  RequireAdmin;
   RequireNotPausedIn;
   var_zimpl_address <- zimpl_address;
 

@@ -23,8 +23,6 @@ func (tr *Transitions) IsAdmin() {
 	readyBlocks := []string{}
 	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, "AdminValidationFailed")
-	tx, _ = p.Azil.ChownStakeConfirmSwap(sdk.Cfg.Addr3)
-	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Azil.ChownStakeReDelegate(sdk.Cfg.Addr3, ToZil(1))
 	AssertError(tx, "AdminValidationFailed")
 }
