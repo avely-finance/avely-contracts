@@ -251,9 +251,7 @@ func (tr *Transitions) ChownStakeAzilErrors() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer.Addr}})
 	AssertEqual(Field(p.Zimpl, "deleg_swap_request", addr2), nextBuffer.Addr)
 
-	GetLog().Info(Field(p.Zimpl, "deleg_swap_request"))
-
-	//call ChownStake for addr2, expecting swap reqject
+	//call ChownStake for addr2, expecting swap reject
 	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr2))
 	AssertTransition(tx, Transition{
 		nextBuffer.Addr, //sender
@@ -262,6 +260,7 @@ func (tr *Transitions) ChownStakeAzilErrors() {
 		"0",
 		ParamsMap{"requestor": addr2},
 	})
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RejectDelegatorSwap", ParamsMap{"requestor": addr2, "new_deleg": nextBuffer.Addr}})
 }
 
 func (tr *Transitions) ChownStakeZimplErrors() {
