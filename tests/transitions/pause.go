@@ -89,7 +89,7 @@ func callPausedIn(p *contracts.Protocol) {
 	tx, _ = p.Azil.DelegateStake(ToZil(10))
 	AssertError(tx, "PausedIn")
 
-	tx, _ = p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(sdk.Cfg.Addr1)
+	tx, _ = p.Azil.WithUser(sdk.Cfg.Key1).ChownStakeConfirmSwap(sdk.Cfg.Addr1)
 	AssertError(tx, "PausedIn")
 
 	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn())
