@@ -159,6 +159,23 @@ func (s *MultisigWallet) SubmitChangeZimplAddressTransaction(azilAddr string, ad
 	return s.Call("SubmitChangeZimplAddressTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitChangeRewardsFeeTransaction(azilAddr string, newFee string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "new_fee",
+			Type:  "Uint128",
+			Value: newFee,
+		},
+	}
+
+	return s.Call("SubmitChangeRewardsFeeTransaction", args, "0")
+}
+
 func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
 	// TOOD: add requiredSignaturesCount validation
 	contract := buildMultisigContract(sdk, owners, strconv.Itoa(requiredSignaturesCount))
