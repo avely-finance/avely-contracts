@@ -191,7 +191,7 @@ func (tr *Transitions) ChownStakeAzilErrors() {
 
 	chownStakeSetup(p)
 
-	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
+	key1, addr1, key2, addr2, ssn, _, userStake := chownStakeDefineParams(p)
 
 	//key1 delegates to main contract
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], userStake))
@@ -236,7 +236,7 @@ func (tr *Transitions) ChownStakeAzilErrors() {
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer.Addr))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer.Addr}})
 
-	//call ChownStake for addr1, expecting error
+	//call ChownStake for addr1, expecting swap reject
 	tx, _ = p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr1)
 	AssertTransition(tx, Transition{
 		nextBuffer.Addr, //sender
@@ -245,6 +245,22 @@ func (tr *Transitions) ChownStakeAzilErrors() {
 		"0",
 		ParamsMap{"requestor": addr1},
 	})
+
+	//key2 has no deposits, but made swap request
+	tx, _ = AssertSuccess(p.Zproxy.WithUser(key2).RequestDelegatorSwap(nextBuffer.Addr))
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer.Addr}})
+	AssertEqual(Field(p.Zimpl, "deleg_swap_request", addr2), nextBuffer.Addr)
+
+	//call ChownStake for addr2, expecting swap reject
+	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr2))
+	AssertTransition(tx, Transition{
+		nextBuffer.Addr, //sender
+		"RejectDelegatorSwap",
+		p.Zproxy.Addr,
+		"0",
+		ParamsMap{"requestor": addr2},
+	})
+	AssertEvent(tx, Event{p.Zimpl.Addr, "RejectDelegatorSwap", ParamsMap{"requestor": addr2, "new_deleg": nextBuffer.Addr}})
 }
 
 func (tr *Transitions) ChownStakeZimplErrors() {

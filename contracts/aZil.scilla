@@ -20,7 +20,6 @@ type Error =
   | CantFetchZimplBufferExistsAtSSN
   | CantFetchZimplFields
   | ChownStakeCantFetchRemote
-  | ChownStakeDepositNotFound
   | ChownStakeReDelegateAzilSsn
   | ChownStakeSwapRequestNotFound
   | ClaimWithdrawalNoUnbonded
@@ -60,7 +59,6 @@ let make_error =
       | CantFetchZimplBufferExistsAtSSN  => "CantFetchZimplBufferExistsAtSSN"
       | CantFetchZimplFields             => "CantFetchZimplFields"
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
-      | ChownStakeDepositNotFound        => "ChownStakeDepositNotFound"
       | ChownStakeReDelegateAzilSsn      => "ChownStakeReDelegateAzilSsn"
       | ChownStakeSwapRequestNotFound    => "ChownStakeSwapRequestNotFound"
       | ClaimWithdrawalNoUnbonded        => "ClaimWithdrawalNoUnbonded"
@@ -1262,18 +1260,16 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
 
         | None =>
 
-          BufferConfirmDelegatorSwap new_deleg delegator;
-
           (* sum delegator's stakes for each ssn, update token balance *)
           o_deposit_amt_deleg <- & zimpl.deposit_amt_deleg[delegator];
           match o_deposit_amt_deleg with
           | Some map_ssn_amt =>
+            BufferConfirmDelegatorSwap new_deleg delegator;
             total_redeleg_amt = sum_amount map_ssn_amt;
             UpdateTokenBalance delegator total_redeleg_amt
           | None =>
-            (* we won't be here, because delegator can't have no stake, but have swap request *)
-            e = ChownStakeDepositNotFound;
-            ThrowError e
+            (* reject swap for delegator without deposits *)
+            BufferRejectDelegatorSwap new_deleg delegator
           end
 
         end
