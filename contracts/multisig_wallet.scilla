@@ -80,6 +80,8 @@ type CalleeTransaction =
 | ClaimOwner
 (* ChangeTreasuryAddress(address: ByStr20)         *)
 | ChangeTreasuryAddress of ByStr20
+(* ChangeZimplAddress(address: ByStr20)            *)
+| ChangeZimplAddress of ByStr20
 
 (* Type of (outstanding) transactions *)
 type Transaction =
@@ -144,12 +146,19 @@ let custom_transaction_msg_as_list =
         {_recipient: calleeContract ;
          _tag: "ClaimOwner";
          _amount: Uint128 0}
-      (* ChangeTreasuryAddress() *)
+      (* ChangeTreasuryAddress(address: ByStr20) *)
       | ChangeTreasuryAddress address =>
         {_recipient: calleeContract ;
          _tag: "ChangeTreasuryAddress";
          _amount: Uint128 0;
          address : address }
+      (* ChangeZimplAddress(address: ByStr20) *)
+      | ChangeZimplAddress address =>
+        {_recipient: calleeContract ;
+         _tag: "ChangeZimplAddress";
+         _amount: Uint128 0;
+         address : address }
+
       end
     in
     one_msg msg
@@ -371,6 +380,12 @@ end
 (* Submit a new ChangeTreasuryAddress transaction for future signoff *)
 transition SubmitChangeTreasuryAddressTransaction (calleeContract : ByStr20, address : ByStr20)
   transaction = ChangeTreasuryAddress address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeZimplAddress transaction for future signoff *)
+transition SubmitChangeZimplAddressTransaction (calleeContract : ByStr20, address : ByStr20)
+  transaction = ChangeZimplAddress address;
   SubmitCustomTransaction calleeContract transaction
 end
 
