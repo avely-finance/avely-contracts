@@ -117,4 +117,5 @@ func multisigManagableActions(tr *Transitions) {
 	newAddr := sdk.Cfg.Admin // could be any random address
 
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeTreasuryAddressTransaction(azil.Addr, newAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeZimplAddressTransaction(azil.Addr, newAddr))
 }
