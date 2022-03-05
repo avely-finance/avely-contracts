@@ -27,7 +27,6 @@ type Error =
   | CompleteWithdrawalFundsMismatch
   | DelegAddrUnknown
   | DelegDoesNotExistAtSSN
-  | DelegHasBufferedDeposit
   | DelegHasNoSufficientAmt
   | DelegStakeFundsMismatch
   | DelegStakeNotEnough
@@ -67,7 +66,6 @@ let make_error =
       | CompleteWithdrawalFundsMismatch  => "CompleteWithdrawalFundsMismatch"
       | DelegAddrUnknown                 => "DelegAddrUnknown"
       | DelegDoesNotExistAtSSN           => "DelegDoesNotExistAtSSN"
-      | DelegHasBufferedDeposit          => "DelegHasBufferedDeposit"
       | DelegHasNoSufficientAmt          => "DelegHasNoSufficientAmt"
       | DelegStakeFundsMismatch          => "DelegStakeFundsMismatch"
       | DelegStakeNotEnough              => "DelegStakeNotEnough"
@@ -263,10 +261,6 @@ field withdrawal_pending_of_delegator: Map ByStr20 (Map BNum Withdrawal) = Emp B
 
 (* AddressOfDeleg ->  Deposit *)
 field withdrawal_unbonded: Map ByStr20 Withdrawal = Emp ByStr20 Withdrawal
-
-(* Keeps track of the cycle number when a deleg last buffered deposit its delegate *)
-(* AddressOfDeleg -> CycleNumberWhenLastDeposit *)
-field last_buf_deposit_cycle_deleg: Map ByStr20 Uint32 = Emp ByStr20 Uint32
 
 field buffer_drained_cycle: Map ByStr20 Uint32 = Emp ByStr20 Uint32
 
@@ -576,8 +570,7 @@ procedure DecreaseTotalTokenAmt(amt: Uint128)
 end
 
 procedure TruncateDeleg(deleg: ByStr20)
-  delete balances[deleg];
-  delete last_buf_deposit_cycle_deleg[deleg]
+  delete balances[deleg]
 end
 
 (* newTokens = amount * totaltokenamount / totalstakeamount *)
@@ -601,28 +594,8 @@ procedure UpdateTokenBalance(initiator: ByStr20, stake_amt: Uint128)
     balances[initiator] := token_amt
   end;
 
-  FetchRemoteZimplFields;
-  lrc <- local_lastrewardcycle;
-
-  last_buf_deposit_cycle_deleg[initiator] := lrc;
-
   IncreaseTotalStakeAmt stake_amt;
   IncreaseTotalTokenAmt token_amt
-end
-
-procedure AssertNoBufferedDeposit(deleg: ByStr20)
-  FetchRemoteZimplFields;
-  ldcd_o <- last_buf_deposit_cycle_deleg[deleg];
-  ldcd = option_uint32_value ldcd_o;
-  lrc <- local_lastrewardcycle;
-
-  has_buffered = uint32_le lrc ldcd;
-  match has_buffered with
-  | True =>
-    e = DelegHasBufferedDeposit;
-    ThrowError e
-  | False =>
-  end
 end
 
 procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Uint128)
@@ -656,7 +629,6 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
 
   match current_token_amount with
   | Some current_token_amt =>
-    AssertNoBufferedDeposit initiator;
     AdjustDeleg initiator current_token_amt withdraw_token_amt;
 
     (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
