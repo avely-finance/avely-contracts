@@ -9,8 +9,9 @@ const txId = 0 // the test transition should be the first
 
 func (tr *Transitions) MultisigWalletTests() {
 	multisigGoldenFlowTest(tr)
-	multisigChangeAdminTest(tr)
 	multisigUpdateOwner(tr)
+	multisigChangeAdminTest(tr)
+	multisigChangeBuffersTest(tr)
 	multisigManagableActions(tr)
 }
 
@@ -57,7 +58,7 @@ func multisigGoldenFlowTest(tr *Transitions) {
 }
 
 func multisigChangeAdminTest(tr *Transitions) {
-	owner1 := sdk.Cfg.Key1
+	owner := sdk.Cfg.Key1
 
 	owners := []string{sdk.Cfg.Addr1}
 	signCount := 1
@@ -70,8 +71,8 @@ func multisigChangeAdminTest(tr *Transitions) {
 	newAdmin := sdk.Cfg.Addr1
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAdminTransaction(azil.Addr, newAdmin))
-	AssertMultisigSuccess(multisig.WithUser(owner1).ExecuteTransaction(txId))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeAdminTransaction(azil.Addr, newAdmin))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
 	AssertEqual(Field(azil, "admin_address"), newAdmin)
 }
 
@@ -130,4 +131,23 @@ func multisigManagableActions(tr *Transitions) {
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseZrc2Transaction(azil.Addr))
 
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetHolderAddressTransaction(azil.Addr, newAddr))
+}
+
+func multisigChangeBuffersTest(tr *Transitions) {
+	owner := sdk.Cfg.Key1
+
+	owners := []string{sdk.Cfg.Addr1}
+	signCount := 1
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	p := tr.DeployAndUpgrade()
+
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+
+	newBuffers := []string{sdk.Cfg.Addr1} // could be any random addresses
+
+	// after submitting transaction it automatically signed by the _sender
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeBuffersTransaction(azil.Addr, newBuffers))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
+	AssertContain(Field(azil, "buffers_addresses"), sdk.Cfg.Addr1)
 }
