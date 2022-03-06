@@ -82,28 +82,32 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 	return nil
 }
 
-func (a *AdminActions) ConfirmSwapRequests(p *Protocol) error {
-	nextBuffer := p.GetBufferToSwapWith().Addr
-	swapRequests := p.GetSwapRequestsForBuffer(nextBuffer)
-	a.log.WithFields(logrus.Fields{"swap_requests_count": len(swapRequests), "next_buffer": nextBuffer}).Debug("Swap request found")
+func (a *AdminActions) ProcessSwapRequests(p *Protocol, bufferOffset int) error {
+	//bufferOffset=0 -> currentBuffer; bufferOffset=1 -> nextBuffer
+	buffer := p.GetBufferByOffset(bufferOffset).Addr
+	swapRequests := p.GetSwapRequestsForBuffer(buffer)
+	a.log.WithFields(logrus.Fields{
+		"swap_requests_count": len(swapRequests),
+		"buffer":              buffer,
+		"bufferOffset":        bufferOffset,
+	}).Debug("Swap request(s) found")
 	errCnt := 0
 	okCnt := 0
 	for _, initiator := range swapRequests {
 		tx, err := p.Azil.ChownStakeConfirmSwap(initiator)
 		if err != nil {
-			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": tx.Receipt}).Error("Can't confirm swap")
+			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": tx.Receipt}).Error("Can't process swap")
 			errCnt++
 		} else {
-			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID}).Info("Swap confirmed")
+			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID}).Info("Swap processed")
 			okCnt++
 		}
 	}
-	a.log.WithFields(logrus.Fields{"confirmed_swaps_count": okCnt, "errors_count": errCnt}).Debug("confirmSwapRequests completed")
+	a.log.WithFields(logrus.Fields{"processed_swaps_count": okCnt, "errors_count": errCnt}).Debug("ProcessSwapRequests completed")
 
 	if errCnt > 0 {
-		return errors.New("ConfirmSwapRequests has failed items")
+		return errors.New("ProcessSwapRequests has failed items")
 	}
-
 	return nil
 }
 

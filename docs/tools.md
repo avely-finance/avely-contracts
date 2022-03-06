@@ -164,8 +164,14 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=claim_withdrawal
 $ go run tools/admin_cmd.go --chain=testnet --cmd=show_swap_requests
 ```
 
-2. Confirm swap request(s)
+2. Confirm next buffer's swap request(s)
 
 ```sh
 $ go run tools/admin_cmd.go --chain=testnet --cmd=confirm_swap_requests
+```
+
+3. Reject current buffer's swap request(s)
+
+```sh
+$ go run tools/admin_cmd.go --chain=testnet --cmd=reject_swap_requests
 ```
