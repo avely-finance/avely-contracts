@@ -11,6 +11,7 @@ func (tr *Transitions) MultisigWalletTests() {
 	multisigGoldenFlowTest(tr)
 	multisigChangeAdminTest(tr)
 	multisigUpdateOwner(tr)
+	multisigManagableActions(tr)
 }
 
 func multisigGoldenFlowTest(tr *Transitions) {
@@ -28,7 +29,7 @@ func multisigGoldenFlowTest(tr *Transitions) {
 
 	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
-	newSsnAddr := sdk.Cfg.Admin // any random address
+	newSsnAddr := sdk.Cfg.Admin // could be any random address
 
 	// after submitting transaction it automatically signed by the _sender
 	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAzilSSNAddressTransaction(azil.Addr, newSsnAddr))
@@ -100,4 +101,33 @@ func multisigUpdateOwner(tr *Transitions) {
 	AssertMultisigSuccess(newMultisig.WithUser(owner2).SubmitClaimOwnerTransaction(azil.Addr))
 	AssertMultisigSuccess(newMultisig.WithUser(owner2).ExecuteTransaction(txId))
 	AssertEqual(Field(azil, "owner_address"), newOwner)
+}
+
+func multisigManagableActions(tr *Transitions) {
+	owner := sdk.Cfg.Key1
+
+	owners := []string{sdk.Cfg.Addr1}
+	signCount := 1
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	p := tr.DeployAndUpgrade()
+
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+
+	newAddr := sdk.Cfg.Admin // could be any random address
+
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeTreasuryAddressTransaction(azil.Addr, newAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeZimplAddressTransaction(azil.Addr, newAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeRewardsFeeTransaction(azil.Addr, "1"))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateStakingParametersTransaction(azil.Addr, "1"))
+
+	// pause actions
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseInTransaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseOutTransaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseZrc2Transaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseInTransaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseOutTransaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseZrc2Transaction(azil.Addr))
+
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetHolderAddressTransaction(azil.Addr, newAddr))
 }
