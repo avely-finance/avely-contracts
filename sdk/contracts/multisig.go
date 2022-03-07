@@ -125,6 +125,163 @@ func (s *MultisigWallet) SubmitClaimOwnerTransaction(azilAddr string) (*transact
 	return s.Call("SubmitClaimOwnerTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitChangeTreasuryAddressTransaction(azilAddr string, addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "address",
+			Type:  "ByStr20",
+			Value: addr,
+		},
+	}
+
+	return s.Call("SubmitChangeTreasuryAddressTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitChangeZimplAddressTransaction(azilAddr string, addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "address",
+			Type:  "ByStr20",
+			Value: addr,
+		},
+	}
+
+	return s.Call("SubmitChangeZimplAddressTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitChangeRewardsFeeTransaction(azilAddr string, newFee string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "new_fee",
+			Type:  "Uint128",
+			Value: newFee,
+		},
+	}
+
+	return s.Call("SubmitChangeRewardsFeeTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(azilAddr string, minDelegStake string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "min_deleg_stake",
+			Type:  "Uint128",
+			Value: minDelegStake,
+		},
+	}
+
+	return s.Call("SubmitUpdateStakingParametersTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitSetHolderAddressTransaction(azilAddr string, addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "address",
+			Type:  "ByStr20",
+			Value: addr,
+		},
+	}
+
+	return s.Call("SubmitSetHolderAddressTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitPauseInTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitPauseOutTransaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitPauseOutTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitPauseZrc2Transaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitPauseZrc2Transaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitUnPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitUnPauseInTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitUnPauseOutTransaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitUnPauseOutTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitUnPauseZrc2Transaction(azilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+	}
+
+	return s.Call("SubmitUnPauseZrc2Transaction", args, "0")
+}
+
 func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
 	// TOOD: add requiredSignaturesCount validation
 	contract := buildMultisigContract(sdk, owners, strconv.Itoa(requiredSignaturesCount))

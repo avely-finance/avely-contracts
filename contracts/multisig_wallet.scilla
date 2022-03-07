@@ -67,17 +67,39 @@ let transaction_inc = one
 (* Type of transactions. *)
 (* All calls are made to the aZIL contract *)
 type CalleeTransaction =
-(***************************************************)
-(*               Proxy Transition                  *)
-(***************************************************)
-(* ChangeAzilSSNAddress(address: ByStr20)          *)
+(*****************************************************)
+(*               Proxy Transition                    *)
+(*****************************************************)
+(* ChangeAzilSSNAddress(address: ByStr20)            *)
 | ChangeAzilSSNAddress of ByStr20
-(* ChangeAdmin(new_admin: ByStr20)                 *)
+(* ChangeAdmin(new_admin: ByStr20)                   *)
 | ChangeAdmin of ByStr20
-(* ChangeOwner(new_owner: ByStr20)                 *)
+(* ChangeOwner(new_owner: ByStr20)                   *)
 | ChangeOwner of ByStr20
-(* ClaimOwner()                                    *)
+(* ClaimOwner()                                      *)
 | ClaimOwner
+(* ChangeTreasuryAddress(address: ByStr20)           *)
+| ChangeTreasuryAddress of ByStr20
+(* ChangeZimplAddress(address: ByStr20)              *)
+| ChangeZimplAddress of ByStr20
+(* ChangeRewardsFee(new_fee: Uint128)                *)
+| ChangeRewardsFee of Uint128
+(* UpdateStakingParameters(min_deleg_stake: Uint128) *)
+| UpdateStakingParameters of Uint128
+(* SetHolderAddress(address: ByStr20)                *)
+| SetHolderAddress of ByStr20
+(* PauseIn()                                         *)
+| PauseIn
+(* PauseOut()                                        *)
+| PauseOut
+(* PauseZrc2()                                       *)
+| PauseZrc2
+(* UnPauseIn()                                       *)
+| UnPauseIn
+(* UnPauseOut()                                      *)
+| UnPauseOut
+(* UnPauseZrc2()                                     *)
+| UnPauseZrc2
 
 (* Type of (outstanding) transactions *)
 type Transaction =
@@ -142,6 +164,54 @@ let custom_transaction_msg_as_list =
         {_recipient: calleeContract ;
          _tag: "ClaimOwner";
          _amount: Uint128 0}
+      (* ChangeTreasuryAddress(address: ByStr20) *)
+      | ChangeTreasuryAddress address =>
+        {_recipient: calleeContract ;
+         _tag: "ChangeTreasuryAddress";
+         _amount: Uint128 0;
+         address : address }
+      (* ChangeZimplAddress(address: ByStr20) *)
+      | ChangeZimplAddress address =>
+        {_recipient: calleeContract ;
+         _tag: "ChangeZimplAddress";
+         _amount: Uint128 0;
+         address : address }
+      (* ChangeRewardsFee(new_fee: Uint128) *)
+      | ChangeRewardsFee new_fee =>
+        {_recipient: calleeContract ;
+         _tag: "ChangeRewardsFee";
+         _amount: Uint128 0;
+         new_fee : new_fee }
+      (* UpdateStakingParameters(min_deleg_stake: Uint128) *)
+      | UpdateStakingParameters min_deleg_stake =>
+        {_recipient: calleeContract ;
+         _tag: "UpdateStakingParameters";
+         _amount: Uint128 0;
+         min_deleg_stake : min_deleg_stake }
+      (* SetHolderAddress(address: ByStr20) *)
+      | SetHolderAddress address =>
+        {_recipient: calleeContract ;
+         _tag: "SetHolderAddress";
+         _amount: Uint128 0;
+         address : address }
+      (* PauseIn() *)
+      | PauseIn =>
+        {_recipient: calleeContract ; _tag: "PauseIn"; _amount: Uint128 0 }
+      (* PauseOut() *)
+      | PauseOut =>
+        {_recipient: calleeContract ; _tag: "PauseOut"; _amount: Uint128 0 }
+      (* PauseZrc2() *)
+      | PauseZrc2 =>
+        {_recipient: calleeContract ; _tag: "PauseZrc2"; _amount: Uint128 0 }
+      (* UnPauseIn() *)
+      | UnPauseIn =>
+        {_recipient: calleeContract ; _tag: "UnPauseIn"; _amount: Uint128 0 }
+      (* UnPauseOut() *)
+      | UnPauseOut =>
+        {_recipient: calleeContract ; _tag: "UnPauseOut"; _amount: Uint128 0 }
+      (* UnPauseZrc2() *)
+      | UnPauseZrc2 =>
+        {_recipient: calleeContract ; _tag: "UnPauseZrc2"; _amount: Uint128 0 }
       end
     in
     one_msg msg
@@ -357,6 +427,72 @@ end
 (* Submit a new ClaimOwner transaction for future signoff *)
 transition SubmitClaimOwnerTransaction (calleeContract : ByStr20)
   transaction = ClaimOwner;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeTreasuryAddress transaction for future signoff *)
+transition SubmitChangeTreasuryAddressTransaction (calleeContract : ByStr20, address : ByStr20)
+  transaction = ChangeTreasuryAddress address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeZimplAddress transaction for future signoff *)
+transition SubmitChangeZimplAddressTransaction (calleeContract : ByStr20, address : ByStr20)
+  transaction = ChangeZimplAddress address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeRewardsFee transaction for future signoff *)
+transition SubmitChangeRewardsFeeTransaction (calleeContract : ByStr20, new_fee : Uint128)
+  transaction = ChangeRewardsFee new_fee;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new UpdateStakingParameters transaction for future signoff *)
+transition SubmitUpdateStakingParametersTransaction (calleeContract : ByStr20, min_deleg_stake : Uint128)
+  transaction = UpdateStakingParameters min_deleg_stake;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SetHolderAddress transaction for future signoff *)
+transition SubmitSetHolderAddressTransaction (calleeContract : ByStr20, address : ByStr20)
+  transaction = SetHolderAddress address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitPauseInTransaction transaction for future signoff *)
+transition SubmitPauseInTransaction (calleeContract : ByStr20)
+  transaction = PauseIn;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitPauseOutTransaction transaction for future signoff *)
+transition SubmitPauseOutTransaction (calleeContract : ByStr20)
+  transaction = PauseOut;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitPauseZrc2Transaction transaction for future signoff *)
+transition SubmitPauseZrc2Transaction (calleeContract : ByStr20)
+  transaction = PauseZrc2;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitUnPauseInTransaction transaction for future signoff *)
+transition SubmitUnPauseInTransaction (calleeContract : ByStr20)
+  transaction = UnPauseIn;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitUnPauseOutTransaction transaction for future signoff *)
+transition SubmitUnPauseOutTransaction (calleeContract : ByStr20)
+  transaction = UnPauseOut;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitUnPauseZrc2Transaction transaction for future signoff *)
+transition SubmitUnPauseZrc2Transaction (calleeContract : ByStr20)
+  transaction = UnPauseZrc2;
   SubmitCustomTransaction calleeContract transaction
 end
 
