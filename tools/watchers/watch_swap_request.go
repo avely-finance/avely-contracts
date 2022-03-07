@@ -12,6 +12,7 @@ import (
 
 type SwapRequestWatcher struct {
 	gap        int
+	mode       string
 	runAtBlock int
 	protocol   *contracts.Protocol
 	log        *core.Log
@@ -20,8 +21,13 @@ type SwapRequestWatcher struct {
 func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	gapPtr := flag.Int("gap", 5, "gap between blocks")
+	modePtr := flag.String("mode", "reject", "confirm/reject")
 
 	flag.Parse()
+
+	if *modePtr != "confirm" {
+		*modePtr = "reject"
+	}
 
 	config := core.NewConfig(*chainPtr)
 	sdk := core.NewAvelySDK(*config)
@@ -33,12 +39,16 @@ func main() {
 
 	watcher := &SwapRequestWatcher{
 		gap:        *gapPtr,
+		mode:       *modePtr,
 		runAtBlock: -1,
 		protocol:   protocol,
 		log:        log,
 	}
 
-	log.Debug("Start swap request watcher")
+	log.WithFields(logrus.Fields{
+		"gap":  *gapPtr,
+		"mode": *modePtr,
+	}).Debug("Start swap request watcher")
 	blockWatcher := utils.CreateBlockWatcher(url, log)
 	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()
@@ -50,10 +60,15 @@ func (w *SwapRequestWatcher) Notify(blockNum int) {
 
 	if (blockNum - w.runAtBlock) > w.gap {
 		w.log.WithFields(logrus.Fields{"block_number": blockNum}).Debug("Mined block")
-		action.ConfirmSwapRequests(protocol)
+		bufferOffset := 0 //current buffer, swap reject mode
+		if w.mode == "confirm" {
+			bufferOffset = 1 //next buffer, confirm mode
+		}
+		action.ProcessSwapRequests(protocol, bufferOffset)
 		w.runAtBlock = blockNum
 	} else {
 		w.log.WithFields(logrus.Fields{
+			"mode":         w.mode,
 			"block_number": blockNum,
 			"current_gap":  (blockNum - w.runAtBlock),
 			"expected_gap": w.gap,

@@ -102,7 +102,9 @@ func main() {
 		case "show_swap_requests":
 			showSwapRequests(p)
 		case "confirm_swap_requests":
-			action.ConfirmSwapRequests(p)
+			action.ProcessSwapRequests(p, 1) //next buffer
+		case "reject_swap_requests":
+			action.ProcessSwapRequests(p, 0) //current buffer
 
 		default:
 			log.Fatal("Unknown command")
