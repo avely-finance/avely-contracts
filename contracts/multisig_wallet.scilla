@@ -88,6 +88,8 @@ type CalleeTransaction =
 | UpdateStakingParameters of Uint128
 (* SetHolderAddress(address: ByStr20)                *)
 | SetHolderAddress of ByStr20
+(* ChangeBuffers(new_buffers: List ByStr20)          *)
+| ChangeBuffers of (List ByStr20)
 (* PauseIn()                                         *)
 | PauseIn
 (* PauseOut()                                        *)
@@ -194,6 +196,12 @@ let custom_transaction_msg_as_list =
          _tag: "SetHolderAddress";
          _amount: Uint128 0;
          address : address }
+      (* ChangeBuffers(new_buffers: List ByStr20)          *)
+      | ChangeBuffers new_buffers =>
+         {_recipient: calleeContract ;
+          _tag: "ChangeBuffers";
+          _amount: Uint128 0;
+          new_buffers : new_buffers }
       (* PauseIn() *)
       | PauseIn =>
         {_recipient: calleeContract ; _tag: "PauseIn"; _amount: Uint128 0 }
@@ -457,6 +465,12 @@ end
 (* Submit a new SetHolderAddress transaction for future signoff *)
 transition SubmitSetHolderAddressTransaction (calleeContract : ByStr20, address : ByStr20)
   transaction = SetHolderAddress address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeBuffers transaction for future signoff *)
+transition SubmitChangeBuffersTransaction (calleeContract : ByStr20, new_buffers : List ByStr20)
+  transaction = ChangeBuffers new_buffers;
   SubmitCustomTransaction calleeContract transaction
 end
 
