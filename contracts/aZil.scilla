@@ -166,6 +166,7 @@ let list_bystr20_length =
 
 let addfunds_tag = "AddFunds"
 
+(* active buffer is remainder of division of lastrewardcycle by buffers count *)
 let get_active_buffer_addr =
   fun (l : List ByStr20) =>
   fun (lastrewardcycle : Uint32) =>
@@ -175,6 +176,7 @@ let get_active_buffer_addr =
     let addr_o = flist_nth active l in
     option_bystr20_value addr_o
 
+(* remove not unbonded blocks from blocks list *)
 let leave_unbonded =
   fun (current_bnum: BNum) =>
   fun (bnum_req_delta: Uint128) =>
@@ -186,6 +188,7 @@ let leave_unbonded =
     let filterBNum = @list_filter BNum in
     filterBNum is_unbonded blist
 
+(* check if address is buffer address *)
 let is_buffer_addr =
   fun(l: List ByStr20) =>
   fun(addr: ByStr20) =>
@@ -249,12 +252,16 @@ field totalstakeamount  : Uint128 = uint128_zero
 field totaltokenamount  : Uint128 = uint128_zero
 field autorestakeamount : Uint128 = uint128_zero
 
+(* Delegator -> Token balance *)
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
-field allowances: Map ByStr20 (Map ByStr20 Uint128)
-  = Emp ByStr20 (Map ByStr20 Uint128)
+
+(* Sender -> (Spender -> Allowance) *)
+field allowances: Map ByStr20 (Map ByStr20 Uint128) = Emp ByStr20 (Map ByStr20 Uint128)
 
 (* BlockNumber -> AddressOfDeleg ->  Withdrawal of Token:Uint128 Stake:Uint128 *)
 field withdrawal_pending:              Map BNum (Map ByStr20 Withdrawal) = Emp BNum (Map ByStr20 Withdrawal)
+
+(* AddressOfDeleg -> BlockNumber -> Withdrawal of Token:Uint128 Stake:Uint128 *)
 field withdrawal_pending_of_delegator: Map ByStr20 (Map BNum Withdrawal) = Emp ByStr20 (Map BNum Withdrawal)
 
 (* AddressOfDeleg ->  Deposit *)
@@ -399,6 +406,7 @@ procedure TransferFunds(tag: String, amt: Uint128, recipient: ByStr20)
   send msgs
 end
 
+(* fetch state fields from ssnlist contract *)
 procedure FetchRemoteZimplFields()
   implAddr <- zimpl_address;
   implAddrTypeTest <- & implAddr as ByStr20 with contract field bnum_req : Uint128, field lastrewardcycle: Uint32 end;
@@ -414,6 +422,7 @@ procedure FetchRemoteZimplFields()
   end
 end
 
+(* check if buffer address exists at deposit_amt_deleg map of ssnlist contract *)
 procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
   implAddr <- zimpl_address;
   implAddrTypeTest <- & implAddr as ByStr20 with contract
@@ -923,6 +932,7 @@ transition ChangeBuffers(new_buffers: List ByStr20)
   buffers_addresses := new_buffers
 end
 
+(* claims buffer/holder rewards; transfer funds from buffer to holder *)
 transition DrainBuffer(buffer_addr: ByStr20)
   RequireAdmin;
   buffers_addrs <- buffers_addresses;
@@ -971,6 +981,7 @@ transition ClaimRewardsSuccessCallBack()
   IncreaseAutoRestakeAmt after_fee
 end
 
+(* offchain-tools calls this transition every new cycle *)
 transition PerformAutoRestake()
   RequireAdmin;
 
@@ -1175,6 +1186,7 @@ transition CompleteWithdrawalSuccessCallBack()
 
 end
 
+(* confirms delegator's swap; could by called by anyone *)
 transition ChownStakeConfirmSwap(delegator: ByStr20)
   RequireNotPausedIn;
   var_zimpl_address <- zimpl_address;
@@ -1257,6 +1269,7 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
   end
 end
 
+(* transfers funds from other ssn to azil ssn *)
 transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   RequireAdmin;
   FetchRemoteZimplFields;
