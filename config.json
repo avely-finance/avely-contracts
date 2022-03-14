@@ -56,6 +56,8 @@
     "AzilSsnRewardShare": "50",
     "HolderInitialDelegateZil": "10",
     "ProtocolRewardsFee": "100",
+    "Owner":"0x6cd3667ba79310837e33f0aecbe13688a6cbca32",
+    "OwnerKey": "",
     "Admin":"",
     "AdminKey": "",
     "Key1": "",
