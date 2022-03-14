@@ -38,7 +38,15 @@ https://viewblock.io/zilliqa/address/zil17c2804u3j3uwttl7r77e5rxuam5lmepdf2l87e?
 
 ## Admin commands
 
-### Deploy
+### Deploy Multsig
+
+1. Deploy mutlisig wallet
+
+```sh
+$ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_multisig --owners=0x4C4B65b9a732bd47aE0fb3bCe8Aa77E47e9dC634,0x907Cb4661099aB4DCE8AE1798b1006970f6a0b2D --signcount=2
+```
+
+### Deploy Protocol
 
 1. Deploy basic contracts
 
@@ -60,7 +68,7 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_buffer
 $ go run tools/admin_cmd.go --chain=testnet --cmd=sync_buffers
 ```
 
-5. Unpause in/out/zrc2/all AZil
+5. Unpause in/out/zrc2/all AZil. (note: see multisig docs if owner is Multisig Wallet)
 
 ```sh
 $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_in
@@ -83,6 +91,7 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_all
 ```sh
 $ go run tools/admin_cmd.go --chain=testnet --cmd=init_holder
 ```
+
 
 ### Utils, information
 

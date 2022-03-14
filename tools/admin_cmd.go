@@ -22,6 +22,8 @@ func main() {
 	cmdPtr := flag.String("cmd", "default", "specific command")
 	addrPtr := flag.String("addr", "default", "an entity address")
 	ssnPtr := flag.String("ssn", "default", "an entity ssn address")
+	ownersPtr := flag.String("owners", "default", "an list of multisig owners")
+	requiredSignaturesCountPtr := flag.Int("signcount", 0, "required signatures count")
 
 	flag.Parse()
 
@@ -48,11 +50,15 @@ func main() {
 		p := RestoreFromState(sdk, log)
 		addr := strings.ToLower(*addrPtr)
 		ssn := strings.ToLower(*ssnPtr)
+		owners := strings.Split(strings.ToLower(*ownersPtr), ",")
+		requiredSignaturesCount := *requiredSignaturesCountPtr
 
 		action := actions.NewAdminActions(log)
 
 		switch cmd {
 		//deploy
+		case "deploy_multisig":
+			deployMultisig(p, owners, requiredSignaturesCount)
 		case "init_holder":
 			initHolder(p)
 		case "sync_buffers":
@@ -147,6 +153,15 @@ func getActiveBuffer(p *Protocol) {
 		"lrc":           p.Zimpl.GetLastRewardCycle(),
 		"active_buffer": p.GetActiveBuffer().Contract.Addr,
 	}).Info("Active buffer / lrc")
+}
+
+func deployMultisig(p *Protocol, owners []string, requiredSignaturesCount int) {
+	multisig, err := NewMultisigContract(sdk, owners, requiredSignaturesCount)
+	if err != nil {
+		log.Fatal("deploy MultisigContract error = " + err.Error())
+	}
+
+	log.Info("Multisig is successfully deployed. Addr: " + multisig.Addr)
 }
 
 func initHolder(p *Protocol) {
