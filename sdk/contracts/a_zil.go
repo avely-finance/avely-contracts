@@ -475,6 +475,10 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 			VName: "decimals",
 			Type:  "Uint32",
 			Value: "12",
+		}, {
+			VName: "init_supply",
+			Type:  "Uint128",
+			Value: "0",
 		},
 	}
 
