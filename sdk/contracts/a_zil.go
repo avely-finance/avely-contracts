@@ -166,14 +166,14 @@ func (a *AZil) GetAutorestakeAmount() *big.Int {
 }
 
 func (a *AZil) GetAzilPrice() *big.Float {
-	params := a.Contract.BuildBatchParams([]string{"totaltokenamount", "totalstakeamount"})
+	params := a.Contract.BuildBatchParams([]string{"total_supply", "totalstakeamount"})
 	raw, _ := a.Contract.BatchSubState(params)
 	state := NewState(raw)
 
-	totaltokenamount := state.Dig("0.result.totaltokenamount").BigFloat()
+	total_supply := state.Dig("0.result.total_supply").BigFloat()
 	totalstakeamount := state.Dig("1.result.totalstakeamount").BigFloat()
 
-	return DivBF(totalstakeamount, totaltokenamount)
+	return DivBF(totalstakeamount, total_supply)
 }
 
 func (s *AZil) GetAzilSsnAddress() string {
@@ -448,7 +448,7 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 			Type:  "Uint32",
 			Value: "0",
 		}, {
-			VName: "init_owner_address",
+			VName: "contract_owner",
 			Type:  "ByStr20",
 			Value: owner,
 		}, {
@@ -466,7 +466,7 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 		}, {
 			VName: "name",
 			Type:  "String",
-			Value: "AZIL",
+			Value: "aZIL",
 		}, {
 			VName: "symbol",
 			Type:  "String",
