@@ -220,16 +220,17 @@ let sum_amount = fun(m: Map ByStr20 Uint128) =>
 (***************************************************)
 
 contract AZil(
-  init_owner_address        : ByStr20,
+  contract_owner            : ByStr20,
   init_admin_address        : ByStr20,
   init_azil_ssn_address     : ByStr20,
   init_zimpl_address        : ByStr20,
   name                      : String,
   symbol                    : String,
-  decimals                  : Uint32
+  decimals                  : Uint32,
+  init_supply               : Uint128
 )
 
-field owner_address         : ByStr20 = init_owner_address
+field owner_address         : ByStr20 = contract_owner
 field admin_address         : ByStr20 = init_admin_address
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field treasury_address      : ByStr20 = init_azil_ssn_address
@@ -246,8 +247,8 @@ field is_paused_zrc2: Bool = True
 field mindelegstake     : Uint128 = Uint128 10000000000000
 field rewards_fee       : Uint128 = uint128_zero
 field totalstakeamount  : Uint128 = uint128_zero
-field totaltokenamount  : Uint128 = uint128_zero
 field autorestakeamount : Uint128 = uint128_zero
+field total_supply      : Uint128 = uint128_zero
 
 (* Delegator -> Token balance *)
 field balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
@@ -535,10 +536,10 @@ procedure IncreaseTotalStakeAmt(amt: Uint128)
   totalstakeamount := new_total_amt
 end
 
-procedure IncreaseTotalTokenAmt(amt: Uint128)
-  total_token_amt <- totaltokenamount;
-  new_total_amt = builtin add total_token_amt amt;
-  totaltokenamount := new_total_amt
+procedure IncreaseTotalSupplyAmt(amt: Uint128)
+  total_supply_amt <- total_supply;
+  new_total_amt = builtin add total_supply_amt amt;
+  total_supply := new_total_amt
 end
 
 procedure IncreaseAutoRestakeAmt(amt: Uint128)
@@ -560,13 +561,13 @@ procedure DecreaseTotalStakeAmt(amt: Uint128)
   end
 end
 
-procedure DecreaseTotalTokenAmt(amt: Uint128)
-  current_amt <- totaltokenamount;
+procedure DecreaseTotalSupplyAmt(amt: Uint128)
+  current_amt <- total_supply;
   valid = uint128_le amt current_amt;
   match valid with
   | True =>
     new_amt = builtin sub current_amt amt;
-    totaltokenamount := new_amt
+    total_supply := new_amt
   | False =>
     e = InvalidTotalAmt;
     ThrowError e
@@ -577,16 +578,16 @@ procedure TruncateDeleg(deleg: ByStr20)
   delete balances[deleg]
 end
 
-(* newTokens = amount * totaltokenamount / totalstakeamount *)
+(* newTokens = amount * total_supply / totalstakeamount *)
 procedure UpdateTokenBalance(initiator: ByStr20, stake_amt: Uint128)
-  total_token_amt <- totaltokenamount;
+  total_supply_amt <- total_supply;
   current_stake_amt <- totalstakeamount;
 
-  first_delegation = builtin eq total_token_amt uint128_zero;
+  first_delegation = builtin eq total_supply_amt uint128_zero;
   token_amt =
     match first_delegation with
     | True => stake_amt
-    | False => muldiv stake_amt total_token_amt current_stake_amt
+    | False => muldiv stake_amt total_supply_amt current_stake_amt
     end;
 
   current_token_amount <- balances[initiator];
@@ -599,7 +600,7 @@ procedure UpdateTokenBalance(initiator: ByStr20, stake_amt: Uint128)
   end;
 
   IncreaseTotalStakeAmt stake_amt;
-  IncreaseTotalTokenAmt token_amt
+  IncreaseTotalSupplyAmt token_amt
 end
 
 procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Uint128)
@@ -637,9 +638,9 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
 
     (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
     (* Calculate token to zil to withdraw *)
-    total_token_amt <- totaltokenamount;
+    total_supply_amt <- total_supply;
     total_stake_amt <- totalstakeamount;
-    withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_token_amt;
+    withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_supply_amt;
 
     withdrawal_bnum <- & BLOCKNUMBER;
     withdraw_pending_o <- withdrawal_pending[withdrawal_bnum][initiator];
@@ -663,7 +664,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
 
     (* Subtract withdrawn amounts from total counters *)
     DecreaseTotalStakeAmt withdraw_stake_amt;
-    DecreaseTotalTokenAmt withdraw_token_amt;
+    DecreaseTotalSupplyAmt withdraw_token_amt;
 
     (* call Holder contract *)
     HolderWithdrawStakeAmt withdraw_stake_amt

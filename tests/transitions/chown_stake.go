@@ -18,7 +18,7 @@ func (tr *Transitions) ChownStakeSuccess() {
 
 	key1, addr1, key2, addr2, ssn, _, userStake := chownStakeDefineParams(p)
 
-	totaltokenamount := Field(p.Azil, "totaltokenamount")
+	total_supply := Field(p.Azil, "total_supply")
 	totalstakeamount := Field(p.Azil, "totalstakeamount")
 	stake1_azil := StrMul(userStake, "64")
 	stake2_azil := StrMul(userStake, "128")
@@ -67,7 +67,7 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn[1], nextBuffer), stake1_1)
 	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn[2], nextBuffer), stake1_2)
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2))
-	AssertEqual(Field(p.Azil, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Azil, "balances", addr1)))
+	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1)))
 
 	//offchain-tool calls ChownStakeConfirmSwap(addr2), expecting success
 	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.VerifierKey).ChownStakeConfirmSwap(addr2))
@@ -77,7 +77,7 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn[1], nextBuffer), StrAdd(stake1_1, stake2_1))
 	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn[2], nextBuffer), stake1_2)
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2, stake2_1))
-	AssertEqual(Field(p.Azil, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Azil, "balances", addr1), Field(p.Azil, "balances", addr2)))
+	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1), Field(p.Azil, "balances", addr2)))
 
 	chownStakeNextCycle(p)
 	chownStakeNextCycleOffchain(p)
@@ -114,7 +114,7 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrAdd(stake1_1, stake1_2, stake2_1, stake2_azil))
 	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, activeBuffer), StrAdd(stake1_1, stake1_2, stake2_1, stake2_azil))
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2, stake2_1, stake2_azil))
-	AssertEqual(Field(p.Azil, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Azil, "balances", addr1), Field(p.Azil, "balances", addr2)))
+	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1), Field(p.Azil, "balances", addr2)))
 }
 
 func (tr *Transitions) ChownStakeManySsnSuccess() {
@@ -125,7 +125,7 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	chownStakeSetup(p)
 
 	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
-	totaltokenamount := Field(p.Azil, "totaltokenamount")
+	total_supply := Field(p.Azil, "total_supply")
 	totalstakeamount := Field(p.Azil, "totalstakeamount")
 
 	//key1 delegates to main contract
@@ -182,7 +182,7 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrMul(userStake, "6"))
 	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, activeBuffer), StrMul(userStake, "6"))
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(totalstakeamount, StrMul(userStake, "6")))
-	AssertEqual(Field(p.Azil, "totaltokenamount"), StrAdd(totaltokenamount, Field(p.Azil, "balances", addr1)))
+	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1)))
 
 }
 

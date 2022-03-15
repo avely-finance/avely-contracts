@@ -30,7 +30,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	AssertEqual(Field(p.Azil, "_balance"), "0")
 
 	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1020))
-	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1020))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1020))
 
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(1000))
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Addr1), ToAzil(20))

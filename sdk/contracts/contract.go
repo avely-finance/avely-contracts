@@ -84,7 +84,7 @@ func (c *Contract) BuildBatchParams(fields []string) [][]interface{} {
 //
 // To build params use BuildBatchParams or:
 //   var params [][]interface{}
-//   params = append(params, []interface{}{"totaltokenamount", []string{}})
+//   params = append(params, []interface{}{"total_supply", []string{}})
 //   params = append(params, []interface{}{"totalstakeamount", []string{}})
 func (c *Contract) BatchSubState(params [][]interface{}) (string, error) {
 	//we should hack here for now

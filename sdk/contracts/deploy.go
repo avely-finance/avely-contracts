@@ -34,7 +34,7 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("deploy Zimpl succeed, address = " + Zimpl.Addr)
 
 	// deploy azil
-	Azil, err := NewAZilContract(sdk, sdk.GetAddressFromPrivateKey(sdk.Cfg.OwnerKey), Zimpl.Addr)
+	Azil, err := NewAZilContract(sdk, sdk.Cfg.Owner, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy aZil error = " + err.Error())
 	}
@@ -77,7 +77,7 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
 	// deploy azil
-	Azil, err := NewAZilContract(sdk, sdk.GetAddressFromPrivateKey(sdk.Cfg.OwnerKey), Zimpl.Addr)
+	Azil, err := NewAZilContract(sdk, sdk.Cfg.Owner, Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy aZil error = " + err.Error())
 	}
