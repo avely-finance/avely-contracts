@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
@@ -14,7 +15,6 @@ var sdk *AvelySDK
 func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	tagPtr := flag.String("tag", "default", "specific command")
-	addrPtr := flag.String("addr", "default", "any address variable")
 
 	flag.Parse()
 
@@ -42,9 +42,13 @@ func main() {
 
 	switch tag {
 	case "SubmitSetHolderAddressTransaction":
-		setHolder(m, azilAddr, *addrPtr)
+		setHolder(m, azilAddr, config.HolderAddr)
 	case "SubmitChangeBuffersTransaction":
 		changeBuffers(m, azilAddr, config.BufferAddrs)
+	case "SubmitChangeRewardsFeeTransaction":
+		changeRewardsFee(m, azilAddr, strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
+	case "SubmitChangeTreasuryAddressTransaction":
+		changeTreasuryAddress(m, azilAddr, sdk.Cfg.TreasuryAddr)
 	case "SubmitUnPauseInTransaction":
 		unPauseIn(m, azilAddr)
 	case "SubmitUnPauseOutTransaction":
@@ -64,6 +68,14 @@ func setHolder(m *MultisigWallet, callee string, new_holder string) {
 
 func changeBuffers(m *MultisigWallet, callee string, buffers []string) {
 	check(m.SubmitChangeBuffersTransaction(callee, buffers))
+}
+
+func changeRewardsFee(m *MultisigWallet, callee string, value string) {
+	check(m.SubmitChangeRewardsFeeTransaction(callee, value))
+}
+
+func changeTreasuryAddress(m *MultisigWallet, callee string, value string) {
+	check(m.SubmitChangeTreasuryAddressTransaction(callee, value))
 }
 
 func unPauseIn(m *MultisigWallet, callee string) {
