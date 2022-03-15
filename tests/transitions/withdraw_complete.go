@@ -99,7 +99,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertEqual(withdrawal.StakeAmount.String(), "0")
 
 	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1000))
-	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1000))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1000))
 	AssertEqual(Field(p.Azil, "tmp_complete_withdrawal_available"), "0")
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(1000))
 

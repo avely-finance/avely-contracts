@@ -41,7 +41,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	txn, _ = p.Azil.WithdrawStakeAmt(ToAzil(100))
 
 	AssertError(txn, "DelegHasNoSufficientAmt")
-	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1015))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1015))
 
 	/*******************************************************************************
 	 * 2B. delegator send withdraw request, but it should fail because mindelegatestake
@@ -51,7 +51,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	txn, _ = p.Azil.WithdrawStakeAmt(ToAzil(10))
 
 	AssertError(txn, "DelegStakeNotEnough")
-	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1015))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1015))
 
 	/*******************************************************************************
 	 * 3A. delegator withdrawing part of his deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -73,7 +73,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 
 	newDelegBalanceZil := p.Azil.ZilBalanceOf(sdk.Cfg.Addr2).String()
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(ToZil(1000), newDelegBalanceZil))
-	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1010))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1010))
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Addr2), ToAzil(10))
 
 	withdrawal := Dig(p.Azil, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
@@ -91,8 +91,8 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	bnum2 := txn.Receipt.EpochNum
 	AssertEvent(txn, Event{p.Azil.Addr, "WithdrawStakeAmt",
 		ParamsMap{"withdraw_amount": ToAzil(10), "withdraw_stake_amount": ToZil(10)}})
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1000))  //0
-	AssertEqual(Field(p.Azil, "totaltokenamount"), ToAzil(1000)) //0
+	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1000)) //0
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1000))    //0
 	//t.AssertEqual(Field(p.Azil, "balances"), "empty")
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(1000))
 	//there is holder's initial stake

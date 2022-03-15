@@ -56,6 +56,8 @@
     "AzilSsnRewardShare": "50",
     "HolderInitialDelegateZil": "10",
     "ProtocolRewardsFee": "100",
+    "Owner":"0x14292E90C25070456BC92caCF54A317E90CA7dc6",
+    "OwnerKey": "",
     "Admin":"",
     "AdminKey": "",
     "Key1": "",
@@ -70,13 +72,13 @@
     "GzilAddr": "0x4b68ebd5c54ae9ad1f069260b4c89f0d3be70a45",
     "ZproxyAddr": "0x351a37e2841A45c7F2De18Ee45F968E106416273",
     "ZimplAddr": "0xA2e4657de8108dd3730EB51f05a1d486D77bE2Df",
-    "AzilAddr": "0x9556567647672bb4ed8eccafc5fa916c74d1d52c",
+    "AzilAddr": "0x888103155d2df5eb0b8ca43992d6dd6ffd114745",
     "BufferAddrs": [
-      "0x60e6172aa16086350c7a89fc03dac2187361babd",
-      "0x5ba0411797020d43accd258b8eefa8b964fc84a6",
-      "0x78fc53a177917e891c59051466378d0d83159634"
+      "0x00f7dd1c6dd8163e90d73a5c25d8367bfbc0e081",
+      "0x1e11103c9f5f1e79380db0e95a2bd07ffe034fa5",
+      "0xcedfc6379cc6654872f75b792cec5e5956e905a8"
     ],
-    "HolderAddr": "0x9a40feccd28b525e1bba3f1029e993ad5072f2e7",
+    "HolderAddr": "0x1ef806d653719b8e82fd473f2e50420456ea0df2",
     "TreasuryAddr": "0x4dE9D0CF923119c2433391eA02Afa14701cB59A8"
   },
   "mainnet": {
