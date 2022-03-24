@@ -147,7 +147,7 @@ func (b *BufferContract) ReDelegateStakeSuccessCallBack(ssnaddr, to_ssn, amount 
 }
 
 func NewBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr, zimplAddr string) (*BufferContract, error) {
-	contract := buildBufferContract(sdk, azilAddr, zproxyAddr, zimplAddr)
+	contract := buildBufferContract(sdk, azilAddr, zproxyAddr)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -171,7 +171,7 @@ func NewBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr, zimplAddr string) (*
 }
 
 func RestoreBufferContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr, zimplAddr string) (*BufferContract, error) {
-	contract := buildBufferContract(sdk, azilAddr, zproxyAddr, zimplAddr)
+	contract := buildBufferContract(sdk, azilAddr, zproxyAddr)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -190,7 +190,7 @@ func RestoreBufferContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr,
 	return &BufferContract{Contract: sdkContract}, nil
 }
 
-func buildBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr, zimplAddr string) contract2.Contract {
+func buildBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/buffer.scilla")
 	key := sdk.Cfg.AdminKey
 	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
@@ -212,10 +212,6 @@ func buildBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr, zimplAddr string) 
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
 			Value: zproxyAddr,
-		}, {
-			VName: "init_zimpl_address",
-			Type:  "ByStr20",
-			Value: zimplAddr,
 		},
 	}
 
