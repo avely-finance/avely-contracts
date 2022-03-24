@@ -12,6 +12,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	Start("DelegateStake: Stake 10 ZIL")
 
 	p := tr.DeployAndUpgrade()
+	delegateStakeHolder(p)
 
 	p.Azil.UpdateWallet(sdk.Cfg.Key1)
 
@@ -65,6 +66,11 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
 	activeBufferAddr = calcActiveBufferAddr(3, new_buffers)
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
+}
+
+func delegateStakeHolder(p *contracts.Protocol) {
+	tx, _ := p.Holder.DelegateStake(ToZil(1))
+	AssertError(tx, "HolderAlreadyInitialized")
 }
 
 func calcActiveBufferAddr(cycle int, buffers []string) string {
