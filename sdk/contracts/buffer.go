@@ -146,7 +146,7 @@ func (b *BufferContract) ReDelegateStakeSuccessCallBack(ssnaddr, to_ssn, amount 
 	return b.Call("ReDelegateStakeSuccessCallBack", args, "0")
 }
 
-func NewBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr, zimplAddr string) (*BufferContract, error) {
+func NewBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr string) (*BufferContract, error) {
 	contract := buildBufferContract(sdk, azilAddr, zproxyAddr)
 
 	tx, err := sdk.DeployTo(&contract)
@@ -170,7 +170,7 @@ func NewBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr, zimplAddr string) (*
 	}
 }
 
-func RestoreBufferContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr, zimplAddr string) (*BufferContract, error) {
+func RestoreBufferContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr string) (*BufferContract, error) {
 	contract := buildBufferContract(sdk, azilAddr, zproxyAddr)
 
 	b32, err := bech32.ToBech32Address(contractAddress)

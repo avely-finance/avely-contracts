@@ -33,7 +33,7 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferCont
 }
 
 func (p *Protocol) DeployBuffer() (*BufferContract, error) {
-	return NewBufferContract(p.Azil.Sdk, p.Azil.Addr, p.Zproxy.Addr, p.Zimpl.Addr)
+	return NewBufferContract(p.Azil.Sdk, p.Azil.Addr, p.Zproxy.Addr)
 }
 
 func (p *Protocol) GetBuffer() *BufferContract {
