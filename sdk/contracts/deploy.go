@@ -41,7 +41,7 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("deploy aZil succeed, address = " + Azil.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
+	Buffer, err := NewBufferContract(sdk, Azil.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -49,7 +49,7 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
+	Holder, err := NewHolderContract(sdk, Azil.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
@@ -84,7 +84,7 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("deploy aZil succeed, address = " + Azil.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
+	Buffer, err := NewBufferContract(sdk, Azil.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -92,7 +92,7 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
+	Holder, err := NewHolderContract(sdk, Azil.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
@@ -128,7 +128,7 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	// Restore buffers
 	buffers := []*BufferContract{}
 	for _, addr := range sdk.Cfg.BufferAddrs {
-		Buffer, err := RestoreBufferContract(sdk, addr, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
+		Buffer, err := RestoreBufferContract(sdk, addr, Azil.Addr, Zproxy.Addr)
 		if err != nil {
 			log.Fatal("Restore buffer error = " + err.Error())
 		}
@@ -138,7 +138,7 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 
 	// Restore holder
-	Holder, err := RestoreHolderContract(sdk, sdk.Cfg.HolderAddr, Azil.Addr, Zproxy.Addr, Zimpl.Addr)
+	Holder, err := RestoreHolderContract(sdk, sdk.Cfg.HolderAddr, Azil.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("Restore holder error = " + err.Error())
 	}
