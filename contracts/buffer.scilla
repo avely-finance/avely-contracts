@@ -6,9 +6,11 @@ scilla_version 0
 library Buffer
 
 let uint128_zero = Uint128 0
+let bystr20_zero = 0x0000000000000000000000000000000000000000
 
 type Error =
   | AzilValidationFailed
+  | CantFetchZimplAddress
   | ClaimRewardsBufferFundsMismatch
   | ZimplValidationFailed
 
@@ -17,6 +19,7 @@ let make_error =
     let result_code =
       match result with
       | AzilValidationFailed            => "AzilValidationFailed"
+      | CantFetchZimplAddress           => "CantFetchZimplAddress"
       | ClaimRewardsBufferFundsMismatch => "ClaimRewardsBufferFundsMismatch"
       | ZimplValidationFailed           => "ZimplValidationFailed"
       end
@@ -35,16 +38,15 @@ let one_msg =
 contract Buffer(
   init_azil_ssn_address     : ByStr20,
   init_azil_address         : ByStr20,
-  init_zproxy_address       : ByStr20,
-  init_zimpl_address        : ByStr20
+  init_zproxy_address       : ByStr20
 )
 
 field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field azil_address          : ByStr20 = init_azil_address
 field zproxy_address        : ByStr20 = init_zproxy_address
-field zimpl_address         : ByStr20 = init_zimpl_address
 
-field tmp_added_funds: Uint128 = uint128_zero
+field local_zimpl_address   : ByStr20 = bystr20_zero
+field tmp_added_funds       : Uint128 = uint128_zero
 
 (************************************************************)
 (* @dev: Procedures                                         *)
@@ -66,8 +68,22 @@ procedure RequireAzil()
   end
 end
 
+procedure FetchZimplAddress()
+  proxyAddr <- zproxy_address;
+  proxyAddrTypeTest <- & proxyAddr as ByStr20 with contract field implementation : ByStr20 end;
+  match proxyAddrTypeTest with
+  | Some proxy =>
+    zimpl <- & proxy.implementation;
+    local_zimpl_address := zimpl
+  | None =>
+    e = CantFetchZimplAddress;
+    ThrowError e
+  end
+end
+
 procedure RequireZimpl()
-  var_zimpl_address <- zimpl_address;
+  FetchZimplAddress;
+  var_zimpl_address <- local_zimpl_address;
   is_zimpl = builtin eq _sender var_zimpl_address;
   match is_zimpl with
   | True  =>
