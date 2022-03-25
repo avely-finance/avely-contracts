@@ -6,6 +6,7 @@ scilla_version 0
 library Holder
 
 let uint128_zero = Uint128 0
+let true = True
 
 let one_msg =
   fun (msg : Message) =>
@@ -18,6 +19,7 @@ type Error =
   | CompleteWithdrawalHolderFundsMismatch
   | CompleteWithdrawalHolderFundsZero
   | CompleteWithdrawalHolderNoUnbondedStake
+  | HolderAlreadyInitialized
   | ZimplValidationFailed
 
 let make_error =
@@ -29,6 +31,7 @@ let make_error =
       | CompleteWithdrawalHolderFundsMismatch   => "CompleteWithdrawalHolderFundsMismatch"
       | CompleteWithdrawalHolderFundsZero       => "CompleteWithdrawalHolderFundsZero"
       | CompleteWithdrawalHolderNoUnbondedStake => "CompleteWithdrawalHolderNoUnbondedStake"
+      | HolderAlreadyInitialized                => "HolderAlreadyInitialized"
       | ZimplValidationFailed                   => "ZimplValidationFailed"
       end
     in
@@ -51,6 +54,8 @@ field zproxy_address        : ByStr20 = init_zproxy_address
 field zimpl_address         : ByStr20 = init_zimpl_address
 
 field tmp_added_funds: Uint128 = uint128_zero
+
+field initialized  : Bool = False
 
 (************************************************************)
 (* @dev: Procedures                                         *)
@@ -82,6 +87,17 @@ procedure RequireZimpl()
     ThrowError e
   end
 end
+
+procedure RequireNotInitialized()
+  inited <- initialized;
+  match inited with
+  | False =>
+  | True =>
+    e = HolderAlreadyInitialized;
+    ThrowError e
+  end
+end
+
 
 procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: Uint128)
   msg = {_tag: "DelegateStake"; _recipient: proxy_contract_addr; _amount: amount; ssnaddr: ssnaddr};
@@ -226,13 +242,15 @@ end
 (* Purpose of this transition is one-time min_deleg_stake delegate from Holder after its deploy *)
 (* Else Zimpl will not know anything about Holder and will return DelegDoesNotExistAtSSN error *)
 transition DelegateStake()
+  RequireNotInitialized;
   accept;
   stake_amt = _amount;
 
   ssnaddr <- azil_ssn_address;
   var_zproxy_address <- zproxy_address;
 
-  ProxyDelegate ssnaddr var_zproxy_address stake_amt
+  ProxyDelegate ssnaddr var_zproxy_address stake_amt;
+  initialized := true
 end
 
 transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
