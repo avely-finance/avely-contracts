@@ -721,8 +721,7 @@ procedure CalculateTotalWithdrawalBlock(deleg_withdrawal: Pair ByStr20 Withdrawa
         unbonded_withdrawal = Withdrawal updated_token updated_stake;
         withdrawal_unbonded[delegator] := unbonded_withdrawal
       | None =>
-        unbonded_withdrawal = Withdrawal withdraw_token_amt withdraw_stake_amt;
-        withdrawal_unbonded[delegator] := unbonded_withdrawal
+        withdrawal_unbonded[delegator] := withdrawal
       end
     end
   end
