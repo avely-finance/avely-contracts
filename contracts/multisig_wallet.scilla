@@ -546,18 +546,11 @@ transition RevokeSignature (transactionId : Uint32)
       err = IncorrectSignatureCount;
       MakeError err
     | Some c =>
-      c_is_zero = builtin eq c zero;
-      match c_is_zero with
-      | True =>
-        err = IncorrectSignatureCount;
-        MakeError err
-      | False =>
-        new_c = builtin sub c one;
-        signature_counts[transactionId] := new_c;
-        delete signatures[transactionId][_sender];
-        e = mk_signature_revoked_event transactionId;
-        event e
-      end
+      new_c = builtin sub c one;
+      signature_counts[transactionId] := new_c;
+      delete signatures[transactionId][_sender];
+      e = mk_signature_revoked_event transactionId;
+      event e
     end
   end
 end
