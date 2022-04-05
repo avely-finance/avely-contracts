@@ -29,7 +29,7 @@ func (tr *Transitions) IsAzil() {
 	// Use non-admin user for p.Holder
 	p.Holder.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, _ = p.Holder.WithdrawStakeAmt(ToZil(1))
+	tx, _ = p.Holder.WithdrawStakeAmt(sdk.Cfg.AzilSsnAddress, ToZil(1))
 	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.Holder.CompleteWithdrawal()
 	AssertError(tx, "AzilValidationFailed")

@@ -93,8 +93,13 @@ func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string)
 	return b.Call("WithdrawStakeAmtSuccessCallBack", args, "0")
 }
 
-func (b *HolderContract) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+func (b *HolderContract) WithdrawStakeAmt(ssnaddr, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
 		{
 			"amount",
 			"Uint128",

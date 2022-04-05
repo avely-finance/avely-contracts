@@ -448,9 +448,9 @@ end
 (* @dev: Holder & Buffer actions                            *)
 (************************************************************)
 
-procedure HolderWithdrawStakeAmt(amount: Uint128)
+procedure HolderWithdrawStakeAmt(ssnaddr: ByStr20, amount: Uint128)
   holder_addr <- holder_address;
-  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; ssnaddr: ssnaddr; amount: amount};
   msgs = one_msg msg;
   send msgs
 end
@@ -662,7 +662,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     DecreaseTotalSupplyAmt withdraw_token_amt;
 
     (* call Holder contract *)
-    HolderWithdrawStakeAmt withdraw_stake_amt
+    HolderWithdrawStakeAmt azil_ssn_addr withdraw_stake_amt
   | None =>
     e = DelegDoesNotExistAtSSN;
     ThrowError e
