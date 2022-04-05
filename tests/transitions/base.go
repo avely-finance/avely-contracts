@@ -27,6 +27,7 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	log := GetLog()
 	p := Deploy(sdk, log)
 
+	p.ChangeSSNs()
 	p.SyncBufferAndHolder()
 
 	p.Unpause()

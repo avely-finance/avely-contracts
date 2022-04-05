@@ -139,6 +139,12 @@ func (p *Protocol) SyncBuffers() {
 	p.Azil.Wallet = prevWallet
 }
 
+func (p *Protocol) ChangeSSNs() {
+	prevWallet := p.Azil.Wallet
+	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeSSNs(p.Azil.Sdk.Cfg.SsnAddrs))
+	p.Azil.Wallet = prevWallet
+}
+
 func (p *Protocol) Unpause() {
 	prevWallet := p.Azil.Wallet
 	p.Azil.UpdateWallet(p.Azil.Sdk.Cfg.OwnerKey)
