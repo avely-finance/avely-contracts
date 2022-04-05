@@ -55,17 +55,7 @@ func (b *BufferContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*
 	return b.Call("DelegateStakeSuccessCallBack", args, "0")
 }
 
-func (b *BufferContract) DelegateStake() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return b.Call("DelegateStake", args, "0")
-}
-
-func (b *BufferContract) ClaimRewards() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return b.Call("ClaimRewards", args, "0")
-}
-
-func (b *BufferContract) ClaimRewardsSsn(ssnaddr string) (*transaction.Transaction, error) {
+func (b *BufferContract) DelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"ssnaddr",
@@ -73,7 +63,18 @@ func (b *BufferContract) ClaimRewardsSsn(ssnaddr string) (*transaction.Transacti
 			ssnaddr,
 		},
 	}
-	return b.Call("ClaimRewardsSsn", args, "0")
+	return b.Call("DelegateStake", args, amount)
+}
+
+func (b *BufferContract) ClaimRewards(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return b.Call("ClaimRewards", args, "0")
 }
 
 func (b *BufferContract) ConfirmDelegatorSwap(requestor string) (*transaction.Transaction, error) {
@@ -109,12 +110,17 @@ func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transacti
 	return b.Call("RequestDelegatorSwap", args, "0")
 }
 
-func (b *BufferContract) ReDelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
+func (b *BufferContract) ReDelegateStake(ssnaddr, to_ssn, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"ssnaddr",
 			"ByStr20",
 			ssnaddr,
+		},
+		{
+			"to_ssn",
+			"ByStr20",
+			to_ssn,
 		},
 		{
 			"amount",
@@ -193,7 +199,6 @@ func RestoreBufferContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr 
 func buildBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/buffer.scilla")
 	key := sdk.Cfg.AdminKey
-	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
 	init := []core.ContractValue{
 		{
@@ -204,10 +209,6 @@ func buildBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.C
 			VName: "init_azil_address",
 			Type:  "ByStr20",
 			Value: azilAddr,
-		}, {
-			VName: "init_azil_ssn_address",
-			Type:  "ByStr20",
-			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",

@@ -448,9 +448,9 @@ end
 (* @dev: Holder & Buffer actions                            *)
 (************************************************************)
 
-procedure HolderWithdrawStakeAmt(amount: Uint128)
+procedure HolderWithdrawStakeAmt(ssnaddr: ByStr20, amount: Uint128)
   holder_addr <- holder_address;
-  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; amount: amount};
+  msg = {_tag: "WithdrawStakeAmt"; _recipient: holder_addr; _amount: uint128_zero; ssnaddr: ssnaddr; amount: amount};
   msgs = one_msg msg;
   send msgs
 end
@@ -474,14 +474,8 @@ procedure HolderCompleteWithdrawal()
   send msgs
 end
 
-procedure BufferReDelegate(buffer_addr: ByStr20, ssnaddr: ByStr20, amount: Uint128)
-  msg = { _tag: "ReDelegateStake"; _recipient: buffer_addr; _amount: uint128_zero; ssnaddr: ssnaddr; amount: amount };
-  msgs = one_msg msg;
-  send msgs
-end
-
-procedure BufferClaimRewardsSsn(buffer_addr: ByStr20, ssnaddr: ByStr20)
-  msg = { _tag: "ClaimRewardsSsn"; _recipient: buffer_addr; _amount: uint128_zero; ssnaddr: ssnaddr };
+procedure BufferReDelegate(buffer_addr: ByStr20, ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
+  msg = { _tag: "ReDelegateStake"; _recipient: buffer_addr; _amount: uint128_zero; ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount };
   msgs = one_msg msg;
   send msgs
 end
@@ -492,13 +486,14 @@ procedure BufferDelegate(amount: Uint128)
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
   buffer_addr = get_active_buffer_addr buffer_addrs cycle;
-  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
+  ssnaddr <- azil_ssn_address;
+  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
 end
 
-procedure ClaimRewards(addr: ByStr20)
-  msg = { _tag: "ClaimRewards"; _recipient: addr; _amount: uint128_zero };
+procedure ClaimRewards(addr: ByStr20, ssnaddr: ByStr20)
+  msg = { _tag: "ClaimRewards"; _recipient: addr; _amount: uint128_zero; ssnaddr: ssnaddr };
   msgs = one_msg msg;
   send msgs
 end
@@ -667,7 +662,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     DecreaseTotalSupplyAmt withdraw_token_amt;
 
     (* call Holder contract *)
-    HolderWithdrawStakeAmt withdraw_stake_amt
+    HolderWithdrawStakeAmt azil_ssn_addr withdraw_stake_amt
   | None =>
     e = DelegDoesNotExistAtSSN;
     ThrowError e
@@ -938,7 +933,8 @@ transition DrainBuffer(buffer_addr: ByStr20)
   match is_buffer with
   | True =>
     holder_addr <- holder_address;
-    ClaimRewards holder_addr;
+    ssnaddr <- azil_ssn_address;
+    ClaimRewards holder_addr ssnaddr;
     FetchRemoteBufferExistsAtSSN buffer_addr;
     (* local_lastrewardcycle updated in FetchRemoteBufferExistsAtSSN *)
     lrc <- local_lastrewardcycle;
@@ -946,7 +942,7 @@ transition DrainBuffer(buffer_addr: ByStr20)
     var_buffer_exists <- tmp_buffer_exists_at_ssn;
     match var_buffer_exists with
     | True =>
-      ClaimRewards buffer_addr;
+      ClaimRewards buffer_addr ssnaddr;
       RequestDelegatorSwap buffer_addr holder_addr;
       ConfirmDelegatorSwap buffer_addr holder_addr
     | False =>
@@ -1280,8 +1276,8 @@ transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   var_buffers_addresses <- buffers_addresses;
   lrc <- local_lastrewardcycle;
   active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
-  BufferClaimRewardsSsn active_buffer from_ssn;
-  BufferReDelegate active_buffer from_ssn amount
+  ClaimRewards active_buffer from_ssn;
+  BufferReDelegate active_buffer from_ssn var_azil_ssn_addr amount
 end
 
 (***************************************)
