@@ -63,6 +63,8 @@ func main() {
 			initHolder(p)
 		case "sync_buffers":
 			syncBuffers(p)
+		case "change_ssns":
+			changeSSNs(p)
 		case "deploy_buffer":
 			deployBuffer(p)
 		case "unpause_in":
@@ -248,6 +250,10 @@ func unpauseAll(p *Protocol) {
 
 func syncBuffers(p *Protocol) {
 	p.SyncBuffers()
+}
+
+func changeSSNs(p *Protocol) {
+	p.ChangeSSNs()
 }
 
 func drainBuffer(p *Protocol, buffer_addr string) {

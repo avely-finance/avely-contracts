@@ -224,7 +224,6 @@ contract AZil(
   init_admin_address        : ByStr20,
   init_azil_ssn_address     : ByStr20,
   init_zimpl_address        : ByStr20,
-  init_ssn_addresses        : List ByStr20,
   name                      : String,
   symbol                    : String,
   decimals                  : Uint32,

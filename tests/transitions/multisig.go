@@ -29,7 +29,7 @@ func multisigGoldenFlowTest(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr, sdk.Cfg.SsnAddrs)
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newSsnAddr := sdk.Cfg.Admin // could be any random address
 
@@ -67,7 +67,7 @@ func multisigChangeAdminTest(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr, sdk.Cfg.SsnAddrs)
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newAdmin := sdk.Cfg.Addr1
 
@@ -92,7 +92,7 @@ func multisigUpdateOwner(tr *Transitions) {
 	newOwner := newMultisig.Addr
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr, sdk.Cfg.SsnAddrs)
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	// after submitting transaction it automatically signed by the _sender
 	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeOwnerTransaction(azil.Addr, newOwner))
@@ -114,7 +114,7 @@ func multisigManagableActions(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr, sdk.Cfg.SsnAddrs)
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newAddr := sdk.Cfg.Admin // could be any random address
 
@@ -143,7 +143,7 @@ func multisigChangeBuffersTest(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr, sdk.Cfg.SsnAddrs)
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newBuffers := []string{sdk.Cfg.Addr1} // could be any random addresses
 
@@ -162,7 +162,7 @@ func multisigChangeSSNsTest(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr, sdk.Cfg.SsnAddrs)
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newAddresses := []string{sdk.Cfg.Addr1} // could be any random addresses
 

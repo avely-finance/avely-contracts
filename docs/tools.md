@@ -92,6 +92,11 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_all
 $ go run tools/admin_cmd.go --chain=testnet --cmd=init_holder
 ```
 
+7. Change SSNs
+
+```sh
+$ go run tools/admin_cmd.go --chain=testnet --cmd=change_ssns
+```
 
 ### Utils, information
 
