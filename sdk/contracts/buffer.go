@@ -55,17 +55,7 @@ func (b *BufferContract) DelegateStakeSuccessCallBack(ssnaddr, amount string) (*
 	return b.Call("DelegateStakeSuccessCallBack", args, "0")
 }
 
-func (b *BufferContract) DelegateStake() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return b.Call("DelegateStake", args, "0")
-}
-
-func (b *BufferContract) ClaimRewards() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-	return b.Call("ClaimRewards", args, "0")
-}
-
-func (b *BufferContract) ClaimRewardsSsn(ssnaddr string) (*transaction.Transaction, error) {
+func (b *BufferContract) DelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"ssnaddr",
@@ -73,7 +63,18 @@ func (b *BufferContract) ClaimRewardsSsn(ssnaddr string) (*transaction.Transacti
 			ssnaddr,
 		},
 	}
-	return b.Call("ClaimRewardsSsn", args, "0")
+	return b.Call("DelegateStake", args, amount)
+}
+
+func (b *BufferContract) ClaimRewards(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return b.Call("ClaimRewards", args, "0")
 }
 
 func (b *BufferContract) ConfirmDelegatorSwap(requestor string) (*transaction.Transaction, error) {
