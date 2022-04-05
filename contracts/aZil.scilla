@@ -926,6 +926,11 @@ transition ChangeBuffers(new_buffers: List ByStr20)
   buffers_addresses := new_buffers
 end
 
+transition ChangeSSNs(new_ssn_addresses: List ByStr20)
+  RequireOwner;
+  ssn_addresses := new_ssn_addresses
+end
+
 (* claims buffer/holder rewards; transfer funds from buffer to holder *)
 transition DrainBuffer(buffer_addr: ByStr20)
   RequireAdmin;

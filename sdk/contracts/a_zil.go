@@ -194,6 +194,17 @@ func (a *AZil) ChangeBuffers(newBuffers []string) (*transaction.Transaction, err
 	return a.Contract.Call("ChangeBuffers", args, "0")
 }
 
+func (a *AZil) ChangeSSNs(newAddresses []string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_ssn_addresses",
+			"List ByStr20",
+			newAddresses,
+		},
+	}
+	return a.Contract.Call("ChangeSSNs", args, "0")
+}
+
 func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
