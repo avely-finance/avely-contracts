@@ -130,12 +130,11 @@ end
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
-transition DelegateStake()
+transition DelegateStake(ssnaddr: ByStr20)
   RequireAzil;
   accept;
   stake_amt = _amount;
 
-  ssnaddr <- azil_ssn_address;
   var_zproxy_address <- zproxy_address;
 
   ProxyDelegate ssnaddr var_zproxy_address stake_amt
@@ -150,17 +149,7 @@ transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
   send msgs
 end
 
-transition ClaimRewards()
-  RequireAzil;
-  tmp_added_funds := uint128_zero;
-
-  ssnaddr <- azil_ssn_address;
-  var_zproxy_address <- zproxy_address;
-
-  ProxyWithdrawStakeRewards ssnaddr var_zproxy_address
-end
-
-transition ClaimRewardsSsn(ssnaddr: ByStr20)
+transition ClaimRewards(ssnaddr: ByStr20)
   RequireAzil;
   tmp_added_funds := uint128_zero;
 

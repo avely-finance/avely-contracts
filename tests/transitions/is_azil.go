@@ -13,11 +13,9 @@ func (tr *Transitions) IsAzil() {
 	// Use non-admin user for Buffer
 	p.GetBuffer().UpdateWallet(sdk.Cfg.Key2)
 
-	tx, _ := p.GetBuffer().DelegateStake()
+	tx, _ := p.GetBuffer().DelegateStake(sdk.Cfg.AzilSsnAddress, ToZil(1))
 	AssertError(tx, "AzilValidationFailed")
-	tx, _ = p.GetBuffer().ClaimRewards()
-	AssertError(tx, "AzilValidationFailed")
-	tx, _ = p.GetBuffer().ClaimRewardsSsn(sdk.Cfg.AzilSsnAddress)
+	tx, _ = p.GetBuffer().ClaimRewards(sdk.Cfg.AzilSsnAddress)
 	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.GetBuffer().RequestDelegatorSwap(p.Holder.Addr)
 	AssertError(tx, "AzilValidationFailed")
@@ -35,7 +33,7 @@ func (tr *Transitions) IsAzil() {
 	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.Holder.CompleteWithdrawal()
 	AssertError(tx, "AzilValidationFailed")
-	tx, _ = p.Holder.ClaimRewards()
+	tx, _ = p.Holder.ClaimRewards(sdk.Cfg.AzilSsnAddress)
 	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.Holder.ConfirmDelegatorSwap(p.GetBuffer().Addr)
 	AssertError(tx, "AzilValidationFailed")

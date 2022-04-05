@@ -111,7 +111,7 @@ func (p *Protocol) GetSwapRequestsForBuffer(bufferAddr string) []string {
 }
 
 func (p *Protocol) InitHolder() (*transaction.Transaction, error) {
-	return p.Holder.DelegateStake(ToZil(p.Azil.Sdk.Cfg.HolderInitialDelegateZil))
+	return p.Holder.DelegateStake(p.Azil.Sdk.Cfg.AzilSsnAddress, ToZil(p.Azil.Sdk.Cfg.HolderInitialDelegateZil))
 }
 
 func (p *Protocol) SyncBufferAndHolder() {
@@ -168,7 +168,7 @@ func (p *Protocol) SetupZProxy() {
 	check(p.Azil.DelegateStake(ToZil(1000)))
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	check(p.Holder.DelegateStake(ToZil(sdk.Cfg.HolderInitialDelegateZil)))
+	check(p.Holder.DelegateStake(sdk.Cfg.AzilSsnAddress, ToZil(sdk.Cfg.HolderInitialDelegateZil)))
 
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 

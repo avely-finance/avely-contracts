@@ -210,11 +210,10 @@ transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
   ThrowError e
 end
 
-transition ClaimRewards()
+transition ClaimRewards(ssnaddr: ByStr20)
   RequireAzil;
   tmp_added_funds := uint128_zero;
 
-  ssnaddr <- azil_ssn_address;
   var_zproxy_address <- zproxy_address;
 
   msg = {_tag: "WithdrawStakeRewards"; _recipient: var_zproxy_address; _amount: uint128_zero; ssnaddr: ssnaddr};
@@ -255,12 +254,11 @@ end
 
 (* Purpose of this transition is one-time min_deleg_stake delegate from Holder after its deploy *)
 (* Else Zimpl will not know anything about Holder and will return DelegDoesNotExistAtSSN error *)
-transition DelegateStake()
+transition DelegateStake(ssnaddr: ByStr20)
   RequireNotInitialized;
   accept;
   stake_amt = _amount;
 
-  ssnaddr <- azil_ssn_address;
   var_zproxy_address <- zproxy_address;
 
   ProxyDelegate ssnaddr var_zproxy_address stake_amt;

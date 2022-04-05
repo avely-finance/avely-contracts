@@ -480,25 +480,20 @@ procedure BufferReDelegate(buffer_addr: ByStr20, ssnaddr: ByStr20, amount: Uint1
   send msgs
 end
 
-procedure BufferClaimRewardsSsn(buffer_addr: ByStr20, ssnaddr: ByStr20)
-  msg = { _tag: "ClaimRewardsSsn"; _recipient: buffer_addr; _amount: uint128_zero; ssnaddr: ssnaddr };
-  msgs = one_msg msg;
-  send msgs
-end
-
 (* @dev : To delegate the stake to the contract through buffer. *)
 procedure BufferDelegate(amount: Uint128)
   FetchRemoteZimplFields;
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
   buffer_addr = get_active_buffer_addr buffer_addrs cycle;
-  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount};
+  ssnaddr <- azil_ssn_address;
+  msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
 end
 
-procedure ClaimRewards(addr: ByStr20)
-  msg = { _tag: "ClaimRewards"; _recipient: addr; _amount: uint128_zero };
+procedure ClaimRewards(addr: ByStr20, ssnaddr: ByStr20)
+  msg = { _tag: "ClaimRewards"; _recipient: addr; _amount: uint128_zero; ssnaddr: ssnaddr };
   msgs = one_msg msg;
   send msgs
 end
@@ -942,18 +937,19 @@ transition DrainBuffer(buffer_addr: ByStr20)
     (* local_lastrewardcycle updated in FetchRemoteBufferExistsAtSSN *)
     lrc <- local_lastrewardcycle;
     RequireNotDrainedBuffer buffer_addr lrc;
+    ssnaddr <- azil_ssn_address;
     var_buffer_exists <- tmp_buffer_exists_at_ssn;
     is_exists = builtin eq var_buffer_exists uint32_one;
     match is_exists with
     | True =>
       holder_addr <- holder_address;
-      ClaimRewards buffer_addr;
-      ClaimRewards holder_addr;
+      ClaimRewards buffer_addr ssnaddr;
+      ClaimRewards holder_addr ssnaddr;
       RequestDelegatorSwap buffer_addr holder_addr;
       ConfirmDelegatorSwap buffer_addr holder_addr
     | False =>
       holder_addr <- holder_address;
-      ClaimRewards holder_addr
+      ClaimRewards holder_addr ssnaddr
     end
   | False =>
     e = BufferAddrUnknown;
@@ -1284,7 +1280,7 @@ transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   var_buffers_addresses <- buffers_addresses;
   lrc <- local_lastrewardcycle;
   active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
-  BufferClaimRewardsSsn active_buffer from_ssn;
+  ClaimRewards active_buffer from_ssn;
   BufferReDelegate active_buffer from_ssn amount
 end
 

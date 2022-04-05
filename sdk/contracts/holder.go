@@ -109,8 +109,14 @@ func (b *HolderContract) CompleteWithdrawal() (*transaction.Transaction, error) 
 	return b.Call("CompleteWithdrawal", args, "0")
 }
 
-func (b *HolderContract) ClaimRewards() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (b *HolderContract) ClaimRewards(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
 	return b.Call("ClaimRewards", args, "0")
 }
 
@@ -125,8 +131,14 @@ func (b *HolderContract) ConfirmDelegatorSwap(requestor string) (*transaction.Tr
 	return b.Call("ConfirmDelegatorSwap", args, "0")
 }
 
-func (b *HolderContract) DelegateStake(amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (b *HolderContract) DelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
 	return b.Call("DelegateStake", args, amount)
 }
 
