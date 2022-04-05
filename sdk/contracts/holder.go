@@ -192,7 +192,6 @@ func RestoreHolderContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr 
 func buildHolderContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/holder.scilla")
 	key := sdk.Cfg.AdminKey
-	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
 	init := []core.ContractValue{
 		{
@@ -203,10 +202,6 @@ func buildHolderContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.C
 			VName: "init_azil_address",
 			Type:  "ByStr20",
 			Value: azilAddr,
-		}, {
-			VName: "init_azil_ssn_address",
-			Type:  "ByStr20",
-			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
