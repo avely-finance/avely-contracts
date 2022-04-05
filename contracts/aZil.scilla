@@ -270,7 +270,7 @@ field buffer_drained_cycle: Map ByStr20 Uint32 = Emp ByStr20 Uint32
 field tmp_delegator: Option ByStr20 = None {ByStr20}
 field tmp_stake_delegate_amount: Uint128 = uint128_zero
 field tmp_complete_withdrawal_available: Uint128 = uint128_zero
-field tmp_buffer_exists_at_ssn: Uint32 = uint32_zero
+field tmp_buffer_exists_at_ssn: Bool = False
 field tmp_buffer: ByStr20 = bystr20_zero
 field tmp_bnum: BNum = BNum 0
 
@@ -434,9 +434,9 @@ procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
     o_deposit_amt_deleg <- & z.deposit_amt_deleg[buffer_addr];
     match o_deposit_amt_deleg with
     | Some amt =>
-      tmp_buffer_exists_at_ssn := uint32_one
+      tmp_buffer_exists_at_ssn := true
     | None =>
-      tmp_buffer_exists_at_ssn := uint32_zero
+      tmp_buffer_exists_at_ssn := false
     end
   | None =>
       e = CantFetchZimplBufferExistsAtSSN;
@@ -721,8 +721,7 @@ procedure CalculateTotalWithdrawalBlock(deleg_withdrawal: Pair ByStr20 Withdrawa
         unbonded_withdrawal = Withdrawal updated_token updated_stake;
         withdrawal_unbonded[delegator] := unbonded_withdrawal
       | None =>
-        unbonded_withdrawal = Withdrawal withdraw_token_amt withdraw_stake_amt;
-        withdrawal_unbonded[delegator] := unbonded_withdrawal
+        withdrawal_unbonded[delegator] := withdrawal
       end
     end
   end
@@ -938,22 +937,19 @@ transition DrainBuffer(buffer_addr: ByStr20)
 
   match is_buffer with
   | True =>
+    holder_addr <- holder_address;
+    ClaimRewards holder_addr;
     FetchRemoteBufferExistsAtSSN buffer_addr;
     (* local_lastrewardcycle updated in FetchRemoteBufferExistsAtSSN *)
     lrc <- local_lastrewardcycle;
     RequireNotDrainedBuffer buffer_addr lrc;
     var_buffer_exists <- tmp_buffer_exists_at_ssn;
-    is_exists = builtin eq var_buffer_exists uint32_one;
-    match is_exists with
+    match var_buffer_exists with
     | True =>
-      holder_addr <- holder_address;
       ClaimRewards buffer_addr;
-      ClaimRewards holder_addr;
       RequestDelegatorSwap buffer_addr holder_addr;
       ConfirmDelegatorSwap buffer_addr holder_addr
     | False =>
-      holder_addr <- holder_address;
-      ClaimRewards holder_addr
     end
   | False =>
     e = BufferAddrUnknown;
@@ -961,7 +957,7 @@ transition DrainBuffer(buffer_addr: ByStr20)
   end;
   lrc <- local_lastrewardcycle;
   buffer_drained_cycle[buffer_addr] := lrc;
-  tmp_buffer_exists_at_ssn := uint32_zero
+  tmp_buffer_exists_at_ssn := false
 end
 
 
