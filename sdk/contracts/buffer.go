@@ -199,7 +199,6 @@ func RestoreBufferContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr 
 func buildBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/buffer.scilla")
 	key := sdk.Cfg.AdminKey
-	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
 	init := []core.ContractValue{
 		{
@@ -210,10 +209,6 @@ func buildBufferContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.C
 			VName: "init_azil_address",
 			Type:  "ByStr20",
 			Value: azilAddr,
-		}, {
-			VName: "init_azil_ssn_address",
-			Type:  "ByStr20",
-			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",

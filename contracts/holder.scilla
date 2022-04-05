@@ -45,12 +45,10 @@ let make_error =
 (***************************************************)
 
 contract Holder(
-  init_azil_ssn_address     : ByStr20,
   init_azil_address         : ByStr20,
   init_zproxy_address       : ByStr20
 )
 
-field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field azil_address          : ByStr20 = init_azil_address
 field zproxy_address        : ByStr20 = init_zproxy_address
 
