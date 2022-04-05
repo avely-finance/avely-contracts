@@ -474,8 +474,8 @@ procedure HolderCompleteWithdrawal()
   send msgs
 end
 
-procedure BufferReDelegate(buffer_addr: ByStr20, ssnaddr: ByStr20, amount: Uint128)
-  msg = { _tag: "ReDelegateStake"; _recipient: buffer_addr; _amount: uint128_zero; ssnaddr: ssnaddr; amount: amount };
+procedure BufferReDelegate(buffer_addr: ByStr20, ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
+  msg = { _tag: "ReDelegateStake"; _recipient: buffer_addr; _amount: uint128_zero; ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount };
   msgs = one_msg msg;
   send msgs
 end
@@ -1281,7 +1281,7 @@ transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   lrc <- local_lastrewardcycle;
   active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
   ClaimRewards active_buffer from_ssn;
-  BufferReDelegate active_buffer from_ssn amount
+  BufferReDelegate active_buffer from_ssn var_azil_ssn_addr amount
 end
 
 (***************************************)

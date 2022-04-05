@@ -110,12 +110,17 @@ func (b *BufferContract) RequestDelegatorSwap(new_deleg_addr string) (*transacti
 	return b.Call("RequestDelegatorSwap", args, "0")
 }
 
-func (b *BufferContract) ReDelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
+func (b *BufferContract) ReDelegateStake(ssnaddr, to_ssn, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"ssnaddr",
 			"ByStr20",
 			ssnaddr,
+		},
+		{
+			"to_ssn",
+			"ByStr20",
+			to_ssn,
 		},
 		{
 			"amount",

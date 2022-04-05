@@ -23,7 +23,7 @@ func (tr *Transitions) IsAzil() {
 	AssertError(tx, "AzilValidationFailed")
 	tx, _ = p.GetBuffer().RejectDelegatorSwap(p.Holder.Addr)
 	AssertError(tx, "AzilValidationFailed")
-	tx, _ = p.GetBuffer().ReDelegateStake(p.Holder.Addr, ToZil(1))
+	tx, _ = p.GetBuffer().ReDelegateStake(p.Holder.Addr, sdk.Cfg.AzilSsnAddress, ToZil(1))
 	AssertError(tx, "AzilValidationFailed")
 
 	// Use non-admin user for p.Holder

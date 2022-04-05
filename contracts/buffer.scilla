@@ -208,11 +208,10 @@ transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
   ProxyRequestDelegatorSwap var_zproxy_address new_deleg_addr
 end
 
-transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
+transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
   RequireAzil;
 
   var_zproxy_address <- zproxy_address;
-  to_ssn <- azil_ssn_address;
 
   msg = {_tag: "ReDelegateStake"; _recipient: var_zproxy_address; _amount: uint128_zero; ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount};
   msgs = one_msg msg;
