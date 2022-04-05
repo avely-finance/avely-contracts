@@ -123,9 +123,8 @@ end
 (* @dev: Azil actions                                       *)
 (************************************************************)
 
-transition WithdrawStakeAmt(amount: Uint128)
+transition WithdrawStakeAmt(ssnaddr: ByStr20, amount: Uint128)
   RequireAzil;
-  ssnaddr <- azil_ssn_address;
   var_zproxy_address <- zproxy_address;
   msg = {_tag: "WithdrawStakeAmt"; _recipient: var_zproxy_address; _amount: uint128_zero;
   ssnaddr: ssnaddr; amt: amount};
