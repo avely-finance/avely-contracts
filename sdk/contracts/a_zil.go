@@ -394,8 +394,8 @@ func (a *AZil) UnpauseZrc2() (*transaction.Transaction, error) {
 	return a.Call("UnPauseZrc2", args, "0")
 }
 
-func NewAZilContract(sdk *AvelySDK, owner, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, owner, zimplAddr)
+func NewAZilContract(sdk *AvelySDK, owner, zimplAddr string, ssnAddresses []string) (*AZil, error) {
+	contract := buildAZilContract(sdk, owner, zimplAddr, ssnAddresses)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -419,8 +419,8 @@ func NewAZilContract(sdk *AvelySDK, owner, zimplAddr string) (*AZil, error) {
 	}
 }
 
-func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, owner, zimplAddr)
+func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string, ssnAddresses []string) (*AZil, error) {
+	contract := buildAZilContract(sdk, owner, zimplAddr, ssnAddresses)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -438,7 +438,7 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string
 	return &AZil{Contract: sdkContract}, nil
 }
 
-func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contract {
+func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string, ssnAddresses []string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
 	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
@@ -463,6 +463,10 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
 			Value: zimplAddr,
+		}, {
+			VName: "init_ssn_addresses",
+			Type:  "List ByStr20",
+			Value: ssnAddresses,
 		}, {
 			VName: "name",
 			Type:  "String",
