@@ -69,7 +69,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 }
 
 func delegateStakeHolder(p *contracts.Protocol) {
-	tx, _ := p.Holder.DelegateStake(ToZil(1))
+	tx, _ := p.Holder.DelegateStake(sdk.Cfg.AzilSsnAddress, ToZil(1))
 	AssertError(tx, "HolderAlreadyInitialized")
 }
 

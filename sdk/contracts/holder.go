@@ -93,8 +93,13 @@ func (b *HolderContract) WithdrawStakeAmtSuccessCallBack(ssnaddr, amount string)
 	return b.Call("WithdrawStakeAmtSuccessCallBack", args, "0")
 }
 
-func (b *HolderContract) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+func (b *HolderContract) WithdrawStakeAmt(ssnaddr, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
 		{
 			"amount",
 			"Uint128",
@@ -109,8 +114,14 @@ func (b *HolderContract) CompleteWithdrawal() (*transaction.Transaction, error) 
 	return b.Call("CompleteWithdrawal", args, "0")
 }
 
-func (b *HolderContract) ClaimRewards() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (b *HolderContract) ClaimRewards(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
 	return b.Call("ClaimRewards", args, "0")
 }
 
@@ -125,8 +136,14 @@ func (b *HolderContract) ConfirmDelegatorSwap(requestor string) (*transaction.Tr
 	return b.Call("ConfirmDelegatorSwap", args, "0")
 }
 
-func (b *HolderContract) DelegateStake(amount string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
+func (b *HolderContract) DelegateStake(ssnaddr, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
 	return b.Call("DelegateStake", args, amount)
 }
 
@@ -175,7 +192,6 @@ func RestoreHolderContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr 
 func buildHolderContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/holder.scilla")
 	key := sdk.Cfg.AdminKey
-	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
 	init := []core.ContractValue{
 		{
@@ -186,10 +202,6 @@ func buildHolderContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.C
 			VName: "init_azil_address",
 			Type:  "ByStr20",
 			Value: azilAddr,
-		}, {
-			VName: "init_azil_ssn_address",
-			Type:  "ByStr20",
-			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",

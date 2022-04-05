@@ -36,12 +36,10 @@ let one_msg =
 (***************************************************)
 
 contract Buffer(
-  init_azil_ssn_address     : ByStr20,
   init_azil_address         : ByStr20,
   init_zproxy_address       : ByStr20
 )
 
-field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field azil_address          : ByStr20 = init_azil_address
 field zproxy_address        : ByStr20 = init_zproxy_address
 
@@ -130,12 +128,11 @@ end
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
-transition DelegateStake()
+transition DelegateStake(ssnaddr: ByStr20)
   RequireAzil;
   accept;
   stake_amt = _amount;
 
-  ssnaddr <- azil_ssn_address;
   var_zproxy_address <- zproxy_address;
 
   ProxyDelegate ssnaddr var_zproxy_address stake_amt
@@ -150,17 +147,7 @@ transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
   send msgs
 end
 
-transition ClaimRewards()
-  RequireAzil;
-  tmp_added_funds := uint128_zero;
-
-  ssnaddr <- azil_ssn_address;
-  var_zproxy_address <- zproxy_address;
-
-  ProxyWithdrawStakeRewards ssnaddr var_zproxy_address
-end
-
-transition ClaimRewardsSsn(ssnaddr: ByStr20)
+transition ClaimRewards(ssnaddr: ByStr20)
   RequireAzil;
   tmp_added_funds := uint128_zero;
 
@@ -219,11 +206,10 @@ transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
   ProxyRequestDelegatorSwap var_zproxy_address new_deleg_addr
 end
 
-transition ReDelegateStake(ssnaddr: ByStr20, amount: Uint128)
+transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
   RequireAzil;
 
   var_zproxy_address <- zproxy_address;
-  to_ssn <- azil_ssn_address;
 
   msg = {_tag: "ReDelegateStake"; _recipient: var_zproxy_address; _amount: uint128_zero; ssnaddr: ssnaddr; to_ssn: to_ssn; amount: amount};
   msgs = one_msg msg;
