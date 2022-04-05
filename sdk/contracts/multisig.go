@@ -227,6 +227,23 @@ func (s *MultisigWallet) SubmitChangeBuffersTransaction(azilAddr string, newBuff
 	return s.Call("SubmitChangeBuffersTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitChangeSSNsTransaction(azilAddr string, newAddresses []string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "new_ssn_addresses",
+			Type:  "List ByStr20",
+			Value: newAddresses,
+		},
+	}
+
+	return s.Call("SubmitChangeSSNsTransaction", args, "0")
+}
+
 func (s *MultisigWallet) SubmitPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
