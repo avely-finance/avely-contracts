@@ -180,6 +180,14 @@ let get_active_buffer_addr =
     let addr_o = flist_nth active l in
     option_bystr20_value addr_o
 
+(* get active ssn address from ssn list *)
+(* @todo we take first element from ssn list for now; replace with correct logic *)
+let get_active_ssn_addr =
+    fun (l : List ByStr20) =>
+      let l_bystr20_head = @list_head ByStr20 in
+      let addr_o = l_bystr20_head l in
+      option_bystr20_value addr_o
+
 (* remove not unbonded blocks from blocks list *)
 let leave_unbonded =
   fun (current_bnum: BNum) =>
