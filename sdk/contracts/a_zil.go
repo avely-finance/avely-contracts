@@ -439,7 +439,6 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string
 
 func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
-	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
 	init := []core.ContractValue{
 		{
@@ -454,10 +453,6 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 			VName: "init_admin_address",
 			Type:  "ByStr20",
 			Value: sdk.GetAddressFromPrivateKey(sdk.Cfg.AdminKey),
-		}, {
-			VName: "init_azil_ssn_address",
-			Type:  "ByStr20",
-			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
