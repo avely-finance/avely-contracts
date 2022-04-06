@@ -20,7 +20,7 @@ type Error =
   | CantFetchZimplBufferExistsAtSSN
   | CantFetchZimplFields
   | ChownStakeCantFetchRemote
-  | ChownStakeReDelegateAzilSsn
+  | ChownStakeReDelegateSameSsn
   | ChownStakeSwapRequestNotFound
   | ClaimWithdrawalNoUnbonded
   | CompleteWithdrawalFundsMismatch
@@ -58,7 +58,7 @@ let make_error =
       | CantFetchZimplBufferExistsAtSSN  => "CantFetchZimplBufferExistsAtSSN"
       | CantFetchZimplFields             => "CantFetchZimplFields"
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
-      | ChownStakeReDelegateAzilSsn      => "ChownStakeReDelegateAzilSsn"
+      | ChownStakeReDelegateSameSsn      => "ChownStakeReDelegateSameSsn"
       | ChownStakeSwapRequestNotFound    => "ChownStakeSwapRequestNotFound"
       | ClaimWithdrawalNoUnbonded        => "ClaimWithdrawalNoUnbonded"
       | CompleteWithdrawalFundsMismatch  => "CompleteWithdrawalFundsMismatch"
@@ -495,7 +495,8 @@ procedure BufferDelegate(amount: Uint128)
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
   buffer_addr = get_active_buffer_addr buffer_addrs cycle;
-  ssnaddr <- azil_ssn_address;
+  var_ssn_addresses <- ssn_addresses;
+  ssnaddr = get_active_ssn_addr var_ssn_addresses;
   msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
@@ -634,7 +635,9 @@ end
 
 procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
   current_token_amount <- balances[initiator];
-  azil_ssn_addr <- azil_ssn_address;
+
+  var_ssn_addresses <- ssn_addresses;
+  ssnaddr = get_active_ssn_addr var_ssn_addresses;
 
   match current_token_amount with
   | Some current_token_amt =>
@@ -663,7 +666,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
       withdrawal_pending_of_delegator[initiator][withdrawal_bnum] := pending_withdrawal
     end;
 
-    e = { _eventname: "WithdrawStakeAmt"; ssn_addr: azil_ssn_addr; deleg_address: initiator; withdraw_amount:withdraw_token_amt; withdraw_stake_amount:withdraw_stake_amt };
+    e = { _eventname: "WithdrawStakeAmt"; ssn_addr: ssnaddr; deleg_address: initiator; withdraw_amount:withdraw_token_amt; withdraw_stake_amount:withdraw_stake_amt };
     event e;
 
     (* Subtract withdrawn amounts from total counters *)
@@ -671,7 +674,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     DecreaseTotalSupplyAmt withdraw_token_amt;
 
     (* call Holder contract *)
-    HolderWithdrawStakeAmt azil_ssn_addr withdraw_stake_amt
+    HolderWithdrawStakeAmt ssnaddr withdraw_stake_amt
   | None =>
     e = DelegDoesNotExistAtSSN;
     ThrowError e
@@ -947,7 +950,8 @@ transition DrainBuffer(buffer_addr: ByStr20)
   match is_buffer with
   | True =>
     holder_addr <- holder_address;
-    ssnaddr <- azil_ssn_address;
+    var_ssn_addresses <- ssn_addresses;
+    ssnaddr = get_active_ssn_addr var_ssn_addresses;
     ClaimRewards holder_addr ssnaddr;
     FetchRemoteBufferExistsAtSSN buffer_addr;
     (* local_lastrewardcycle updated in FetchRemoteBufferExistsAtSSN *)
@@ -1133,13 +1137,14 @@ end
 transition WithdrawStakeAmt(amount: Uint128)
   RequireNotPausedOut;
 
-  azil_ssn_addr <- azil_ssn_address;
+  var_ssn_addresses <- ssn_addresses;
+  ssnaddr = get_active_ssn_addr var_ssn_addresses;
 
   (* first we do all checks, then call Holder on success within procedure *)
   WithdrawalStakeAmt _sender amount;
 
   msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
-    ssnaddr : azil_ssn_addr; amount : amount};
+    ssnaddr : ssnaddr; amount : amount};
   msg = one_msg msg_to_delegator;
   send msg
 end
@@ -1273,16 +1278,18 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
   end
 end
 
-(* transfers funds from other ssn to azil ssn *)
+(* transfers funds from other ssn to active ssn *)
 transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   RequireAdmin;
   FetchRemoteZimplFields;
 
-  var_azil_ssn_addr <- azil_ssn_address;
-  is_azil_ssn = builtin eq var_azil_ssn_addr from_ssn;
-  match is_azil_ssn with
+  var_ssn_addresses <- ssn_addresses;
+  ssnaddr = get_active_ssn_addr var_ssn_addresses;
+
+  is_same_ssn = builtin eq ssnaddr from_ssn;
+  match is_same_ssn with
   | True =>
-    e = ChownStakeReDelegateAzilSsn;
+    e = ChownStakeReDelegateSameSsn;
     ThrowError e
   | False =>
   end;
@@ -1291,7 +1298,7 @@ transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   lrc <- local_lastrewardcycle;
   active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
   ClaimRewards active_buffer from_ssn;
-  BufferReDelegate active_buffer from_ssn var_azil_ssn_addr amount
+  BufferReDelegate active_buffer from_ssn ssnaddr amount
 end
 
 (***************************************)
