@@ -896,13 +896,6 @@ transition ClaimOwner()
   end
 end
 
-transition ChangeAzilSSNAddress(address: ByStr20)
-  RequireOwner;
-  azil_ssn_address := address;
-  e = { _eventname: "ChangeAzilSSNAddress"; address: address };
-  event e
-end
-
 transition ChangeTreasuryAddress(address: ByStr20)
   RequireOwner;
   treasury_address := address
