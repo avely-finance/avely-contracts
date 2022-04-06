@@ -183,6 +183,12 @@ func (s *AZil) GetAzilSsnAddress() string {
 	return state.Dig("result.azil_ssn_address").String()
 }
 
+func (s *AZil) GetTreasuryAddress() string {
+	rawState := s.Contract.SubState("treasury_address", []string{})
+	state := NewState(rawState)
+	return state.Dig("result.treasury_address").String()
+}
+
 func (a *AZil) ChangeBuffers(newBuffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -214,17 +220,6 @@ func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction,
 		},
 	}
 	return a.Contract.Call("ClaimWithdrawal", args, "0")
-}
-
-func (a *AZil) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return a.Call("ChangeAzilSSNAddress", args, "0")
 }
 
 func (a *AZil) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction, error) {
