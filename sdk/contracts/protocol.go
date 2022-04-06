@@ -36,6 +36,10 @@ func (p *Protocol) DeployBuffer() (*BufferContract, error) {
 	return NewBufferContract(p.Azil.Sdk, p.Azil.Addr, p.Zproxy.Addr)
 }
 
+func (p *Protocol) GetActiveSsn() string {
+	return p.Azil.Sdk.Cfg.AzilSsnAddress
+}
+
 func (p *Protocol) GetBuffer() *BufferContract {
 	return p.Buffers[0]
 }
