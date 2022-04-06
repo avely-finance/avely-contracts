@@ -230,7 +230,6 @@ let sum_amount = fun(m: Map ByStr20 Uint128) =>
 contract AZil(
   contract_owner            : ByStr20,
   init_admin_address        : ByStr20,
-  init_azil_ssn_address     : ByStr20,
   init_zimpl_address        : ByStr20,
   name                      : String,
   symbol                    : String,
@@ -240,7 +239,6 @@ contract AZil(
 
 field owner_address         : ByStr20 = contract_owner
 field admin_address         : ByStr20 = init_admin_address
-field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field treasury_address      : ByStr20 = init_admin_address
 field zimpl_address         : ByStr20 = init_zimpl_address
 field holder_address        : ByStr20 = bystr20_zero

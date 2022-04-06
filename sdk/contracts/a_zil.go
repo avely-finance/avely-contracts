@@ -176,13 +176,6 @@ func (a *AZil) GetAzilPrice() *big.Float {
 	return DivBF(totalstakeamount, total_supply)
 }
 
-func (s *AZil) GetAzilSsnAddress() string {
-	rawState := s.Contract.SubState("azil_ssn_address", []string{})
-	state := NewState(rawState)
-
-	return state.Dig("result.azil_ssn_address").String()
-}
-
 func (s *AZil) GetTreasuryAddress() string {
 	rawState := s.Contract.SubState("treasury_address", []string{})
 	state := NewState(rawState)
