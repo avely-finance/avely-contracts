@@ -124,6 +124,7 @@ func main() {
 
 func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
+	p.ChangeTreasuryAddress()
 	p.SyncBufferAndHolder()
 
 	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
@@ -132,11 +133,6 @@ func deployAvely() {
 	}
 	log.Info("aZIL Rewards Fee successfully changed")
 
-	_, err = p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(sdk.Cfg.TreasuryAddr)
-	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change Treasery address failed")
-	}
-	log.Info("aZIL Treasery address successfully changed")
 	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
 }
 
