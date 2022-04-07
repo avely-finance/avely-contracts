@@ -39,6 +39,7 @@ type Error =
   | PausedIn
   | PausedOut
   | PausedZrc2
+  | SsnAddressesEmpty
   | StagingOwnerNotExists
   | StagingOwnerValidationFailed
   | IsSender
@@ -77,6 +78,7 @@ let make_error =
       | PausedOut                        => "PausedOut"
       | PausedIn                         => "PausedIn"
       | PausedZrc2                       => "PausedZrc2"
+      | SsnAddressesEmpty                => "SsnAddressesEmpty"
       | StagingOwnerNotExists            => "StagingOwnerNotExists"
       | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
       | IsSender                         => "IsSender"
@@ -230,7 +232,6 @@ let sum_amount = fun(m: Map ByStr20 Uint128) =>
 contract AZil(
   contract_owner            : ByStr20,
   init_admin_address        : ByStr20,
-  init_azil_ssn_address     : ByStr20,
   init_zimpl_address        : ByStr20,
   name                      : String,
   symbol                    : String,
@@ -240,7 +241,6 @@ contract AZil(
 
 field owner_address         : ByStr20 = contract_owner
 field admin_address         : ByStr20 = init_admin_address
-field azil_ssn_address      : ByStr20 = init_azil_ssn_address
 field treasury_address      : ByStr20 = init_admin_address
 field zimpl_address         : ByStr20 = init_zimpl_address
 field holder_address        : ByStr20 = bystr20_zero
@@ -404,6 +404,17 @@ procedure RequireBufferOrHolder()
   | False =>
     e = BufferOrHolderValidationFailed;
     ThrowError e
+  end
+end
+
+procedure RequireSsnAddresses(ssnlist: List ByStr20)
+  llen = list_bystr20_length ssnlist;
+  list_empty = builtin eq uint32_zero llen;
+  match list_empty with
+  | True =>
+    error = SsnAddressesEmpty;
+    ThrowError error
+  | False =>
   end
 end
 
@@ -801,6 +812,8 @@ transition UnPauseIn()
 
   var_buffers <- buffers_addresses;
   RequireBuffers var_buffers;
+  var_ssn_addresses <- ssn_addresses;
+  RequireSsnAddresses var_ssn_addresses;
 
   is_paused_in := false;
   e = { _eventname: "UnPauseIn"; is_paused_in: uint32_zero };
@@ -931,6 +944,7 @@ end
 
 transition ChangeSSNs(new_ssn_addresses: List ByStr20)
   RequireOwner;
+  RequireSsnAddresses new_ssn_addresses;
   ssn_addresses := new_ssn_addresses
 end
 
