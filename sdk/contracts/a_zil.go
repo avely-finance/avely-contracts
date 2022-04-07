@@ -176,13 +176,6 @@ func (a *AZil) GetAzilPrice() *big.Float {
 	return DivBF(totalstakeamount, total_supply)
 }
 
-func (s *AZil) GetAzilSsnAddress() string {
-	rawState := s.Contract.SubState("azil_ssn_address", []string{})
-	state := NewState(rawState)
-
-	return state.Dig("result.azil_ssn_address").String()
-}
-
 func (s *AZil) GetTreasuryAddress() string {
 	rawState := s.Contract.SubState("treasury_address", []string{})
 	state := NewState(rawState)
@@ -446,7 +439,6 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string
 
 func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
-	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
 	init := []core.ContractValue{
 		{
@@ -461,10 +453,6 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 			VName: "init_admin_address",
 			Type:  "ByStr20",
 			Value: sdk.GetAddressFromPrivateKey(sdk.Cfg.AdminKey),
-		}, {
-			VName: "init_azil_ssn_address",
-			Type:  "ByStr20",
-			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",

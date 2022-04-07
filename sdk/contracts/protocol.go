@@ -149,6 +149,12 @@ func (p *Protocol) ChangeSSNs() {
 	p.Azil.Wallet = prevWallet
 }
 
+func (p *Protocol) ChangeTreasuryAddress() {
+	prevWallet := p.Azil.Wallet
+	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.Azil.Sdk.Cfg.TreasuryAddr))
+	p.Azil.Wallet = prevWallet
+}
+
 func (p *Protocol) Unpause() {
 	prevWallet := p.Azil.Wallet
 	p.Azil.UpdateWallet(p.Azil.Sdk.Cfg.OwnerKey)
