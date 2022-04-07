@@ -12,6 +12,7 @@ func (tr *Transitions) MultisigWalletTests() {
 	multisigUpdateOwner(tr)
 	multisigChangeAdminTest(tr)
 	multisigChangeBuffersTest(tr)
+	multisigChangeSSNsTest(tr)
 	multisigManagableActions(tr)
 }
 
@@ -30,10 +31,10 @@ func multisigGoldenFlowTest(tr *Transitions) {
 
 	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
-	newSsnAddr := sdk.Cfg.Admin // could be any random address
+	newAddr := sdk.Cfg.Admin // could be any random address
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAzilSSNAddressTransaction(azil.Addr, newSsnAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeTreasuryAddressTransaction(azil.Addr, newAddr))
 
 	txId := 0 // the test transition should be the first
 
@@ -51,10 +52,11 @@ func multisigGoldenFlowTest(tr *Transitions) {
 	AssertMultisigError(tx, "-9") // NotEnoughSignatures
 
 	// should be changed after execution
+
 	AssertMultisigSuccess(multisig.WithUser(owner1).SignTransaction(txId))
-	AssertEqual(azil.GetAzilSsnAddress(), sdk.Cfg.AzilSsnAddress)
+	AssertEqual(azil.GetTreasuryAddress(), sdk.Cfg.TreasuryAddr)
 	AssertMultisigSuccess(multisig.WithUser(owner2).ExecuteTransaction(txId))
-	AssertEqual(azil.GetAzilSsnAddress(), newSsnAddr)
+	AssertEqual(azil.GetTreasuryAddress(), newAddr)
 }
 
 func multisigChangeAdminTest(tr *Transitions) {
@@ -150,4 +152,23 @@ func multisigChangeBuffersTest(tr *Transitions) {
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeBuffersTransaction(azil.Addr, newBuffers))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
 	AssertContain(Field(azil, "buffers_addresses"), sdk.Cfg.Addr1)
+}
+
+func multisigChangeSSNsTest(tr *Transitions) {
+	owner := sdk.Cfg.Key1
+
+	owners := []string{sdk.Cfg.Addr1}
+	signCount := 1
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	p := tr.DeployAndUpgrade()
+
+	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+
+	newAddresses := []string{sdk.Cfg.Addr1} // could be any random addresses
+
+	// after submitting transaction it automatically signed by the _sender
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeSSNsTransaction(azil.Addr, newAddresses))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
+	AssertContain(Field(azil, "ssn_addresses"), sdk.Cfg.Addr1)
 }

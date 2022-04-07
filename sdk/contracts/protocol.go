@@ -36,6 +36,10 @@ func (p *Protocol) DeployBuffer() (*BufferContract, error) {
 	return NewBufferContract(p.Azil.Sdk, p.Azil.Addr, p.Zproxy.Addr)
 }
 
+func (p *Protocol) GetActiveSsn() string {
+	return p.Azil.Sdk.Cfg.AzilSsnAddress
+}
+
 func (p *Protocol) GetBuffer() *BufferContract {
 	return p.Buffers[0]
 }
@@ -136,6 +140,18 @@ func (p *Protocol) SyncBuffers() {
 
 	prevWallet := p.Azil.Wallet
 	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	p.Azil.Wallet = prevWallet
+}
+
+func (p *Protocol) ChangeSSNs() {
+	prevWallet := p.Azil.Wallet
+	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeSSNs(p.Azil.Sdk.Cfg.SsnAddrs))
+	p.Azil.Wallet = prevWallet
+}
+
+func (p *Protocol) ChangeTreasuryAddress() {
+	prevWallet := p.Azil.Wallet
+	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.Azil.Sdk.Cfg.TreasuryAddr))
 	p.Azil.Wallet = prevWallet
 }
 

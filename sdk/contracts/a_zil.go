@@ -176,11 +176,10 @@ func (a *AZil) GetAzilPrice() *big.Float {
 	return DivBF(totalstakeamount, total_supply)
 }
 
-func (s *AZil) GetAzilSsnAddress() string {
-	rawState := s.Contract.SubState("azil_ssn_address", []string{})
+func (s *AZil) GetTreasuryAddress() string {
+	rawState := s.Contract.SubState("treasury_address", []string{})
 	state := NewState(rawState)
-
-	return state.Dig("result.azil_ssn_address").String()
+	return state.Dig("result.treasury_address").String()
 }
 
 func (a *AZil) ChangeBuffers(newBuffers []string) (*transaction.Transaction, error) {
@@ -194,6 +193,17 @@ func (a *AZil) ChangeBuffers(newBuffers []string) (*transaction.Transaction, err
 	return a.Contract.Call("ChangeBuffers", args, "0")
 }
 
+func (a *AZil) ChangeSSNs(newAddresses []string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_ssn_addresses",
+			"List ByStr20",
+			newAddresses,
+		},
+	}
+	return a.Contract.Call("ChangeSSNs", args, "0")
+}
+
 func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -203,17 +213,6 @@ func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction,
 		},
 	}
 	return a.Contract.Call("ClaimWithdrawal", args, "0")
-}
-
-func (a *AZil) ChangeAzilSSNAddress(new_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"address",
-			"ByStr20",
-			new_addr,
-		},
-	}
-	return a.Call("ChangeAzilSSNAddress", args, "0")
 }
 
 func (a *AZil) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction, error) {
@@ -440,7 +439,6 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string
 
 func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
-	aZilSSNAddress := sdk.Cfg.AzilSsnAddress
 
 	init := []core.ContractValue{
 		{
@@ -455,10 +453,6 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 			VName: "init_admin_address",
 			Type:  "ByStr20",
 			Value: sdk.GetAddressFromPrivateKey(sdk.Cfg.AdminKey),
-		}, {
-			VName: "init_azil_ssn_address",
-			Type:  "ByStr20",
-			Value: aZilSSNAddress,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
