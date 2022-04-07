@@ -54,7 +54,7 @@ func multisigGoldenFlowTest(tr *Transitions) {
 	// should be changed after execution
 
 	AssertMultisigSuccess(multisig.WithUser(owner1).SignTransaction(txId))
-	AssertEqual(azil.GetTreasuryAddress(), sdk.Cfg.AzilSsnAddress)
+	AssertEqual(azil.GetTreasuryAddress(), sdk.Cfg.TreasuryAddr)
 	AssertMultisigSuccess(multisig.WithUser(owner2).ExecuteTransaction(txId))
 	AssertEqual(azil.GetTreasuryAddress(), newAddr)
 }
