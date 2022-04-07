@@ -16,6 +16,7 @@ func (tr *Transitions) Owner() {
 
 	checkChangeAdmin(p)
 	checkChangeBuffersEmpty(p)
+	checkChangeSSNsEmpty(p)
 	checkSetHolderAddress(p)
 	checkChangeRewardsFee(p)
 	checkChangeTreasuryAddress(p)
@@ -68,6 +69,12 @@ func checkChangeBuffersEmpty(p *contracts.Protocol) {
 	new_buffers := []string{}
 	tx, _ := p.Azil.ChangeBuffers(new_buffers)
 	AssertError(tx, "BuffersEmpty")
+}
+
+func checkChangeSSNsEmpty(p *contracts.Protocol) {
+	new_ssns := []string{}
+	tx, _ := p.Azil.ChangeSSNs(new_ssns)
+	AssertError(tx, "SsnAddressesEmpty")
 }
 
 func checkSetHolderAddress(p *contracts.Protocol) {
