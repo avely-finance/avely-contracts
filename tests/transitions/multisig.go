@@ -31,10 +31,10 @@ func multisigGoldenFlowTest(tr *Transitions) {
 
 	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
-	newSsnAddr := sdk.Cfg.Admin // could be any random address
+	newAddr := sdk.Cfg.Admin // could be any random address
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeAzilSSNAddressTransaction(azil.Addr, newSsnAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeTreasuryAddressTransaction(azil.Addr, newAddr))
 
 	txId := 0 // the test transition should be the first
 
@@ -52,10 +52,11 @@ func multisigGoldenFlowTest(tr *Transitions) {
 	AssertMultisigError(tx, "-9") // NotEnoughSignatures
 
 	// should be changed after execution
+
 	AssertMultisigSuccess(multisig.WithUser(owner1).SignTransaction(txId))
-	AssertEqual(azil.GetAzilSsnAddress(), sdk.Cfg.AzilSsnAddress)
+	AssertEqual(azil.GetTreasuryAddress(), sdk.Cfg.TreasuryAddr)
 	AssertMultisigSuccess(multisig.WithUser(owner2).ExecuteTransaction(txId))
-	AssertEqual(azil.GetAzilSsnAddress(), newSsnAddr)
+	AssertEqual(azil.GetTreasuryAddress(), newAddr)
 }
 
 func multisigChangeAdminTest(tr *Transitions) {
