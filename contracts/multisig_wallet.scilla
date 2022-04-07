@@ -70,8 +70,6 @@ type CalleeTransaction =
 (*****************************************************)
 (*               Proxy Transition                    *)
 (*****************************************************)
-(* ChangeAzilSSNAddress(address: ByStr20)            *)
-| ChangeAzilSSNAddress of ByStr20
 (* ChangeAdmin(new_admin: ByStr20)                   *)
 | ChangeAdmin of ByStr20
 (* ChangeOwner(new_owner: ByStr20)                   *)
@@ -90,6 +88,8 @@ type CalleeTransaction =
 | SetHolderAddress of ByStr20
 (* ChangeBuffers(new_buffers: List ByStr20)          *)
 | ChangeBuffers of (List ByStr20)
+(* ChangeSSNs(new_ssn_addresses: List ByStr20)       *)
+| ChangeSSNs of (List ByStr20)
 (* PauseIn()                                         *)
 | PauseIn
 (* PauseOut()                                        *)
@@ -143,12 +143,6 @@ let custom_transaction_msg_as_list =
   fun (calleeTransaction : CalleeTransaction) =>
     let msg =
       match calleeTransaction with
-      (* ChangeAzilSSNAddress(address: ByStr20) *)
-      | ChangeAzilSSNAddress address =>
-        {_recipient: calleeContract ;
-         _tag: "ChangeAzilSSNAddress";
-         _amount: Uint128 0;
-         address : address}
       (* ChangeAdmin(new_admin: ByStr20) *)
       | ChangeAdmin new_admin =>
         {_recipient: calleeContract ;
@@ -202,6 +196,12 @@ let custom_transaction_msg_as_list =
           _tag: "ChangeBuffers";
           _amount: Uint128 0;
           new_buffers : new_buffers }
+      (* ChangeSSNs(new_ssn_addresses: List ByStr20)          *)
+      | ChangeSSNs new_ssn_addresses =>
+         {_recipient: calleeContract ;
+          _tag: "ChangeSSNs";
+          _amount: Uint128 0;
+          new_ssn_addresses : new_ssn_addresses }
       (* PauseIn() *)
       | PauseIn =>
         {_recipient: calleeContract ; _tag: "PauseIn"; _amount: Uint128 0 }
@@ -414,12 +414,6 @@ end
 (*               Proxy Transition                  *)
 (***************************************************)
 
-(* Submit a new ChangeAzilSSNAddress transaction for future signoff *)
-transition SubmitChangeAzilSSNAddressTransaction (calleeContract : ByStr20, address : ByStr20)
-  transaction = ChangeAzilSSNAddress address;
-  SubmitCustomTransaction calleeContract transaction
-end
-
 (* Submit a new ChangeAdmin transaction for future signoff *)
 transition SubmitChangeAdminTransaction (calleeContract : ByStr20, new_admin : ByStr20)
   transaction = ChangeAdmin new_admin;
@@ -471,6 +465,12 @@ end
 (* Submit a new ChangeBuffers transaction for future signoff *)
 transition SubmitChangeBuffersTransaction (calleeContract : ByStr20, new_buffers : List ByStr20)
   transaction = ChangeBuffers new_buffers;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ChangeSSNs transaction for future signoff *)
+transition SubmitChangeSSNsTransaction (calleeContract : ByStr20, new_ssn_addresses : List ByStr20)
+  transaction = ChangeSSNs new_ssn_addresses;
   SubmitCustomTransaction calleeContract transaction
 end
 

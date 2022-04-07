@@ -127,14 +127,12 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
 	total_supply := Field(p.Azil, "total_supply")
 	totalstakeamount := Field(p.Azil, "totalstakeamount")
+	ssnlist := []string{sdk.Cfg.AzilSsnAddress, ssn[1], ssn[2], ssn[3], ssn[4], ssn[5]}
 
 	//key1 delegates to main contract
-	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(sdk.Cfg.AzilSsnAddress, userStake))
-	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], userStake))
-	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[2], userStake))
-	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[3], userStake))
-	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[4], userStake))
-	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[5], userStake))
+	for _, ssnaddr := range ssnlist {
+		AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssnaddr, userStake))
+	}
 
 	//key1 waits 2 reward cycles (they should have no buffered depo in current/prev cycles, else swap request will fail)
 	chownStakeNextCycle(p)
@@ -144,12 +142,9 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//key1 claims rewards
-	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(sdk.Cfg.AzilSsnAddress))
-	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[1]))
-	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[2]))
-	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[3]))
-	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[4]))
-	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[5]))
+	for _, ssnaddr := range ssnlist {
+		AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssnaddr))
+	}
 
 	//key1 requests swap
 	tx, _ := AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
@@ -170,20 +165,21 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	actions.NewAdminActions(GetLog()).ChownStakeReDelegate(p, showOnly)
 
 	//offchain tool calls ChownStakeReDelegate for each ssn/amount
-	tx, _ = p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(sdk.Cfg.AzilSsnAddress, userStake)
-	AssertError(tx, "ChownStakeReDelegateAzilSsn")
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[1], userStake))
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[2], userStake))
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[3], userStake))
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[4], userStake))
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[5], userStake))
+	activeSsn := p.GetActiveSsn()
+	for _, ssnaddr := range ssnlist {
+		tx, err := p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssnaddr, userStake)
+		if activeSsn == ssnaddr {
+			AssertError(tx, "ChownStakeReDelegateSameSsn")
+		} else {
+			AssertSuccess(tx, err)
+		}
+	}
 
 	//check balances
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrMul(userStake, "6"))
 	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, activeBuffer), StrMul(userStake, "6"))
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(totalstakeamount, StrMul(userStake, "6")))
 	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1)))
-
 }
 
 func (tr *Transitions) ChownStakeAzilErrors() {

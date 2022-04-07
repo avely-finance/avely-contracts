@@ -14,7 +14,13 @@ go run tools/multisig_cmd.go --chain=testnet --tag=SubmitSetHolderAddressTransac
 go run tools/multisig_cmd.go --chain=testnet --tag=SubmitChangeBuffersTransaction
 ```
 
-3. Change Protocol Rewards Fee
+3. Change SSN addresses
+
+```sh
+go run tools/multisig_cmd.go --chain=testnet --tag=SubmitChangeSSNsTransaction
+```
+
+4. Change Protocol Rewards Fee
 
 ```sh
 go run tools/multisig_cmd.go --chain=testnet --tag=SubmitChangeRewardsFeeTransaction

@@ -48,6 +48,7 @@ type Config struct {
 	ZimplAddr    string
 	AzilAddr     string
 	BufferAddrs  []string
+	SsnAddrs     []string
 	HolderAddr   string
 	TreasuryAddr string
 }

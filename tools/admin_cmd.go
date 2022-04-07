@@ -63,6 +63,8 @@ func main() {
 			initHolder(p)
 		case "sync_buffers":
 			syncBuffers(p)
+		case "change_ssns":
+			changeSSNs(p)
 		case "deploy_buffer":
 			deployBuffer(p)
 		case "unpause_in":
@@ -122,6 +124,7 @@ func main() {
 
 func deployAvely() {
 	p := DeployOnlyAvely(sdk, log)
+	p.ChangeTreasuryAddress()
 	p.SyncBufferAndHolder()
 
 	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
@@ -130,11 +133,6 @@ func deployAvely() {
 	}
 	log.Info("aZIL Rewards Fee successfully changed")
 
-	_, err = p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(sdk.Cfg.TreasuryAddr)
-	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change Treasery address failed")
-	}
-	log.Info("aZIL Treasery address successfully changed")
 	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
 }
 
@@ -248,6 +246,10 @@ func unpauseAll(p *Protocol) {
 
 func syncBuffers(p *Protocol) {
 	p.SyncBuffers()
+}
+
+func changeSSNs(p *Protocol) {
+	p.ChangeSSNs()
 }
 
 func drainBuffer(p *Protocol, buffer_addr string) {

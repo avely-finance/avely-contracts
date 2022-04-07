@@ -36,8 +36,14 @@
     "BufferAddrs": [
       ""
     ],
+    "SsnAddrs": [
+      "0x166862bdd5d76b3a4775d2494820179d582acac5",
+      "0x0000000000000000000000000000000000000001",
+      "0x0000000000000000000000000000000000000002",
+      "0x0000000000000000000000000000000000000003"
+    ],
     "HolderAddr": "",
-    "TreasuryAddr": ""
+    "TreasuryAddr": "0x381f4008505e940ad7681ec3468a719060caf796"
   },
   "testnet": {
     "Api": {
@@ -77,6 +83,9 @@
       "0x00f7dd1c6dd8163e90d73a5c25d8367bfbc0e081",
       "0x1e11103c9f5f1e79380db0e95a2bd07ffe034fa5",
       "0xcedfc6379cc6654872f75b792cec5e5956e905a8"
+    ],
+    "SsnAddrs": [
+      "0x73f16753ea97C770201Fd6Ae04073348c483239f"
     ],
     "HolderAddr": "0x1ef806d653719b8e82fd473f2e50420456ea0df2",
     "TreasuryAddr": "0x4dE9D0CF923119c2433391eA02Afa14701cB59A8"
