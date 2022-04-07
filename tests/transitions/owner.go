@@ -15,8 +15,8 @@ func (tr *Transitions) Owner() {
 	p.Azil.UpdateWallet(sdk.Cfg.OwnerKey)
 
 	checkChangeAdmin(p)
-	checkChangeAzilSSNAddress(p)
 	checkChangeBuffersEmpty(p)
+	checkChangeSSNsEmpty(p)
 	checkSetHolderAddress(p)
 	checkChangeRewardsFee(p)
 	checkChangeTreasuryAddress(p)
@@ -65,17 +65,16 @@ func checkChangeAdmin(p *contracts.Protocol) {
 	AssertEqual(Field(p.Azil, "admin_address"), newAdminAddr)
 }
 
-func checkChangeAzilSSNAddress(p *contracts.Protocol) {
-	tx, _ := AssertSuccess(p.Azil.ChangeAzilSSNAddress(core.ZeroAddr))
-	AssertEvent(tx, Event{p.Azil.Addr, "ChangeAzilSSNAddress", ParamsMap{"address": core.ZeroAddr}})
-	AssertEqual(Field(p.Azil, "azil_ssn_address"), core.ZeroAddr)
-	AssertSuccess(p.Azil.ChangeAzilSSNAddress(sdk.Cfg.AzilSsnAddress))
-}
-
 func checkChangeBuffersEmpty(p *contracts.Protocol) {
 	new_buffers := []string{}
 	tx, _ := p.Azil.ChangeBuffers(new_buffers)
 	AssertError(tx, "BuffersEmpty")
+}
+
+func checkChangeSSNsEmpty(p *contracts.Protocol) {
+	new_ssns := []string{}
+	tx, _ := p.Azil.ChangeSSNs(new_ssns)
+	AssertError(tx, "SsnAddressesEmpty")
 }
 
 func checkSetHolderAddress(p *contracts.Protocol) {
@@ -98,7 +97,7 @@ func checkChangeRewardsFee(p *contracts.Protocol) {
 func checkChangeTreasuryAddress(p *contracts.Protocol) {
 	AssertSuccess(p.Azil.ChangeTreasuryAddress(core.ZeroAddr))
 	AssertEqual(Field(p.Azil, "treasury_address"), core.ZeroAddr)
-	AssertSuccess(p.Azil.ChangeTreasuryAddress(sdk.Cfg.AzilSsnAddress))
+	AssertSuccess(p.Azil.ChangeTreasuryAddress(sdk.Cfg.TreasuryAddr))
 }
 
 func checkChangeZimplAddress(p *contracts.Protocol) {

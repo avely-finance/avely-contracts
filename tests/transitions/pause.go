@@ -54,6 +54,9 @@ func unPauseEmptyBuffers() {
 	p := contracts.Deploy(sdk, GetLog())
 	tx, _ := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
 	AssertError(tx, "BuffersEmpty")
+	p.SyncBufferAndHolder()
+	tx, _ = p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+	AssertError(tx, "SsnAddressesEmpty")
 }
 
 func callPauseUnpauseNonAdmin(p *contracts.Protocol) {
