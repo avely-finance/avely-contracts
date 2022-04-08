@@ -182,13 +182,19 @@ let get_active_buffer_addr =
     let addr_o = flist_nth active l in
     option_bystr20_value addr_o
 
-(* get active ssn address from ssn list *)
-(* @todo we take first element from ssn list for now; replace with correct logic *)
+(* get active ssn address; it's remainder of division of ssn_index by ssn addresses count *)
 let get_active_ssn_addr =
-    fun (l : List ByStr20) =>
-      let l_bystr20_head = @list_head ByStr20 in
-      let addr_o = l_bystr20_head l in
-      option_bystr20_value addr_o
+  fun (l : List ByStr20) =>
+  fun (ssn_index : Uint128) =>
+    let l_length = list_bystr20_length l in
+    let opt_l_length_uint128 = builtin to_uint128 l_length in
+    let l_length_uint128 = option_uint128_value opt_l_length_uint128 in
+    let active_uint128 = builtin rem ssn_index l_length_uint128 in
+    let opt_active_uint32 = builtin to_uint32 active_uint128 in
+    let active_uint32 = option_uint32_value opt_active_uint32 in
+    let flist_nth = @list_nth ByStr20 in
+    let addr_o = flist_nth active_uint32 l in
+    option_bystr20_value addr_o
 
 (* remove not unbonded blocks from blocks list *)
 let leave_unbonded =
@@ -275,16 +281,19 @@ field withdrawal_pending_of_delegator: Map ByStr20 (Map BNum Withdrawal) = Emp B
 field withdrawal_unbonded: Map ByStr20 Withdrawal = Emp ByStr20 Withdrawal
 
 field buffer_drained_cycle: Map ByStr20 Uint32 = Emp ByStr20 Uint32
+field ssn_index: Uint128 = uint128_zero
 
-field tmp_delegator: Option ByStr20 = None {ByStr20}
-field tmp_stake_delegate_amount: Uint128 = uint128_zero
-field tmp_complete_withdrawal_available: Uint128 = uint128_zero
-field tmp_buffer_exists_at_ssn: Bool = False
-field tmp_buffer: ByStr20 = bystr20_zero
-field tmp_bnum: BNum = BNum 0
+field tmp_delegator                     : Option ByStr20 = None {ByStr20}
+field tmp_stake_delegate_amount         : Uint128        = uint128_zero
+field tmp_complete_withdrawal_available : Uint128        = uint128_zero
+field tmp_buffer_exists_at_ssn          : Bool           = False
+field tmp_buffer                        : ByStr20        = bystr20_zero
+field tmp_ssn_addr_in                   : ByStr20        = bystr20_zero
+field tmp_ssn_addr_out                  : ByStr20        = bystr20_zero
+field tmp_bnum                          : BNum           = BNum 0
 
-field local_bnum_req: Uint128 = Uint128 35000
-field local_lastrewardcycle: Uint32 = uint32_one
+field local_bnum_req                    : Uint128        = Uint128 35000
+field local_lastrewardcycle             : Uint32         = uint32_one
 
 (************************************************************)
 (* @dev: Procedures                                         *)
@@ -424,6 +433,24 @@ procedure TransferFunds(tag: String, amt: Uint128, recipient: ByStr20)
   send msgs
 end
 
+(* get active ssn address by counter; save address to tmp field; increment counter *)
+procedure GetSsnAddressForInput()
+  var_ssn_addresses <- ssn_addresses;
+  var_ssn_index <- ssn_index;
+  active_ssn_addr = get_active_ssn_addr var_ssn_addresses var_ssn_index;
+  tmp_ssn_addr_in := active_ssn_addr;
+  new_ssn_index = builtin add var_ssn_index uint128_one;
+  ssn_index := new_ssn_index
+end
+
+procedure GetSsnAddressForOutput()
+  var_ssn_addresses <- ssn_addresses;
+  l_bystr20_head = @list_head ByStr20;
+  addr_o = l_bystr20_head var_ssn_addresses;
+  addr = option_bystr20_value addr_o;
+  tmp_ssn_addr_out := addr
+end
+
 (* fetch state fields from ssnlist contract *)
 procedure FetchRemoteZimplFields()
   implAddr <- zimpl_address;
@@ -506,8 +533,10 @@ procedure BufferDelegate(amount: Uint128)
   cycle <- local_lastrewardcycle;
   buffer_addrs <- buffers_addresses;
   buffer_addr = get_active_buffer_addr buffer_addrs cycle;
-  var_ssn_addresses <- ssn_addresses;
-  ssnaddr = get_active_ssn_addr var_ssn_addresses;
+
+  GetSsnAddressForInput;
+  ssnaddr <- tmp_ssn_addr_in;
+
   msg = {_tag: "DelegateStake"; _recipient: buffer_addr; _amount: amount; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
@@ -644,11 +673,8 @@ procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Ui
   end
 end
 
-procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
+procedure WithdrawalStakeAmt(initiator: ByStr20, from_ssn: ByStr20, withdraw_token_amt: Uint128)
   current_token_amount <- balances[initiator];
-
-  var_ssn_addresses <- ssn_addresses;
-  ssnaddr = get_active_ssn_addr var_ssn_addresses;
 
   match current_token_amount with
   | Some current_token_amt =>
@@ -677,7 +703,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
       withdrawal_pending_of_delegator[initiator][withdrawal_bnum] := pending_withdrawal
     end;
 
-    e = { _eventname: "WithdrawStakeAmt"; ssn_addr: ssnaddr; deleg_address: initiator; withdraw_amount:withdraw_token_amt; withdraw_stake_amount:withdraw_stake_amt };
+    e = { _eventname: "WithdrawStakeAmt"; ssn_addr: from_ssn; deleg_address: initiator; withdraw_amount:withdraw_token_amt; withdraw_stake_amount:withdraw_stake_amt };
     event e;
 
     (* Subtract withdrawn amounts from total counters *)
@@ -685,7 +711,7 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, withdraw_token_amt: Uint128)
     DecreaseTotalSupplyAmt withdraw_token_amt;
 
     (* call Holder contract *)
-    HolderWithdrawStakeAmt ssnaddr withdraw_stake_amt
+    HolderWithdrawStakeAmt from_ssn withdraw_stake_amt
   | None =>
     e = DelegDoesNotExistAtSSN;
     ThrowError e
@@ -957,8 +983,10 @@ transition DrainBuffer(buffer_addr: ByStr20)
   match is_buffer with
   | True =>
     holder_addr <- holder_address;
-    var_ssn_addresses <- ssn_addresses;
-    ssnaddr = get_active_ssn_addr var_ssn_addresses;
+
+    GetSsnAddressForOutput;
+    ssnaddr <- tmp_ssn_addr_out;
+
     ClaimRewards holder_addr ssnaddr;
     FetchRemoteBufferExistsAtSSN buffer_addr;
     (* local_lastrewardcycle updated in FetchRemoteBufferExistsAtSSN *)
@@ -1144,11 +1172,10 @@ end
 transition WithdrawStakeAmt(amount: Uint128)
   RequireNotPausedOut;
 
-  var_ssn_addresses <- ssn_addresses;
-  ssnaddr = get_active_ssn_addr var_ssn_addresses;
-
+  GetSsnAddressForOutput;
+  ssnaddr <- tmp_ssn_addr_out;
   (* first we do all checks, then call Holder on success within procedure *)
-  WithdrawalStakeAmt _sender amount;
+  WithdrawalStakeAmt _sender ssnaddr amount;
 
   msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
     ssnaddr : ssnaddr; amount : amount};
@@ -1290,8 +1317,8 @@ transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   RequireAdmin;
   FetchRemoteZimplFields;
 
-  var_ssn_addresses <- ssn_addresses;
-  ssnaddr = get_active_ssn_addr var_ssn_addresses;
+  GetSsnAddressForInput;
+  ssnaddr <- tmp_ssn_addr_in;
 
   is_same_ssn = builtin eq ssnaddr from_ssn;
   match is_same_ssn with

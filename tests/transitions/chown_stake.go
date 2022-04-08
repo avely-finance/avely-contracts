@@ -165,7 +165,7 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	actions.NewAdminActions(GetLog()).ChownStakeReDelegate(p, showOnly)
 
 	//offchain tool calls ChownStakeReDelegate for each ssn/amount
-	activeSsn := p.GetActiveSsn()
+	activeSsn := p.GetSsnAddressForInput()
 	for _, ssnaddr := range ssnlist {
 		tx, err := p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssnaddr, userStake)
 		if activeSsn == ssnaddr {
