@@ -1,9 +1,10 @@
 package contracts
 
 import (
-	"github.com/tidwall/gjson"
 	"math/big"
 	"strings"
+
+	"github.com/tidwall/gjson"
 )
 
 type SSNCycleInfoType struct {
@@ -63,6 +64,15 @@ func (i *StateItem) ArrayInt() []int {
 	out := []int{}
 	for _, value := range iarr {
 		out = append(out, int(value.Int()))
+	}
+	return out
+}
+
+func (i *StateItem) ArrayString() []string {
+	iarr := i.Array()
+	out := []string{}
+	for _, value := range iarr {
+		out = append(out, value.String())
 	}
 	return out
 }

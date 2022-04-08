@@ -165,6 +165,12 @@ func (a *AZil) GetAutorestakeAmount() *big.Int {
 	return state.Dig("result.autorestakeamount").BigInt()
 }
 
+func (a *AZil) GetSsnIndex() *big.Int {
+	rawState := a.Contract.SubState("ssn_index", []string{})
+	state := NewState(rawState)
+	return state.Dig("result.ssn_index").BigInt()
+}
+
 func (a *AZil) GetAzilPrice() *big.Float {
 	params := a.Contract.BuildBatchParams([]string{"total_supply", "totalstakeamount"})
 	raw, _ := a.Contract.BatchSubState(params)
