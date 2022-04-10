@@ -948,16 +948,16 @@ transition DrainBuffer(buffer_addr: ByStr20)
     | True =>
       ClaimRewards buffer_addr;
       RequestDelegatorSwap buffer_addr holder_addr;
-      ConfirmDelegatorSwap buffer_addr holder_addr
+      ConfirmDelegatorSwap buffer_addr holder_addr;
+      tmp_buffer_exists_at_ssn := false
     | False =>
-    end
+    end;
+    (* we should have it here after match, because even for False case we should mark buffer as drained at the cycle *)
+    buffer_drained_cycle[buffer_addr] := lrc
   | False =>
     e = BufferAddrUnknown;
     ThrowError e
-  end;
-  lrc <- local_lastrewardcycle;
-  buffer_drained_cycle[buffer_addr] := lrc;
-  tmp_buffer_exists_at_ssn := false
+  end
 end
 
 
