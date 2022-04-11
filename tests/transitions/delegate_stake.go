@@ -23,9 +23,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	// Success delegate
 	ssnIn := p.GetSsnAddressForInput()
-	GetLog().Info(ssnIn)
 	AssertSuccess(p.Azil.DelegateStake(ToZil(20)))
-	GetLog().Info(ssnIn)
 
 	lastrewardcycle := strconv.Itoa(p.Zimpl.GetLastRewardCycle())
 
