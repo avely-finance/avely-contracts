@@ -12,7 +12,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	Start("DelegateStake: Stake 10 ZIL")
 
 	p := tr.DeployAndUpgrade()
-	totalInitialDeposit := len(sdk.Cfg.SsnAddrs) * contracts.InitialSsnDeposit
+	totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
 	delegateStakeHolder(p)
 
 	p.Azil.UpdateWallet(sdk.Cfg.Key1)
@@ -30,10 +30,10 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetBuffer().Addr, ssnIn, lastrewardcycle), ToZil(20))
 	AssertEqual(Field(p.Azil, "_balance"), "0")
 
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalInitialDeposit+20))
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalInitialDeposit+20))
+	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil+20))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil+20))
 
-	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(totalInitialDeposit))
+	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(totalSsnInitialDelegateZil))
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Addr1), ToAzil(20))
 
 	// Check delegate to the next cycle

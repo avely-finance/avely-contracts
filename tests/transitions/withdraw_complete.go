@@ -14,6 +14,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	readyBlocks := []string{}
 
 	p := tr.DeployAndUpgrade()
+	totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
 
 	p.Azil.UpdateWallet(sdk.Cfg.Key1)
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
@@ -25,10 +26,9 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
-	AssertSuccess(p.Azil.DrainBuffer(p.GetBuffer().Addr))
+	actions.NewAdminActions(GetLog()).DrainBuffer(p, p.Zimpl.GetLastRewardCycle())
 
-	p.Azil.UpdateWallet(sdk.Cfg.Key1)
-	tx, _ := AssertSuccess(p.Azil.WithdrawStakeAmt(ToAzil(10)))
+	tx, _ := AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(10)))
 
 	block1 := tx.Receipt.EpochNum
 	tx, _ = p.Azil.CompleteWithdrawal()
@@ -98,10 +98,10 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertEqual(withdrawal.TokenAmount.String(), "0")
 	AssertEqual(withdrawal.StakeAmount.String(), "0")
 
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1000))
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1000))
+	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil))
 	AssertEqual(Field(p.Azil, "tmp_complete_withdrawal_available"), "0")
-	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(1000))
+	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(totalSsnInitialDelegateZil))
 
 	AssertEqual(Field(p.Azil, "withdrawal_unbonded"), "{}")
 	AssertEqual(Field(p.Azil, "withdrawal_pending"), "{}")
