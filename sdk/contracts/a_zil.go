@@ -165,6 +165,13 @@ func (a *AZil) GetAutorestakeAmount() *big.Int {
 	return state.Dig("result.autorestakeamount").BigInt()
 }
 
+func (a *AZil) GetSsnWhitelist() []string {
+	partialState := a.Contract.SubState("ssn_addresses", []string{})
+	state := NewState(partialState)
+	ssnAddrs := state.Dig("result.ssn_addresses").ArrayString()
+	return ssnAddrs
+}
+
 func (a *AZil) GetSsnIndex() *big.Int {
 	rawState := a.Contract.SubState("ssn_index", []string{})
 	state := NewState(rawState)
@@ -334,6 +341,17 @@ func (a *AZil) CompleteWithdrawal() (*transaction.Transaction, error) {
 	return a.Call("CompleteWithdrawal", args, "0")
 }
 
+func (a *AZil) ConsolidateInHolder(buffer_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"buffer_addr",
+			"ByStr20",
+			buffer_addr,
+		},
+	}
+	return a.Call("ConsolidateInHolder", args, "0")
+}
+
 func (a *AZil) ZilBalanceOf(addr string) *big.Int {
 	azilPriceFloat := a.GetAzilPrice()
 	balance := a.BalanceOf(addr)
@@ -344,6 +362,33 @@ func (a *AZil) ZilBalanceOf(addr string) *big.Int {
 	zilBalanceFloat.Int(result) // store converted number in result
 
 	return result
+}
+
+func (a *AZil) ClaimRewardsBuffer(buffer, ssn string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"buffer",
+			"ByStr20",
+			buffer,
+		},
+		{
+			"ssn",
+			"ByStr20",
+			ssn,
+		},
+	}
+	return a.Call("ClaimRewardsBuffer", args, "0")
+}
+
+func (a *AZil) ClaimRewardsHolder(ssn string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssn",
+			"ByStr20",
+			ssn,
+		},
+	}
+	return a.Call("ClaimRewardsHolder", args, "0")
 }
 
 func (a *AZil) ClaimRewardsSuccessCallBack() (*transaction.Transaction, error) {

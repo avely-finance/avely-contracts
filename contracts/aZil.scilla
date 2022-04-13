@@ -17,7 +17,8 @@ type Error =
   | BufferNotDrained
   | BufferOrHolderValidationFailed
   | BuffersEmpty
-  | CantFetchZimplBufferExistsAtSSN
+  | CantFetchZimplDelegExists
+  | CantFetchZimplDelegSsnExists
   | CantFetchZimplFields
   | ChownStakeCantFetchRemote
   | ChownStakeReDelegateSameSsn
@@ -56,7 +57,8 @@ let make_error =
       | BufferNotDrained                 => "BufferNotDrained"
       | BufferOrHolderValidationFailed   => "BufferOrHolderValidationFailed"
       | BuffersEmpty                     => "BuffersEmpty"
-      | CantFetchZimplBufferExistsAtSSN  => "CantFetchZimplBufferExistsAtSSN"
+      | CantFetchZimplDelegExists        => "CantFetchZimplDelegExists"
+      | CantFetchZimplDelegSsnExists     => "CantFetchZimplDelegSsnExists2"
       | CantFetchZimplFields             => "CantFetchZimplFields"
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
       | ChownStakeReDelegateSameSsn      => "ChownStakeReDelegateSameSsn"
@@ -286,11 +288,14 @@ field ssn_index: Uint128 = uint128_zero
 field tmp_delegator                     : Option ByStr20 = None {ByStr20}
 field tmp_stake_delegate_amount         : Uint128        = uint128_zero
 field tmp_complete_withdrawal_available : Uint128        = uint128_zero
-field tmp_buffer_exists_at_ssn          : Bool           = False
 field tmp_buffer                        : ByStr20        = bystr20_zero
 field tmp_ssn_addr_in                   : ByStr20        = bystr20_zero
 field tmp_ssn_addr_out                  : ByStr20        = bystr20_zero
 field tmp_bnum                          : BNum           = BNum 0
+(* flag of existence ssnlist.deposit_amt_deleg[deleg][ssn] *)
+field tmp_deleg_ssn_exists              : Bool           = False
+(* flag of existence ssnlist.deposit_amt_deleg[deleg] *)
+field tmp_deleg_exists                  : Bool           = False
 
 field local_bnum_req                    : Uint128        = Uint128 35000
 field local_lastrewardcycle             : Uint32         = uint32_one
@@ -364,6 +369,17 @@ procedure RequireBuffers(buffers: List ByStr20)
     error = BuffersEmpty;
     ThrowError error
   | False =>
+  end
+end
+
+procedure RequireBuffer(address: ByStr20)
+  buffers_addrs <- buffers_addresses;
+  is_buffer = is_buffer_addr buffers_addrs address;
+  match is_buffer with
+  | True =>
+  | False =>
+    e = BufferAddrUnknown;
+    ThrowError e
   end
 end
 
@@ -467,8 +483,8 @@ procedure FetchRemoteZimplFields()
   end
 end
 
-(* check if buffer address exists at deposit_amt_deleg map of ssnlist contract *)
-procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
+(* check if delegator address exists at deposit_amt_deleg map of ssnlist contract *)
+procedure FetchZimplDelegExists(deleg: ByStr20)
   implAddr <- zimpl_address;
   implAddrTypeTest <- & implAddr as ByStr20 with contract
     field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128),
@@ -478,15 +494,36 @@ procedure FetchRemoteBufferExistsAtSSN(buffer_addr: ByStr20)
   | Some z =>
     lrc <- & z.lastrewardcycle;
     local_lastrewardcycle := lrc;
-    o_deposit_amt_deleg <- & z.deposit_amt_deleg[buffer_addr];
+    o_deposit_amt_deleg <- & z.deposit_amt_deleg[deleg];
     match o_deposit_amt_deleg with
     | Some amt =>
-      tmp_buffer_exists_at_ssn := true
+      tmp_deleg_exists := true
     | None =>
-      tmp_buffer_exists_at_ssn := false
+      tmp_deleg_exists := false
     end
   | None =>
-      e = CantFetchZimplBufferExistsAtSSN;
+      e = CantFetchZimplDelegExists;
+      ThrowError e
+  end
+end
+
+(* check if delegator/ssn addresses exists at deposit_amt_deleg map of ssnlist contract *)
+procedure FetchZimplDelegSsnExists(deleg: ByStr20, ssnaddr: ByStr20)
+  implAddr <- zimpl_address;
+  implAddrTypeTest <- & implAddr as ByStr20 with contract
+    field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128)
+  end;
+  match implAddrTypeTest with
+  | Some z =>
+    o_deposit_amt_deleg <- & z.deposit_amt_deleg[deleg][ssnaddr];
+    match o_deposit_amt_deleg with
+    | Some amt =>
+      tmp_deleg_ssn_exists := true
+    | None =>
+      tmp_deleg_ssn_exists := false
+    end
+  | None =>
+      e = CantFetchZimplDelegSsnExists;
       ThrowError e
   end
 end
@@ -542,10 +579,17 @@ procedure BufferDelegate(amount: Uint128)
   send msgs
 end
 
-procedure ClaimRewards(addr: ByStr20, ssnaddr: ByStr20)
-  msg = { _tag: "ClaimRewards"; _recipient: addr; _amount: uint128_zero; ssnaddr: ssnaddr };
-  msgs = one_msg msg;
-  send msgs
+procedure ClaimRewards(deleg: ByStr20, ssnaddr: ByStr20)
+  FetchZimplDelegSsnExists deleg ssnaddr;
+  var_deleg_ssn_exists <- tmp_deleg_ssn_exists;
+  match var_deleg_ssn_exists with
+  | True =>
+    msg = { _tag: "ClaimRewards"; _recipient: deleg; _amount: uint128_zero; ssnaddr: ssnaddr };
+    msgs = one_msg msg;
+    send msgs
+  | False =>
+    (* we wont send ClaimRewards message, because we'll get ssnlist.DelegDoesNotExistAtSSN error *)
+  end
 end
 
 procedure RequestDelegatorSwap(from: ByStr20, to: ByStr20)
@@ -974,41 +1018,40 @@ transition ChangeSSNs(new_ssn_addresses: List ByStr20)
   ssn_addresses := new_ssn_addresses
 end
 
-(* claims buffer/holder rewards; transfer funds from buffer to holder *)
-transition DrainBuffer(buffer_addr: ByStr20)
+transition ClaimRewardsHolder(ssn: ByStr20)
   RequireAdmin;
-  buffers_addrs <- buffers_addresses;
-  is_buffer = is_buffer_addr buffers_addrs buffer_addr;
-
-  match is_buffer with
-  | True =>
-    holder_addr <- holder_address;
-
-    GetSsnAddressForOutput;
-    ssnaddr <- tmp_ssn_addr_out;
-
-    ClaimRewards holder_addr ssnaddr;
-    FetchRemoteBufferExistsAtSSN buffer_addr;
-    (* local_lastrewardcycle updated in FetchRemoteBufferExistsAtSSN *)
-    lrc <- local_lastrewardcycle;
-    RequireNotDrainedBuffer buffer_addr lrc;
-    var_buffer_exists <- tmp_buffer_exists_at_ssn;
-    match var_buffer_exists with
-    | True =>
-      ClaimRewards buffer_addr ssnaddr;
-      RequestDelegatorSwap buffer_addr holder_addr;
-      ConfirmDelegatorSwap buffer_addr holder_addr;
-      tmp_buffer_exists_at_ssn := false
-    | False =>
-    end;
-    (* we should have it here after match, because even for False case we should mark buffer as drained at the cycle *)
-    buffer_drained_cycle[buffer_addr] := lrc
-  | False =>
-    e = BufferAddrUnknown;
-    ThrowError e
-  end
+  holder <- holder_address;
+  ClaimRewards holder ssn
 end
 
+transition ClaimRewardsBuffer(buffer: ByStr20, ssn: ByStr20)
+  RequireAdmin;
+  RequireBuffer buffer;
+  ClaimRewards buffer ssn
+end
+
+(* transfer strake from buffer to holder; should be called after claiming rewards from buffer/holder *)
+transition ConsolidateInHolder(buffer_addr: ByStr20)
+  RequireAdmin;
+  RequireBuffer buffer_addr;
+  (* RequireClaimedRewards? *)
+
+  FetchZimplDelegExists buffer_addr; (* we're sure that holder exists there *)
+  (* local_lastrewardcycle updated in FetchZimplDelegExists *)
+  lrc <- local_lastrewardcycle;
+  RequireNotDrainedBuffer buffer_addr lrc;
+  var_buffer_exists <- tmp_deleg_exists;
+  match var_buffer_exists with
+  | True =>
+    holder_addr <- holder_address;
+    RequestDelegatorSwap buffer_addr holder_addr;
+    ConfirmDelegatorSwap buffer_addr holder_addr;
+    tmp_deleg_exists := false
+  | False =>
+  end;
+  (* we should have it here after match, because even for False case we should mark buffer as drained at the cycle *)
+  buffer_drained_cycle[buffer_addr] := lrc
+end
 
 transition ClaimRewardsSuccessCallBack()
   RequireBufferOrHolder;

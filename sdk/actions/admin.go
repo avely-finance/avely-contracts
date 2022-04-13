@@ -36,14 +36,53 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int) error {
 	}
 
 	if needDrain {
-		tx, err := p.Azil.DrainBuffer(bufferToDrain.Addr)
-		if err != nil {
-			a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt}).Error("Buffer drain is failed")
 
-			return errors.New("Buffer drain is failed")
-		} else {
-			a.log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Buffer successfully drained")
+		//FIXME: how to be sure that there are no rewards on possibly un-whitelisted SSNs?
+		ssnlist := p.Azil.GetSsnWhitelist()
+
+		//claim rewards from holder
+		for _, ssn := range ssnlist {
+			tx, err := p.Azil.ClaimRewardsHolder(ssn)
+			if err != nil {
+				a.log.WithFields(logrus.Fields{"tx": tx.ID, "ssn_address": ssn, "error": tx.Receipt}).Error("ClaimRewardsHolder failed")
+				return errors.New("Buffer drain is failed at ClaimRewardsHolder step")
+			} else {
+				a.log.WithFields(logrus.Fields{"tx": tx.ID, "ssn_address": ssn}).Info("ClaimRewardsHolder success")
+			}
 		}
+
+		//claim rewards from buffer
+		for _, ssn := range ssnlist {
+			tx, err := p.Azil.ClaimRewardsBuffer(bufferToDrain.Addr, ssn)
+			if err != nil {
+				a.log.WithFields(logrus.Fields{
+					"tx":             tx.ID,
+					"buffer_address": bufferToDrain.Addr,
+					"ssn_address":    ssn,
+					"error":          tx.Receipt,
+				}).Error("ClaimRewardsBuffer failed")
+				return errors.New("Buffer drain is failed at ClaimRewardsBuffer step")
+			} else {
+				a.log.WithFields(logrus.Fields{
+					"tx":             tx.ID,
+					"buffer_address": bufferToDrain.Addr,
+					"ssn_address":    ssn,
+				}).Info("ClaimRewardsBuffer success")
+			}
+		}
+
+		//transfer stake from buffer to holder
+		tx, err := p.Azil.ConsolidateInHolder(bufferToDrain.Addr)
+		if err != nil {
+			a.log.WithFields(logrus.Fields{
+				"tx":             tx.ID,
+				"buffer_address": bufferToDrain.Addr,
+				"error":          tx.Receipt,
+			}).Error("ConsolidateInHolder failed")
+			return errors.New("Buffer drain is failed at ConsolidateInHolder step")
+		}
+
+		a.log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Buffer successfully drained")
 	} else {
 		a.log.Debug("No need to drain buffer")
 	}
