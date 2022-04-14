@@ -374,8 +374,7 @@ func chownStakeNextCycle(p *contracts.Protocol) {
 }
 
 func chownStakeNextCycleOffchain(p *contracts.Protocol) {
-	buffer := p.GetBufferToDrain()
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).DrainBuffer(buffer.Addr))
+	actions.NewAdminActions(GetLog()).DrainBufferAuto(p)
 	//AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate())
 }
 
