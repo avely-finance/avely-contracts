@@ -96,7 +96,7 @@ func (tr *Transitions) RunAll() {
 	tr.MultisigWalletTests()
 
 	if !IsCI() {
-		//tr.DrainBuffer()
+		tr.DrainBuffer()
 		tr.CompleteWithdrawalSuccess()
 		tr.WithdrawStakeAmount()
 	}
