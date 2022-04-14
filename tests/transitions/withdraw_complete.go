@@ -26,7 +26,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
-	actions.NewAdminActions(GetLog()).DrainBuffer(p, p.Zimpl.GetLastRewardCycle())
+	actions.NewAdminActions(GetLog()).DrainBufferAuto(p)
 
 	tx, _ := AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(10)))
 

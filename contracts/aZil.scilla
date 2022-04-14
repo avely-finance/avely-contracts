@@ -1020,6 +1020,7 @@ end
 
 transition ClaimRewardsHolder(ssn: ByStr20)
   RequireAdmin;
+  (* RequireWhitelistedSsn ssn ? *)
   holder <- holder_address;
   ClaimRewards holder ssn
 end
@@ -1027,10 +1028,11 @@ end
 transition ClaimRewardsBuffer(buffer: ByStr20, ssn: ByStr20)
   RequireAdmin;
   RequireBuffer buffer;
+  (* RequireWhitelistedSsn ssn ? *)
   ClaimRewards buffer ssn
 end
 
-(* transfer strake from buffer to holder; should be called after claiming rewards from buffer/holder *)
+(* transfer stake from buffer to holder; should be called after claiming rewards from buffer/holder *)
 transition ConsolidateInHolder(buffer_addr: ByStr20)
   RequireAdmin;
   RequireBuffer buffer_addr;
