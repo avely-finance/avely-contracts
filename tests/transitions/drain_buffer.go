@@ -20,6 +20,7 @@ func (tr *Transitions) DrainBuffer() {
 	buffer3, _ := p.DeployBuffer()
 	p.Buffers = append(p.Buffers, buffer2, buffer3)
 	p.SyncBuffers()
+	p.SetupShortcuts(GetLog())
 
 	rewardsFee := "1000" //10% of feeDenom=10000
 	treasuryAddr := sdk.Cfg.Addr3
