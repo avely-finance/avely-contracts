@@ -86,17 +86,13 @@ func (tr *Transitions) RunAll() {
 	tr.IsBufferOrHolder()
 	tr.Pause()
 	tr.PerformAutoRestake()
-	//tr.ChownStakeSuccess()
-	//tr.ChownStakeManySsnSuccess()
-	//tr.ChownStakeZimplErrors()
-	//tr.ChownStakeAzilErrors()
-	//tr.ChownStakeRequireDrainBuffer()
+	tr.ChownStakeAll()
 	tr.AddToSwap()
 	tr.TransferFrom()
 	tr.MultisigWalletTests()
 
 	if !IsCI() {
-		//tr.DrainBuffer()
+		tr.DrainBuffer()
 		tr.CompleteWithdrawalSuccess()
 		tr.WithdrawStakeAmount()
 	}

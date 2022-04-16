@@ -18,6 +18,13 @@ type Zimpl struct {
 	Contract
 }
 
+func (z *Zimpl) GetSsnList() []string {
+	partialState := z.Contract.SubState("ssnlist", []string{})
+	state := NewState(partialState)
+	ssnAddrs := state.Dig("result.ssnlist|@keys").ArrayString()
+	return ssnAddrs
+}
+
 func (z *Zimpl) GetDepositAmtDeleg(delegator string) map[string]*big.Int {
 	delegator = strings.ToLower(delegator)
 	rawState := z.Contract.SubState("deposit_amt_deleg", []string{delegator})
