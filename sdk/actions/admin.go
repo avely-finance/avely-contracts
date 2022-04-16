@@ -5,55 +5,122 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
 	"github.com/sirupsen/logrus"
 )
 
+type TxLog struct {
+	Tx  *transaction.Transaction
+	Err error
+}
+
 type AdminActions struct {
-	log *core.Log
+	log      *core.Log
+	testMode bool
+	TxLogMap map[string]TxLog
 }
 
 func NewAdminActions(log *core.Log) *AdminActions {
 	return &AdminActions{log: log}
 }
 
-func (a *AdminActions) DrainBuffer(p *Protocol, lrc int) error {
+func (a *AdminActions) SetTestMode(mode bool) {
+	a.testMode = mode
+	if a.testMode {
+		a.TxLogMap = make(map[string]TxLog)
+	} else {
+		a.TxLogMap = nil
+	}
+}
+
+func (a *AdminActions) SaveTx(step string, tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+	if a.testMode {
+		a.TxLogMap[step] = TxLog{tx, err}
+	}
+	return tx, err
+}
+
+func (a *AdminActions) DrainBufferAuto(p *Protocol) error {
+	lrc := p.Zimpl.GetLastRewardCycle()
 	bufferToDrain := p.GetBufferToDrain()
+	return a.DrainBuffer(p, lrc, bufferToDrain.Addr)
+}
+
+func (a *AdminActions) DrainBufferByCycle(p *Protocol, lrc int) error {
+	bufferToDrain := p.GetBufferToDrain()
+	return a.DrainBuffer(p, lrc, bufferToDrain.Addr)
+}
+
+func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) error {
 
 	buffers := p.Azil.GetDrainedBuffers()
-	needDrain := false
-
-	if lastDrained, ok := buffers[bufferToDrain.Addr]; ok {
-		if lastDrained.Int() != int64(lrc) {
-			needDrain = true
-		}
-	} else {
+	if lastDrained, ok := buffers[bufferToDrain]; !ok {
 		a.log.Info("Buffer is never drained; Let's do this first time")
-
-		needDrain = true
-	}
-
-	if needDrain {
-		tx, err := p.Azil.DrainBuffer(bufferToDrain.Addr)
-		if err != nil {
-			a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt}).Error("Buffer drain is failed")
-
-			return errors.New("Buffer drain is failed")
-		} else {
-			a.log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Buffer successfully drained")
-		}
-	} else {
+	} else if lastDrained.Int() >= int64(lrc) {
 		a.log.Debug("No need to drain buffer")
+		return nil
 	}
+
+	ssnlist := p.Azil.GetSsnWhitelist()
+
+	//claim rewards from holder
+	for _, ssn := range ssnlist {
+		tx, err := p.Azil.ClaimRewardsHolder(ssn)
+		a.SaveTx("ClaimRewardsHolder_"+ssn, tx, err)
+		if err != nil {
+			a.log.WithFields(logrus.Fields{"tx": tx.ID, "ssn_address": ssn, "error": tx.Receipt}).Error("ClaimRewardsHolder failed")
+			return errors.New("Buffer drain is failed at ClaimRewardsHolder step")
+		} else {
+			a.log.WithFields(logrus.Fields{"tx": tx.ID, "ssn_address": ssn}).Info("ClaimRewardsHolder success")
+		}
+	}
+
+	//claim rewards from buffer
+	for _, ssn := range ssnlist {
+		tx, err := p.Azil.ClaimRewardsBuffer(bufferToDrain, ssn)
+		a.SaveTx("ClaimRewardsBuffer_"+ssn, tx, err)
+		if err != nil {
+			a.log.WithFields(logrus.Fields{
+				"tx":             tx.ID,
+				"buffer_address": bufferToDrain,
+				"ssn_address":    ssn,
+				"error":          tx.Receipt,
+			}).Error("ClaimRewardsBuffer failed")
+			return errors.New("Buffer drain is failed at ClaimRewardsBuffer step")
+		} else {
+			a.log.WithFields(logrus.Fields{
+				"tx":             tx.ID,
+				"buffer_address": bufferToDrain,
+				"ssn_address":    ssn,
+			}).Info("ClaimRewardsBuffer success")
+		}
+	}
+
+	//transfer stake from buffer to holder
+	tx, err := p.Azil.ConsolidateInHolder(bufferToDrain)
+	a.SaveTx("ConsolidateInHolder", tx, err)
+	if err != nil {
+		a.log.WithFields(logrus.Fields{
+			"tx":             tx.ID,
+			"buffer_address": bufferToDrain,
+			"error":          tx.Receipt,
+		}).Error("ConsolidateInHolder failed")
+		return errors.New("Buffer drain is failed at ConsolidateInHolder step")
+	}
+
+	a.log.WithFields(logrus.Fields{
+		"buffer_address": bufferToDrain,
+		"tx":             tx.ID,
+	}).Info("ConsolidateInHolder Success; buffer successfully drained")
 
 	return nil
 }
 
 func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 	activeBuffer := p.GetActiveBuffer()
-	aZilSsnAddr := strings.ToLower(p.Azil.Sdk.Cfg.AzilSsnAddress)
 	a.log.WithFields(logrus.Fields{"active_buffer": activeBuffer.Addr}).Info("Active Buffer")
 
 	mapSsnAmount := p.Zimpl.GetDepositAmtDeleg(activeBuffer.Addr)
@@ -62,20 +129,33 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 		return nil
 	}
 
-	for ssn, amount := range mapSsnAmount {
+	for fromSsn, amount := range mapSsnAmount {
 		amountStr := amount.String()
-		if ssn != aZilSsnAddr {
-			if showOnly {
-				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Debug("Need to run ChownStakeReDelegate")
-			} else if tx, err := p.Azil.ChownStakeReDelegate(ssn, amountStr); err != nil {
-				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID, "error": tx.Receipt}).Error("ChownStakeReDelegate failed")
-
-				return errors.New("ChownStakeReDelegate failed")
-			} else {
-				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID}).Info("ChownStakeReDelegate OK")
-			}
+		ssnForInput := p.GetSsnAddressForInput()
+		if showOnly {
+			a.log.WithFields(logrus.Fields{
+				"from_ssn": fromSsn,
+				"to_ssn":   ssnForInput,
+				"amount":   amountStr,
+			}).Debug("Need to call Azil.ChownStakeReDelegate transition")
+		} else if tx, err := p.Azil.ChownStakeReDelegate(fromSsn, amountStr); err != nil {
+			a.log.WithFields(logrus.Fields{
+				"from_ssn": fromSsn,
+				"to_ssn":   ssnForInput,
+				"amount":   amountStr,
+				"tx":       tx.ID,
+				"error":    tx.Receipt,
+			}).Error("ChownStakeReDelegate failed")
+			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
+			return errors.New("ChownStakeReDelegate failed")
 		} else {
-			a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Info("Skip ChownStakeReDelegate")
+			a.log.WithFields(logrus.Fields{
+				"from_ssn": fromSsn,
+				"to_ssn":   ssnForInput,
+				"amount":   amountStr,
+				"tx":       tx.ID,
+			}).Info("ChownStakeReDelegate OK")
+			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
 		}
 	}
 
