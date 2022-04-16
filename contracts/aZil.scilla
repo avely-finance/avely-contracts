@@ -57,7 +57,7 @@ let make_error =
       | BufferOrHolderValidationFailed   => "BufferOrHolderValidationFailed"
       | BuffersEmpty                     => "BuffersEmpty"
       | CantFetchZimplDelegExists        => "CantFetchZimplDelegExists"
-      | CantFetchZimplDelegSsnExists     => "CantFetchZimplDelegSsnExists2"
+      | CantFetchZimplDelegSsnExists     => "CantFetchZimplDelegSsnExists"
       | CantFetchZimplFields             => "CantFetchZimplFields"
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
       | ChownStakeSwapRequestNotFound    => "ChownStakeSwapRequestNotFound"
@@ -1018,7 +1018,6 @@ end
 
 transition ClaimRewardsHolder(ssn: ByStr20)
   RequireAdmin;
-  (* RequireWhitelistedSsn ssn ? *)
   holder <- holder_address;
   ClaimRewards holder ssn
 end
@@ -1026,7 +1025,6 @@ end
 transition ClaimRewardsBuffer(buffer: ByStr20, ssn: ByStr20)
   RequireAdmin;
   RequireBuffer buffer;
-  (* RequireWhitelistedSsn ssn ? *)
   ClaimRewards buffer ssn
 end
 
