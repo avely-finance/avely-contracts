@@ -90,7 +90,7 @@ func main() {
 
 		//new reward cycle
 		case "drain_buffer":
-			drainBuffer(p, addr)
+			action.DrainBuffer(p, p.Zimpl.GetLastRewardCycle(), addr)
 		case "redelegate":
 			showOnly := false
 			action.ChownStakeReDelegate(p, showOnly)
@@ -250,15 +250,6 @@ func syncBuffers(p *Protocol) {
 
 func changeSSNs(p *Protocol) {
 	p.ChangeSSNs()
-}
-
-func drainBuffer(p *Protocol, buffer_addr string) {
-	tx, err := p.Azil.DrainBuffer(buffer_addr)
-
-	if err != nil {
-		log.WithFields(logrus.Fields{"buffer_addr": buffer_addr, "error": err.Error()}).Fatal("Drain buffer failed")
-	}
-	log.WithFields(logrus.Fields{"buffer_addr": buffer_addr, "tx": tx.ID}).Info("Drain is successfully completed")
 }
 
 func showRewards(p *Protocol, ssn, deleg string) {

@@ -10,8 +10,6 @@ import (
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
-const InitialSsnDeposit = 1000
-
 type Protocol struct {
 	Zproxy  *Zproxy
 	Zimpl   *Zimpl
@@ -39,9 +37,7 @@ func (p *Protocol) DeployBuffer() (*BufferContract, error) {
 }
 
 func (p *Protocol) GetSsnAddressForInput() string {
-	partialState := p.Azil.Contract.SubState("ssn_addresses", []string{})
-	state := NewState(partialState)
-	ssnAddrs := state.Dig("result.ssn_addresses").ArrayString()
+	ssnAddrs := p.Azil.GetSsnWhitelist()
 	ssnIndex := p.Azil.GetSsnIndex()
 	i := ssnIndex.Uint64() % uint64(len(ssnAddrs))
 	return ssnAddrs[i]
@@ -187,12 +183,12 @@ func (p *Protocol) SetupZProxy() {
 	}
 	check(p.Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
 	check(p.Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateStakingParameters(ToZil(InitialSsnDeposit), ToZil(10))) //minstake (ssn not active if less), mindelegstake
+	check(p.Zproxy.UpdateStakingParameters(ToZil(sdk.Cfg.SsnInitialDelegateZil), ToZil(10))) //minstake (ssn not active if less), mindelegstake
 	check(p.Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake to each
 	for i := 0; i < len(sdk.Cfg.SsnAddrs); i++ {
-		check(p.Azil.DelegateStake(ToZil(InitialSsnDeposit)))
+		check(p.Azil.DelegateStake(ToZil(sdk.Cfg.SsnInitialDelegateZil)))
 	}
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
