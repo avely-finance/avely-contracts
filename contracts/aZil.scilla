@@ -481,7 +481,7 @@ procedure FetchRemoteZimplFields()
   end
 end
 
- (* check if delegator address exists at deposit_amt_deleg map of ssnlist contract *)
+(* check if delegator address exists at deposit_amt_deleg map of ssnlist contract *)
 procedure FetchZimplDelegExists(deleg: ByStr20)
   implAddr <- zimpl_address;
   implAddrTypeTest <- & implAddr as ByStr20 with contract
