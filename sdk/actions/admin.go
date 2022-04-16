@@ -64,7 +64,6 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 		return nil
 	}
 
-	//FIXME: how to be sure that there are no rewards on possibly un-whitelisted SSNs?
 	ssnlist := p.Azil.GetSsnWhitelist()
 
 	//claim rewards from holder
