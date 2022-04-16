@@ -9,6 +9,14 @@ import (
 
 //ChownStakeConfirmSwap transition called with VerifierKey in order to demonstrate that it could be called by any user
 
+func (tr *Transitions) ChownStakeAll() {
+	tr.ChownStakeSuccess()
+	tr.ChownStakeManySsnSuccess()
+	tr.ChownStakeAzilErrors()
+	tr.ChownStakeZimplErrors()
+	tr.ChownStakeRequireDrainBuffer()
+}
+
 func (tr *Transitions) ChownStakeSuccess() {
 	Start("Chown Stake Success")
 
@@ -80,39 +88,47 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1), Field(p.Azil, "balances", addr2)))
 
 	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
+	//key2 delegates through Azil
+	//this isn't a part of transfer process, but delegate can happen before offchain-tool calls
+	AssertSuccess(p.Azil.WithUser(key2).DelegateStake(stake2_azil))
+	tools := chownStakeNextCycleOffchain(p)
 
 	//nextBuffer becomes active
 	activeBuffer := p.GetActiveBuffer().Addr
 	AssertEqual(nextBuffer, activeBuffer)
 
-	//key2 delegates through Azil
-	//this isn't a part of transfer process, but delegate can happen before offchain-tool calls
-	AssertSuccess(p.Azil.WithUser(key2).DelegateStake(stake2_azil))
-
-	showOnly := true
-	actions.NewAdminActions(GetLog()).ChownStakeReDelegate(p, showOnly)
-
-	//offchain tool calls ChownStakeReDelegate for each SSN (excepting AzilSSN) when new cycle starts
-	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[1], StrAdd(stake1_1, stake2_1)))
+	//offchain tool calls ChownStakeReDelegate for each SSN when new cycle starts
+	tx = tools.TxLogMap["ChownStakeReDelegate_"+ssn[1]].Tx
 	AssertTransition(tx, Transition{
 		p.Zimpl.Addr, //sender
 		"ReDelegateStakeSuccessCallBack",
 		activeBuffer,
 		"0",
-		ParamsMap{"ssnaddr": ssn[1], "tossn": sdk.Cfg.AzilSsnAddress, "amount": StrAdd(stake1_1, stake2_1)},
+		ParamsMap{"ssnaddr": ssn[1], "amount": StrAdd(stake1_1, stake2_1)},
 	})
-	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssn[2], stake1_2))
+	tx = tools.TxLogMap["ChownStakeReDelegate_"+ssn[2]].Tx
 	AssertTransition(tx, Transition{
 		p.Zimpl.Addr, //sender
 		"ReDelegateStakeSuccessCallBack",
 		activeBuffer,
 		"0",
-		ParamsMap{"ssnaddr": ssn[2], "tossn": sdk.Cfg.AzilSsnAddress, "amount": stake1_2},
+		ParamsMap{"ssnaddr": ssn[2], "amount": stake1_2},
 	})
 
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrAdd(stake1_1, stake1_2, stake2_1, stake2_azil))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, activeBuffer), StrAdd(stake1_1, stake1_2, stake2_1, stake2_azil))
+	total := "0"
+	for _, ssn := range sdk.Cfg.SsnAddrs {
+		if tmp := Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, ssn); tmp != "" {
+			total = StrAdd(total, tmp)
+		}
+	}
+	AssertEqual(total, StrAdd(stake1_1, stake1_2, stake2_1, stake2_azil))
+	total = "0"
+	for _, ssn := range sdk.Cfg.SsnAddrs {
+		if tmp := Field(p.Zimpl, "ssn_deleg_amt", ssn, activeBuffer); tmp != "" {
+			total = StrAdd(total, tmp)
+		}
+	}
+	AssertEqual(total, StrAdd(stake1_1, stake1_2, stake2_1, stake2_azil))
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2, stake2_1, stake2_azil))
 	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1), Field(p.Azil, "balances", addr2)))
 }
@@ -161,23 +177,21 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	activeBuffer := p.GetActiveBuffer().Addr
 	AssertEqual(nextBuffer, activeBuffer)
 
-	showOnly := true
-	actions.NewAdminActions(GetLog()).ChownStakeReDelegate(p, showOnly)
-
-	//offchain tool calls ChownStakeReDelegate for each ssn/amount
-	activeSsn := p.GetSsnAddressForInput()
-	for _, ssnaddr := range ssnlist {
-		tx, err := p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate(ssnaddr, userStake)
-		if activeSsn == ssnaddr {
-			AssertError(tx, "ChownStakeReDelegateSameSsn")
-		} else {
-			AssertSuccess(tx, err)
+	//check balances
+	total := "0"
+	for _, ssn := range sdk.Cfg.SsnAddrs {
+		if tmp := Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, ssn); tmp != "" {
+			total = StrAdd(total, tmp)
 		}
 	}
-
-	//check balances
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", activeBuffer, sdk.Cfg.AzilSsnAddress), StrMul(userStake, "6"))
-	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", sdk.Cfg.AzilSsnAddress, activeBuffer), StrMul(userStake, "6"))
+	AssertEqual(total, StrMul(userStake, "6"))
+	total = "0"
+	for _, ssn := range sdk.Cfg.SsnAddrs {
+		if tmp := Field(p.Zimpl, "ssn_deleg_amt", ssn, activeBuffer); tmp != "" {
+			total = StrAdd(total, tmp)
+		}
+	}
+	AssertEqual(total, StrMul(userStake, "6"))
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(totalstakeamount, StrMul(userStake, "6")))
 	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1)))
 }
@@ -311,9 +325,9 @@ func chownStakeDefineParams(p *contracts.Protocol) (string, string, string, stri
 	addr1 := sdk.Cfg.Addr1
 	key2 := sdk.Cfg.Key2
 	addr2 := sdk.Cfg.Addr2
-	ssn := []string{"0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000001",
-		"0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000003",
-		"0x0000000000000000000000000000000000000004", "0x0000000000000000000000000000000000000005"}
+	ssn := []string{"0x1000000000000000000000000000000000000000", "0x1000000000000000000000000000000000000001",
+		"0x1000000000000000000000000000000000000002", "0x1000000000000000000000000000000000000003",
+		"0x1000000000000000000000000000000000000004", "0x1000000000000000000000000000000000000005"}
 	minStake := Field(p.Zimpl, "minstake")
 	userStake := ToZil(10)
 	return key1, addr1, key2, addr2, ssn, minStake, userStake
@@ -355,28 +369,32 @@ func chownStakeSetup(p *contracts.Protocol) {
 }
 
 func chownStakeNextCycle(p *contracts.Protocol) {
-	_, _, _, _, ssn, _, _ := chownStakeDefineParams(p)
+	chownStakeDefineParams(p)
 	prevWallet := p.Zproxy.Contract.Wallet
 
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-	ssnRewardFactor := map[string]string{
-		ssn[0]:                 "100",
-		ssn[1]:                 "100",
-		ssn[2]:                 "100",
-		ssn[3]:                 "100",
-		ssn[4]:                 "100",
-		ssn[5]:                 "100",
-		sdk.Cfg.AzilSsnAddress: sdk.Cfg.AzilSsnRewardShare,
+
+	zimplSsnList := p.Zimpl.GetSsnList()
+	ssnRewardFactor := make(map[string]string)
+	for _, ssn := range zimplSsnList {
+		ssnRewardFactor[ssn] = "100"
 	}
+	ssnRewardFactor[sdk.Cfg.AzilSsnAddress] = sdk.Cfg.AzilSsnRewardShare
 	AssertSuccess(p.Zproxy.AssignStakeRewardList(ssnRewardFactor, "10000"))
 
 	p.Zproxy.Contract.Wallet = prevWallet
 }
 
-func chownStakeNextCycleOffchain(p *contracts.Protocol) {
-	buffer := p.GetBufferToDrain()
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).DrainBuffer(buffer.Addr))
-	//AssertSuccess(p.Azil.WithUser(sdk.Cfg.AdminKey).ChownStakeReDelegate())
+func chownStakeNextCycleOffchain(p *contracts.Protocol) *actions.AdminActions {
+	tools := actions.NewAdminActions(GetLog())
+	tools.SetTestMode(true)
+	prevWallet := p.Azil.Contract.Wallet
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	tools.DrainBufferAuto(p)
+	showOnly := false
+	tools.ChownStakeReDelegate(p, showOnly)
+	p.Azil.Contract.Wallet = prevWallet
+	return tools
 }
 
 func (tr *Transitions) ChownStakeRequireDrainBuffer() {

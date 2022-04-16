@@ -18,7 +18,9 @@ func (tr *Transitions) IsAdmin() {
 	AssertError(tx, "AdminValidationFailed")
 	tx, _ = p.Azil.PerformAutoRestake()
 	AssertError(tx, "AdminValidationFailed")
-	tx, _ = p.Azil.DrainBuffer(p.GetBuffer().Addr)
+	tx, _ = p.Azil.ClaimRewardsHolder(sdk.Cfg.SsnAddrs[0])
+	AssertError(tx, "AdminValidationFailed")
+	tx, _ = p.Azil.ClaimRewardsBuffer(p.GetBuffer().Addr, sdk.Cfg.SsnAddrs[0])
 	AssertError(tx, "AdminValidationFailed")
 	readyBlocks := []string{}
 	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)

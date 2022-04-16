@@ -11,6 +11,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 
 	// deploy smart contract
 	p := tr.DeployAndUpgrade()
+	totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
 
 	/*******************************************************************************
 	 * 0. delegator (sdk.Cfg.Addr2) delegate 15 zil
@@ -41,7 +42,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	txn, _ = p.Azil.WithdrawStakeAmt(ToAzil(100))
 
 	AssertError(txn, "DelegHasNoSufficientAmt")
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1015))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil+15))
 
 	/*******************************************************************************
 	 * 2B. delegator send withdraw request, but it should fail because mindelegatestake
@@ -51,7 +52,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	txn, _ = p.Azil.WithdrawStakeAmt(ToAzil(10))
 
 	AssertError(txn, "DelegStakeNotEnough")
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1015))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil+15))
 
 	/*******************************************************************************
 	 * 3A. delegator withdrawing part of his deposit, it should success with "_eventname": "WithdrawStakeAmt"
@@ -72,8 +73,8 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	bnum1 := txn.Receipt.EpochNum
 
 	newDelegBalanceZil := p.Azil.ZilBalanceOf(sdk.Cfg.Addr2).String()
-	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(ToZil(1000), newDelegBalanceZil))
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1010))
+	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(ToZil(totalSsnInitialDelegateZil), newDelegBalanceZil))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil+10))
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Addr2), ToAzil(10))
 
 	withdrawal := Dig(p.Azil, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
@@ -91,10 +92,10 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	bnum2 := txn.Receipt.EpochNum
 	AssertEvent(txn, Event{p.Azil.Addr, "WithdrawStakeAmt",
 		ParamsMap{"withdraw_amount": ToAzil(10), "withdraw_stake_amount": ToZil(10)}})
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1000)) //0
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1000))    //0
+	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil)) //0
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil))    //0
 	//t.AssertEqual(Field(p.Azil, "balances"), "empty")
-	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(1000))
+	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(totalSsnInitialDelegateZil))
 	//there is holder's initial stake
 	//t.AssertEqual(p.Zproxy.Field("totalstakeamount"), "0")
 	if bnum1 == bnum2 {
