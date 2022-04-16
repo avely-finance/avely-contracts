@@ -68,19 +68,28 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 
 	//claim rewards from holder
 	for _, ssn := range ssnlist {
-		tx, err := p.Azil.ClaimRewardsHolder(ssn)
+		tx, err := p.Azil.ClaimRewards(p.Holder.Addr, ssn)
 		a.SaveTx("ClaimRewardsHolder_"+ssn, tx, err)
 		if err != nil {
-			a.log.WithFields(logrus.Fields{"tx": tx.ID, "ssn_address": ssn, "error": tx.Receipt}).Error("ClaimRewardsHolder failed")
-			return errors.New("Buffer drain is failed at ClaimRewardsHolder step")
+			a.log.WithFields(logrus.Fields{
+				"tx":             tx.ID,
+				"holder_address": p.Holder.Addr,
+				"ssn_address":    ssn,
+				"error":          tx.Receipt,
+			}).Error("ClaimRewards Holder failed")
+			return errors.New("Buffer drain is failed at ClaimRewards Holder step")
 		} else {
-			a.log.WithFields(logrus.Fields{"tx": tx.ID, "ssn_address": ssn}).Info("ClaimRewardsHolder success")
+			a.log.WithFields(logrus.Fields{
+				"tx":             tx.ID,
+				"holder_address": p.Holder.Addr,
+				"ssn_address":    ssn,
+			}).Info("ClaimRewards Holder success")
 		}
 	}
 
 	//claim rewards from buffer
 	for _, ssn := range ssnlist {
-		tx, err := p.Azil.ClaimRewardsBuffer(bufferToDrain, ssn)
+		tx, err := p.Azil.ClaimRewards(bufferToDrain, ssn)
 		a.SaveTx("ClaimRewardsBuffer_"+ssn, tx, err)
 		if err != nil {
 			a.log.WithFields(logrus.Fields{
