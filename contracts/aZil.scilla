@@ -413,12 +413,12 @@ procedure RequireDrainedBuffer(buffer_addr: ByStr20, cycle: Uint32)
   end
 end
 
-procedure RequireBufferOrHolder()
+procedure RequireBufferOrHolder(address: ByStr20)
   buffers_addrs <- buffers_addresses;
-  is_buffer = is_addr_in_list buffers_addrs _sender;
+  is_buffer = is_addr_in_list buffers_addrs address;
 
   holder <- holder_address;
-  is_holder = builtin eq _sender holder;
+  is_holder = builtin eq address holder;
 
   is_buffer_or_holder = orb is_buffer is_holder;
 
@@ -481,7 +481,7 @@ procedure FetchRemoteZimplFields()
   end
 end
 
-(* check if delegator address exists at deposit_amt_deleg map of ssnlist contract *)
+(* procedure checks existence of ssnlist.deposit_amt_deleg[deleg][ssnaddr]; we need it for safe rewards claiming *)
 procedure FetchZimplDelegExists(deleg: ByStr20)
   implAddr <- zimpl_address;
   implAddrTypeTest <- & implAddr as ByStr20 with contract
@@ -577,7 +577,7 @@ procedure BufferDelegate(amount: Uint128)
   send msgs
 end
 
-procedure ClaimRewards(deleg: ByStr20, ssnaddr: ByStr20)
+procedure ClaimRewardsProc(deleg: ByStr20, ssnaddr: ByStr20)
   FetchZimplDelegSsnExists deleg ssnaddr;
   var_deleg_ssn_exists <- tmp_deleg_ssn_exists;
   match var_deleg_ssn_exists with
@@ -1016,16 +1016,10 @@ transition ChangeSSNs(new_ssn_addresses: List ByStr20)
   ssn_addresses := new_ssn_addresses
 end
 
-transition ClaimRewardsHolder(ssn: ByStr20)
+transition ClaimRewards(buffer_or_holder: ByStr20, ssn: ByStr20)
   RequireAdmin;
-  holder <- holder_address;
-  ClaimRewards holder ssn
-end
-
-transition ClaimRewardsBuffer(buffer: ByStr20, ssn: ByStr20)
-  RequireAdmin;
-  RequireBuffer buffer;
-  ClaimRewards buffer ssn
+  RequireBufferOrHolder buffer_or_holder;
+  ClaimRewardsProc buffer_or_holder ssn
 end
 
 (* transfer stake from buffer to holder; should be called after claiming rewards from buffer/holder *)
@@ -1053,7 +1047,7 @@ transition ConsolidateInHolder(buffer_addr: ByStr20)
 end
 
 transition ClaimRewardsSuccessCallBack()
-  RequireBufferOrHolder;
+  RequireBufferOrHolder _sender;
   accept;
 
   (* take fee from rewards *)
@@ -1137,7 +1131,7 @@ transition DelegateStake()
 end
 
 transition DelegateStakeSuccessCallBack(amount: Uint128)
-  RequireBufferOrHolder;
+  RequireBufferOrHolder _sender;
 
   stake_delegate_amt <- tmp_stake_delegate_amount;
   o_delegator <- tmp_delegator;
@@ -1250,7 +1244,7 @@ transition CompleteWithdrawal()
 end
 
 transition CompleteWithdrawalSuccessCallBack()
-  RequireBufferOrHolder;
+  RequireBufferOrHolder _sender;
 
   accept;
   amount = _amount;
@@ -1375,7 +1369,7 @@ transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
     lrc <- local_lastrewardcycle;
     active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
 
-    ClaimRewards active_buffer from_ssn;
+    ClaimRewardsProc active_buffer from_ssn;
     BufferReDelegate active_buffer from_ssn ssnaddr amount
   end
 end
