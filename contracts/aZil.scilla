@@ -21,7 +21,6 @@ type Error =
   | CantFetchZimplDelegSsnExists
   | CantFetchZimplFields
   | ChownStakeCantFetchRemote
-  | ChownStakeReDelegateSameSsn
   | ChownStakeSwapRequestNotFound
   | ClaimWithdrawalNoUnbonded
   | CompleteWithdrawalFundsMismatch
@@ -58,10 +57,9 @@ let make_error =
       | BufferOrHolderValidationFailed   => "BufferOrHolderValidationFailed"
       | BuffersEmpty                     => "BuffersEmpty"
       | CantFetchZimplDelegExists        => "CantFetchZimplDelegExists"
-      | CantFetchZimplDelegSsnExists     => "CantFetchZimplDelegSsnExists2"
+      | CantFetchZimplDelegSsnExists     => "CantFetchZimplDelegSsnExists"
       | CantFetchZimplFields             => "CantFetchZimplFields"
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
-      | ChownStakeReDelegateSameSsn      => "ChownStakeReDelegateSameSsn"
       | ChownStakeSwapRequestNotFound    => "ChownStakeSwapRequestNotFound"
       | ClaimWithdrawalNoUnbonded        => "ClaimWithdrawalNoUnbonded"
       | CompleteWithdrawalFundsMismatch  => "CompleteWithdrawalFundsMismatch"
@@ -211,7 +209,7 @@ let leave_unbonded =
     filterBNum is_unbonded blist
 
 (* check if address is buffer address *)
-let is_buffer_addr =
+let is_addr_in_list =
   fun(l: List ByStr20) =>
   fun(addr: ByStr20) =>
     let feq = bystr20_eq addr in
@@ -374,7 +372,7 @@ end
 
 procedure RequireBuffer(address: ByStr20)
   buffers_addrs <- buffers_addresses;
-  is_buffer = is_buffer_addr buffers_addrs address;
+  is_buffer = is_addr_in_list buffers_addrs address;
   match is_buffer with
   | True =>
   | False =>
@@ -417,7 +415,7 @@ end
 
 procedure RequireBufferOrHolder()
   buffers_addrs <- buffers_addresses;
-  is_buffer = is_buffer_addr buffers_addrs _sender;
+  is_buffer = is_addr_in_list buffers_addrs _sender;
 
   holder <- holder_address;
   is_holder = builtin eq _sender holder;
@@ -1030,7 +1028,7 @@ transition ClaimRewardsBuffer(buffer: ByStr20, ssn: ByStr20)
   ClaimRewards buffer ssn
 end
 
-(* transfer strake from buffer to holder; should be called after claiming rewards from buffer/holder *)
+(* transfer stake from buffer to holder; should be called after claiming rewards from buffer/holder *)
 transition ConsolidateInHolder(buffer_addr: ByStr20)
   RequireAdmin;
   RequireBuffer buffer_addr;
@@ -1294,7 +1292,7 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
 
       (* new_deleg must be azil buffer *)
       var_buffers_addresses <- buffers_addresses;
-      is_buffer = is_buffer_addr var_buffers_addresses new_deleg;
+      is_buffer = is_addr_in_list var_buffers_addresses new_deleg;
       match is_buffer with
       | False =>
         e = BufferAddrUnknown;
@@ -1358,24 +1356,27 @@ end
 (* transfers funds from other ssn to active ssn *)
 transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   RequireAdmin;
-  FetchRemoteZimplFields;
 
-  GetSsnAddressForInput;
-  ssnaddr <- tmp_ssn_addr_in;
-
-  is_same_ssn = builtin eq ssnaddr from_ssn;
-  match is_same_ssn with
+  var_ssn_addresses <- ssn_addresses;
+  is_whitelisted = is_addr_in_list var_ssn_addresses from_ssn;
+  match is_whitelisted with
   | True =>
-    e = ChownStakeReDelegateSameSsn;
-    ThrowError e
+    (* we won't redelegate amount from whitelisted address *)
+      e = { _eventname: "ChownStakeReDelegateSkip"; from_ssn: from_ssn; amount: amount };
+      event e
   | False =>
-  end;
+    GetSsnAddressForInput;
+    ssnaddr <- tmp_ssn_addr_in;
 
-  var_buffers_addresses <- buffers_addresses;
-  lrc <- local_lastrewardcycle;
-  active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
-  ClaimRewards active_buffer from_ssn;
-  BufferReDelegate active_buffer from_ssn ssnaddr amount
+    FetchRemoteZimplFields;
+
+    var_buffers_addresses <- buffers_addresses;
+    lrc <- local_lastrewardcycle;
+    active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
+
+    ClaimRewards active_buffer from_ssn;
+    BufferReDelegate active_buffer from_ssn ssnaddr amount
+  end
 end
 
 (***************************************)

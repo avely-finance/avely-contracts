@@ -325,17 +325,6 @@ func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error)
 	return a.Call("WithdrawStakeAmt", args, "0")
 }
 
-func (a *AZil) DrainBuffer(buffer_addr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"buffer_addr",
-			"ByStr20",
-			buffer_addr,
-		},
-	}
-	return a.Call("DrainBuffer", args, "0")
-}
-
 func (a *AZil) CompleteWithdrawal() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("CompleteWithdrawal", args, "0")
