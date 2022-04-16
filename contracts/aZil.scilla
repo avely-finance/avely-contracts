@@ -1047,7 +1047,8 @@ transition ConsolidateInHolder(buffer_addr: ByStr20)
     tmp_deleg_exists := false
   | False =>
   end;
-  (* we should have it here after match, because even for False case we should mark buffer as drained at the cycle *)
+  (* Buffer does not exist is a possible and correct case if no one staked ZIL in the current cycle. *)
+  (* We still should mark the buffer as drained at the cycle. *)
   buffer_drained_cycle[buffer_addr] := lrc
 end
 
