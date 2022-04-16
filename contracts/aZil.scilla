@@ -481,7 +481,7 @@ procedure FetchRemoteZimplFields()
   end
 end
 
-(* procedure checks existence of ssnlist.deposit_amt_deleg[deleg][ssnaddr]; we need it for safe rewards claiming *)
+ (* check if delegator address exists at deposit_amt_deleg map of ssnlist contract *)
 procedure FetchZimplDelegExists(deleg: ByStr20)
   implAddr <- zimpl_address;
   implAddrTypeTest <- & implAddr as ByStr20 with contract
@@ -505,7 +505,7 @@ procedure FetchZimplDelegExists(deleg: ByStr20)
   end
 end
 
-(* check if delegator/ssn addresses exists at deposit_amt_deleg map of ssnlist contract *)
+(* procedure checks existence of ssnlist.deposit_amt_deleg[deleg][ssnaddr]; we need it for safe rewards claiming *)
 procedure FetchZimplDelegSsnExists(deleg: ByStr20, ssnaddr: ByStr20)
   implAddr <- zimpl_address;
   implAddrTypeTest <- & implAddr as ByStr20 with contract
