@@ -112,14 +112,16 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 		return errors.New("Buffer drain is failed at ConsolidateInHolder step")
 	}
 
-	a.log.WithFields(logrus.Fields{"tx": tx.ID}).Info("Buffer successfully drained")
+	a.log.WithFields(logrus.Fields{
+		"buffer_address": bufferToDrain,
+		"tx":             tx.ID,
+	}).Info("ConsolidateInHolder Success; buffer successfully drained")
 
 	return nil
 }
 
 func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 	activeBuffer := p.GetActiveBuffer()
-	aZilSsnAddr := strings.ToLower(p.Azil.Sdk.Cfg.AzilSsnAddress)
 	a.log.WithFields(logrus.Fields{"active_buffer": activeBuffer.Addr}).Info("Active Buffer")
 
 	mapSsnAmount := p.Zimpl.GetDepositAmtDeleg(activeBuffer.Addr)
@@ -128,20 +130,33 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 		return nil
 	}
 
-	for ssn, amount := range mapSsnAmount {
+	for fromSsn, amount := range mapSsnAmount {
 		amountStr := amount.String()
-		if ssn != aZilSsnAddr {
-			if showOnly {
-				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Debug("Need to run ChownStakeReDelegate")
-			} else if tx, err := p.Azil.ChownStakeReDelegate(ssn, amountStr); err != nil {
-				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID, "error": tx.Receipt}).Error("ChownStakeReDelegate failed")
-
-				return errors.New("ChownStakeReDelegate failed")
-			} else {
-				a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr, "tx": tx.ID}).Info("ChownStakeReDelegate OK")
-			}
+		ssnForInput := p.GetSsnAddressForInput()
+		if showOnly {
+			a.log.WithFields(logrus.Fields{
+				"from_ssn": fromSsn,
+				"to_ssn":   ssnForInput,
+				"amount":   amountStr,
+			}).Debug("Need to call Azil.ChownStakeReDelegate transition")
+		} else if tx, err := p.Azil.ChownStakeReDelegate(fromSsn, amountStr); err != nil {
+			a.log.WithFields(logrus.Fields{
+				"from_ssn": fromSsn,
+				"to_ssn":   ssnForInput,
+				"amount":   amountStr,
+				"tx":       tx.ID,
+				"error":    tx.Receipt,
+			}).Error("ChownStakeReDelegate failed")
+			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
+			return errors.New("ChownStakeReDelegate failed")
 		} else {
-			a.log.WithFields(logrus.Fields{"ssn": ssn, "amount": amountStr}).Info("Skip ChownStakeReDelegate")
+			a.log.WithFields(logrus.Fields{
+				"from_ssn": fromSsn,
+				"to_ssn":   ssnForInput,
+				"amount":   amountStr,
+				"tx":       tx.ID,
+			}).Info("ChownStakeReDelegate OK")
+			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
 		}
 	}
 
