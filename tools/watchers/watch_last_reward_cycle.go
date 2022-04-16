@@ -61,7 +61,7 @@ func (w *LastRewardCycleWatcher) Notify(blockNum int) {
 			"lrc":          lrc,
 		}).Info("Block mined, New Last Reward Cycle.")
 
-		action.DrainBuffer(protocol, lrc)
+		action.DrainBufferByCycle(protocol, lrc)
 		showOnly := false
 		action.ChownStakeReDelegate(protocol, showOnly)
 		action.AutoRestake(protocol)

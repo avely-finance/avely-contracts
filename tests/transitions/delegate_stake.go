@@ -12,6 +12,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	Start("DelegateStake: Stake 10 ZIL")
 
 	p := tr.DeployAndUpgrade()
+	totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
 	delegateStakeHolder(p)
 
 	p.Azil.UpdateWallet(sdk.Cfg.Key1)
@@ -21,19 +22,18 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	AssertError(tx, "DelegStakeNotEnough")
 
 	// Success delegate
+	ssnIn := p.GetSsnAddressForInput()
 	AssertSuccess(p.Azil.DelegateStake(ToZil(20)))
 
 	lastrewardcycle := strconv.Itoa(p.Zimpl.GetLastRewardCycle())
 
-	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetBuffer().Addr, sdk.Cfg.AzilSsnAddress, lastrewardcycle), ToZil(20))
-
-	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetBuffer().Addr, sdk.Cfg.AzilSsnAddress, lastrewardcycle), ToZil(20))
+	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetBuffer().Addr, ssnIn, lastrewardcycle), ToZil(20))
 	AssertEqual(Field(p.Azil, "_balance"), "0")
 
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(1020))
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(1020))
+	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil+20))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil+20))
 
-	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(1000))
+	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(totalSsnInitialDelegateZil))
 	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Addr1), ToAzil(20))
 
 	// Check delegate to the next cycle
@@ -63,9 +63,10 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
+	ssnIn := p.GetSsnAddressForInput()
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
 	activeBufferAddr = calcActiveBufferAddr(3, new_buffers)
-	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
+	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, ssnIn, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
 }
 
 func delegateStakeHolder(p *contracts.Protocol) {
