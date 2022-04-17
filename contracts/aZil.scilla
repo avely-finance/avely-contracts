@@ -290,8 +290,6 @@ field tmp_buffer                        : ByStr20        = bystr20_zero
 field tmp_ssn_addr_in                   : ByStr20        = bystr20_zero
 field tmp_ssn_addr_out                  : ByStr20        = bystr20_zero
 field tmp_bnum                          : BNum           = BNum 0
-(* flag of existence ssnlist.deposit_amt_deleg[deleg][ssn] *)
-field tmp_deleg_ssn_exists              : Bool           = False
 (* flag of existence ssnlist.deposit_amt_deleg[deleg] *)
 field tmp_deleg_exists                  : Bool           = False
 
@@ -505,8 +503,9 @@ procedure FetchZimplDelegExists(deleg: ByStr20)
   end
 end
 
-(* procedure checks existence of ssnlist.deposit_amt_deleg[deleg][ssnaddr]; we need it for safe rewards claiming *)
-procedure FetchZimplDelegSsnExists(deleg: ByStr20, ssnaddr: ByStr20)
+(* procedure checks existence of ssnlist.deposit_amt_deleg[deleg][ssnaddr] and throw error if not found *)
+(* it's used in rewards claiming process *)
+procedure RequireZimplDelegSsnExists(deleg: ByStr20, ssnaddr: ByStr20)
   implAddr <- zimpl_address;
   implAddrTypeTest <- & implAddr as ByStr20 with contract
     field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128)
@@ -516,9 +515,10 @@ procedure FetchZimplDelegSsnExists(deleg: ByStr20, ssnaddr: ByStr20)
     o_deposit_amt_deleg <- & z.deposit_amt_deleg[deleg][ssnaddr];
     match o_deposit_amt_deleg with
     | Some amt =>
-      tmp_deleg_ssn_exists := true
+      (* ssnlist map entry found, we can claim rewards safely *)
     | None =>
-      tmp_deleg_ssn_exists := false
+      e = DelegDoesNotExistAtSSN;
+      ThrowError e
     end
   | None =>
       e = CantFetchZimplDelegSsnExists;
@@ -578,16 +578,10 @@ procedure BufferDelegate(amount: Uint128)
 end
 
 procedure ClaimRewardsProc(deleg: ByStr20, ssnaddr: ByStr20)
-  FetchZimplDelegSsnExists deleg ssnaddr;
-  var_deleg_ssn_exists <- tmp_deleg_ssn_exists;
-  match var_deleg_ssn_exists with
-  | True =>
-    msg = { _tag: "ClaimRewards"; _recipient: deleg; _amount: uint128_zero; ssnaddr: ssnaddr };
-    msgs = one_msg msg;
-    send msgs
-  | False =>
-    (* we wont send ClaimRewards message, because we'll get ssnlist.DelegDoesNotExistAtSSN error *)
-  end
+  RequireZimplDelegSsnExists deleg ssnaddr;
+  msg = { _tag: "ClaimRewards"; _recipient: deleg; _amount: uint128_zero; ssnaddr: ssnaddr };
+  msgs = one_msg msg;
+  send msgs
 end
 
 procedure RequestDelegatorSwap(from: ByStr20, to: ByStr20)
@@ -1369,6 +1363,8 @@ transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
     lrc <- local_lastrewardcycle;
     active_buffer = get_active_buffer_addr var_buffers_addresses lrc;
 
+    (* ClaimRewardsProc may throw error in case of absence ssnlist.deposit_amt_deleg[active_buffer][from_ssn] entry *)
+    (* it's safe: ReDelegate procedure has no sense in that case; ssnlist will throw same DelegDoesNotExistAtSSN error *)
     ClaimRewardsProc active_buffer from_ssn;
     BufferReDelegate active_buffer from_ssn ssnaddr amount
   end
