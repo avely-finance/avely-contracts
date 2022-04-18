@@ -64,7 +64,7 @@ func main() {
 		case "sync_buffers":
 			syncBuffers(p)
 		case "change_ssns":
-			changeSSNs(p)
+			addSSNs(p)
 		case "deploy_buffer":
 			deployBuffer(p)
 		case "unpause_in":
@@ -248,8 +248,8 @@ func syncBuffers(p *Protocol) {
 	p.SyncBuffers()
 }
 
-func changeSSNs(p *Protocol) {
-	p.ChangeSSNs()
+func addSSNs(p *Protocol) {
+	p.AddSSNs()
 }
 
 func showRewards(p *Protocol, ssn, deleg string) {

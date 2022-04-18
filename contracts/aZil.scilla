@@ -40,6 +40,7 @@ type Error =
   | PausedOut
   | PausedZrc2
   | SsnAddressesEmpty
+  | SsnAddressExists
   | StagingOwnerNotExists
   | StagingOwnerValidationFailed
   | IsSender
@@ -79,6 +80,7 @@ let make_error =
       | PausedIn                         => "PausedIn"
       | PausedZrc2                       => "PausedZrc2"
       | SsnAddressesEmpty                => "SsnAddressesEmpty"
+      | SsnAddressExists                 => "SsnAddressExists"
       | StagingOwnerNotExists            => "StagingOwnerNotExists"
       | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
       | IsSender                         => "IsSender"
@@ -1004,10 +1006,18 @@ transition ChangeBuffers(new_buffers: List ByStr20)
   buffers_addresses := new_buffers
 end
 
-transition ChangeSSNs(new_ssn_addresses: List ByStr20)
+transition AddSSN(ssnaddr: ByStr20)
   RequireOwner;
-  RequireSsnAddresses new_ssn_addresses;
-  ssn_addresses := new_ssn_addresses
+  var_ssn_addresses <- ssn_addresses;
+  is_whitelisted = is_addr_in_list var_ssn_addresses ssnaddr;
+  match is_whitelisted with
+  | True =>
+    e = SsnAddressExists;
+    ThrowError e
+  | False =>
+  end;
+  new_list = Cons {ByStr20} ssnaddr var_ssn_addresses;
+  ssn_addresses := new_list
 end
 
 transition ClaimRewards(buffer_or_holder: ByStr20, ssn: ByStr20)

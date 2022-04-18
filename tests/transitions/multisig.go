@@ -12,7 +12,7 @@ func (tr *Transitions) MultisigWalletTests() {
 	multisigUpdateOwner(tr)
 	multisigChangeAdminTest(tr)
 	multisigChangeBuffersTest(tr)
-	multisigChangeSSNsTest(tr)
+	multisigAddSSNTest(tr)
 	multisigManagableActions(tr)
 }
 
@@ -154,7 +154,7 @@ func multisigChangeBuffersTest(tr *Transitions) {
 	AssertContain(Field(azil, "buffers_addresses"), sdk.Cfg.Addr1)
 }
 
-func multisigChangeSSNsTest(tr *Transitions) {
+func multisigAddSSNTest(tr *Transitions) {
 	owner := sdk.Cfg.Key1
 
 	owners := []string{sdk.Cfg.Addr1}
@@ -165,10 +165,10 @@ func multisigChangeSSNsTest(tr *Transitions) {
 
 	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
-	newAddresses := []string{sdk.Cfg.Addr1} // could be any random addresses
+	newAddress := sdk.Cfg.Addr1 // could be any random addresses
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeSSNsTransaction(azil.Addr, newAddresses))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitAddSSNTransaction(azil.Addr, newAddress))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
 	AssertContain(Field(azil, "ssn_addresses"), sdk.Cfg.Addr1)
 }
