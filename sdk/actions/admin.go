@@ -1,7 +1,9 @@
 package actions
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -43,6 +45,13 @@ func (a *AdminActions) SaveTx(step string, tx *transaction.Transaction, err erro
 	return tx, err
 }
 
+func (a *AdminActions) HasTxError(txn *transaction.Transaction, errorCode string) bool {
+	receipt, _ := json.Marshal(txn.Receipt)
+	receiptStr := string(receipt)
+	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (String \\\"%s\\\"))])", errorCode)
+	return strings.Contains(receiptStr, errorMessage)
+}
+
 func (a *AdminActions) DrainBufferAuto(p *Protocol) error {
 	lrc := p.Zimpl.GetLastRewardCycle()
 	bufferToDrain := p.GetBufferToDrain()
@@ -68,34 +77,45 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 
 	//claim rewards from holder
 	for _, ssn := range ssnlist {
-		tx, err := p.Azil.ClaimRewardsHolder(ssn)
+		tx, err := p.Azil.ClaimRewards(p.Holder.Addr, ssn)
+		fields := logrus.Fields{
+			"tx":             tx.ID,
+			"holder_address": p.Holder.Addr,
+			"ssn_address":    ssn,
+		}
 		a.SaveTx("ClaimRewardsHolder_"+ssn, tx, err)
-		if err != nil {
-			a.log.WithFields(logrus.Fields{"tx": tx.ID, "ssn_address": ssn, "error": tx.Receipt}).Error("ClaimRewardsHolder failed")
-			return errors.New("Buffer drain is failed at ClaimRewardsHolder step")
+		if err == nil {
+			a.log.WithFields(fields).Info("ClaimRewards Holder success")
 		} else {
-			a.log.WithFields(logrus.Fields{"tx": tx.ID, "ssn_address": ssn}).Info("ClaimRewardsHolder success")
+			fields["error"] = tx.Receipt
+			if a.HasTxError(tx, "DelegDoesNotExistAtSSN") {
+				a.log.WithFields(fields).Warning("ClaimRewards Holder reported DelegDoesNotExistAtSSN error")
+			} else {
+				a.log.WithFields(fields).Error("ClaimRewards Holder fatal error")
+				return errors.New("Buffer drain is failed at ClaimRewards Holder step")
+			}
 		}
 	}
 
 	//claim rewards from buffer
 	for _, ssn := range ssnlist {
-		tx, err := p.Azil.ClaimRewardsBuffer(bufferToDrain, ssn)
+		tx, err := p.Azil.ClaimRewards(bufferToDrain, ssn)
+		fields := logrus.Fields{
+			"tx":             tx.ID,
+			"buffer_address": bufferToDrain,
+			"ssn_address":    ssn,
+		}
 		a.SaveTx("ClaimRewardsBuffer_"+ssn, tx, err)
-		if err != nil {
-			a.log.WithFields(logrus.Fields{
-				"tx":             tx.ID,
-				"buffer_address": bufferToDrain,
-				"ssn_address":    ssn,
-				"error":          tx.Receipt,
-			}).Error("ClaimRewardsBuffer failed")
-			return errors.New("Buffer drain is failed at ClaimRewardsBuffer step")
+		if err == nil {
+			a.log.WithFields(fields).Info("ClaimRewards Buffer success")
 		} else {
-			a.log.WithFields(logrus.Fields{
-				"tx":             tx.ID,
-				"buffer_address": bufferToDrain,
-				"ssn_address":    ssn,
-			}).Info("ClaimRewardsBuffer success")
+			fields["error"] = tx.Receipt
+			if a.HasTxError(tx, "DelegDoesNotExistAtSSN") {
+				a.log.WithFields(fields).Warning("ClaimRewards Buffer reported DelegDoesNotExistAtSSN error")
+			} else {
+				a.log.WithFields(fields).Error("ClaimRewards Buffer fatal error")
+				return errors.New("Buffer drain is failed at ClaimRewards Buffer step")
+			}
 		}
 	}
 
@@ -132,30 +152,27 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 	for fromSsn, amount := range mapSsnAmount {
 		amountStr := amount.String()
 		ssnForInput := p.GetSsnAddressForInput()
+		fields := logrus.Fields{
+			"from_ssn": fromSsn,
+			"to_ssn":   ssnForInput,
+			"amount":   amountStr,
+		}
 		if showOnly {
-			a.log.WithFields(logrus.Fields{
-				"from_ssn": fromSsn,
-				"to_ssn":   ssnForInput,
-				"amount":   amountStr,
-			}).Debug("Need to call Azil.ChownStakeReDelegate transition")
-		} else if tx, err := p.Azil.ChownStakeReDelegate(fromSsn, amountStr); err != nil {
-			a.log.WithFields(logrus.Fields{
-				"from_ssn": fromSsn,
-				"to_ssn":   ssnForInput,
-				"amount":   amountStr,
-				"tx":       tx.ID,
-				"error":    tx.Receipt,
-			}).Error("ChownStakeReDelegate failed")
+			a.log.WithFields(fields).Debug("Need to call Azil.ChownStakeReDelegate transition")
+		} else if tx, err := p.Azil.ChownStakeReDelegate(fromSsn, amountStr); err == nil {
 			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
-			return errors.New("ChownStakeReDelegate failed")
+			fields["tx"] = tx.ID
+			a.log.WithFields(fields).Info("ChownStakeReDelegate OK")
 		} else {
-			a.log.WithFields(logrus.Fields{
-				"from_ssn": fromSsn,
-				"to_ssn":   ssnForInput,
-				"amount":   amountStr,
-				"tx":       tx.ID,
-			}).Info("ChownStakeReDelegate OK")
 			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
+			fields["tx"] = tx.ID
+			fields["error"] = tx.Receipt
+			if a.HasTxError(tx, "DelegDoesNotExistAtSSN") {
+				a.log.WithFields(fields).Warning("ChownStakeReDelegate reported DelegDoesNotExistAtSSN error")
+			} else {
+				a.log.WithFields(fields).Error("ChownStakeReDelegate failed")
+				return errors.New("ChownStakeReDelegate failed")
+			}
 		}
 	}
 

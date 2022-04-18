@@ -86,20 +86,23 @@ func (tr *Transitions) DrainBuffer() {
 	})
 
 	//rewards claiming from holder/empty ssn address will not return errors
-	AssertSuccess(p.Azil.ClaimRewardsHolder(sdk.Cfg.SsnAddrs[0]))
+	AssertSuccess(p.Azil.ClaimRewards(p.Holder.Addr, sdk.Cfg.SsnAddrs[0]))
 
-	//rewards claiming from holder/non-ssn address will not return errors
-	AssertSuccess(p.Azil.ClaimRewardsHolder(core.ZeroAddr))
+	//rewards claiming from holder/non-ssn address will return DelegDoesNotExistAtSSN error
+	txn, _ = p.Azil.ClaimRewards(p.Holder.Addr, core.ZeroAddr)
+	AssertError(txn, "DelegDoesNotExistAtSSN")
 
-	//rewards claiming from buffer/empty ssn address will not return errors
-	AssertSuccess(p.Azil.ClaimRewardsBuffer(bufferToDrain, sdk.Cfg.SsnAddrs[0]))
+	//rewards claiming from buffer/empty ssn address will return DelegDoesNotExistAtSSN error
+	txn, _ = p.Azil.ClaimRewards(bufferToDrain, sdk.Cfg.SsnAddrs[0])
+	AssertError(txn, "DelegDoesNotExistAtSSN")
 
-	//rewards claiming from buffer/non-ssn address will not return errors
-	AssertSuccess(p.Azil.ClaimRewardsBuffer(bufferToDrain, core.ZeroAddr))
+	//rewards claiming from buffer/non-ssn address will return DelegDoesNotExistAtSSN error
+	txn, _ = p.Azil.ClaimRewards(bufferToDrain, core.ZeroAddr)
+	AssertError(txn, "DelegDoesNotExistAtSSN")
 
 	//rewards claiming from non-buffer address, expecting BufferAddrUnknown error
-	txn, _ = p.Azil.ClaimRewardsBuffer(core.ZeroAddr, core.ZeroAddr)
-	AssertError(txn, "BufferAddrUnknown")
+	txn, _ = p.Azil.ClaimRewards(core.ZeroAddr, core.ZeroAddr)
+	AssertError(txn, "BufferOrHolderValidationFailed")
 
 	//repeat consolidate, excepting BufferAlreadyDrained error
 	//we don't call complete tools.DrainBufferAuto(p), because it will not run twice for same buffer/lrc

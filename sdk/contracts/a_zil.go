@@ -353,12 +353,12 @@ func (a *AZil) ZilBalanceOf(addr string) *big.Int {
 	return result
 }
 
-func (a *AZil) ClaimRewardsBuffer(buffer, ssn string) (*transaction.Transaction, error) {
+func (a *AZil) ClaimRewards(address, ssn string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
-			"buffer",
+			"buffer_or_holder",
 			"ByStr20",
-			buffer,
+			address,
 		},
 		{
 			"ssn",
@@ -366,18 +366,7 @@ func (a *AZil) ClaimRewardsBuffer(buffer, ssn string) (*transaction.Transaction,
 			ssn,
 		},
 	}
-	return a.Call("ClaimRewardsBuffer", args, "0")
-}
-
-func (a *AZil) ClaimRewardsHolder(ssn string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"ssn",
-			"ByStr20",
-			ssn,
-		},
-	}
-	return a.Call("ClaimRewardsHolder", args, "0")
+	return a.Call("ClaimRewards", args, "0")
 }
 
 func (a *AZil) ClaimRewardsSuccessCallBack() (*transaction.Transaction, error) {
