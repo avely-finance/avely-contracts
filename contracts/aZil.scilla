@@ -20,6 +20,7 @@ type Error =
   | CantFetchZimplDelegExists
   | CantFetchZimplDelegSsnExists
   | CantFetchZimplFields
+  | CantFetchZimplHolderStakes
   | ChownStakeCantFetchRemote
   | ChownStakeSwapRequestNotFound
   | ClaimWithdrawalNoUnbonded
@@ -30,7 +31,10 @@ type Error =
   | DelegStakeFundsMismatch
   | DelegStakeNotEnough
   | InvalidTotalAmt
+  | InsufficientFunds
+  | InsufficientAllowance
   | InvalidRewardsFee
+  | IsSender
   | HolderAlreadySet
   | NotPausedIn
   | NotPausedOut
@@ -43,9 +47,7 @@ type Error =
   | SsnAddressExists
   | StagingOwnerNotExists
   | StagingOwnerValidationFailed
-  | IsSender
-  | InsufficientFunds
-  | InsufficientAllowance
+  | WithdrawAmountTooBig
 
 let make_error =
   fun (result: Error) =>
@@ -60,6 +62,7 @@ let make_error =
       | CantFetchZimplDelegExists        => "CantFetchZimplDelegExists"
       | CantFetchZimplDelegSsnExists     => "CantFetchZimplDelegSsnExists"
       | CantFetchZimplFields             => "CantFetchZimplFields"
+      | CantFetchZimplHolderStakes       => "CantFetchZimplHolderStakes"
       | ChownStakeCantFetchRemote        => "ChownStakeCantFetchRemote"
       | ChownStakeSwapRequestNotFound    => "ChownStakeSwapRequestNotFound"
       | ClaimWithdrawalNoUnbonded        => "ClaimWithdrawalNoUnbonded"
@@ -69,8 +72,11 @@ let make_error =
       | DelegHasNoSufficientAmt          => "DelegHasNoSufficientAmt"
       | DelegStakeFundsMismatch          => "DelegStakeFundsMismatch"
       | DelegStakeNotEnough              => "DelegStakeNotEnough"
-      | InvalidRewardsFee                => "InvalidRewardsFee"
       | InvalidTotalAmt                  => "InvalidTotalAmt"
+      | InsufficientFunds                => "InsufficientFunds"
+      | InsufficientAllowance            => "InsufficientAllowance"
+      | InvalidRewardsFee                => "InvalidRewardsFee"
+      | IsSender                         => "IsSender"
       | HolderAlreadySet                 => "HolderAlreadySet"
       | NotPausedIn                      => "NotPausedIn"
       | NotPausedOut                     => "NotPausedOut"
@@ -83,9 +89,7 @@ let make_error =
       | SsnAddressExists                 => "SsnAddressExists"
       | StagingOwnerNotExists            => "StagingOwnerNotExists"
       | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
-      | IsSender                         => "IsSender"
-      | InsufficientFunds                => "InsufficientFunds"
-      | InsufficientAllowance            => "InsufficientAllowance"
+      | WithdrawAmountTooBig             => "WithdrawAmountTooBig"
       end
     in
     { _exception: "Error"; code: result_code }
@@ -232,6 +236,28 @@ let sum_amount = fun(m: Map ByStr20 Uint128) =>
       let int = the_int pair in
       builtin add acc int in (* add int to accumulator *)
     folder addition init l (* apply to entire list of pairs *)
+
+let get_heaviest = fun(m: Map ByStr20 Uint128) =>
+  (* create a list of (key,values) pairs of the map *)
+  let l = builtin to_list m in
+  (* use fold to compare the second elements of all pairs *)
+  let folder = @list_foldl (Pair ByStr20 Uint128) (Pair ByStr20 Uint128) in
+  let init = Pair {ByStr20 Uint128} bystr20_zero uint128_zero in (* initialize the accumulator *)
+  let compare = (* update accumulator with heaviest pair *)
+    fun(acc: Pair ByStr20 Uint128) =>
+    fun(next: Pair ByStr20 Uint128) =>
+      let the_int_acc = @snd ByStr20 Uint128 in
+      let int_acc = the_int_acc acc in
+      let the_int_next = @snd ByStr20 Uint128 in
+      let int_next = the_int_next next in
+      let is_next_less = builtin lt int_next int_acc in
+      match is_next_less with
+      | True =>
+        acc
+      | False =>
+        next
+      end in
+    folder compare init l (* apply to entire list of pairs *)
 
 (***************************************************)
 (*             The contract definition             *)
@@ -457,12 +483,40 @@ procedure GetSsnAddressForInput()
   ssn_index := new_ssn_index
 end
 
-procedure GetSsnAddressForOutput()
-  var_ssn_addresses <- ssn_addresses;
-  l_bystr20_head = @list_head ByStr20;
-  addr_o = l_bystr20_head var_ssn_addresses;
-  addr = option_bystr20_value addr_o;
-  tmp_ssn_addr_out := addr
+procedure GetSsnAddressForOutput(withdraw_amount: Uint128)
+  implAddr <- zimpl_address;
+  implAddrTypeTest <- & implAddr as ByStr20 with contract
+    field deposit_amt_deleg: Map ByStr20 (Map ByStr20 Uint128)
+  end;
+  match implAddrTypeTest with
+  | Some z =>
+    var_holder_addr <- holder_address;
+    o_deposit_amt_holder <- & z.deposit_amt_deleg[var_holder_addr];
+    match o_deposit_amt_holder with
+    | Some map_ssn_amount =>
+      (* holder has some deposits *)
+      pair_ssn_amount = get_heaviest map_ssn_amount;
+      match pair_ssn_amount with
+      | Pair ssn holder_amount =>
+        (* heaviest pair found *)
+        is_not_enough = builtin lt holder_amount withdraw_amount;
+        match is_not_enough with
+        | True =>
+          e = WithdrawAmountTooBig;
+          ThrowError e
+        | False =>
+          (* holder has enough amount on the ssn to fullfill withdraw request *)
+          tmp_ssn_addr_out := ssn
+        end
+      end
+    | None =>
+      e = WithdrawAmountTooBig;
+      ThrowError e
+    end
+  | None =>
+      e = CantFetchZimplHolderStakes;
+      ThrowError e
+  end
 end
 
 (* fetch state fields from ssnlist contract *)
@@ -1212,7 +1266,7 @@ end
 transition WithdrawStakeAmt(amount: Uint128)
   RequireNotPausedOut;
 
-  GetSsnAddressForOutput;
+  GetSsnAddressForOutput amount;
   ssnaddr <- tmp_ssn_addr_out;
   (* first we do all checks, then call Holder on success within procedure *)
   WithdrawalStakeAmt _sender ssnaddr amount;
