@@ -15,6 +15,7 @@ var sdk *AvelySDK
 func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	tagPtr := flag.String("tag", "default", "specific command")
+	ssnPtr := flag.String("ssn", "", "ssn address")
 
 	flag.Parse()
 
@@ -45,8 +46,11 @@ func main() {
 		setHolder(m, azilAddr, config.HolderAddr)
 	case "SubmitChangeBuffersTransaction":
 		changeBuffers(m, azilAddr, config.BufferAddrs)
-	case "SubmitChangeSSNsTransaction":
-		changeSSNs(m, azilAddr, config.SsnAddrs)
+	case "SubmitAddSSNTransaction":
+		if ssnaddr := *ssnPtr; ssnaddr == "" {
+			log.Fatal("SSN address empty")
+		}
+		addSSN(m, azilAddr, ssnaddr)
 	case "SubmitChangeRewardsFeeTransaction":
 		changeRewardsFee(m, azilAddr, strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 	case "SubmitChangeTreasuryAddressTransaction":
@@ -72,8 +76,8 @@ func changeBuffers(m *MultisigWallet, callee string, buffers []string) {
 	check(m.SubmitChangeBuffersTransaction(callee, buffers))
 }
 
-func changeSSNs(m *MultisigWallet, callee string, ssn_addresses []string) {
-	check(m.SubmitChangeSSNsTransaction(callee, ssn_addresses))
+func addSSN(m *MultisigWallet, callee string, ssnaddr string) {
+	check(m.SubmitAddSSNTransaction(callee, ssnaddr))
 }
 
 func changeRewardsFee(m *MultisigWallet, callee string, value string) {

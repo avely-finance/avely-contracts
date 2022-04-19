@@ -55,9 +55,11 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
 	p.Azil.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
 
+	ssnForInput := p.GetSsnAddressForInput()
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
 	activeBufferAddr := calcActiveBufferAddr(2, new_buffers) // start from second cycle
-	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, sdk.Cfg.AzilSsnAddress, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
+
+	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, ssnForInput, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
 
 	//next reward cycle
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
