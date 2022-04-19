@@ -30,6 +30,8 @@ func (tr *Transitions) DrainBuffer() {
 	tools := actions.NewAdminActions(GetLog())
 	tools.SetTestMode(true)
 
+	ssnForInput := p.GetSsnAddressForInput()
+	activeBuffer := p.GetActiveBuffer().Addr
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
@@ -41,15 +43,17 @@ func (tr *Transitions) DrainBuffer() {
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
 
 	bufferToDrain := p.GetBufferToDrain().Addr
+	AssertEqual(bufferToDrain, activeBuffer)
 
 	//try to consolidate in holder without rewards claiming, excepting Zimpl.DelegHasUnwithdrawRewards -12 error
 	txn, _ := p.Azil.ConsolidateInHolder(bufferToDrain)
 	AssertZimplError(txn, -12)
 
+	holderStake := p.Zimpl.GetDepositAmtDeleg(p.Holder.Addr)
 	tools.DrainBufferAuto(p)
 	AssertEqual(strconv.Itoa(p.Zimpl.GetLastRewardCycle()), Field(p.Azil, "buffer_drained_cycle", bufferToDrain))
 
-	txn = tools.TxLogMap["ClaimRewardsBuffer_"+sdk.Cfg.AzilSsnAddress].Tx
+	txn = tools.TxLogMap["ClaimRewardsBuffer_"+ssnForInput].Tx
 	AssertTransition(txn, Transition{
 		p.Azil.Addr,    //sender
 		"ClaimRewards", //tag
@@ -58,14 +62,20 @@ func (tr *Transitions) DrainBuffer() {
 		ParamsMap{},
 	})
 
-	txn = tools.TxLogMap["ClaimRewardsHolder_"+sdk.Cfg.AzilSsnAddress].Tx
-	AssertTransition(txn, Transition{
-		p.Azil.Addr,    //sender
-		"ClaimRewards", //tag
-		p.Holder.Addr,  //recipient
-		"0",            //amount
-		ParamsMap{},
-	})
+	txn = tools.TxLogMap["ClaimRewardsHolder_"+ssnForInput].Tx
+	if holderStake[ssnForInput] != nil {
+		//holder had some stake for ssnForInput before DrainBuffer
+		AssertTransition(txn, Transition{
+			p.Azil.Addr,    //sender
+			"ClaimRewards", //tag
+			p.Holder.Addr,  //recipient
+			"0",            //amount
+			ParamsMap{},
+		})
+	} else {
+		//there was no stake for ssnForInput on holder before DrainBuffer
+		AssertError(txn, "DelegDoesNotExistAtSSN")
+	}
 
 	// check Swap transactions
 	txn = tools.TxLogMap["ConsolidateInHolder"].Tx

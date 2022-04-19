@@ -146,9 +146,13 @@ func (p *Protocol) SyncBuffers() {
 	p.Azil.Wallet = prevWallet
 }
 
-func (p *Protocol) ChangeSSNs() {
+func (p *Protocol) AddSSNs() {
 	prevWallet := p.Azil.Wallet
-	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeSSNs(p.Azil.Sdk.Cfg.SsnAddrs))
+
+	//reverse elements to keep order of azil.ssn_addresses elements same as in config
+	for i := len(p.Azil.Sdk.Cfg.SsnAddrs) - 1; i >= 0; i-- {
+		check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).AddSSN(p.Azil.Sdk.Cfg.SsnAddrs[i]))
+	}
 	p.Azil.Wallet = prevWallet
 }
 
