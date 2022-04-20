@@ -132,6 +132,7 @@ func (tr *Transitions) RunAll() {
 	if !IsCI() {
 		tr.DrainBuffer()
 		tr.CompleteWithdrawalSuccess()
+		tr.CompleteWithdrawalMultiSsn()
 		tr.WithdrawStakeAmount()
 	}
 }
