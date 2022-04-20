@@ -3,6 +3,8 @@ package transitions
 import (
 	"reflect"
 
+	"github.com/avely-finance/avely-contracts/sdk/actions"
+	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
@@ -26,6 +28,11 @@ func NewTransitions() *Transitions {
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	log := GetLog()
 	p := Deploy(sdk, log)
+
+	//add buffers to protocol, we need 3
+	buffer2, _ := p.DeployBuffer()
+	buffer3, _ := p.DeployBuffer()
+	p.Buffers = append(p.Buffers, buffer2, buffer3)
 
 	p.AddSSNs()
 	p.ChangeTreasuryAddress()
@@ -63,6 +70,37 @@ func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *Mul
 	}
 
 	return multisig
+}
+
+func (tr *Transitions) NextCycle(p *contracts.Protocol) {
+	sdk.IncreaseBlocknum(10)
+	prevWallet := p.Zproxy.Contract.Wallet
+
+	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+
+	zimplSsnList := p.Zimpl.GetSsnList()
+	ssnRewardFactor := make(map[string]string)
+	for _, ssn := range zimplSsnList {
+		ssnRewardFactor[ssn] = "100"
+	}
+	ssnRewardFactor[sdk.Cfg.AzilSsnAddress] = sdk.Cfg.AzilSsnRewardShare
+	AssertSuccess(p.Zproxy.AssignStakeRewardList(ssnRewardFactor, "10000"))
+
+	p.Zproxy.Contract.Wallet = prevWallet
+}
+
+func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol) *actions.AdminActions {
+	tools := actions.NewAdminActions(GetLog())
+	tools.TxLogMode(true)
+	tools.TxLogClear()
+	prevWallet := p.Azil.Contract.Wallet
+	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	tools.DrainBufferAuto(p)
+	showOnly := false
+	tools.ChownStakeReDelegate(p, showOnly)
+	//tools.AutoRestake(p)
+	p.Azil.Contract.Wallet = prevWallet
+	return tools
 }
 
 func (tr *Transitions) FocusOn(focus string) {

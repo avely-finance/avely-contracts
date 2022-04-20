@@ -181,7 +181,6 @@ func (p *Protocol) SetupZProxy() {
 		},
 	}
 	check(p.Zproxy.Call("UpgradeTo", args, "0"))
-	//check(p.Zproxy.AddSSN(sdk.Cfg.AzilSsnAddress, "aZil SSN"))
 	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
 		check(p.Zproxy.AddSSN(ssnaddr, ssnaddr))
 	}
@@ -191,8 +190,8 @@ func (p *Protocol) SetupZProxy() {
 	check(p.Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake to each
-	for i := 0; i < len(sdk.Cfg.SsnAddrs); i++ {
-		check(p.Azil.DelegateStake(ToZil(sdk.Cfg.SsnInitialDelegateZil)))
+	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
+		check(p.Zproxy.DelegateStake(ssnaddr, ToZil(sdk.Cfg.SsnInitialDelegateZil)))
 	}
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address

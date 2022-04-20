@@ -27,7 +27,7 @@ func (tr *Transitions) PerformAutoRestake() {
 	AssertEqual(Field(p.Azil, "autorestakeamount"), ToZil(0))
 
 	AssertTransition(txn, Transition{
-		p.GetBuffer().Addr, //sender
+		p.GetActiveBuffer().Addr, //sender
 		"DelegateStake",
 		p.Zproxy.Addr,
 		restakeAmount,
