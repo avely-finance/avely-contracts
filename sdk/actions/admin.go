@@ -26,23 +26,26 @@ type AdminActions struct {
 }
 
 func NewAdminActions(log *core.Log) *AdminActions {
-	return &AdminActions{log: log}
-}
-
-func (a *AdminActions) SetTestMode(mode bool) {
-	a.testMode = mode
-	if a.testMode {
-		a.TxLogMap = make(map[string]TxLog)
-	} else {
-		a.TxLogMap = nil
+	return &AdminActions{
+		log:      log,
+		testMode: false,
+		TxLogMap: make(map[string]TxLog),
 	}
 }
 
-func (a *AdminActions) SaveTx(step string, tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+func (a *AdminActions) TxLogMode(mode bool) {
+	a.testMode = mode
+}
+
+func (a *AdminActions) TxLog(step string, tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	if a.testMode {
 		a.TxLogMap[step] = TxLog{tx, err}
 	}
 	return tx, err
+}
+
+func (a *AdminActions) TxLogClear() {
+	a.TxLogMap = make(map[string]TxLog)
 }
 
 func (a *AdminActions) HasTxError(txn *transaction.Transaction, errorCode string) bool {
@@ -64,7 +67,6 @@ func (a *AdminActions) DrainBufferByCycle(p *Protocol, lrc int) error {
 }
 
 func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) error {
-
 	buffers := p.Azil.GetDrainedBuffers()
 	if lastDrained, ok := buffers[bufferToDrain]; !ok {
 		a.log.Info("Buffer is never drained; Let's do this first time")
@@ -83,7 +85,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 			"holder_address": p.Holder.Addr,
 			"ssn_address":    ssn,
 		}
-		a.SaveTx("ClaimRewardsHolder_"+ssn, tx, err)
+		a.TxLog("ClaimRewardsHolder_"+ssn, tx, err)
 		if err == nil {
 			a.log.WithFields(fields).Info("ClaimRewards Holder success")
 		} else {
@@ -105,7 +107,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 			"buffer_address": bufferToDrain,
 			"ssn_address":    ssn,
 		}
-		a.SaveTx("ClaimRewardsBuffer_"+ssn, tx, err)
+		a.TxLog("ClaimRewardsBuffer_"+ssn, tx, err)
 		if err == nil {
 			a.log.WithFields(fields).Info("ClaimRewards Buffer success")
 		} else {
@@ -121,7 +123,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 
 	//transfer stake from buffer to holder
 	tx, err := p.Azil.ConsolidateInHolder(bufferToDrain)
-	a.SaveTx("ConsolidateInHolder", tx, err)
+	a.TxLog("ConsolidateInHolder", tx, err)
 	if err != nil {
 		a.log.WithFields(logrus.Fields{
 			"tx":             tx.ID,
@@ -160,11 +162,11 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 		if showOnly {
 			a.log.WithFields(fields).Debug("Need to call Azil.ChownStakeReDelegate transition")
 		} else if tx, err := p.Azil.ChownStakeReDelegate(fromSsn, amountStr); err == nil {
-			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
+			a.TxLog("ChownStakeReDelegate_"+fromSsn, tx, err)
 			fields["tx"] = tx.ID
 			a.log.WithFields(fields).Info("ChownStakeReDelegate OK")
 		} else {
-			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
+			a.TxLog("ChownStakeReDelegate_"+fromSsn, tx, err)
 			fields["tx"] = tx.ID
 			fields["error"] = tx.Receipt
 			if a.HasTxError(tx, "DelegDoesNotExistAtSSN") {

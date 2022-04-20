@@ -1,7 +1,6 @@
 package transitions
 
 import (
-	"github.com/avely-finance/avely-contracts/sdk/actions"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
@@ -22,7 +21,7 @@ func (tr *Transitions) ChownStakeSuccess() {
 
 	p := tr.DeployAndUpgrade()
 
-	chownStakeSetup(p)
+	chownStakeSetup(tr, p)
 
 	key1, addr1, key2, addr2, ssn, _, userStake := chownStakeDefineParams(p)
 
@@ -36,10 +35,10 @@ func (tr *Transitions) ChownStakeSuccess() {
 
 	//key1 delegates through Azil (this isn't a part of transfer process)
 	AssertSuccess(p.Azil.WithUser(key1).DelegateStake(stake1_azil))
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 
 	//key1, key2 delegate to main contract
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], stake1_1))
@@ -47,10 +46,10 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertSuccess(p.Zproxy.WithUser(key2).DelegateStake(ssn[1], stake2_1))
 
 	//key1, key2 wait 2 reward cycles (they should have no buffered depo in current/prev cycles, else swap request will fail)
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//key1, key2 claim rewards
@@ -87,11 +86,11 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEqual(Field(p.Azil, "totalstakeamount"), StrAdd(totalstakeamount, stake1_azil, stake1_1, stake1_2, stake2_1))
 	AssertEqual(Field(p.Azil, "total_supply"), StrAdd(total_supply, Field(p.Azil, "balances", addr1), Field(p.Azil, "balances", addr2)))
 
-	chownStakeNextCycle(p)
+	tr.NextCycle(p)
 	//key2 delegates through Azil
 	//this isn't a part of transfer process, but delegate can happen before offchain-tool calls
 	AssertSuccess(p.Azil.WithUser(key2).DelegateStake(stake2_azil))
-	tools := chownStakeNextCycleOffchain(p)
+	tools := tr.NextCycleOffchain(p)
 
 	//nextBuffer becomes active
 	activeBuffer := p.GetActiveBuffer().Addr
@@ -138,7 +137,7 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 
 	p := tr.DeployAndUpgrade()
 
-	chownStakeSetup(p)
+	chownStakeSetup(tr, p)
 
 	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
 	total_supply := Field(p.Azil, "total_supply")
@@ -151,10 +150,10 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	}
 
 	//key1 waits 2 reward cycles (they should have no buffered depo in current/prev cycles, else swap request will fail)
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//key1 claims rewards
@@ -170,8 +169,8 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.VerifierKey).ChownStakeConfirmSwap(addr1))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 
 	//nextBuffer becomes active
 	activeBuffer := p.GetActiveBuffer().Addr
@@ -201,7 +200,7 @@ func (tr *Transitions) ChownStakeAzilErrors() {
 
 	p := tr.DeployAndUpgrade()
 
-	chownStakeSetup(p)
+	chownStakeSetup(tr, p)
 
 	key1, addr1, key2, addr2, ssn, _, userStake := chownStakeDefineParams(p)
 
@@ -209,10 +208,10 @@ func (tr *Transitions) ChownStakeAzilErrors() {
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], userStake))
 
 	//key1 waits 2 reward cycles
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 	nextBuffer := p.GetBufferToSwapWith()
 
 	//key1 claims rewards
@@ -280,7 +279,7 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 
 	p := tr.DeployAndUpgrade()
 
-	chownStakeSetup(p)
+	chownStakeSetup(tr, p)
 	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
 
 	//key1 delegates to main contract, expecting success
@@ -291,15 +290,15 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 	tx, _ := p.Zproxy.RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -8)
 
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 	nextBuffer = p.GetBufferToSwapWith().Addr
 
 	//key1 requests delegator swap, but he has buffered deposit in previous cycle, expecting DelegHasBufferedDeposit
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
 	AssertZimplError(tx, -8)
 
-	chownStakeNextCycle(p)
+	tr.NextCycle(p)
 	nextBuffer = p.GetBufferToSwapWith().Addr
 
 	//key1 requests delegator swap, but he has unclaimed rewards, expecting DelegHasUnwithdrawRewards
@@ -309,12 +308,10 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[1]))
 
-	//key1 requests delegator swap, but Holder has unclaimed rewards, expecting DelegHasUnwithdrawRewards
-	//workflow of this use case is: Verifier->AssignStakeReward, User->RequestDelegatorSwap, Azil->DrainBuffer
-	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
-	AssertZimplError(tx, -12)
+	//next buffer has no deposit/rewards in this test, so key1 can RequestDelegatorSwap
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer), "")
 
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycleOffchain(p)
 
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
@@ -333,18 +330,10 @@ func chownStakeDefineParams(p *contracts.Protocol) (string, string, string, stri
 	return key1, addr1, key2, addr2, ssn, minStake, userStake
 }
 
-func chownStakeSetup(p *contracts.Protocol) {
+func chownStakeSetup(tr *Transitions, p *contracts.Protocol) {
 	_, _, _, _, ssn, minStake, _ := chownStakeDefineParams(p)
 
 	prevWallet := p.Zproxy.Contract.Wallet
-
-	//TODO: move this to protocol.go
-	//add buffers to protocol, we need 3
-	buffer2, _ := p.DeployBuffer()
-	buffer3, _ := p.DeployBuffer()
-	p.Buffers = append(p.Buffers, buffer2, buffer3)
-	p.SyncBuffers()
-	p.SetupShortcuts(GetLog())
 
 	//add test SSNs to main staking contract
 	p.Zproxy.UpdateWallet(sdk.Cfg.AdminKey)
@@ -364,37 +353,8 @@ func chownStakeSetup(p *contracts.Protocol) {
 	p.Zproxy.Contract.Wallet = prevWallet
 
 	//ssns will become active on the next cycle
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
-}
-
-func chownStakeNextCycle(p *contracts.Protocol) {
-	chownStakeDefineParams(p)
-	prevWallet := p.Zproxy.Contract.Wallet
-
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-
-	zimplSsnList := p.Zimpl.GetSsnList()
-	ssnRewardFactor := make(map[string]string)
-	for _, ssn := range zimplSsnList {
-		ssnRewardFactor[ssn] = "100"
-	}
-	ssnRewardFactor[sdk.Cfg.AzilSsnAddress] = sdk.Cfg.AzilSsnRewardShare
-	AssertSuccess(p.Zproxy.AssignStakeRewardList(ssnRewardFactor, "10000"))
-
-	p.Zproxy.Contract.Wallet = prevWallet
-}
-
-func chownStakeNextCycleOffchain(p *contracts.Protocol) *actions.AdminActions {
-	tools := actions.NewAdminActions(GetLog())
-	tools.SetTestMode(true)
-	prevWallet := p.Azil.Contract.Wallet
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
-	tools.DrainBufferAuto(p)
-	showOnly := false
-	tools.ChownStakeReDelegate(p, showOnly)
-	p.Azil.Contract.Wallet = prevWallet
-	return tools
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 }
 
 func (tr *Transitions) ChownStakeRequireDrainBuffer() {
@@ -402,7 +362,7 @@ func (tr *Transitions) ChownStakeRequireDrainBuffer() {
 
 	p := tr.DeployAndUpgrade()
 
-	chownStakeSetup(p)
+	chownStakeSetup(tr, p)
 
 	key1, addr1, _, _, ssn, _, userStake := chownStakeDefineParams(p)
 
@@ -410,15 +370,15 @@ func (tr *Transitions) ChownStakeRequireDrainBuffer() {
 	AssertSuccess(p.Zproxy.WithUser(key1).DelegateStake(ssn[1], userStake))
 
 	//after 3 cycles all buffers are empty
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
-	chownStakeNextCycle(p)
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 
 	//next cycle
-	chownStakeNextCycle(p)
+	tr.NextCycle(p)
 	nextBuffer := p.GetBufferToSwapWith().Addr
 
 	//quick swap sequence!
@@ -435,7 +395,7 @@ func (tr *Transitions) ChownStakeRequireDrainBuffer() {
 	AssertError(tx, "BufferNotDrained")
 
 	//drain buffer
-	chownStakeNextCycleOffchain(p)
+	tr.NextCycleOffchain(p)
 
 	//offchain-tool re-calls ChownStakeConfirmSwap(addr1) after DrainBuffer(), expecting success
 	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.VerifierKey).ChownStakeConfirmSwap(addr1))

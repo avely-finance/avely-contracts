@@ -11,7 +11,9 @@ func (tr *Transitions) WithdrawStakeAmount() {
 
 	// deploy smart contract
 	p := tr.DeployAndUpgrade()
-	totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
+	//totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
+	//for now to activate SSNs we delegate required stakes through Zproxy as admin
+	totalSsnInitialDelegateZil := 0
 
 	/*******************************************************************************
 	 * 0. delegator (sdk.Cfg.Addr2) delegate 15 zil
@@ -92,21 +94,22 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	bnum2 := txn.Receipt.EpochNum
 	AssertEvent(txn, Event{p.Azil.Addr, "WithdrawStakeAmt",
 		ParamsMap{"withdraw_amount": ToAzil(10), "withdraw_stake_amount": ToZil(10)}})
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil)) //0
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil))    //0
-	//t.AssertEqual(Field(p.Azil, "balances"), "empty")
-	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(totalSsnInitialDelegateZil))
+	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil))
+	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil))
+	if totalSsnInitialDelegateZil == 0 {
+		AssertEqual(Field(p.Azil, "balances"), "{}")
+		AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), "")
+	} else {
+		AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(totalSsnInitialDelegateZil))
+	}
 	//there is holder's initial stake
-	//t.AssertEqual(p.Zproxy.Field("totalstakeamount"), "0")
 	if bnum1 == bnum2 {
 		withdrawal := Dig(p.Azil, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
-
 		AssertEqual(withdrawal.TokenAmount.String(), ToAzil(15))
 		AssertEqual(withdrawal.StakeAmount.String(), ToAzil(15))
 	} else {
 		//second withdrawal happened in next block
 		withdrawal := Dig(p.Azil, "withdrawal_pending", bnum2, sdk.Cfg.Addr2).Withdrawal()
-
 		AssertEqual(withdrawal.TokenAmount.String(), ToAzil(10))
 		AssertEqual(withdrawal.StakeAmount.String(), ToAzil(10))
 	}

@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	"github.com/avely-finance/avely-contracts/sdk/actions"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -16,41 +15,31 @@ func (tr *Transitions) DrainBuffer() {
 	Start("DrainBuffer")
 
 	p := tr.DeployAndUpgrade()
-	buffer2, _ := p.DeployBuffer()
-	buffer3, _ := p.DeployBuffer()
-	p.Buffers = append(p.Buffers, buffer2, buffer3)
-	p.SyncBuffers()
-	p.SetupShortcuts(GetLog())
 
 	rewardsFee := "1000" //10% of feeDenom=10000
 	treasuryAddr := sdk.Cfg.Addr3
 	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
 	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(treasuryAddr))
 	p.Azil.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
-	tools := actions.NewAdminActions(GetLog())
-	tools.SetTestMode(true)
 
 	ssnForInput := p.GetSsnAddressForInput()
 	activeBuffer := p.GetActiveBuffer().Addr
 	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-	sdk.IncreaseBlocknum(10)
-	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 
-	sdk.IncreaseBlocknum(10)
-	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+	tr.NextCycle(p)
 
 	bufferToDrain := p.GetBufferToDrain().Addr
 	AssertEqual(bufferToDrain, activeBuffer)
-
 	//try to consolidate in holder without rewards claiming, excepting Zimpl.DelegHasUnwithdrawRewards -12 error
 	txn, _ := p.Azil.ConsolidateInHolder(bufferToDrain)
 	AssertZimplError(txn, -12)
 
-	holderStake := p.Zimpl.GetDepositAmtDeleg(p.Holder.Addr)
-	tools.DrainBufferAuto(p)
+	tools := tr.NextCycleOffchain(p)
+
 	AssertEqual(strconv.Itoa(p.Zimpl.GetLastRewardCycle()), Field(p.Azil, "buffer_drained_cycle", bufferToDrain))
 
 	txn = tools.TxLogMap["ClaimRewardsBuffer_"+ssnForInput].Tx
@@ -62,20 +51,15 @@ func (tr *Transitions) DrainBuffer() {
 		ParamsMap{},
 	})
 
-	txn = tools.TxLogMap["ClaimRewardsHolder_"+ssnForInput].Tx
-	if holderStake[ssnForInput] != nil {
-		//holder had some stake for ssnForInput before DrainBuffer
-		AssertTransition(txn, Transition{
-			p.Azil.Addr,    //sender
-			"ClaimRewards", //tag
-			p.Holder.Addr,  //recipient
-			"0",            //amount
-			ParamsMap{},
-		})
-	} else {
-		//there was no stake for ssnForInput on holder before DrainBuffer
-		AssertError(txn, "DelegDoesNotExistAtSSN")
-	}
+	txn = tools.TxLogMap["ClaimRewardsHolder_"+sdk.Cfg.AzilSsnAddress].Tx
+	//holder has HolderInitialDelegateZil on sdk.Cfg.AzilSsnAddress
+	AssertTransition(txn, Transition{
+		p.Azil.Addr,    //sender
+		"ClaimRewards", //tag
+		p.Holder.Addr,  //recipient
+		"0",            //amount
+		ParamsMap{},
+	})
 
 	// check Swap transactions
 	txn = tools.TxLogMap["ConsolidateInHolder"].Tx
