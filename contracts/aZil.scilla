@@ -44,6 +44,7 @@ type Error =
   | PausedOut
   | PausedZrc2
   | SsnAddressesEmpty
+  | SsnAddressDoesNotExist
   | SsnAddressExists
   | StagingOwnerNotExists
   | StagingOwnerValidationFailed
@@ -86,6 +87,7 @@ let make_error =
       | PausedIn                         => "PausedIn"
       | PausedZrc2                       => "PausedZrc2"
       | SsnAddressesEmpty                => "SsnAddressesEmpty"
+      | SsnAddressDoesNotExist           => "SsnAddressDoesNotExist"
       | SsnAddressExists                 => "SsnAddressExists"
       | StagingOwnerNotExists            => "StagingOwnerNotExists"
       | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
@@ -176,6 +178,10 @@ let list_bystr20_length =
     let flist_length = @list_length ByStr20 in
     flist_length l
 
+let not_equal_bystr20 = fun (a: ByStr20) => fun(b: ByStr20) =>
+  let equal = builtin eq a b in
+  negb equal (* from BoolUtils *)
+
 let addfunds_tag = "AddFunds"
 
 (* active buffer is remainder of division of lastrewardcycle by buffers count *)
@@ -221,6 +227,11 @@ let is_addr_in_list =
     let feq = bystr20_eq addr in
     let flist_exists = @list_exists ByStr20 in
     flist_exists feq l
+
+let remove_addr_from_list = fun(addr: ByStr20) => fun(l: List ByStr20) =>
+  let f = not_equal_bystr20 addr in
+  let filterBystr20 = @list_filter ByStr20 in
+  filterBystr20 f l
 
 (* sum the integer type values in a map *)
 let sum_amount = fun(m: Map ByStr20 Uint128) =>
@@ -1072,6 +1083,20 @@ transition AddSSN(ssnaddr: ByStr20)
   end;
   new_list = Cons {ByStr20} ssnaddr var_ssn_addresses;
   ssn_addresses := new_list
+end
+
+transition RemoveSSN(ssnaddr: ByStr20)
+  RequireOwner;
+  var_ssn_addresses <- ssn_addresses;
+  is_whitelisted = is_addr_in_list var_ssn_addresses ssnaddr;
+  match is_whitelisted with
+  | True =>
+    new_list = remove_addr_from_list ssnaddr var_ssn_addresses;
+    ssn_addresses := new_list
+  | False =>
+    e = SsnAddressDoesNotExist;
+    ThrowError e
+  end
 end
 
 transition ClaimRewards(buffer_or_holder: ByStr20, ssn: ByStr20)
