@@ -47,10 +47,17 @@ func main() {
 	case "SubmitChangeBuffersTransaction":
 		changeBuffers(m, azilAddr, config.BufferAddrs)
 	case "SubmitAddSSNTransaction":
-		if ssnaddr := *ssnPtr; ssnaddr == "" {
+		ssnaddr := *ssnPtr
+		if ssnaddr == "" {
 			log.Fatal("SSN address empty")
 		}
 		addSSN(m, azilAddr, ssnaddr)
+	case "SubmitRemoveSSNTransaction":
+		ssnaddr := *ssnPtr
+		if ssnaddr == "" {
+			log.Fatal("SSN address empty")
+		}
+		removeSSN(m, azilAddr, ssnaddr)
 	case "SubmitChangeRewardsFeeTransaction":
 		changeRewardsFee(m, azilAddr, strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 	case "SubmitChangeTreasuryAddressTransaction":
@@ -78,6 +85,10 @@ func changeBuffers(m *MultisigWallet, callee string, buffers []string) {
 
 func addSSN(m *MultisigWallet, callee string, ssnaddr string) {
 	check(m.SubmitAddSSNTransaction(callee, ssnaddr))
+}
+
+func removeSSN(m *MultisigWallet, callee string, ssnaddr string) {
+	check(m.SubmitRemoveSSNTransaction(callee, ssnaddr))
 }
 
 func changeRewardsFee(m *MultisigWallet, callee string, value string) {
