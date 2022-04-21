@@ -227,6 +227,23 @@ func (s *MultisigWallet) SubmitAddSSNTransaction(azilAddr, ssnaddr string) (*tra
 	return s.Call("SubmitAddSSNTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitRemoveSSNTransaction(azilAddr, ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: azilAddr,
+		},
+		{
+			VName: "ssnaddr",
+			Type:  "ByStr20",
+			Value: ssnaddr,
+		},
+	}
+
+	return s.Call("SubmitRemoveSSNTransaction", args, "0")
+}
+
 func (s *MultisigWallet) SubmitPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

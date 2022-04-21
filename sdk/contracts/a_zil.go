@@ -217,6 +217,17 @@ func (a *AZil) AddSSN(ssnaddr string) (*transaction.Transaction, error) {
 	return a.Contract.Call("AddSSN", args, "0")
 }
 
+func (a *AZil) RemoveSSN(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return a.Contract.Call("RemoveSSN", args, "0")
+}
+
 func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

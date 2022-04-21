@@ -2,6 +2,7 @@ package transitions
 
 import (
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -12,7 +13,7 @@ func (tr *Transitions) MultisigWalletTests() {
 	multisigUpdateOwner(tr)
 	multisigChangeAdminTest(tr)
 	multisigChangeBuffersTest(tr)
-	multisigAddSSNTest(tr)
+	multisigAddRemoveSSNTest(tr)
 	multisigManagableActions(tr)
 }
 
@@ -154,7 +155,7 @@ func multisigChangeBuffersTest(tr *Transitions) {
 	AssertContain(Field(azil, "buffers_addresses"), sdk.Cfg.Addr1)
 }
 
-func multisigAddSSNTest(tr *Transitions) {
+func multisigAddRemoveSSNTest(tr *Transitions) {
 	owner := sdk.Cfg.Key1
 
 	owners := []string{sdk.Cfg.Addr1}
@@ -171,4 +172,14 @@ func multisigAddSSNTest(tr *Transitions) {
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitAddSSNTransaction(azil.Addr, newAddress))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
 	AssertContain(Field(azil, "ssn_addresses"), sdk.Cfg.Addr1)
+
+	//try to remove non-existent ssn, expect SsnAddressDoesNotExist error
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitRemoveSSNTransaction(azil.Addr, core.ZeroAddr))
+	tx, _ := multisig.WithUser(owner).ExecuteTransaction(txId + 1)
+	AssertError(tx, "SsnAddressDoesNotExist")
+
+	//remove ssn, added before; expect success
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitRemoveSSNTransaction(azil.Addr, newAddress))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId + 2))
+	AssertEqual(Field(azil, "ssn_addresses"), "[]")
 }

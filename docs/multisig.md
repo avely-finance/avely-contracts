@@ -20,13 +20,19 @@ go run tools/multisig_cmd.go --chain=testnet --tag=SubmitChangeBuffersTransactio
 go run tools/multisig_cmd.go --chain=testnet --tag=SubmitAddSSNTransaction --ssn=ssn_address
 ```
 
-4. Change Protocol Rewards Fee
+4. Remove SSN address
+
+```sh
+go run tools/multisig_cmd.go --chain=testnet --tag=SubmitRemoveSSNTransaction --ssn=ssn_address
+```
+
+5. Change Protocol Rewards Fee
 
 ```sh
 go run tools/multisig_cmd.go --chain=testnet --tag=SubmitChangeRewardsFeeTransaction
 ```
 
-4. Upnause In, Out and ZRC2
+6. Upnause In, Out and ZRC2
 
 ```sh
 go run tools/multisig_cmd.go --chain=testnet --tag=SubmitUnPauseInTransaction

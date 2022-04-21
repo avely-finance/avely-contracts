@@ -113,7 +113,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 
-	Start("CompleteWithdrawal - success")
+	Start("CompleteWithdrawal multi ssn")
 	readyBlocks := []string{}
 
 	p := tr.DeployAndUpgrade()
