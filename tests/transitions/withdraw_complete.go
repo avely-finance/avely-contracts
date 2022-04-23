@@ -187,7 +187,18 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnSlashHeavy), ToZil(1000))
 
-	//next withdraw is going from current heavisest SSN
+	//there are not enough balance on slashed SSNs now, so withdraw will go from heaviest whitelisted SSN
+	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(5000)))
+	AssertTransition(tx, Transition{
+		p.Azil.Addr,        //sender
+		"WithdrawStakeAmt", //tag
+		p.Holder.Addr,      //recipient
+		"0",                //amount
+		ParamsMap{"amount": ToZil(5000), "ssnaddr": ssnWhitelistHeavy},
+	})
+	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnWhitelistHeavy), ToZil(sdk.Cfg.HolderInitialDelegateZil))
+
+	//next withdraw is going from current heaviest slashed SSN (it was not heaviest before, but now it is)
 	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(3000)))
 	AssertTransition(tx, Transition{
 		p.Azil.Addr,        //sender
@@ -209,17 +220,6 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 		ParamsMap{"amount": ToZil(1000), "ssnaddr": ssnSlashHeavy},
 	})
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnSlashHeavy), "")
-
-	//there are no balance on slashed SSNs now, so withdraw will go from heaviest whitelisted SSN
-	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(5000)))
-	AssertTransition(tx, Transition{
-		p.Azil.Addr,        //sender
-		"WithdrawStakeAmt", //tag
-		p.Holder.Addr,      //recipient
-		"0",                //amount
-		ParamsMap{"amount": ToZil(5000), "ssnaddr": ssnWhitelistHeavy},
-	})
-	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnWhitelistHeavy), ToZil(sdk.Cfg.HolderInitialDelegateZil))
 
 	//next withdraw will go from ssnWhitelistLight, because it's heaviest now
 	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(5000)))
