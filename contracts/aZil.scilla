@@ -248,27 +248,69 @@ let sum_amount = fun(m: Map ByStr20 Uint128) =>
       builtin add acc int in (* add int to accumulator *)
     folder addition init l (* apply to entire list of pairs *)
 
-let get_heaviest = fun(m: Map ByStr20 Uint128) =>
+let bool_to_uint32 = fun(bval: Bool) =>
+  match bval with
+  | True =>
+    uint32_one
+  | False =>
+    uint32_zero
+  end
+
+(* get heaviest ssn address from provided map[address]amount *)
+(* address must have amount enough to withdraw requested withdraw_amount: Uint128 *)
+(* non-whitelisted (slashed) address will be returned as a priority *)
+let get_heaviest = fun(m: Map ByStr20 Uint128) => fun(whitelist: List ByStr20) => fun(withdraw_amount: Uint128) =>
   (* create a list of (key,values) pairs of the map *)
-  let l = builtin to_list m in
-  (* use fold to compare the second elements of all pairs *)
-  let folder = @list_foldl (Pair ByStr20 Uint128) (Pair ByStr20 Uint128) in
-  let init = Pair {ByStr20 Uint128} bystr20_zero uint128_zero in (* initialize the accumulator *)
-  let compare = (* update accumulator with heaviest pair *)
-    fun(acc: Pair ByStr20 Uint128) =>
-    fun(next: Pair ByStr20 Uint128) =>
-      let the_int_acc = @snd ByStr20 Uint128 in
-      let int_acc = the_int_acc acc in
+  let l = builtin to_list m in (* list consist of Pairs (ssnaddr, amount) *)
+  (* use foldl to choose heaviest pair (1) by type slashed/whitelisted, (2) by amount if types are same  *)
+  let folder = @list_foldl (Pair ByStr20 Uint128) (Map Uint32 (Pair ByStr20 Uint128)) in (* @list_foldl 'Next 'Accumulator *)
+  let init = Emp Uint32 (Pair ByStr20 Uint128) in (* initialize the accumulator as map[slashed=0,whitelisted=1]Pair(address,amount) *)
+  let compare = (* update accumulator function *)
+    fun(acc: Map Uint32 (Pair ByStr20 Uint128)) =>
+    fun(nextpair: Pair ByStr20 Uint128) =>
       let the_int_next = @snd ByStr20 Uint128 in
-      let int_next = the_int_next next in
-      let is_next_less = builtin lt int_next int_acc in
-      match is_next_less with
+      let int_next = the_int_next nextpair in
+      (* check if nextpair's amount is less then withdraw_amount *)
+      let is_next_less_than_amount = builtin lt int_next withdraw_amount in
+      match is_next_less_than_amount with
       | True =>
-        acc
+        acc (* nextpair's amount less then withdraw_amount, so we skip it, and keep accumulator as is *)
       | False =>
-        next
+        match nextpair with
+        | Pair next_ssnaddr next_amount =>
+          let status_bool = is_addr_in_list whitelist next_ssnaddr in
+          let status = bool_to_uint32 status_bool in (* 0 - address slashed; 1 - address whitelisted *)
+          let curval = builtin get acc status in
+          match curval with
+          | Some (Pair acc_ssnaddr acc_amount) =>
+            let is_next_less_than_acc = builtin lt next_amount acc_amount in
+            match is_next_less_than_acc with
+            | True =>
+              (* nextpair's amount less then acc[status]amount, so we ignore nextpair, and keep acc[status]Pair as is *)
+              acc
+            | False =>
+              builtin put acc status nextpair
+            end
+          | None =>
+            (* there is no Pair for this status in accumulator, add it *)
+            builtin put acc status nextpair
+          end
+        end
       end in
-    folder compare init l (* apply to entire list of pairs *)
+  let folded = folder compare init l in (* apply fold function to list *)
+  let heaviest_slashed = builtin get folded uint32_zero in (* first, check slashed *)
+  match heaviest_slashed with
+  | Some (Pair slashed_ssnaddr slashed_amount) =>
+    Some {ByStr20} slashed_ssnaddr
+  | None =>
+    let heaviest_whitelisted = builtin get folded uint32_one in (* if slashed not found, check whitelisted *)
+    match heaviest_whitelisted with
+    | Some (Pair whitelisted_ssnaddr whitelisted_amount) =>
+      Some {ByStr20} whitelisted_ssnaddr
+    | None =>
+      None {ByStr20} (* nothing found *)
+    end
+  end
 
 (***************************************************)
 (*             The contract definition             *)
@@ -506,21 +548,19 @@ procedure GetSsnAddressForOutput(withdraw_amount: Uint128)
     match o_deposit_amt_holder with
     | Some map_ssn_amount =>
       (* holder has some deposits *)
-      pair_ssn_amount = get_heaviest map_ssn_amount;
-      match pair_ssn_amount with
-      | Pair ssn holder_amount =>
-        (* heaviest pair found *)
-        is_not_enough = builtin lt holder_amount withdraw_amount;
-        match is_not_enough with
-        | True =>
-          e = WithdrawAmountTooBig;
-          ThrowError e
-        | False =>
-          (* holder has enough amount on the ssn to fullfill withdraw request *)
-          tmp_ssn_addr_out := ssn
-        end
+      ssn_whitelist <- ssn_addresses;
+      o_ssnaddr = get_heaviest map_ssn_amount ssn_whitelist withdraw_amount;
+      match o_ssnaddr with
+      | Some ssnaddr =>
+        (* heaviest ssnaddress found *)
+        tmp_ssn_addr_out := ssnaddr
+      | None =>
+        (* address that meets withdrawal request requirements was not found *)
+        e = WithdrawAmountTooBig;
+        ThrowError e
       end
     | None =>
+      (* holder has no deposits, it's almost impossible case *)
       e = WithdrawAmountTooBig;
       ThrowError e
     end
