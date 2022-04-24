@@ -26,8 +26,8 @@ type Config struct {
 	ChainId                  int
 	TxConfrimMaxAttempts     int
 	TxConfirmIntervalSec     int
-	AzilSsnAddress           string
-	AzilSsnRewardShare       string
+	StZilSsnAddress          string
+	StZilSsnRewardShare      string
 	HolderInitialDelegateZil int
 	SsnInitialDelegateZil    int
 	ProtocolRewardsFee       int
@@ -47,7 +47,7 @@ type Config struct {
 	ZproxyAddr   string
 	GzilAddr     string
 	ZimplAddr    string
-	AzilAddr     string
+	StZilAddr    string
 	BufferAddrs  []string
 	SsnAddrs     []string
 	HolderAddr   string

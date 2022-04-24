@@ -13,12 +13,12 @@ import (
 type Protocol struct {
 	Zproxy  *Zproxy
 	Zimpl   *Zimpl
-	Azil    *AZil
+	StZIL   *StZIL
 	Buffers []*BufferContract
 	Holder  *HolderContract
 }
 
-func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferContract, holder *HolderContract) *Protocol {
+func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, stzil *StZIL, buffers []*BufferContract, holder *HolderContract) *Protocol {
 	if len(buffers) == 0 {
 		log.Fatal("Protocol should have at least one buffer")
 	}
@@ -26,19 +26,19 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, azil *AZil, buffers []*BufferCont
 	return &Protocol{
 		Zproxy:  zproxy,
 		Zimpl:   zimpl,
-		Azil:    azil,
+		StZIL:   stzil,
 		Buffers: buffers,
 		Holder:  holder,
 	}
 }
 
 func (p *Protocol) DeployBuffer() (*BufferContract, error) {
-	return NewBufferContract(p.Azil.Sdk, p.Azil.Addr, p.Zproxy.Addr)
+	return NewBufferContract(p.StZIL.Sdk, p.StZIL.Addr, p.Zproxy.Addr)
 }
 
 func (p *Protocol) GetSsnAddressForInput() string {
-	ssnAddrs := p.Azil.GetSsnWhitelist()
-	ssnIndex := p.Azil.GetSsnIndex()
+	ssnAddrs := p.StZIL.GetSsnWhitelist()
+	ssnIndex := p.StZIL.GetSsnIndex()
 	i := ssnIndex.Uint64() % uint64(len(ssnAddrs))
 	return ssnAddrs[i]
 }
@@ -69,14 +69,14 @@ func (p *Protocol) GetBufferByOffset(offset int) *BufferContract {
 
 func (p *Protocol) GetBlockHeight() int {
 	result := ""
-	if p.Azil.Sdk.Cfg.Chain == "local" {
+	if p.StZIL.Sdk.Cfg.Chain == "local" {
 		//Isolated server has limited set of API methods: https://github.com/Zilliqa/zilliqa-isolated-server#available-apis
 		//GetNumTxBlocks is not available.
 		//So we'll take BlockNum from receipt of safe transaction.
-		tx, _ := p.Zproxy.UpdateVerifier(p.Azil.Sdk.Cfg.Verifier)
+		tx, _ := p.Zproxy.UpdateVerifier(p.StZIL.Sdk.Cfg.Verifier)
 		result = tx.Receipt.EpochNum
 	} else {
-		result, _ = p.Azil.Contract.Provider.GetNumTxBlocks()
+		result, _ = p.StZIL.Contract.Provider.GetNumTxBlocks()
 	}
 	blockHeight, _ := strconv.Atoi(result)
 	return blockHeight
@@ -87,12 +87,12 @@ func (p *Protocol) GetClaimWithdrawalBlocks() []int {
 	bnumReq := p.Zimpl.GetBnumReq()
 
 	//get all blocks with pending withdrawals
-	partialState := p.Azil.Contract.SubState("withdrawal_pending", []string{})
+	partialState := p.StZIL.Contract.SubState("withdrawal_pending", []string{})
 	state := NewState(partialState)
 	allWithdrawBlocks := state.Dig("result.withdrawal_pending|@keys")
 	blocks := allWithdrawBlocks.ArrayInt()
 
-	//see leave_unbonded function in azil
+	//see leave_unbonded function in stzil
 	unbonded := []int{}
 	for _, bnum := range blocks {
 		if bnum+bnumReq < curBlockNum {
@@ -118,7 +118,7 @@ func (p *Protocol) GetSwapRequestsForBuffer(bufferAddr string) []string {
 }
 
 func (p *Protocol) InitHolder() (*transaction.Transaction, error) {
-	return p.Holder.DelegateStake(p.Azil.Sdk.Cfg.AzilSsnAddress, ToZil(p.Azil.Sdk.Cfg.HolderInitialDelegateZil))
+	return p.Holder.DelegateStake(p.StZIL.Sdk.Cfg.StZilSsnAddress, ToZil(p.StZIL.Sdk.Cfg.HolderInitialDelegateZil))
 }
 
 func (p *Protocol) SyncBufferAndHolder() {
@@ -128,10 +128,10 @@ func (p *Protocol) SyncBufferAndHolder() {
 		new_buffers = append(new_buffers, b.Addr)
 	}
 
-	prevWallet := p.Azil.Wallet
-	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
-	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).SetHolderAddress(p.Holder.Addr))
-	p.Azil.Wallet = prevWallet
+	prevWallet := p.StZIL.Wallet
+	check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).SetHolderAddress(p.Holder.Addr))
+	p.StZIL.Wallet = prevWallet
 }
 
 func (p *Protocol) SyncBuffers() {
@@ -141,38 +141,38 @@ func (p *Protocol) SyncBuffers() {
 		new_buffers = append(new_buffers, b.Addr)
 	}
 
-	prevWallet := p.Azil.Wallet
-	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
-	p.Azil.Wallet = prevWallet
+	prevWallet := p.StZIL.Wallet
+	check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	p.StZIL.Wallet = prevWallet
 }
 
 func (p *Protocol) AddSSNs() {
-	prevWallet := p.Azil.Wallet
+	prevWallet := p.StZIL.Wallet
 
-	//reverse elements to keep order of azil.ssn_addresses elements same as in config
-	for i := len(p.Azil.Sdk.Cfg.SsnAddrs) - 1; i >= 0; i-- {
-		check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).AddSSN(p.Azil.Sdk.Cfg.SsnAddrs[i]))
+	//reverse elements to keep order of stzil.ssn_addresses elements same as in config
+	for i := len(p.StZIL.Sdk.Cfg.SsnAddrs) - 1; i >= 0; i-- {
+		check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).AddSSN(p.StZIL.Sdk.Cfg.SsnAddrs[i]))
 	}
-	p.Azil.Wallet = prevWallet
+	p.StZIL.Wallet = prevWallet
 }
 
 func (p *Protocol) ChangeTreasuryAddress() {
-	prevWallet := p.Azil.Wallet
-	check(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.Azil.Sdk.Cfg.TreasuryAddr))
-	p.Azil.Wallet = prevWallet
+	prevWallet := p.StZIL.Wallet
+	check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.StZIL.Sdk.Cfg.TreasuryAddr))
+	p.StZIL.Wallet = prevWallet
 }
 
 func (p *Protocol) Unpause() {
-	prevWallet := p.Azil.Wallet
-	p.Azil.UpdateWallet(p.Azil.Sdk.Cfg.OwnerKey)
-	check(p.Azil.UnpauseIn())
-	check(p.Azil.UnpauseOut())
-	check(p.Azil.UnpauseZrc2())
-	p.Azil.Wallet = prevWallet
+	prevWallet := p.StZIL.Wallet
+	p.StZIL.UpdateWallet(p.StZIL.Sdk.Cfg.OwnerKey)
+	check(p.StZIL.UnpauseIn())
+	check(p.StZIL.UnpauseOut())
+	check(p.StZIL.UnpauseZrc2())
+	p.StZIL.Wallet = prevWallet
 }
 
 func (p *Protocol) SetupZProxy() {
-	sdk := p.Azil.Sdk
+	sdk := p.StZIL.Sdk
 	args := []core.ContractValue{
 		{
 			"newImplementation",
@@ -195,20 +195,20 @@ func (p *Protocol) SetupZProxy() {
 	}
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	check(p.Holder.DelegateStake(sdk.Cfg.AzilSsnAddress, ToZil(sdk.Cfg.HolderInitialDelegateZil)))
+	check(p.Holder.DelegateStake(sdk.Cfg.StZilSsnAddress, ToZil(sdk.Cfg.HolderInitialDelegateZil)))
 
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 
 	// SSN will become active on next cycle
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	sdk.IncreaseBlocknum(10)
-	check(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+	check(p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 }
 
 func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
 	log.AddShortcut("Zproxy", p.Zproxy.Addr)
 	log.AddShortcut("Zimpl", p.Zimpl.Addr)
-	log.AddShortcut("Azil", p.Azil.Addr)
+	log.AddShortcut("StZIL", p.StZIL.Addr)
 	log.AddShortcut("Holder", p.Holder.Addr)
 
 	for i, b := range p.Buffers {

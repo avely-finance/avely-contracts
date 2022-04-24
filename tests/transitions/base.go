@@ -83,7 +83,7 @@ func (tr *Transitions) NextCycle(p *contracts.Protocol) {
 	for _, ssn := range zimplSsnList {
 		ssnRewardFactor[ssn] = "100"
 	}
-	ssnRewardFactor[sdk.Cfg.AzilSsnAddress] = sdk.Cfg.AzilSsnRewardShare
+	ssnRewardFactor[sdk.Cfg.StZilSsnAddress] = sdk.Cfg.StZilSsnRewardShare
 	AssertSuccess(p.Zproxy.AssignStakeRewardList(ssnRewardFactor, "10000"))
 
 	p.Zproxy.Contract.Wallet = prevWallet
@@ -93,13 +93,13 @@ func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol) *actions.AdminAc
 	tools := actions.NewAdminActions(GetLog())
 	tools.TxLogMode(true)
 	tools.TxLogClear()
-	prevWallet := p.Azil.Contract.Wallet
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	prevWallet := p.StZIL.Contract.Wallet
+	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
 	tools.DrainBufferAuto(p)
 	showOnly := false
 	tools.ChownStakeReDelegate(p, showOnly)
 	//tools.AutoRestake(p)
-	p.Azil.Contract.Wallet = prevWallet
+	p.StZIL.Contract.Wallet = prevWallet
 	return tools
 }
 
@@ -119,7 +119,7 @@ func (tr *Transitions) RunAll() {
 	tr.DelegateStakeBuffersRotation()
 	tr.IsAdmin()
 	tr.IsOwner()
-	tr.IsAzil()
+	tr.IsStZil()
 	tr.IsZimpl()
 	tr.IsBufferOrHolder()
 	tr.Pause()
