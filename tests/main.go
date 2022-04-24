@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/tests/transitions"
@@ -15,7 +16,7 @@ func main() {
 	log := helpers.GetLog()
 
 	shortcuts := map[string]string{
-		"azilssn":  config.AzilSsnAddress,
+		"stzilssn": config.StZilSsnAddress,
 		"addr1":    config.Addr1,
 		"addr2":    config.Addr2,
 		"addr3":    config.Addr3,

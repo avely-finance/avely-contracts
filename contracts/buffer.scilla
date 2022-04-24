@@ -9,7 +9,7 @@ let uint128_zero = Uint128 0
 let bystr20_zero = 0x0000000000000000000000000000000000000000
 
 type Error =
-  | AzilValidationFailed
+  | StZILValidationFailed
   | CantFetchZimplAddress
   | ClaimRewardsBufferFundsMismatch
   | ZimplValidationFailed
@@ -18,7 +18,7 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AzilValidationFailed            => "AzilValidationFailed"
+      | StZILValidationFailed            => "StZILValidationFailed"
       | CantFetchZimplAddress           => "CantFetchZimplAddress"
       | ClaimRewardsBufferFundsMismatch => "ClaimRewardsBufferFundsMismatch"
       | ZimplValidationFailed           => "ZimplValidationFailed"
@@ -36,11 +36,11 @@ let one_msg =
 (***************************************************)
 
 contract Buffer(
-  init_azil_address         : ByStr20,
+  init_stzil_address         : ByStr20,
   init_zproxy_address       : ByStr20
 )
 
-field azil_address          : ByStr20 = init_azil_address
+field stzil_address          : ByStr20 = init_stzil_address
 field zproxy_address        : ByStr20 = init_zproxy_address
 
 field local_zimpl_address   : ByStr20 = bystr20_zero
@@ -55,13 +55,13 @@ procedure ThrowError(err: Error)
   throw e
 end
 
-procedure RequireAzil()
-  var_azil_address <- azil_address;
-  is_azil = builtin eq _sender var_azil_address;
-  match is_azil with
+procedure RequireStZIL()
+  var_stzil_address <- stzil_address;
+  is_stzil = builtin eq _sender var_stzil_address;
+  match is_stzil with
   | True  =>
   | False =>
-    e = AzilValidationFailed;
+    e = StZILValidationFailed;
     ThrowError e
   end
 end
@@ -129,7 +129,7 @@ end
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
 transition DelegateStake(ssnaddr: ByStr20)
-  RequireAzil;
+  RequireStZIL;
   accept;
   stake_amt = _amount;
 
@@ -140,15 +140,15 @@ end
 
 transition DelegateStakeSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
   RequireZimpl;
-  o_azil_address <- azil_address;
+  o_stzil_address <- stzil_address;
 
-  msg = { _tag : "DelegateStakeSuccessCallBack"; _recipient : o_azil_address; _amount : uint128_zero; amount: amount };
+  msg = { _tag : "DelegateStakeSuccessCallBack"; _recipient : o_stzil_address; _amount : uint128_zero; amount: amount };
   msgs = one_msg msg;
   send msgs
 end
 
 transition ClaimRewards(ssnaddr: ByStr20)
-  RequireAzil;
+  RequireStZIL;
   tmp_added_funds := uint128_zero;
 
   var_zproxy_address <- zproxy_address;
@@ -157,7 +157,7 @@ transition ClaimRewards(ssnaddr: ByStr20)
 end
 
 transition ConfirmDelegatorSwap(requestor: ByStr20)
-  RequireAzil;
+  RequireStZIL;
 
   var_zproxy_address <- zproxy_address;
 
@@ -167,7 +167,7 @@ transition ConfirmDelegatorSwap(requestor: ByStr20)
 end
 
 transition RejectDelegatorSwap(requestor: ByStr20)
-  RequireAzil;
+  RequireStZIL;
 
   var_zproxy_address <- zproxy_address;
 
@@ -190,16 +190,16 @@ transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint12
     e = ClaimRewardsBufferFundsMismatch;
     ThrowError e
   | True =>
-    o_azil_address <- azil_address;
+    o_stzil_address <- stzil_address;
 
-    msg = { _tag : "ClaimRewardsSuccessCallBack"; _recipient : o_azil_address; _amount : rewards };
+    msg = { _tag : "ClaimRewardsSuccessCallBack"; _recipient : o_stzil_address; _amount : rewards };
     msgs = one_msg msg;
     send msgs
   end
 end
 
 transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
-  RequireAzil;
+  RequireStZIL;
 
   var_zproxy_address <- zproxy_address;
 
@@ -207,7 +207,7 @@ transition RequestDelegatorSwap(new_deleg_addr: ByStr20)
 end
 
 transition ReDelegateStake(ssnaddr: ByStr20, to_ssn: ByStr20, amount: Uint128)
-  RequireAzil;
+  RequireStZIL;
 
   var_zproxy_address <- zproxy_address;
 

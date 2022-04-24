@@ -65,7 +65,7 @@ let one = Uint32 1
 let transaction_inc = one
 
 (* Type of transactions. *)
-(* All calls are made to the aZIL contract *)
+(* All calls are made to the stZIL contract *)
 type CalleeTransaction =
 (*****************************************************)
 (*               Proxy Transition                    *)
