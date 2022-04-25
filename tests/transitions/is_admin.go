@@ -11,18 +11,18 @@ func (tr *Transitions) IsAdmin() {
 
 	p := tr.DeployAndUpgrade()
 
-	// Use non-admin user for Azil, expecting errors
-	p.Azil.UpdateWallet(sdk.Cfg.Key2)
+	// Use non-admin user for StZIL, expecting errors
+	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, _ := p.Azil.IncreaseAutoRestakeAmount(ToZil(1))
+	tx, _ := p.StZIL.IncreaseAutoRestakeAmount(ToZil(1))
 	AssertError(tx, "AdminValidationFailed")
-	tx, _ = p.Azil.PerformAutoRestake()
+	tx, _ = p.StZIL.PerformAutoRestake()
 	AssertError(tx, "AdminValidationFailed")
-	tx, _ = p.Azil.ClaimRewards(p.GetBuffer().Addr, sdk.Cfg.SsnAddrs[0])
+	tx, _ = p.StZIL.ClaimRewards(p.GetBuffer().Addr, sdk.Cfg.SsnAddrs[0])
 	AssertError(tx, "AdminValidationFailed")
 	readyBlocks := []string{}
-	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)
+	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, "AdminValidationFailed")
-	tx, _ = p.Azil.ChownStakeReDelegate(sdk.Cfg.Addr3, ToZil(1))
+	tx, _ = p.StZIL.ChownStakeReDelegate(sdk.Cfg.Addr3, ToZil(1))
 	AssertError(tx, "AdminValidationFailed")
 }
