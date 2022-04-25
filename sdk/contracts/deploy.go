@@ -33,15 +33,15 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Debug("deploy Zimpl succeed, address = " + Zimpl.Addr)
 
-	// deploy azil
-	Azil, err := NewAZilContract(sdk, sdk.Cfg.Owner, Zimpl.Addr)
+	// deploy stzil
+	StZIL, err := NewStZILContract(sdk, sdk.Cfg.Owner, Zimpl.Addr)
 	if err != nil {
-		log.Fatal("deploy aZil error = " + err.Error())
+		log.Fatal("deploy StZIL error = " + err.Error())
 	}
-	log.Debug("deploy aZil succeed, address = " + Azil.Addr)
+	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, Azil.Addr, Zproxy.Addr)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -49,16 +49,16 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, Azil.Addr, Zproxy.Addr)
+	Holder, err := NewHolderContract(sdk, StZIL.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Azil, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder)
 }
 
-// Restore ZProxy + Zimpl and deploy new versions of Azil, Buffer and Holder
+// Restore ZProxy + Zimpl and deploy new versions of StZIL, Buffer and Holder
 func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("start to DeployOnlyAvely")
 
@@ -76,15 +76,15 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Debug("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
-	// deploy azil
-	Azil, err := NewAZilContract(sdk, sdk.Cfg.Owner, Zimpl.Addr)
+	// deploy stzil
+	StZIL, err := NewStZILContract(sdk, sdk.Cfg.Owner, Zimpl.Addr)
 	if err != nil {
-		log.Fatal("deploy aZil error = " + err.Error())
+		log.Fatal("deploy StZIL error = " + err.Error())
 	}
-	log.Debug("deploy aZil succeed, address = " + Azil.Addr)
+	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, Azil.Addr, Zproxy.Addr)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -92,13 +92,13 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, Azil.Addr, Zproxy.Addr)
+	Holder, err := NewHolderContract(sdk, StZIL.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Azil, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder)
 }
 
 func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
@@ -118,17 +118,17 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Debug("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
-	// Restore azil
-	Azil, err := RestoreAZilContract(sdk, sdk.Cfg.AzilAddr, sdk.GetAddressFromPrivateKey(sdk.Cfg.OwnerKey), Zimpl.Addr)
+	// Restore stzil
+	StZIL, err := RestoreStZILContract(sdk, sdk.Cfg.StZilAddr, sdk.GetAddressFromPrivateKey(sdk.Cfg.OwnerKey), Zimpl.Addr)
 	if err != nil {
-		log.Fatal("Restore aZil error = " + err.Error())
+		log.Fatal("Restore StZIL error = " + err.Error())
 	}
-	log.Debug("Restore aZil succeed, address = " + Azil.Addr)
+	log.Debug("Restore StZIL succeed, address = " + StZIL.Addr)
 
 	// Restore buffers
 	buffers := []*BufferContract{}
 	for _, addr := range sdk.Cfg.BufferAddrs {
-		Buffer, err := RestoreBufferContract(sdk, addr, Azil.Addr, Zproxy.Addr)
+		Buffer, err := RestoreBufferContract(sdk, addr, StZIL.Addr, Zproxy.Addr)
 		if err != nil {
 			log.Fatal("Restore buffer error = " + err.Error())
 		}
@@ -138,13 +138,13 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 
 	// Restore holder
-	Holder, err := RestoreHolderContract(sdk, sdk.Cfg.HolderAddr, Azil.Addr, Zproxy.Addr)
+	Holder, err := RestoreHolderContract(sdk, sdk.Cfg.HolderAddr, StZIL.Addr, Zproxy.Addr)
 	if err != nil {
 		log.Fatal("Restore holder error = " + err.Error())
 	}
 	log.Debug("Restore holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, Azil, buffers, Holder)
+	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder)
 }
 
 //TODO: move this function to core/sdk.go, rename to CheckTx

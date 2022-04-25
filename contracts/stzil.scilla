@@ -5,7 +5,7 @@ import ListUtils IntUtils BoolUtils PairUtils
 (***************************************************)
 (*               Associated library                *)
 (***************************************************)
-library AZil
+library StZIL
 
 type Withdrawal =
   | Withdrawal of Uint128 Uint128
@@ -248,33 +248,75 @@ let sum_amount = fun(m: Map ByStr20 Uint128) =>
       builtin add acc int in (* add int to accumulator *)
     folder addition init l (* apply to entire list of pairs *)
 
-let get_heaviest = fun(m: Map ByStr20 Uint128) =>
+let bool_to_uint32 = fun(bval: Bool) =>
+  match bval with
+  | True =>
+    uint32_one
+  | False =>
+    uint32_zero
+  end
+
+(* get heaviest ssn address from provided map[address]amount *)
+(* address must have amount enough to withdraw requested withdraw_amount: Uint128 *)
+(* non-whitelisted (slashed) address will be returned as a priority *)
+let get_heaviest = fun(m: Map ByStr20 Uint128) => fun(whitelist: List ByStr20) => fun(withdraw_amount: Uint128) =>
   (* create a list of (key,values) pairs of the map *)
-  let l = builtin to_list m in
-  (* use fold to compare the second elements of all pairs *)
-  let folder = @list_foldl (Pair ByStr20 Uint128) (Pair ByStr20 Uint128) in
-  let init = Pair {ByStr20 Uint128} bystr20_zero uint128_zero in (* initialize the accumulator *)
-  let compare = (* update accumulator with heaviest pair *)
-    fun(acc: Pair ByStr20 Uint128) =>
-    fun(next: Pair ByStr20 Uint128) =>
-      let the_int_acc = @snd ByStr20 Uint128 in
-      let int_acc = the_int_acc acc in
+  let l = builtin to_list m in (* list consist of Pairs (ssnaddr, amount) *)
+  (* use foldl to create heaviest_by_status map[slashed=0,whitelisted=1]HeaviestPair(ssnaddr,amount)  *)
+  let folder = @list_foldl (Pair ByStr20 Uint128) (Map Uint32 (Pair ByStr20 Uint128)) in (* @list_foldl 'Next 'Accumulator *)
+  let init = Emp Uint32 (Pair ByStr20 Uint128) in (* initialize the accumulator as map[slashed=0,whitelisted=1]Pair(address,amount) *)
+  let compare = (* update accumulator function *)
+    fun(acc: Map Uint32 (Pair ByStr20 Uint128)) =>
+    fun(nextpair: Pair ByStr20 Uint128) =>
       let the_int_next = @snd ByStr20 Uint128 in
-      let int_next = the_int_next next in
-      let is_next_less = builtin lt int_next int_acc in
-      match is_next_less with
+      let int_next = the_int_next nextpair in
+      (* check if nextpair's amount is less then withdraw_amount *)
+      let is_next_less_than_amount = builtin lt int_next withdraw_amount in
+      match is_next_less_than_amount with
       | True =>
-        acc
+        acc (* nextpair's amount less then withdraw_amount, so we skip it, and keep accumulator as is *)
       | False =>
-        next
+        match nextpair with
+        | Pair next_ssnaddr next_amount =>
+          let status_bool = is_addr_in_list whitelist next_ssnaddr in
+          let status = bool_to_uint32 status_bool in (* 0 - address slashed; 1 - address whitelisted *)
+          let curval = builtin get acc status in
+          match curval with
+          | Some (Pair acc_ssnaddr acc_amount) =>
+            let is_next_less_than_acc = builtin lt next_amount acc_amount in
+            match is_next_less_than_acc with
+            | True =>
+              (* nextpair's amount less then acc[status]amount, so we ignore nextpair, and keep acc[status]Pair as is *)
+              acc
+            | False =>
+              builtin put acc status nextpair
+            end
+          | None =>
+            (* there is no Pair for this status in accumulator, add it *)
+            builtin put acc status nextpair
+          end
+        end
       end in
-    folder compare init l (* apply to entire list of pairs *)
+  let heaviest_by_status = folder compare init l in (* apply fold function to list *)
+  let heaviest_slashed = builtin get heaviest_by_status uint32_zero in (* first, check slashed *)
+  match heaviest_slashed with
+  | Some (Pair slashed_ssnaddr slashed_amount) =>
+    Some {ByStr20} slashed_ssnaddr
+  | None =>
+    let heaviest_whitelisted = builtin get heaviest_by_status uint32_one in (* if slashed not found, check whitelisted *)
+    match heaviest_whitelisted with
+    | Some (Pair whitelisted_ssnaddr whitelisted_amount) =>
+      Some {ByStr20} whitelisted_ssnaddr
+    | None =>
+      None {ByStr20} (* nothing found *)
+    end
+  end
 
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
 
-contract AZil(
+contract StZIL(
   contract_owner            : ByStr20,
   init_admin_address        : ByStr20,
   init_zimpl_address        : ByStr20,
@@ -506,21 +548,19 @@ procedure GetSsnAddressForOutput(withdraw_amount: Uint128)
     match o_deposit_amt_holder with
     | Some map_ssn_amount =>
       (* holder has some deposits *)
-      pair_ssn_amount = get_heaviest map_ssn_amount;
-      match pair_ssn_amount with
-      | Pair ssn holder_amount =>
-        (* heaviest pair found *)
-        is_not_enough = builtin lt holder_amount withdraw_amount;
-        match is_not_enough with
-        | True =>
-          e = WithdrawAmountTooBig;
-          ThrowError e
-        | False =>
-          (* holder has enough amount on the ssn to fullfill withdraw request *)
-          tmp_ssn_addr_out := ssn
-        end
+      ssn_whitelist <- ssn_addresses;
+      o_ssnaddr = get_heaviest map_ssn_amount ssn_whitelist withdraw_amount;
+      match o_ssnaddr with
+      | Some ssnaddr =>
+        (* heaviest ssnaddress found *)
+        tmp_ssn_addr_out := ssnaddr
+      | None =>
+        (* address that meets withdrawal request requirements was not found *)
+        e = WithdrawAmountTooBig;
+        ThrowError e
       end
     | None =>
+      (* holder has no deposits, it's almost impossible case *)
       e = WithdrawAmountTooBig;
       ThrowError e
     end
@@ -664,7 +704,7 @@ procedure ConfirmDelegatorSwap(from: ByStr20, to: ByStr20)
 end
 
 (************************************************************)
-(* @dev: aZil actions                                       *)
+(* @dev: stZIL actions                                       *)
 (************************************************************)
 
 procedure IsDelegStakeSufficient(amount: Uint128)
@@ -1242,8 +1282,8 @@ end
 (********************************************************************************)
 (*                    ClaimWithdrawal Flow                                      *)
 (*                                                                              *)
-(* 1) Offchain worker calls Azil->ClaimWithdrawal()                             *)
-(* 1) Azil calls Holder->CompleteWithdrawal()                                   *)
+(* 1) Offchain worker calls stZIL->ClaimWithdrawal()                             *)
+(* 1) stZIL calls Holder->CompleteWithdrawal()                                   *)
 (* 2) Holder calls Zproxy->CompleteWithdrawal()                                 *)
 (* 3) Zimpl do its work, then few options are possible:                         *)
 (*   a) it issues NoPendingWithdrawal event                                     *)
@@ -1253,13 +1293,13 @@ end
 (*     * Holder->CompleteWithdrawalSuccessCallBack(amount),                     *)
 (* In case of (3c):                                                             *)
 (*                                                                              *)
-(* 1) Holder calls Azil->CompleteWithdrawalSuccessCallBack(_amount)             *)
-(* 2) Azil accepts; then check _amount with tmp_complete_withdrawal_available   *)
+(* 1) Holder calls stZIL->CompleteWithdrawalSuccessCallBack(_amount)             *)
+(* 2) stZIL accepts; then check _amount with tmp_complete_withdrawal_available   *)
 (*   a) OK => workflow finished                                                 *)
 (*   b) ERROR => exception                                                      *)
 (*                                                                              *)
 (* Completely successful chaincall will looks like                              *)
-(* Worker->Azil->Holder->Zproxy->Zimpl->Holder->Azil                            *)
+(* Worker->stZIL->Holder->Zproxy->Zimpl->Holder->stZIL                            *)
 (*                                                                              *)
 (********************************************************************************)
 
@@ -1332,12 +1372,12 @@ transition CompleteWithdrawalSuccessCallBack()
   accept;
   amount = _amount;
 
-  (* check Azil-calculated withdrawal amount against of Zimpl *)
+  (* check stZIL-calculated withdrawal amount against of Zimpl *)
   withdraw_amt <- tmp_complete_withdrawal_available;
   amount_eq = builtin eq withdraw_amt amount;
   match amount_eq with
   | False =>
-    e = { _eventname: "CompleteWithdrawalFundsMismatch"; amountAzil: withdraw_amt; amounthZimpl: amount };
+    e = { _eventname: "CompleteWithdrawalFundsMismatch"; amountStZil: withdraw_amt; amounthZimpl: amount };
     event e;
     e = CompleteWithdrawalFundsMismatch;
     ThrowError e
@@ -1368,7 +1408,7 @@ transition ChownStakeConfirmSwap(delegator: ByStr20)
     match o_deleg_swap_request with
     | Some new_deleg =>
 
-      (* new_deleg must be azil buffer *)
+      (* new_deleg must be stZIL buffer *)
       var_buffers_addresses <- buffers_addresses;
       is_buffer = is_addr_in_list var_buffers_addresses new_deleg;
       match is_buffer with

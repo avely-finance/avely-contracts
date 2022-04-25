@@ -30,12 +30,12 @@ func multisigGoldenFlowTest(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newAddr := sdk.Cfg.Admin // could be any random address
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeTreasuryAddressTransaction(azil.Addr, newAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeTreasuryAddressTransaction(stzil.Addr, newAddr))
 
 	txId := 0 // the test transition should be the first
 
@@ -55,9 +55,9 @@ func multisigGoldenFlowTest(tr *Transitions) {
 	// should be changed after execution
 
 	AssertMultisigSuccess(multisig.WithUser(owner1).SignTransaction(txId))
-	AssertEqual(azil.GetTreasuryAddress(), sdk.Cfg.TreasuryAddr)
+	AssertEqual(stzil.GetTreasuryAddress(), sdk.Cfg.TreasuryAddr)
 	AssertMultisigSuccess(multisig.WithUser(owner2).ExecuteTransaction(txId))
-	AssertEqual(azil.GetTreasuryAddress(), newAddr)
+	AssertEqual(stzil.GetTreasuryAddress(), newAddr)
 }
 
 func multisigChangeAdminTest(tr *Transitions) {
@@ -69,14 +69,14 @@ func multisigChangeAdminTest(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newAdmin := sdk.Cfg.Addr1
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeAdminTransaction(azil.Addr, newAdmin))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeAdminTransaction(stzil.Addr, newAdmin))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
-	AssertEqual(Field(azil, "admin_address"), newAdmin)
+	AssertEqual(Field(stzil, "admin_address"), newAdmin)
 }
 
 func multisigUpdateOwner(tr *Transitions) {
@@ -94,17 +94,17 @@ func multisigUpdateOwner(tr *Transitions) {
 	newOwner := newMultisig.Addr
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeOwnerTransaction(azil.Addr, newOwner))
+	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeOwnerTransaction(stzil.Addr, newOwner))
 	AssertMultisigSuccess(multisig.WithUser(owner1).ExecuteTransaction(txId))
-	AssertEqual(Field(azil, "staging_owner_address"), newOwner)
+	AssertEqual(Field(stzil, "staging_owner_address"), newOwner)
 
 	// claim owner using; newMultisig has also the first tx in order
-	AssertMultisigSuccess(newMultisig.WithUser(owner2).SubmitClaimOwnerTransaction(azil.Addr))
+	AssertMultisigSuccess(newMultisig.WithUser(owner2).SubmitClaimOwnerTransaction(stzil.Addr))
 	AssertMultisigSuccess(newMultisig.WithUser(owner2).ExecuteTransaction(txId))
-	AssertEqual(Field(azil, "owner_address"), newOwner)
+	AssertEqual(Field(stzil, "owner_address"), newOwner)
 }
 
 func multisigManagableActions(tr *Transitions) {
@@ -116,24 +116,24 @@ func multisigManagableActions(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newAddr := sdk.Cfg.Admin // could be any random address
 
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeTreasuryAddressTransaction(azil.Addr, newAddr))
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeZimplAddressTransaction(azil.Addr, newAddr))
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeRewardsFeeTransaction(azil.Addr, "1"))
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateStakingParametersTransaction(azil.Addr, "1"))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeTreasuryAddressTransaction(stzil.Addr, newAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeZimplAddressTransaction(stzil.Addr, newAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeRewardsFeeTransaction(stzil.Addr, "1"))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateStakingParametersTransaction(stzil.Addr, "1"))
 
 	// pause actions
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseInTransaction(azil.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseOutTransaction(azil.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseZrc2Transaction(azil.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseInTransaction(azil.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseOutTransaction(azil.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseZrc2Transaction(azil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseInTransaction(stzil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseOutTransaction(stzil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitPauseZrc2Transaction(stzil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseInTransaction(stzil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseOutTransaction(stzil.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUnPauseZrc2Transaction(stzil.Addr))
 
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetHolderAddressTransaction(azil.Addr, newAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetHolderAddressTransaction(stzil.Addr, newAddr))
 }
 
 func multisigChangeBuffersTest(tr *Transitions) {
@@ -145,14 +145,14 @@ func multisigChangeBuffersTest(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newBuffers := []string{sdk.Cfg.Addr1} // could be any random addresses
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeBuffersTransaction(azil.Addr, newBuffers))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeBuffersTransaction(stzil.Addr, newBuffers))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
-	AssertContain(Field(azil, "buffers_addresses"), sdk.Cfg.Addr1)
+	AssertContain(Field(stzil, "buffers_addresses"), sdk.Cfg.Addr1)
 }
 
 func multisigAddRemoveSSNTest(tr *Transitions) {
@@ -164,22 +164,22 @@ func multisigAddRemoveSSNTest(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	azil, _ := NewAZilContract(sdk, multisig.Addr, p.Zimpl.Addr)
+	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr)
 
 	newAddress := sdk.Cfg.Addr1 // could be any random addresses
 
 	// after submitting transaction it automatically signed by the _sender
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitAddSSNTransaction(azil.Addr, newAddress))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitAddSSNTransaction(stzil.Addr, newAddress))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
-	AssertContain(Field(azil, "ssn_addresses"), sdk.Cfg.Addr1)
+	AssertContain(Field(stzil, "ssn_addresses"), sdk.Cfg.Addr1)
 
 	//try to remove non-existent ssn, expect SsnAddressDoesNotExist error
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitRemoveSSNTransaction(azil.Addr, core.ZeroAddr))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitRemoveSSNTransaction(stzil.Addr, core.ZeroAddr))
 	tx, _ := multisig.WithUser(owner).ExecuteTransaction(txId + 1)
 	AssertError(tx, "SsnAddressDoesNotExist")
 
 	//remove ssn, added before; expect success
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitRemoveSSNTransaction(azil.Addr, newAddress))
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitRemoveSSNTransaction(stzil.Addr, newAddress))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId + 2))
-	AssertEqual(Field(azil, "ssn_addresses"), "[]")
+	AssertEqual(Field(stzil, "ssn_addresses"), "[]")
 }

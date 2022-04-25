@@ -26,7 +26,7 @@ func main() {
 	sdk = NewAvelySDK(*config)
 
 	shortcuts := map[string]string{
-		"azilssn":  config.AzilSsnAddress,
+		"stzilssn": config.StZilSsnAddress,
 		"addr1":    config.Addr1,
 		"addr2":    config.Addr2,
 		"addr3":    config.Addr3,
@@ -39,35 +39,35 @@ func main() {
 
 	m.UpdateWallet(config.OwnerKey)
 
-	azilAddr := config.AzilAddr
+	stZilAddr := config.stZilAddr
 
 	switch tag {
 	case "SubmitSetHolderAddressTransaction":
-		setHolder(m, azilAddr, config.HolderAddr)
+		setHolder(m, stZilAddr, config.HolderAddr)
 	case "SubmitChangeBuffersTransaction":
-		changeBuffers(m, azilAddr, config.BufferAddrs)
+		changeBuffers(m, stZilAddr, config.BufferAddrs)
 	case "SubmitAddSSNTransaction":
 		ssnaddr := *ssnPtr
 		if ssnaddr == "" {
 			log.Fatal("SSN address empty")
 		}
-		addSSN(m, azilAddr, ssnaddr)
+		addSSN(m, stZilAddr, ssnaddr)
 	case "SubmitRemoveSSNTransaction":
 		ssnaddr := *ssnPtr
 		if ssnaddr == "" {
 			log.Fatal("SSN address empty")
 		}
-		removeSSN(m, azilAddr, ssnaddr)
+		removeSSN(m, stZilAddr, ssnaddr)
 	case "SubmitChangeRewardsFeeTransaction":
-		changeRewardsFee(m, azilAddr, strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
+		changeRewardsFee(m, stZilAddr, strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 	case "SubmitChangeTreasuryAddressTransaction":
-		changeTreasuryAddress(m, azilAddr, sdk.Cfg.TreasuryAddr)
+		changeTreasuryAddress(m, stZilAddr, sdk.Cfg.TreasuryAddr)
 	case "SubmitUnPauseInTransaction":
-		unPauseIn(m, azilAddr)
+		unPauseIn(m, stZilAddr)
 	case "SubmitUnPauseOutTransaction":
-		unPauseOut(m, azilAddr)
+		unPauseOut(m, stZilAddr)
 	case "SubmitUnPauseZrc2Transaction":
-		unauseZrc2(m, azilAddr)
+		unauseZrc2(m, stZilAddr)
 	default:
 		log.Fatal("Unknown tx tag")
 	}
