@@ -147,8 +147,8 @@ func (b *HolderContract) DelegateStake(ssnaddr, amount string) (*transaction.Tra
 	return b.Call("DelegateStake", args, amount)
 }
 
-func NewHolderContract(sdk *AvelySDK, azilAddr, zproxyAddr string) (*HolderContract, error) {
-	contract := buildHolderContract(sdk, azilAddr, zproxyAddr)
+func NewHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string) (*HolderContract, error) {
+	contract := buildHolderContract(sdk, stZilAddr, zproxyAddr)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -171,8 +171,8 @@ func NewHolderContract(sdk *AvelySDK, azilAddr, zproxyAddr string) (*HolderContr
 	}
 }
 
-func RestoreHolderContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr string) (*HolderContract, error) {
-	contract := buildHolderContract(sdk, azilAddr, zproxyAddr)
+func RestoreHolderContract(sdk *AvelySDK, contractAddress, stZilAddr, zproxyAddr string) (*HolderContract, error) {
+	contract := buildHolderContract(sdk, stZilAddr, zproxyAddr)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 	if err != nil {
@@ -189,7 +189,7 @@ func RestoreHolderContract(sdk *AvelySDK, contractAddress, azilAddr, zproxyAddr 
 	return &HolderContract{Contract: sdkContract}, nil
 }
 
-func buildHolderContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.Contract {
+func buildHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/holder.scilla")
 	key := sdk.Cfg.AdminKey
 
@@ -199,9 +199,9 @@ func buildHolderContract(sdk *AvelySDK, azilAddr, zproxyAddr string) contract2.C
 			Type:  "Uint32",
 			Value: "0",
 		}, {
-			VName: "init_azil_address",
+			VName: "init_stzil_address",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		}, {
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",

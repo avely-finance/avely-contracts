@@ -13,7 +13,7 @@ func ToZil(amount int) string {
 	return fmt.Sprintf("%d%s", amount, qa)
 }
 
-func ToAzil(amount int) string {
+func ToStZil(amount int) string {
 	return ToZil(amount)
 }
 
