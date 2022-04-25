@@ -17,8 +17,8 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	//for now to activate SSNs we delegate required stakes through Zproxy as admin
 	totalSsnInitialDelegateZil := 0
 
-	p.Azil.UpdateWallet(sdk.Cfg.Key1)
-	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
+	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
+	AssertSuccess(p.StZIL.DelegateStake(ToZil(10)))
 
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
@@ -26,19 +26,19 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
 
-	tx, _ := AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(10)))
+	tx, _ := AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(10)))
 
 	block1 := tx.Receipt.EpochNum
-	tx, _ = p.Azil.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Azil.Addr, "NoUnbondedStake", ParamsMap{}})
+	tx, _ = p.StZIL.CompleteWithdrawal()
+	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.Azil.UpdateWallet(sdk.Cfg.Key2)
-	tx, _ = p.Azil.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Azil.Addr, "NoUnbondedStake", ParamsMap{}})
+	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
+	tx, _ = p.StZIL.CompleteWithdrawal()
+	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
 	readyBlocks = append(readyBlocks, block1)
-	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)
+	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, "ClaimWithdrawalNoUnbonded")
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
@@ -51,14 +51,14 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertEqual(readyBlocks[0], strconv.Itoa(unbondedWithdrawalsBlocks[0]))
 	tools.ShowClaimWithdrawal(p)
 
-	withdrawal := Dig(p.Azil, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
-	AssertEqual(withdrawal.TokenAmount.String(), ToAzil(10))
-	AssertEqual(withdrawal.StakeAmount.String(), ToAzil(10))
+	withdrawal := Dig(p.StZIL, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
+	AssertEqual(withdrawal.TokenAmount.String(), ToStZil(10))
+	AssertEqual(withdrawal.StakeAmount.String(), ToStZil(10))
 
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
-	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)
+	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,          //sender
+		p.StZIL.Addr,         //sender
 		"CompleteWithdrawal", //tag
 		p.Holder.Addr,        //recipient
 		"0",                  //amount
@@ -69,46 +69,46 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertTransition(tx, Transition{
 		p.Holder.Addr,                       //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
-		p.Azil.Addr,                         //recipient
+		p.StZIL.Addr,                        //recipient
 		ToZil(10),                           //amount
 		ParamsMap{},
 	})
 
-	p.Azil.UpdateWallet(sdk.Cfg.Key1)
-	tx, _ = p.Azil.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Azil.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(10), "delegator": sdk.Cfg.Addr1}})
+	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
+	tx, _ = p.StZIL.CompleteWithdrawal()
+	AssertEvent(tx, Event{p.StZIL.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(10), "delegator": sdk.Cfg.Addr1}})
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,
+		p.StZIL.Addr,
 		"CompleteWithdrawalSuccessCallBack",
 		sdk.Cfg.Addr1,
 		"0",
 		ParamsMap{"amount": ToZil(10)},
 	})
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,
+		p.StZIL.Addr,
 		"AddFunds",
 		sdk.Cfg.Addr1,
 		ToZil(10),
 		ParamsMap{},
 	})
 
-	withdrawal = Dig(p.Azil, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
+	withdrawal = Dig(p.StZIL, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
 	AssertEqual(withdrawal.TokenAmount.String(), "0")
 	AssertEqual(withdrawal.StakeAmount.String(), "0")
 
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil))
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil))
-	AssertEqual(Field(p.Azil, "tmp_complete_withdrawal_available"), "0")
+	AssertEqual(Field(p.StZIL, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil))
+	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil))
+	AssertEqual(Field(p.StZIL, "tmp_complete_withdrawal_available"), "0")
 
 	if totalSsnInitialDelegateZil == 0 {
-		AssertEqual(Field(p.Azil, "balances"), "{}")
-		AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), "")
+		AssertEqual(Field(p.StZIL, "balances"), "{}")
+		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), "")
 	} else {
-		AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Admin), ToAzil(totalSsnInitialDelegateZil))
+		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), ToStZil(totalSsnInitialDelegateZil))
 	}
 
-	AssertEqual(Field(p.Azil, "withdrawal_unbonded"), "{}")
-	AssertEqual(Field(p.Azil, "withdrawal_pending"), "{}")
+	AssertEqual(Field(p.StZIL, "withdrawal_unbonded"), "{}")
+	AssertEqual(Field(p.StZIL, "withdrawal_pending"), "{}")
 }
 
 func (tr *Transitions) CompleteWithdrawalMultiSsn() {
@@ -120,9 +120,9 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 
 	rewardsFee := "1000" //10% of feeDenom=10000
 	treasuryAddr := sdk.Cfg.Addr3
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(treasuryAddr))
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(treasuryAddr))
+	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
 
 	//totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
 	//for now to activate SSNs we delegate required stakes through Zproxy as admin
@@ -130,30 +130,30 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 
 	ssnWhitelistHeavy := p.GetSsnAddressForInput()
 
-	//for current test setup first SSN for input is AzilSSN
-	AssertEqual(ssnWhitelistHeavy, sdk.Cfg.AzilSsnAddress)
+	//for current test setup first SSN for input is StZILSSN
+	AssertEqual(ssnWhitelistHeavy, sdk.Cfg.StZilSsnAddress)
 
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(5000)))
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(5000)))
 
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
 
 	ssnWhitelistLight := p.GetSsnAddressForInput()
 	AssertNotEqual(ssnWhitelistHeavy, ssnWhitelistLight)
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(5000)))
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(5000)))
 	ssnSlashHeavy := p.GetSsnAddressForInput()
 	AssertNotEqual(ssnWhitelistLight, ssnSlashHeavy)
 	AssertNotEqual(ssnWhitelistHeavy, ssnSlashHeavy)
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(4000)))
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(4000)))
 	ssnSlashLight := p.GetSsnAddressForInput()
 	AssertNotEqual(ssnWhitelistLight, ssnSlashLight)
 	AssertNotEqual(ssnWhitelistHeavy, ssnSlashLight)
 	AssertNotEqual(ssnSlashHeavy, ssnSlashLight)
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(3000)))
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil+5000+5000+4000+3000))
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil+5000+5000+4000+3000))
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(3000)))
+	AssertEqual(Field(p.StZIL, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil+5000+5000+4000+3000))
+	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+5000+5000+4000+3000))
 
-	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Addr1), ToAzil(5000+5000+4000+3000))
+	AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Addr1), ToStZil(5000+5000+4000+3000))
 
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
@@ -168,18 +168,18 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnSlashLight), ToZil(3000))
 
 	//it's impossible to withdraw amount, bigger than amount on heaviest SSN
-	tx, _ := p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(7000))
+	tx, _ := p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(7000))
 	AssertError(tx, "WithdrawAmountTooBig")
 
 	//slash SSNs
-	AssertSuccess(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).RemoveSSN(ssnSlashHeavy))
-	AssertSuccess(p.Azil.WithUser(p.Azil.Sdk.Cfg.OwnerKey).RemoveSSN(ssnSlashLight))
+	AssertSuccess(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).RemoveSSN(ssnSlashHeavy))
+	AssertSuccess(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).RemoveSSN(ssnSlashLight))
 
 	//withdraw and check from which SSN stake will be withdrawn
-	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(3000)))
+	tx, _ = AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(3000)))
 	//first is from heaviest slashed SSN
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,        //sender
+		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
 		p.Holder.Addr,      //recipient
 		"0",                //amount
@@ -188,9 +188,9 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnSlashHeavy), ToZil(1000))
 
 	//there are not enough balance on slashed SSNs now, so withdraw will go from heaviest whitelisted SSN
-	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(5000)))
+	tx, _ = AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(5000)))
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,        //sender
+		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
 		p.Holder.Addr,      //recipient
 		"0",                //amount
@@ -199,9 +199,9 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnWhitelistHeavy), ToZil(sdk.Cfg.HolderInitialDelegateZil))
 
 	//next withdraw is going from current heaviest slashed SSN (it was not heaviest before, but now it is)
-	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(3000)))
+	tx, _ = AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(3000)))
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,        //sender
+		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
 		p.Holder.Addr,      //recipient
 		"0",                //amount
@@ -211,9 +211,9 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnSlashLight), "")
 
 	//withdraw rest from ssnSlashHeavy
-	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(1000)))
+	tx, _ = AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(1000)))
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,        //sender
+		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
 		p.Holder.Addr,      //recipient
 		"0",                //amount
@@ -222,9 +222,9 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnSlashHeavy), "")
 
 	//next withdraw will go from ssnWhitelistLight, because it's heaviest now
-	tx, _ = AssertSuccess(p.Azil.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToAzil(5000)))
+	tx, _ = AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(5000)))
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,        //sender
+		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
 		p.Holder.Addr,      //recipient
 		"0",                //amount
@@ -233,16 +233,16 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnWhitelistLight), "")
 
 	block1 := tx.Receipt.EpochNum
-	tx, _ = p.Azil.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Azil.Addr, "NoUnbondedStake", ParamsMap{}})
+	tx, _ = p.StZIL.CompleteWithdrawal()
+	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.Azil.UpdateWallet(sdk.Cfg.Key2)
-	tx, _ = p.Azil.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.Azil.Addr, "NoUnbondedStake", ParamsMap{}})
+	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
+	tx, _ = p.StZIL.CompleteWithdrawal()
+	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
 	readyBlocks = append(readyBlocks, block1)
-	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)
+	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, "ClaimWithdrawalNoUnbonded")
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
@@ -255,14 +255,14 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(readyBlocks[0], strconv.Itoa(unbondedWithdrawalsBlocks[0]))
 	tools.ShowClaimWithdrawal(p)
 
-	withdrawal := Dig(p.Azil, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
-	AssertEqual(withdrawal.TokenAmount.String(), ToAzil(17000))
-	AssertEqual(withdrawal.StakeAmount.String(), ToAzil(17000))
+	withdrawal := Dig(p.StZIL, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
+	AssertEqual(withdrawal.TokenAmount.String(), ToStZil(17000))
+	AssertEqual(withdrawal.StakeAmount.String(), ToStZil(17000))
 
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
-	tx, _ = p.Azil.ClaimWithdrawal(readyBlocks)
+	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,          //sender
+		p.StZIL.Addr,         //sender
 		"CompleteWithdrawal", //tag
 		p.Holder.Addr,        //recipient
 		"0",                  //amount
@@ -273,38 +273,38 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertTransition(tx, Transition{
 		p.Holder.Addr,                       //sender
 		"CompleteWithdrawalSuccessCallBack", //tag
-		p.Azil.Addr,                         //recipient
+		p.StZIL.Addr,                        //recipient
 		ToZil(17000),                        //amount
 		ParamsMap{},
 	})
 
-	p.Azil.UpdateWallet(sdk.Cfg.Key1)
-	tx, _ = AssertSuccess(p.Azil.CompleteWithdrawal())
-	AssertEvent(tx, Event{p.Azil.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(17000), "delegator": sdk.Cfg.Addr1}})
+	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
+	tx, _ = AssertSuccess(p.StZIL.CompleteWithdrawal())
+	AssertEvent(tx, Event{p.StZIL.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(17000), "delegator": sdk.Cfg.Addr1}})
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,
+		p.StZIL.Addr,
 		"CompleteWithdrawalSuccessCallBack",
 		sdk.Cfg.Addr1,
 		"0",
 		ParamsMap{"amount": ToZil(17000)},
 	})
 	AssertTransition(tx, Transition{
-		p.Azil.Addr,
+		p.StZIL.Addr,
 		"AddFunds",
 		sdk.Cfg.Addr1,
 		ToZil(17000),
 		ParamsMap{},
 	})
 
-	withdrawal = Dig(p.Azil, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
+	withdrawal = Dig(p.StZIL, "withdrawal_pending_of_delegator", sdk.Cfg.Addr1, block1).Withdrawal()
 	AssertEqual(withdrawal.TokenAmount.String(), "0")
 	AssertEqual(withdrawal.StakeAmount.String(), "0")
 
-	AssertEqual(Field(p.Azil, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil))
-	AssertEqual(Field(p.Azil, "total_supply"), ToAzil(totalSsnInitialDelegateZil))
-	AssertEqual(Field(p.Azil, "tmp_complete_withdrawal_available"), "0")
+	AssertEqual(Field(p.StZIL, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil))
+	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil))
+	AssertEqual(Field(p.StZIL, "tmp_complete_withdrawal_available"), "0")
 
-	AssertEqual(Field(p.Azil, "balances", sdk.Cfg.Addr1), "")
-	AssertEqual(Field(p.Azil, "withdrawal_unbonded"), "{}")
-	AssertEqual(Field(p.Azil, "withdrawal_pending"), "{}")
+	AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Addr1), "")
+	AssertEqual(Field(p.StZIL, "withdrawal_unbonded"), "{}")
+	AssertEqual(Field(p.StZIL, "withdrawal_pending"), "{}")
 }
