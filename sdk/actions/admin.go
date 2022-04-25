@@ -26,23 +26,26 @@ type AdminActions struct {
 }
 
 func NewAdminActions(log *core.Log) *AdminActions {
-	return &AdminActions{log: log}
-}
-
-func (a *AdminActions) SetTestMode(mode bool) {
-	a.testMode = mode
-	if a.testMode {
-		a.TxLogMap = make(map[string]TxLog)
-	} else {
-		a.TxLogMap = nil
+	return &AdminActions{
+		log:      log,
+		testMode: false,
+		TxLogMap: make(map[string]TxLog),
 	}
 }
 
-func (a *AdminActions) SaveTx(step string, tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+func (a *AdminActions) TxLogMode(mode bool) {
+	a.testMode = mode
+}
+
+func (a *AdminActions) TxLog(step string, tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	if a.testMode {
 		a.TxLogMap[step] = TxLog{tx, err}
 	}
 	return tx, err
+}
+
+func (a *AdminActions) TxLogClear() {
+	a.TxLogMap = make(map[string]TxLog)
 }
 
 func (a *AdminActions) HasTxError(txn *transaction.Transaction, errorCode string) bool {
@@ -64,8 +67,7 @@ func (a *AdminActions) DrainBufferByCycle(p *Protocol, lrc int) error {
 }
 
 func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) error {
-
-	buffers := p.Azil.GetDrainedBuffers()
+	buffers := p.StZIL.GetDrainedBuffers()
 	if lastDrained, ok := buffers[bufferToDrain]; !ok {
 		a.log.Info("Buffer is never drained; Let's do this first time")
 	} else if lastDrained.Int() >= int64(lrc) {
@@ -73,17 +75,17 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 		return nil
 	}
 
-	ssnlist := p.Azil.GetSsnWhitelist()
+	ssnlist := p.StZIL.GetSsnWhitelist()
 
 	//claim rewards from holder
 	for _, ssn := range ssnlist {
-		tx, err := p.Azil.ClaimRewards(p.Holder.Addr, ssn)
+		tx, err := p.StZIL.ClaimRewards(p.Holder.Addr, ssn)
 		fields := logrus.Fields{
 			"tx":             tx.ID,
 			"holder_address": p.Holder.Addr,
 			"ssn_address":    ssn,
 		}
-		a.SaveTx("ClaimRewardsHolder_"+ssn, tx, err)
+		a.TxLog("ClaimRewardsHolder_"+ssn, tx, err)
 		if err == nil {
 			a.log.WithFields(fields).Info("ClaimRewards Holder success")
 		} else {
@@ -99,13 +101,13 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 
 	//claim rewards from buffer
 	for _, ssn := range ssnlist {
-		tx, err := p.Azil.ClaimRewards(bufferToDrain, ssn)
+		tx, err := p.StZIL.ClaimRewards(bufferToDrain, ssn)
 		fields := logrus.Fields{
 			"tx":             tx.ID,
 			"buffer_address": bufferToDrain,
 			"ssn_address":    ssn,
 		}
-		a.SaveTx("ClaimRewardsBuffer_"+ssn, tx, err)
+		a.TxLog("ClaimRewardsBuffer_"+ssn, tx, err)
 		if err == nil {
 			a.log.WithFields(fields).Info("ClaimRewards Buffer success")
 		} else {
@@ -120,8 +122,8 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 	}
 
 	//transfer stake from buffer to holder
-	tx, err := p.Azil.ConsolidateInHolder(bufferToDrain)
-	a.SaveTx("ConsolidateInHolder", tx, err)
+	tx, err := p.StZIL.ConsolidateInHolder(bufferToDrain)
+	a.TxLog("ConsolidateInHolder", tx, err)
 	if err != nil {
 		a.log.WithFields(logrus.Fields{
 			"tx":             tx.ID,
@@ -158,13 +160,13 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 			"amount":   amountStr,
 		}
 		if showOnly {
-			a.log.WithFields(fields).Debug("Need to call Azil.ChownStakeReDelegate transition")
-		} else if tx, err := p.Azil.ChownStakeReDelegate(fromSsn, amountStr); err == nil {
-			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
+			a.log.WithFields(fields).Debug("Need to call StZIL.ChownStakeReDelegate transition")
+		} else if tx, err := p.StZIL.ChownStakeReDelegate(fromSsn, amountStr); err == nil {
+			a.TxLog("ChownStakeReDelegate_"+fromSsn, tx, err)
 			fields["tx"] = tx.ID
 			a.log.WithFields(fields).Info("ChownStakeReDelegate OK")
 		} else {
-			a.SaveTx("ChownStakeReDelegate_"+fromSsn, tx, err)
+			a.TxLog("ChownStakeReDelegate_"+fromSsn, tx, err)
 			fields["tx"] = tx.ID
 			fields["error"] = tx.Receipt
 			if a.HasTxError(tx, "DelegDoesNotExistAtSSN") {
@@ -191,7 +193,7 @@ func (a *AdminActions) ProcessSwapRequests(p *Protocol, bufferOffset int) error 
 	errCnt := 0
 	okCnt := 0
 	for _, initiator := range swapRequests {
-		tx, err := p.Azil.ChownStakeConfirmSwap(initiator)
+		tx, err := p.StZIL.ChownStakeConfirmSwap(initiator)
 		if err != nil {
 			a.log.WithFields(logrus.Fields{"initiator": initiator, "txid": tx.ID, "error": tx.Receipt}).Error("Can't process swap")
 			errCnt++
@@ -209,7 +211,7 @@ func (a *AdminActions) ProcessSwapRequests(p *Protocol, bufferOffset int) error 
 }
 
 func (a *AdminActions) AutoRestake(p *Protocol) error {
-	autorestakeamount := p.Azil.GetAutorestakeAmount()
+	autorestakeamount := p.StZIL.GetAutorestakeAmount()
 
 	if autorestakeamount.Cmp(big.NewInt(0)) == 0 { // autorestakeamount == 0
 		a.log.Info("Nothing to autorestake")
@@ -221,8 +223,8 @@ func (a *AdminActions) AutoRestake(p *Protocol) error {
 		return nil
 	}
 
-	priceBefore := p.Azil.GetAzilPrice().String()
-	tx, err := p.Azil.PerformAutoRestake()
+	priceBefore := p.StZIL.GetStZilPrice().String()
+	tx, err := p.StZIL.PerformAutoRestake()
 
 	if err != nil {
 		a.log.WithFields(logrus.Fields{"txid": tx.ID, "error": tx.Receipt}).Error("AutoRestake failed")
@@ -230,7 +232,7 @@ func (a *AdminActions) AutoRestake(p *Protocol) error {
 		return errors.New("AutoRestake failed")
 	}
 
-	priceAfter := p.Azil.GetAzilPrice().String()
+	priceAfter := p.StZIL.GetStZilPrice().String()
 
 	a.log.WithFields(logrus.Fields{
 		"tx":           tx.ID,
@@ -261,7 +263,7 @@ func (a *AdminActions) ClaimWithdrawal(p *Protocol) error {
 	}
 	blocksStr := utils.ArrayItoa(blocks)
 	a.log.WithFields(logrus.Fields{"blocks_count": cnt, "blocks_list": strings.Join(blocksStr, ", ")}).Debug("Found blocks with unbonded withdrawals")
-	tx, err := p.Azil.ClaimWithdrawal(blocksStr)
+	tx, err := p.StZIL.ClaimWithdrawal(blocksStr)
 
 	if err != nil {
 		a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt}).Error("Withdrawals claim failed")

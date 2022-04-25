@@ -17,25 +17,25 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 )
 
-type AZil struct {
+type StZIL struct {
 	Contract
 }
 
-func (a *AZil) WithUser(key string) *AZil {
+func (a *StZIL) WithUser(key string) *StZIL {
 	wallet := account.NewWallet()
 	wallet.AddByPrivateKey(key)
 	a.Contract.Wallet = wallet
 	return a
 }
 
-func (s *AZil) BalanceOf(addr string) *big.Int {
+func (s *StZIL) BalanceOf(addr string) *big.Int {
 	rawState := s.Contract.SubState("balances", []string{addr})
 	state := NewState(rawState)
 
 	return state.Dig("result.balances." + addr).BigInt()
 }
 
-func (s *AZil) IncreaseAllowance(spender, amount string) (*transaction.Transaction, error) {
+func (s *StZIL) IncreaseAllowance(spender, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "spender",
@@ -51,7 +51,7 @@ func (s *AZil) IncreaseAllowance(spender, amount string) (*transaction.Transacti
 	return s.Call("IncreaseAllowance", args, "0")
 }
 
-func (s *AZil) DecreaseAllowance(spender, amount string) (*transaction.Transaction, error) {
+func (s *StZIL) DecreaseAllowance(spender, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "spender",
@@ -67,7 +67,7 @@ func (s *AZil) DecreaseAllowance(spender, amount string) (*transaction.Transacti
 	return s.Call("DecreaseAllowance", args, "0")
 }
 
-func (s *AZil) Transfer(to, amount string) (*transaction.Transaction, error) {
+func (s *StZIL) Transfer(to, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "to",
@@ -83,7 +83,7 @@ func (s *AZil) Transfer(to, amount string) (*transaction.Transaction, error) {
 	return s.Call("Transfer", args, "0")
 }
 
-func (s *AZil) TransferFrom(from, to, amount string) (*transaction.Transaction, error) {
+func (s *StZIL) TransferFrom(from, to, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "from",
@@ -103,7 +103,7 @@ func (s *AZil) TransferFrom(from, to, amount string) (*transaction.Transaction, 
 	return s.Call("TransferFrom", args, "0")
 }
 
-func (a *AZil) ChangeAdmin(new_addr string) (*transaction.Transaction, error) {
+func (a *StZIL) ChangeAdmin(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"new_admin",
@@ -114,12 +114,12 @@ func (a *AZil) ChangeAdmin(new_addr string) (*transaction.Transaction, error) {
 	return a.Call("ChangeAdmin", args, "0")
 }
 
-func (a *AZil) ClaimAdmin() (*transaction.Transaction, error) {
+func (a *StZIL) ClaimAdmin() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("ClaimAdmin", args, "0")
 }
 
-func (a *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
+func (a *StZIL) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -130,7 +130,7 @@ func (a *AZil) ChangeZimplAddress(new_addr string) (*transaction.Transaction, er
 	return a.Call("ChangeZimplAddress", args, "0")
 }
 
-func (a *AZil) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
+func (a *StZIL) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"new_owner",
@@ -141,7 +141,7 @@ func (a *AZil) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
 	return a.Call("ChangeOwner", args, "0")
 }
 
-func (a *AZil) ClaimOwner() (*transaction.Transaction, error) {
+func (a *StZIL) ClaimOwner() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("ClaimOwner", args, "0")
 }
@@ -152,33 +152,33 @@ func (a *AZil) ClaimOwner() (*transaction.Transaction, error) {
 //	  						 {"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6":"123",
 //                  "0xbfb3bbde860bcd17315ec0e171ac971de7bea9a3":"124"}
 // }
-func (a *AZil) GetDrainedBuffers() map[string]gjson.Result {
+func (a *StZIL) GetDrainedBuffers() map[string]gjson.Result {
 	rawState := a.Contract.SubState("buffer_drained_cycle", []string{})
 	state := NewState(rawState)
 	return state.Dig("result.buffer_drained_cycle").Map()
 }
 
-func (a *AZil) GetAutorestakeAmount() *big.Int {
+func (a *StZIL) GetAutorestakeAmount() *big.Int {
 	rawState := a.Contract.SubState("autorestakeamount", []string{})
 	state := NewState(rawState)
 
 	return state.Dig("result.autorestakeamount").BigInt()
 }
 
-func (a *AZil) GetSsnWhitelist() []string {
+func (a *StZIL) GetSsnWhitelist() []string {
 	partialState := a.Contract.SubState("ssn_addresses", []string{})
 	state := NewState(partialState)
 	ssnAddrs := state.Dig("result.ssn_addresses").ArrayString()
 	return ssnAddrs
 }
 
-func (a *AZil) GetSsnIndex() *big.Int {
+func (a *StZIL) GetSsnIndex() *big.Int {
 	rawState := a.Contract.SubState("ssn_index", []string{})
 	state := NewState(rawState)
 	return state.Dig("result.ssn_index").BigInt()
 }
 
-func (a *AZil) GetAzilPrice() *big.Float {
+func (a *StZIL) GetStZilPrice() *big.Float {
 	params := a.Contract.BuildBatchParams([]string{"total_supply", "totalstakeamount"})
 	raw, _ := a.Contract.BatchSubState(params)
 	state := NewState(raw)
@@ -189,13 +189,13 @@ func (a *AZil) GetAzilPrice() *big.Float {
 	return DivBF(totalstakeamount, total_supply)
 }
 
-func (s *AZil) GetTreasuryAddress() string {
+func (s *StZIL) GetTreasuryAddress() string {
 	rawState := s.Contract.SubState("treasury_address", []string{})
 	state := NewState(rawState)
 	return state.Dig("result.treasury_address").String()
 }
 
-func (a *AZil) ChangeBuffers(newBuffers []string) (*transaction.Transaction, error) {
+func (a *StZIL) ChangeBuffers(newBuffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"new_buffers",
@@ -206,7 +206,7 @@ func (a *AZil) ChangeBuffers(newBuffers []string) (*transaction.Transaction, err
 	return a.Contract.Call("ChangeBuffers", args, "0")
 }
 
-func (a *AZil) AddSSN(ssnaddr string) (*transaction.Transaction, error) {
+func (a *StZIL) AddSSN(ssnaddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"ssnaddr",
@@ -217,7 +217,18 @@ func (a *AZil) AddSSN(ssnaddr string) (*transaction.Transaction, error) {
 	return a.Contract.Call("AddSSN", args, "0")
 }
 
-func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction, error) {
+func (a *StZIL) RemoveSSN(ssnaddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"ssnaddr",
+			"ByStr20",
+			ssnaddr,
+		},
+	}
+	return a.Contract.Call("RemoveSSN", args, "0")
+}
+
+func (a *StZIL) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"blocks_to_withdraw",
@@ -228,7 +239,7 @@ func (a *AZil) ClaimWithdrawal(ready_blocks []string) (*transaction.Transaction,
 	return a.Contract.Call("ClaimWithdrawal", args, "0")
 }
 
-func (a *AZil) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction, error) {
+func (a *StZIL) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -239,7 +250,7 @@ func (a *AZil) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction,
 	return a.Call("ChangeTreasuryAddress", args, "0")
 }
 
-func (a *AZil) SetHolderAddress(new_addr string) (*transaction.Transaction, error) {
+func (a *StZIL) SetHolderAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"address",
@@ -250,7 +261,7 @@ func (a *AZil) SetHolderAddress(new_addr string) (*transaction.Transaction, erro
 	return a.Contract.Call("SetHolderAddress", args, "0")
 }
 
-func (a *AZil) ChangeRewardsFee(new_fee string) (*transaction.Transaction, error) {
+func (a *StZIL) ChangeRewardsFee(new_fee string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"new_fee",
@@ -261,7 +272,7 @@ func (a *AZil) ChangeRewardsFee(new_fee string) (*transaction.Transaction, error
 	return a.Call("ChangeRewardsFee", args, "0")
 }
 
-func (a *AZil) ChownStakeConfirmSwap(delegator string) (*transaction.Transaction, error) {
+func (a *StZIL) ChownStakeConfirmSwap(delegator string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"delegator",
@@ -272,7 +283,7 @@ func (a *AZil) ChownStakeConfirmSwap(delegator string) (*transaction.Transaction
 	return a.Call("ChownStakeConfirmSwap", args, "0")
 }
 
-func (a *AZil) ChownStakeReDelegate(from_ssn, amount string) (*transaction.Transaction, error) {
+func (a *StZIL) ChownStakeReDelegate(from_ssn, amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"from_ssn",
@@ -288,22 +299,22 @@ func (a *AZil) ChownStakeReDelegate(from_ssn, amount string) (*transaction.Trans
 	return a.Call("ChownStakeReDelegate", args, "0")
 }
 
-func (a *AZil) DelegateStake(amount string) (*transaction.Transaction, error) {
+func (a *StZIL) DelegateStake(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("DelegateStake", args, amount)
 }
 
-func (a *AZil) IncreaseAutoRestakeAmount(amount string) (*transaction.Transaction, error) {
+func (a *StZIL) IncreaseAutoRestakeAmount(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("IncreaseAutoRestakeAmount", args, amount)
 }
 
-func (a *AZil) PerformAutoRestake() (*transaction.Transaction, error) {
+func (a *StZIL) PerformAutoRestake() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("PerformAutoRestake", args, "0")
 }
 
-func (a *AZil) UpdateStakingParameters(min_deleg_stake string) (*transaction.Transaction, error) {
+func (a *StZIL) UpdateStakingParameters(min_deleg_stake string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"min_deleg_stake",
@@ -314,7 +325,7 @@ func (a *AZil) UpdateStakingParameters(min_deleg_stake string) (*transaction.Tra
 	return a.Call("UpdateStakingParameters", args, "0")
 }
 
-func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
+func (a *StZIL) WithdrawStakeAmt(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"amount",
@@ -325,12 +336,12 @@ func (a *AZil) WithdrawStakeAmt(amount string) (*transaction.Transaction, error)
 	return a.Call("WithdrawStakeAmt", args, "0")
 }
 
-func (a *AZil) CompleteWithdrawal() (*transaction.Transaction, error) {
+func (a *StZIL) CompleteWithdrawal() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("CompleteWithdrawal", args, "0")
 }
 
-func (a *AZil) ConsolidateInHolder(buffer_addr string) (*transaction.Transaction, error) {
+func (a *StZIL) ConsolidateInHolder(buffer_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"buffer_addr",
@@ -341,11 +352,11 @@ func (a *AZil) ConsolidateInHolder(buffer_addr string) (*transaction.Transaction
 	return a.Call("ConsolidateInHolder", args, "0")
 }
 
-func (a *AZil) ZilBalanceOf(addr string) *big.Int {
-	azilPriceFloat := a.GetAzilPrice()
+func (a *StZIL) ZilBalanceOf(addr string) *big.Int {
+	stzilPriceFloat := a.GetStZilPrice()
 	balance := a.BalanceOf(addr)
 	balanceFloat := new(big.Float).SetInt(balance)
-	zilBalanceFloat := new(big.Float).Mul(azilPriceFloat, balanceFloat)
+	zilBalanceFloat := new(big.Float).Mul(stzilPriceFloat, balanceFloat)
 
 	result := new(big.Int)
 	zilBalanceFloat.Int(result) // store converted number in result
@@ -353,7 +364,7 @@ func (a *AZil) ZilBalanceOf(addr string) *big.Int {
 	return result
 }
 
-func (a *AZil) ClaimRewards(address, ssn string) (*transaction.Transaction, error) {
+func (a *StZIL) ClaimRewards(address, ssn string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"buffer_or_holder",
@@ -369,13 +380,13 @@ func (a *AZil) ClaimRewards(address, ssn string) (*transaction.Transaction, erro
 	return a.Call("ClaimRewards", args, "0")
 }
 
-func (a *AZil) ClaimRewardsSuccessCallBack() (*transaction.Transaction, error) {
+func (a *StZIL) ClaimRewardsSuccessCallBack() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 
 	return a.Call("ClaimRewardsSuccessCallBack", args, "0")
 }
 
-func (a *AZil) DelegateStakeSuccessCallBack(amount string) (*transaction.Transaction, error) {
+func (a *StZIL) DelegateStakeSuccessCallBack(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"amount",
@@ -386,44 +397,44 @@ func (a *AZil) DelegateStakeSuccessCallBack(amount string) (*transaction.Transac
 	return a.Call("DelegateStakeSuccessCallBack", args, "0")
 }
 
-func (a *AZil) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, error) {
+func (a *StZIL) CompleteWithdrawalSuccessCallBack() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 
 	return a.Call("CompleteWithdrawalSuccessCallBack", args, "0")
 }
 
-func (a *AZil) PauseIn() (*transaction.Transaction, error) {
+func (a *StZIL) PauseIn() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("PauseIn", args, "0")
 }
 
-func (a *AZil) UnpauseIn() (*transaction.Transaction, error) {
+func (a *StZIL) UnpauseIn() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("UnPauseIn", args, "0")
 }
 
-func (a *AZil) PauseOut() (*transaction.Transaction, error) {
+func (a *StZIL) PauseOut() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("PauseOut", args, "0")
 }
 
-func (a *AZil) UnpauseOut() (*transaction.Transaction, error) {
+func (a *StZIL) UnpauseOut() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("UnPauseOut", args, "0")
 }
 
-func (a *AZil) PauseZrc2() (*transaction.Transaction, error) {
+func (a *StZIL) PauseZrc2() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("PauseZrc2", args, "0")
 }
 
-func (a *AZil) UnpauseZrc2() (*transaction.Transaction, error) {
+func (a *StZIL) UnpauseZrc2() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("UnPauseZrc2", args, "0")
 }
 
-func NewAZilContract(sdk *AvelySDK, owner, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, owner, zimplAddr)
+func NewStZILContract(sdk *AvelySDK, owner, zimplAddr string) (*StZIL, error) {
+	contract := buildStZILContract(sdk, owner, zimplAddr)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -440,20 +451,20 @@ func NewAZilContract(sdk *AvelySDK, owner, zimplAddr string) (*AZil, error) {
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
-		return &AZil{Contract: sdkContract}, nil
+		return &StZIL{Contract: sdkContract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 		return nil, errors.New("deploy failed:" + string(data))
 	}
 }
 
-func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string) (*AZil, error) {
-	contract := buildAZilContract(sdk, owner, zimplAddr)
+func RestoreStZILContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string) (*StZIL, error) {
+	contract := buildStZILContract(sdk, owner, zimplAddr)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
 	if err != nil {
-		return nil, errors.New("Config has invalid AZil address")
+		return nil, errors.New("Config has invalid StZIL address")
 	}
 
 	sdkContract := Contract{
@@ -463,11 +474,11 @@ func RestoreAZilContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
-	return &AZil{Contract: sdkContract}, nil
+	return &StZIL{Contract: sdkContract}, nil
 }
 
-func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/aZil.scilla")
+func buildStZILContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contract {
+	code, _ := ioutil.ReadFile("contracts/stzil.scilla")
 
 	init := []core.ContractValue{
 		{
@@ -489,11 +500,11 @@ func buildAZilContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contrac
 		}, {
 			VName: "name",
 			Type:  "String",
-			Value: "aZIL",
+			Value: "StZIL",
 		}, {
 			VName: "symbol",
 			Type:  "String",
-			Value: "AZIL",
+			Value: "stZIL",
 		}, {
 			VName: "decimals",
 			Type:  "Uint32",

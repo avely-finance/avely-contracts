@@ -11,35 +11,38 @@ func (tr *Transitions) IsOwner() {
 
 	p := tr.DeployAndUpgrade()
 
-	// Use non-owner user for Azil, expecting errors
-	p.Azil.UpdateWallet(sdk.Cfg.Key2)
+	// Use non-owner user for StZIL, expecting errors
+	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
 
-	tx, _ := p.Azil.ChangeAdmin(sdk.Cfg.Addr3)
+	tx, _ := p.StZIL.ChangeAdmin(sdk.Cfg.Addr3)
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.ChangeOwner(sdk.Cfg.Addr3)
+	tx, _ = p.StZIL.ChangeOwner(sdk.Cfg.Addr3)
 	AssertError(tx, "OwnerValidationFailed")
 
 	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr}
-	tx, _ = p.Azil.ChangeBuffers(new_buffers)
+	tx, _ = p.StZIL.ChangeBuffers(new_buffers)
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.AddSSN(sdk.Cfg.Addr3)
+	tx, _ = p.StZIL.AddSSN(sdk.Cfg.Addr3)
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.SetHolderAddress(sdk.Cfg.Addr3)
+	tx, _ = p.StZIL.RemoveSSN(sdk.Cfg.Addr3)
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.ChangeRewardsFee("100")
+	tx, _ = p.StZIL.SetHolderAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.ChangeTreasuryAddress(sdk.Cfg.Addr3)
+	tx, _ = p.StZIL.ChangeRewardsFee("100")
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.ChangeZimplAddress(sdk.Cfg.Addr3)
+	tx, _ = p.StZIL.ChangeTreasuryAddress(sdk.Cfg.Addr3)
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.UpdateStakingParameters(ToZil(100))
+	tx, _ = p.StZIL.ChangeZimplAddress(sdk.Cfg.Addr3)
+	AssertError(tx, "OwnerValidationFailed")
+
+	tx, _ = p.StZIL.UpdateStakingParameters(ToZil(100))
 	AssertError(tx, "OwnerValidationFailed")
 
 }
