@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	"github.com/avely-finance/avely-contracts/sdk/actions"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -16,66 +15,51 @@ func (tr *Transitions) DrainBuffer() {
 	Start("DrainBuffer")
 
 	p := tr.DeployAndUpgrade()
-	buffer2, _ := p.DeployBuffer()
-	buffer3, _ := p.DeployBuffer()
-	p.Buffers = append(p.Buffers, buffer2, buffer3)
-	p.SyncBuffers()
-	p.SetupShortcuts(GetLog())
 
 	rewardsFee := "1000" //10% of feeDenom=10000
 	treasuryAddr := sdk.Cfg.Addr3
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(treasuryAddr))
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
-	tools := actions.NewAdminActions(GetLog())
-	tools.SetTestMode(true)
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(treasuryAddr))
+	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
 
 	ssnForInput := p.GetSsnAddressForInput()
 	activeBuffer := p.GetActiveBuffer().Addr
-	AssertSuccess(p.Azil.DelegateStake(ToZil(10)))
+	AssertSuccess(p.StZIL.DelegateStake(ToZil(10)))
 
 	//we need wait 2 reward cycles, in order to pass AssertNoBufferedDepositLessOneCycle, AssertNoBufferedDeposit checks
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-	sdk.IncreaseBlocknum(10)
-	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+	tr.NextCycle(p)
+	tr.NextCycleOffchain(p)
 
-	sdk.IncreaseBlocknum(10)
-	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.AzilSsnAddress, sdk.Cfg.AzilSsnRewardShare))
+	tr.NextCycle(p)
 
 	bufferToDrain := p.GetBufferToDrain().Addr
 	AssertEqual(bufferToDrain, activeBuffer)
-
 	//try to consolidate in holder without rewards claiming, excepting Zimpl.DelegHasUnwithdrawRewards -12 error
-	txn, _ := p.Azil.ConsolidateInHolder(bufferToDrain)
+	txn, _ := p.StZIL.ConsolidateInHolder(bufferToDrain)
 	AssertZimplError(txn, -12)
 
-	holderStake := p.Zimpl.GetDepositAmtDeleg(p.Holder.Addr)
-	tools.DrainBufferAuto(p)
-	AssertEqual(strconv.Itoa(p.Zimpl.GetLastRewardCycle()), Field(p.Azil, "buffer_drained_cycle", bufferToDrain))
+	tools := tr.NextCycleOffchain(p)
+
+	AssertEqual(strconv.Itoa(p.Zimpl.GetLastRewardCycle()), Field(p.StZIL, "buffer_drained_cycle", bufferToDrain))
 
 	txn = tools.TxLogMap["ClaimRewardsBuffer_"+ssnForInput].Tx
 	AssertTransition(txn, Transition{
-		p.Azil.Addr,    //sender
+		p.StZIL.Addr,   //sender
 		"ClaimRewards", //tag
 		bufferToDrain,  //recipient
 		"0",            //amount
 		ParamsMap{},
 	})
 
-	txn = tools.TxLogMap["ClaimRewardsHolder_"+ssnForInput].Tx
-	if holderStake[ssnForInput] != nil {
-		//holder had some stake for ssnForInput before DrainBuffer
-		AssertTransition(txn, Transition{
-			p.Azil.Addr,    //sender
-			"ClaimRewards", //tag
-			p.Holder.Addr,  //recipient
-			"0",            //amount
-			ParamsMap{},
-		})
-	} else {
-		//there was no stake for ssnForInput on holder before DrainBuffer
-		AssertError(txn, "DelegDoesNotExistAtSSN")
-	}
+	txn = tools.TxLogMap["ClaimRewardsHolder_"+sdk.Cfg.StZilSsnAddress].Tx
+	//holder has HolderInitialDelegateZil on sdk.Cfg.StZilSsnAddress
+	AssertTransition(txn, Transition{
+		p.StZIL.Addr,   //sender
+		"ClaimRewards", //tag
+		p.Holder.Addr,  //recipient
+		"0",            //amount
+		ParamsMap{},
+	})
 
 	// check Swap transactions
 	txn = tools.TxLogMap["ConsolidateInHolder"].Tx
@@ -96,43 +80,43 @@ func (tr *Transitions) DrainBuffer() {
 	})
 
 	//rewards claiming from holder/empty ssn address will not return errors
-	AssertSuccess(p.Azil.ClaimRewards(p.Holder.Addr, sdk.Cfg.SsnAddrs[0]))
+	AssertSuccess(p.StZIL.ClaimRewards(p.Holder.Addr, sdk.Cfg.SsnAddrs[0]))
 
 	//rewards claiming from holder/non-ssn address will return DelegDoesNotExistAtSSN error
-	txn, _ = p.Azil.ClaimRewards(p.Holder.Addr, core.ZeroAddr)
+	txn, _ = p.StZIL.ClaimRewards(p.Holder.Addr, core.ZeroAddr)
 	AssertError(txn, "DelegDoesNotExistAtSSN")
 
 	//rewards claiming from buffer/empty ssn address will return DelegDoesNotExistAtSSN error
-	txn, _ = p.Azil.ClaimRewards(bufferToDrain, sdk.Cfg.SsnAddrs[0])
+	txn, _ = p.StZIL.ClaimRewards(bufferToDrain, sdk.Cfg.SsnAddrs[0])
 	AssertError(txn, "DelegDoesNotExistAtSSN")
 
 	//rewards claiming from buffer/non-ssn address will return DelegDoesNotExistAtSSN error
-	txn, _ = p.Azil.ClaimRewards(bufferToDrain, core.ZeroAddr)
+	txn, _ = p.StZIL.ClaimRewards(bufferToDrain, core.ZeroAddr)
 	AssertError(txn, "DelegDoesNotExistAtSSN")
 
 	//rewards claiming from non-buffer address, expecting BufferAddrUnknown error
-	txn, _ = p.Azil.ClaimRewards(core.ZeroAddr, core.ZeroAddr)
+	txn, _ = p.StZIL.ClaimRewards(core.ZeroAddr, core.ZeroAddr)
 	AssertError(txn, "BufferOrHolderValidationFailed")
 
 	//repeat consolidate, excepting BufferAlreadyDrained error
 	//we don't call complete tools.DrainBufferAuto(p), because it will not run twice for same buffer/lrc
-	txn, _ = p.Azil.ConsolidateInHolder(bufferToDrain)
+	txn, _ = p.StZIL.ConsolidateInHolder(bufferToDrain)
 	AssertError(txn, "BufferAlreadyDrained")
 
 	//repeat consolidate with non-buffer address, excepting BufferAddrUnknown error
-	txn, _ = p.Azil.ConsolidateInHolder(core.ZeroAddr)
+	txn, _ = p.StZIL.ConsolidateInHolder(core.ZeroAddr)
 	AssertError(txn, "BufferAddrUnknown")
 }
 
 func checkRewards(p *Protocol, txn *transaction.Transaction, bufferToDrain string) {
 	totalFee := "0"
-	treasuryAddr := p.Azil.GetTreasuryAddress()
+	treasuryAddr := p.StZIL.GetTreasuryAddress()
 	treasuryBalance := sdk.GetBalance(treasuryAddr[2:])
 
 	// ssnlist#UpdateStakeReward has complex logic based on a fee and comission calculations
 	// since we use extra small numbers (not QA 10 ^ 12) all calculations are rounded
 	// and all assigned rewards are credited to one SSN node
-	bufferRewards := StrAdd(sdk.Cfg.AzilSsnRewardShare, sdk.Cfg.AzilSsnRewardShare)
+	bufferRewards := StrAdd(sdk.Cfg.StZilSsnRewardShare, sdk.Cfg.StZilSsnRewardShare)
 	AssertEqual(bufferRewards, "100")
 
 	AssertTransition(txn, Transition{
@@ -158,12 +142,12 @@ func checkRewards(p *Protocol, txn *transaction.Transaction, bufferToDrain strin
 	AssertTransition(txn, Transition{
 		p.GetBuffer().Addr, //sender
 		"ClaimRewardsSuccessCallBack",
-		p.Azil.Addr,
+		p.StZIL.Addr,
 		bufferRewards,
 		ParamsMap{},
 	})
 	AssertTransition(txn, Transition{
-		p.Azil.Addr, //sender
+		p.StZIL.Addr, //sender
 		"AddFunds",
 		treasuryAddr,
 		rewardsFeeValue,
@@ -194,23 +178,23 @@ func checkRewards(p *Protocol, txn *transaction.Transaction, bufferToDrain strin
 	AssertTransition(txn, Transition{
 		p.GetBuffer().Addr, //sender
 		"ClaimRewardsSuccessCallBack",
-		p.Azil.Addr,
+		p.StZIL.Addr,
 		bufferRewards,
 		ParamsMap{},
 	})
 	AssertTransition(txn, Transition{
-		p.Azil.Addr, //sender
+		p.StZIL.Addr, //sender
 		"AddFunds",
 		treasuryAddr,
 		rewardsFeeValue,
 		ParamsMap{},
 	})
 
-	// Check aZIL balance
+	// Check StZIL balance
 	totalRewards := "149" // "100" from Buffer + "49" from Holder[]
 	totalRewards = StrSub(totalRewards, totalFee)
-	AssertEqual(Field(p.Azil, "_balance"), totalRewards)
-	AssertEqual(Field(p.Azil, "autorestakeamount"), totalRewards)
+	AssertEqual(Field(p.StZIL, "_balance"), totalRewards)
+	AssertEqual(Field(p.StZIL, "autorestakeamount"), totalRewards)
 	//check if treasury balance increased properly
 	AssertEqual(StrAdd(treasuryBalance, totalFee), sdk.GetBalance(treasuryAddr[2:]))
 }

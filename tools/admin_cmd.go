@@ -34,7 +34,7 @@ func main() {
 	sdk = NewAvelySDK(*config)
 
 	shortcuts := map[string]string{
-		"azilssn":  config.AzilSsnAddress,
+		"stzilssn": config.StZilSsnAddress,
 		"addr1":    config.Addr1,
 		"addr2":    config.Addr2,
 		"addr3":    config.Addr3,
@@ -127,17 +127,17 @@ func deployAvely() {
 	p.ChangeTreasuryAddress()
 	p.SyncBufferAndHolder()
 
-	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
+	_, err := p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change rewards fee failed")
 	}
-	log.Info("aZIL Rewards Fee successfully changed")
+	log.Info("StZIL Rewards Fee successfully changed")
 
-	p.Azil.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
 }
 
 func showTx(p *Protocol, tx_addr string) {
-	provider := p.Azil.Contract.Provider
+	provider := p.StZIL.Contract.Provider
 	tx, err := provider.GetTransaction(tx_addr)
 	if err != nil {
 		log.Error("Err: " + err.Error())
@@ -201,47 +201,47 @@ func deployBuffer(p *Protocol) {
 }
 
 func unpauseIn(p *Protocol) {
-	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+	_, err := p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
 
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-in AZil failed")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-in StZIL failed")
 	}
-	log.Info("Unpause-in AZil is successfully completed")
+	log.Info("Unpause-in StZIL is successfully completed")
 }
 
 func unpauseOut(p *Protocol) {
-	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseOut()
+	_, err := p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseOut()
 
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-out AZil failed")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-out StZIL failed")
 	}
-	log.Info("Unpause-out AZil is successfully completed")
+	log.Info("Unpause-out StZIL is successfully completed")
 }
 
 func unpauseZrc2(p *Protocol) {
-	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseZrc2()
+	_, err := p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseZrc2()
 
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-zrc2 AZil failed")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-zrc2 StZIL failed")
 	}
-	log.Info("Unpause-zrc2 AZil is successfully completed")
+	log.Info("Unpause-zrc2 StZIL is successfully completed")
 }
 
 func unpauseAll(p *Protocol) {
-	_, err := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+	_, err := p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-in step")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all StZIL failed at Unpause-in step")
 	}
-	_, err = p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseOut()
+	_, err = p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseOut()
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-out step")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all StZIL failed at Unpause-out step")
 	}
-	_, err = p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseZrc2()
+	_, err = p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseZrc2()
 	if err != nil {
-		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all AZil failed at Unpause-zrc2 step")
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Unpause-all StZIL failed at Unpause-zrc2 step")
 	}
 
-	log.Info("Unpause-all AZil is successfully completed")
+	log.Info("Unpause-all StZIL is successfully completed")
 }
 
 func syncBuffers(p *Protocol) {
@@ -253,7 +253,7 @@ func addSSNs(p *Protocol) {
 }
 
 func showRewards(p *Protocol, ssn, deleg string) {
-	// result := p.Azil.Contract.SubState("balances",  [1]string{"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6"})
+	// result := p.StZIL.Contract.SubState("balances",  [1]string{"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6"})
 
 	rawState := p.Zimpl.Contract.State()
 

@@ -59,6 +59,18 @@ func AssertEqual(s1, s2 string) {
 	}
 }
 
+func AssertNotEqual(s1, s2 string) {
+	if s1 == s2 {
+		_, file, no, _ := runtime.Caller(1)
+		GetLog().Error("ASSERT_NOT_EQUAL FAILED, " + file + ":" + strconv.Itoa(no))
+		GetLog().Error("EXPECTED: " + s2)
+		GetLog().Error("ACTUAL: " + s1)
+		GetLog().Fatal("TESTS ARE FAILED")
+	} else {
+		GetLog().Info("ASSERT_NOT_EQUAL SUCCESS")
+	}
+}
+
 func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	if err != nil {
 		_, file, no, _ := runtime.Caller(1)

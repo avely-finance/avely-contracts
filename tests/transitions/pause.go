@@ -12,7 +12,7 @@ func (tr *Transitions) Pause() {
 	unPauseEmptyBuffers()
 
 	p := tr.DeployAndUpgrade()
-	p.Azil.UpdateWallet(sdk.Cfg.OwnerKey)
+	p.StZIL.UpdateWallet(sdk.Cfg.OwnerKey)
 
 	callPausedIn(p)
 	callPausedOut(p)
@@ -20,118 +20,118 @@ func (tr *Transitions) Pause() {
 	callPauseUnpauseNonAdmin(p)
 
 	//pause-in contract, expecting success
-	tx, _ := AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).PauseIn())
-	AssertEvent(tx, Event{p.Azil.Addr, "PauseIn", ParamsMap{"is_paused_in": "1"}})
-	AssertEqual(Field(p.Azil, "is_paused_in"), "True")
+	tx, _ := AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).PauseIn())
+	AssertEvent(tx, Event{p.StZIL.Addr, "PauseIn", ParamsMap{"is_paused_in": "1"}})
+	AssertEqual(Field(p.StZIL, "is_paused_in"), "True")
 
 	//unpause-in contract, expecting success
-	tx, _ = AssertSuccess(p.Azil.UnpauseIn())
-	AssertEvent(tx, Event{p.Azil.Addr, "UnPauseIn", ParamsMap{"is_paused_in": "0"}})
-	AssertEqual(Field(p.Azil, "is_paused_in"), "False")
+	tx, _ = AssertSuccess(p.StZIL.UnpauseIn())
+	AssertEvent(tx, Event{p.StZIL.Addr, "UnPauseIn", ParamsMap{"is_paused_in": "0"}})
+	AssertEqual(Field(p.StZIL, "is_paused_in"), "False")
 
 	//pause-out contract, expecting success
-	tx, _ = AssertSuccess(p.Azil.PauseOut())
-	AssertEvent(tx, Event{p.Azil.Addr, "PauseOut", ParamsMap{"is_paused_out": "1"}})
-	AssertEqual(Field(p.Azil, "is_paused_out"), "True")
+	tx, _ = AssertSuccess(p.StZIL.PauseOut())
+	AssertEvent(tx, Event{p.StZIL.Addr, "PauseOut", ParamsMap{"is_paused_out": "1"}})
+	AssertEqual(Field(p.StZIL, "is_paused_out"), "True")
 
 	//unpause-out contract, expecting success
-	tx, _ = AssertSuccess(p.Azil.UnpauseOut())
-	AssertEvent(tx, Event{p.Azil.Addr, "UnPauseOut", ParamsMap{"is_paused_out": "0"}})
-	AssertEqual(Field(p.Azil, "is_paused_out"), "False")
+	tx, _ = AssertSuccess(p.StZIL.UnpauseOut())
+	AssertEvent(tx, Event{p.StZIL.Addr, "UnPauseOut", ParamsMap{"is_paused_out": "0"}})
+	AssertEqual(Field(p.StZIL, "is_paused_out"), "False")
 
 	//pause-zrc2 contract, expecting success
-	tx, _ = AssertSuccess(p.Azil.PauseZrc2())
-	AssertEvent(tx, Event{p.Azil.Addr, "PauseZrc2", ParamsMap{"is_paused_zrc2": "1"}})
-	AssertEqual(Field(p.Azil, "is_paused_zrc2"), "True")
+	tx, _ = AssertSuccess(p.StZIL.PauseZrc2())
+	AssertEvent(tx, Event{p.StZIL.Addr, "PauseZrc2", ParamsMap{"is_paused_zrc2": "1"}})
+	AssertEqual(Field(p.StZIL, "is_paused_zrc2"), "True")
 
 	//unpause-zrc2 contract, expecting success
-	tx, _ = AssertSuccess(p.Azil.UnpauseZrc2())
-	AssertEvent(tx, Event{p.Azil.Addr, "UnPauseZrc2", ParamsMap{"is_paused_zrc2": "0"}})
-	AssertEqual(Field(p.Azil, "is_paused_zrc2"), "False")
+	tx, _ = AssertSuccess(p.StZIL.UnpauseZrc2())
+	AssertEvent(tx, Event{p.StZIL.Addr, "UnPauseZrc2", ParamsMap{"is_paused_zrc2": "0"}})
+	AssertEqual(Field(p.StZIL, "is_paused_zrc2"), "False")
 }
 
 func unPauseEmptyBuffers() {
 	p := contracts.Deploy(sdk, GetLog())
-	tx, _ := p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+	tx, _ := p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
 	AssertError(tx, "BuffersEmpty")
 	p.SyncBufferAndHolder()
-	tx, _ = p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
 	AssertError(tx, "SsnAddressesEmpty")
 }
 
 func callPauseUnpauseNonAdmin(p *contracts.Protocol) {
 	//call pause/unpause admin transitions with non-admin user; expecting errors
-	p.Azil.UpdateWallet(sdk.Cfg.Key1)
+	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
 
-	tx, _ := p.Azil.PauseIn()
+	tx, _ := p.StZIL.PauseIn()
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.UnpauseIn()
+	tx, _ = p.StZIL.UnpauseIn()
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.PauseOut()
+	tx, _ = p.StZIL.PauseOut()
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.UnpauseOut()
+	tx, _ = p.StZIL.UnpauseOut()
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.PauseZrc2()
+	tx, _ = p.StZIL.PauseZrc2()
 	AssertError(tx, "OwnerValidationFailed")
 
-	tx, _ = p.Azil.UnpauseZrc2()
+	tx, _ = p.StZIL.UnpauseZrc2()
 	AssertError(tx, "OwnerValidationFailed")
 }
 
 func callPausedIn(p *contracts.Protocol) {
 	//call transitions, when contract is paused-in; expecting errors
-	AssertSuccess(p.Azil.PauseIn())
+	AssertSuccess(p.StZIL.PauseIn())
 
-	tx, _ := p.Azil.PauseIn()
+	tx, _ := p.StZIL.PauseIn()
 	AssertError(tx, "PausedIn")
 
-	tx, _ = p.Azil.DelegateStake(ToZil(10))
+	tx, _ = p.StZIL.DelegateStake(ToZil(10))
 	AssertError(tx, "PausedIn")
 
-	tx, _ = p.Azil.WithUser(sdk.Cfg.Key1).ChownStakeConfirmSwap(sdk.Cfg.Addr1)
+	tx, _ = p.StZIL.WithUser(sdk.Cfg.Key1).ChownStakeConfirmSwap(sdk.Cfg.Addr1)
 	AssertError(tx, "PausedIn")
 
-	AssertSuccess(p.Azil.WithUser(sdk.Cfg.OwnerKey).UnpauseIn())
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn())
 }
 
 func callPausedOut(p *contracts.Protocol) {
 	//call transitions, when contract is paused-out; expecting errors
-	AssertSuccess(p.Azil.PauseOut())
+	AssertSuccess(p.StZIL.PauseOut())
 
-	tx, _ := p.Azil.PauseOut()
+	tx, _ := p.StZIL.PauseOut()
 	AssertError(tx, "PausedOut")
 
-	tx, _ = p.Azil.WithdrawStakeAmt(ToZil(10))
+	tx, _ = p.StZIL.WithdrawStakeAmt(ToZil(10))
 	AssertError(tx, "PausedOut")
 
-	tx, _ = p.Azil.CompleteWithdrawal()
+	tx, _ = p.StZIL.CompleteWithdrawal()
 	AssertError(tx, "PausedOut")
 
-	AssertSuccess(p.Azil.UnpauseOut())
+	AssertSuccess(p.StZIL.UnpauseOut())
 }
 
 func callPausedZrc2(p *contracts.Protocol) {
 	//call transitions, when contract is paused-zrc2; expecting errors
-	AssertSuccess(p.Azil.PauseZrc2())
+	AssertSuccess(p.StZIL.PauseZrc2())
 
-	tx, _ := p.Azil.PauseZrc2()
+	tx, _ := p.StZIL.PauseZrc2()
 	AssertError(tx, "PausedZrc2")
 
-	tx, _ = p.Azil.WithUser(sdk.Cfg.OwnerKey).TransferFrom(sdk.Cfg.Addr1, sdk.Cfg.Addr2, ToQA(10000))
+	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).TransferFrom(sdk.Cfg.Addr1, sdk.Cfg.Addr2, ToQA(10000))
 	AssertError(tx, "PausedZrc2")
 
-	tx, _ = p.Azil.WithUser(sdk.Cfg.OwnerKey).Transfer(sdk.Cfg.Addr2, ToQA(10000))
+	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).Transfer(sdk.Cfg.Addr2, ToQA(10000))
 	AssertError(tx, "PausedZrc2")
 
-	tx, _ = p.Azil.WithUser(sdk.Cfg.OwnerKey).IncreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
+	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).IncreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
 	AssertError(tx, "PausedZrc2")
 
-	tx, _ = p.Azil.WithUser(sdk.Cfg.OwnerKey).DecreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
+	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).DecreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
 	AssertError(tx, "PausedZrc2")
 
-	AssertSuccess(p.Azil.UnpauseZrc2())
+	AssertSuccess(p.StZIL.UnpauseZrc2())
 }

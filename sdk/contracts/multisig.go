@@ -62,12 +62,12 @@ func (s *MultisigWallet) ExecuteTransaction(transactionId int) (*transaction.Tra
 	return s.Call("ExecuteTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeAdminTransaction(azilAddr, newAdmin string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitChangeAdminTransaction(stZilAddr, newAdmin string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "new_admin",
@@ -79,12 +79,12 @@ func (s *MultisigWallet) SubmitChangeAdminTransaction(azilAddr, newAdmin string)
 	return s.Call("SubmitChangeAdminTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeOwnerTransaction(azilAddr, newOwner string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitChangeOwnerTransaction(stZilAddr, newOwner string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "new_owner",
@@ -96,24 +96,24 @@ func (s *MultisigWallet) SubmitChangeOwnerTransaction(azilAddr, newOwner string)
 	return s.Call("SubmitChangeOwnerTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitClaimOwnerTransaction(azilAddr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitClaimOwnerTransaction(stZilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 	}
 
 	return s.Call("SubmitClaimOwnerTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeTreasuryAddressTransaction(azilAddr string, addr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitChangeTreasuryAddressTransaction(stZilAddr string, addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "address",
@@ -125,12 +125,12 @@ func (s *MultisigWallet) SubmitChangeTreasuryAddressTransaction(azilAddr string,
 	return s.Call("SubmitChangeTreasuryAddressTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeZimplAddressTransaction(azilAddr string, addr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitChangeZimplAddressTransaction(stZilAddr string, addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "address",
@@ -142,12 +142,12 @@ func (s *MultisigWallet) SubmitChangeZimplAddressTransaction(azilAddr string, ad
 	return s.Call("SubmitChangeZimplAddressTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeRewardsFeeTransaction(azilAddr string, newFee string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitChangeRewardsFeeTransaction(stZilAddr string, newFee string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "new_fee",
@@ -159,12 +159,12 @@ func (s *MultisigWallet) SubmitChangeRewardsFeeTransaction(azilAddr string, newF
 	return s.Call("SubmitChangeRewardsFeeTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(azilAddr string, minDelegStake string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(stZilAddr string, minDelegStake string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "min_deleg_stake",
@@ -176,12 +176,12 @@ func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(azilAddr strin
 	return s.Call("SubmitUpdateStakingParametersTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitSetHolderAddressTransaction(azilAddr string, addr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitSetHolderAddressTransaction(stZilAddr string, addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "address",
@@ -193,12 +193,12 @@ func (s *MultisigWallet) SubmitSetHolderAddressTransaction(azilAddr string, addr
 	return s.Call("SubmitSetHolderAddressTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeBuffersTransaction(azilAddr string, newBuffers []string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitChangeBuffersTransaction(stZilAddr string, newBuffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "new_buffers",
@@ -210,12 +210,12 @@ func (s *MultisigWallet) SubmitChangeBuffersTransaction(azilAddr string, newBuff
 	return s.Call("SubmitChangeBuffersTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitAddSSNTransaction(azilAddr, ssnaddr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitAddSSNTransaction(stZilAddr, ssnaddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 		{
 			VName: "ssnaddr",
@@ -227,72 +227,89 @@ func (s *MultisigWallet) SubmitAddSSNTransaction(azilAddr, ssnaddr string) (*tra
 	return s.Call("SubmitAddSSNTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitRemoveSSNTransaction(stZilAddr, ssnaddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
+		},
+		{
+			VName: "ssnaddr",
+			Type:  "ByStr20",
+			Value: ssnaddr,
+		},
+	}
+
+	return s.Call("SubmitRemoveSSNTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitPauseInTransaction(stZilAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: stZilAddr,
 		},
 	}
 
 	return s.Call("SubmitPauseInTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitPauseOutTransaction(azilAddr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitPauseOutTransaction(stZilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 	}
 
 	return s.Call("SubmitPauseOutTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitPauseZrc2Transaction(azilAddr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitPauseZrc2Transaction(stZilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 	}
 
 	return s.Call("SubmitPauseZrc2Transaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitUnPauseInTransaction(azilAddr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitUnPauseInTransaction(stZilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 	}
 
 	return s.Call("SubmitUnPauseInTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitUnPauseOutTransaction(azilAddr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitUnPauseOutTransaction(stZilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 	}
 
 	return s.Call("SubmitUnPauseOutTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitUnPauseZrc2Transaction(azilAddr string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitUnPauseZrc2Transaction(stZilAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
 			Type:  "ByStr20",
-			Value: azilAddr,
+			Value: stZilAddr,
 		},
 	}
 
