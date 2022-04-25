@@ -68,7 +68,7 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_buffer
 $ go run tools/admin_cmd.go --chain=testnet --cmd=sync_buffers
 ```
 
-5. Unpause in/out/zrc2/all AZil. (note: see multisig docs if owner is Multisig Wallet)
+5. Unpause in/out/zrc2/all stZIL. (note: see multisig docs if owner is Multisig Wallet)
 
 ```sh
 $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_in

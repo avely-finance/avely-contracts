@@ -29,7 +29,7 @@ func main() {
 	sdk = NewAvelySDK(*config)
 
 	shortcuts := map[string]string{
-		"azilssn":  config.AzilSsnAddress,
+		"stzilssn": config.StZilSsnAddress,
 		"addr1":    config.Addr1,
 		"addr2":    config.Addr2,
 		"addr3":    config.Addr3,
@@ -62,7 +62,7 @@ func setupUsr(p *Protocol, usr string) {
 
 	key := keyValue.Interface().(string)
 
-	p.Azil.UpdateWallet(key)
+	p.StZIL.UpdateWallet(key)
 
 	log.Info("Wallet has been updates to Key" + usr)
 }
@@ -72,7 +72,7 @@ func delegate(p *Protocol, amount int) {
 		log.Fatal("Amount should be greater than 0")
 	}
 
-	tx, err := p.Azil.DelegateStake(utils.ToZil(amount))
+	tx, err := p.StZIL.DelegateStake(utils.ToZil(amount))
 
 	if err != nil {
 		log.Fatal("Delegate failed with error:" + err.Error())

@@ -15,7 +15,7 @@ let one_msg =
     Cons {Message} msg nil_msg
 
 type Error =
-  | AzilValidationFailed
+  | StZILValidationFailed
   | CantFetchZimplAddress
   | ClaimRewardsHolderFundsMismatch
   | CompleteWithdrawalHolderFundsMismatch
@@ -28,7 +28,7 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | AzilValidationFailed                    => "AzilValidationFailed"
+      | StZILValidationFailed                    => "StZILValidationFailed"
       | CantFetchZimplAddress                   => "CantFetchZimplAddress"
       | ClaimRewardsHolderFundsMismatch         => "ClaimRewardsHolderFundsMismatch"
       | CompleteWithdrawalHolderFundsMismatch   => "CompleteWithdrawalHolderFundsMismatch"
@@ -45,11 +45,11 @@ let make_error =
 (***************************************************)
 
 contract Holder(
-  init_azil_address         : ByStr20,
+  init_stzil_address         : ByStr20,
   init_zproxy_address       : ByStr20
 )
 
-field azil_address          : ByStr20 = init_azil_address
+field stzil_address          : ByStr20 = init_stzil_address
 field zproxy_address        : ByStr20 = init_zproxy_address
 
 field initialized           : Bool = False
@@ -65,13 +65,13 @@ procedure ThrowError(err: Error)
   throw e
 end
 
-procedure RequireAzil()
-  var_azil_address <- azil_address;
-  is_azil = builtin eq _sender var_azil_address;
-  match is_azil with
+procedure RequireStZIL()
+  var_stzil_address <- stzil_address;
+  is_stzil = builtin eq _sender var_stzil_address;
+  match is_stzil with
   | True  =>
   | False =>
-    e = AzilValidationFailed;
+    e = StZILValidationFailed;
     ThrowError e
   end
 end
@@ -118,11 +118,11 @@ procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: 
 end
 
 (************************************************************)
-(* @dev: Azil actions                                       *)
+(* @dev: StZIL actions                                       *)
 (************************************************************)
 
 transition WithdrawStakeAmt(ssnaddr: ByStr20, amount: Uint128)
-  RequireAzil;
+  RequireStZIL;
   var_zproxy_address <- zproxy_address;
   msg = {_tag: "WithdrawStakeAmt"; _recipient: var_zproxy_address; _amount: uint128_zero;
   ssnaddr: ssnaddr; amt: amount};
@@ -136,7 +136,7 @@ transition WithdrawStakeAmtSuccessCallBack(ssnaddr: ByStr20, amount: Uint128)
 end
 
 transition CompleteWithdrawal()
-  RequireAzil;
+  RequireStZIL;
   tmp_added_funds := uint128_zero;
   var_zproxy_address <- zproxy_address;
   msg = {_tag: "CompleteWithdrawal"; _recipient: var_zproxy_address; _amount: uint128_zero };
@@ -162,9 +162,9 @@ end
 transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
   RequireZimpl;
 
-  (* send funds and callback to Azil *)
+  (* send funds and callback to stZIL *)
   added_funds <- tmp_added_funds;
-  o_azil_address <- azil_address;
+  o_stzil_address <- stzil_address;
 
   (* reset tmp variable *)
   tmp_added_funds := uint128_zero;
@@ -192,7 +192,7 @@ transition CompleteWithdrawalSuccessCallBack(amount: Uint128)
   end;
 
   (* transfer funds *)
-  msg = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : o_azil_address;
+  msg = {_tag : "CompleteWithdrawalSuccessCallBack"; _recipient : o_stzil_address;
     _amount : amount
   };
   msgs = one_msg msg;
@@ -208,7 +208,7 @@ transition CompleteWithdrawalNoUnbondedStakeCallBack(amount: Uint128)
 end
 
 transition ClaimRewards(ssnaddr: ByStr20)
-  RequireAzil;
+  RequireStZIL;
   tmp_added_funds := uint128_zero;
 
   var_zproxy_address <- zproxy_address;
@@ -231,16 +231,16 @@ transition WithdrawStakeRewardsSuccessCallBack(ssnaddr: ByStr20, rewards: Uint12
     e = ClaimRewardsHolderFundsMismatch;
     ThrowError e
   | True =>
-    o_azil_address <- azil_address;
+    o_stzil_address <- stzil_address;
 
-    msg = { _tag : "ClaimRewardsSuccessCallBack"; _recipient : o_azil_address; _amount : rewards };
+    msg = { _tag : "ClaimRewardsSuccessCallBack"; _recipient : o_stzil_address; _amount : rewards };
     msgs = one_msg msg;
     send msgs
   end
 end
 
 transition ConfirmDelegatorSwap(requestor: ByStr20)
-  RequireAzil;
+  RequireStZIL;
 
   var_zproxy_address <- zproxy_address;
 
