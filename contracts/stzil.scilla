@@ -262,7 +262,7 @@ let bool_to_uint32 = fun(bval: Bool) =>
 let get_heaviest = fun(m: Map ByStr20 Uint128) => fun(whitelist: List ByStr20) => fun(withdraw_amount: Uint128) =>
   (* create a list of (key,values) pairs of the map *)
   let l = builtin to_list m in (* list consist of Pairs (ssnaddr, amount) *)
-  (* use foldl to choose heaviest pair (1) by type slashed/whitelisted, (2) by amount if types are same  *)
+  (* use foldl to create heaviest_by_status map[slashed=0,whitelisted=1]HeaviestPair(ssnaddr,amount)  *)
   let folder = @list_foldl (Pair ByStr20 Uint128) (Map Uint32 (Pair ByStr20 Uint128)) in (* @list_foldl 'Next 'Accumulator *)
   let init = Emp Uint32 (Pair ByStr20 Uint128) in (* initialize the accumulator as map[slashed=0,whitelisted=1]Pair(address,amount) *)
   let compare = (* update accumulator function *)
@@ -297,13 +297,13 @@ let get_heaviest = fun(m: Map ByStr20 Uint128) => fun(whitelist: List ByStr20) =
           end
         end
       end in
-  let folded = folder compare init l in (* apply fold function to list *)
-  let heaviest_slashed = builtin get folded uint32_zero in (* first, check slashed *)
+  let heaviest_by_status = folder compare init l in (* apply fold function to list *)
+  let heaviest_slashed = builtin get heaviest_by_status uint32_zero in (* first, check slashed *)
   match heaviest_slashed with
   | Some (Pair slashed_ssnaddr slashed_amount) =>
     Some {ByStr20} slashed_ssnaddr
   | None =>
-    let heaviest_whitelisted = builtin get folded uint32_one in (* if slashed not found, check whitelisted *)
+    let heaviest_whitelisted = builtin get heaviest_by_status uint32_one in (* if slashed not found, check whitelisted *)
     match heaviest_whitelisted with
     | Some (Pair whitelisted_ssnaddr whitelisted_amount) =>
       Some {ByStr20} whitelisted_ssnaddr
