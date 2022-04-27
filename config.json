@@ -57,39 +57,40 @@
       "LogLevel": "info"
     },
     "ChainId": 333,
-    "TxConfrimMaxAttempts": 15,
-    "TxConfirmIntervalSec": 30,
+    "TxConfrimMaxAttempts": 10,
+    "TxConfirmIntervalSec": 15,
     "StZilSsnAddress": "0x73f16753ea97C770201Fd6Ae04073348c483239f",
     "StZilSsnRewardShare": "50",
     "HolderInitialDelegateZil": "10",
     "SsnInitialDelegateZil": "1000",
     "ProtocolRewardsFee": "100",
-    "Owner":"0x14292E90C25070456BC92caCF54A317E90CA7dc6",
+    "Owner":"0x13d94b7430f24e23a856d8e8970453011e0440e0",
     "OwnerKey": "",
-    "Admin":"",
+    "Admin":"0xf61477D7919478e5AfFe1fbd9A0CDCeee9fdE42d",
     "AdminKey": "",
     "Key1": "",
     "Addr1": "",
     "Key2": "",
-    "Addr2": "0xec902fe17d90203d0bddd943d97b29576ece3177",
+    "Addr2": "",
     "Key3": "",
-    "Addr3": "0xc2035715831ab100ec42e562ce341b834bed1f4c",
-    "VerifierKey": "",
+    "Addr3": "",
     "Verifier": "0x10200e3da08ee88729469d6eabc055cb225821e7",
+    "VerifierKey": "",
 
     "GzilAddr": "0x4b68ebd5c54ae9ad1f069260b4c89f0d3be70a45",
     "ZproxyAddr": "0x351a37e2841A45c7F2De18Ee45F968E106416273",
     "ZimplAddr": "0xA2e4657de8108dd3730EB51f05a1d486D77bE2Df",
-    "StZilAddr": "0x888103155d2df5eb0b8ca43992d6dd6ffd114745",
+    "StZilAddr": "0xfeeac8eacefbbe18983ab578bc696f2d14f25f8c",
     "BufferAddrs": [
-      "0x00f7dd1c6dd8163e90d73a5c25d8367bfbc0e081",
-      "0x1e11103c9f5f1e79380db0e95a2bd07ffe034fa5",
-      "0xcedfc6379cc6654872f75b792cec5e5956e905a8"
+      "0x9097f8145372fd982c580ce308bcc3e545ce1655",
+      "0xd689a93c00b97f0648ea937feac4696fb1c87252",
+      "0x5207e195afe58a21ea78d300b16e7ae2fa025e4a"
     ],
     "SsnAddrs": [
-      "0x73f16753ea97C770201Fd6Ae04073348c483239f"
+      "0x73f16753ea97C770201Fd6Ae04073348c483239f",
+      "0xA9B9B3e19cbC122B9781425B12e07dC396A15850"
     ],
-    "HolderAddr": "0x1ef806d653719b8e82fd473f2e50420456ea0df2",
+    "HolderAddr": "0xd4330cbd48cacac3769b6cfa9edf6873e5d855ec",
     "TreasuryAddr": "0x4dE9D0CF923119c2433391eA02Afa14701cB59A8"
   },
   "mainnet": {
