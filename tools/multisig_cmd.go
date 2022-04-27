@@ -39,7 +39,7 @@ func main() {
 
 	m.UpdateWallet(config.OwnerKey)
 
-	stZilAddr := config.stZilAddr
+	stZilAddr := config.StZilAddr
 
 	switch tag {
 	case "SubmitSetHolderAddressTransaction":
@@ -58,6 +58,8 @@ func main() {
 			log.Fatal("SSN address empty")
 		}
 		removeSSN(m, stZilAddr, ssnaddr)
+	case "SubmitClaimOwnerTransaction":
+		claimOwner(m, stZilAddr)
 	case "SubmitChangeRewardsFeeTransaction":
 		changeRewardsFee(m, stZilAddr, strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 	case "SubmitChangeTreasuryAddressTransaction":
@@ -97,6 +99,10 @@ func changeRewardsFee(m *MultisigWallet, callee string, value string) {
 
 func changeTreasuryAddress(m *MultisigWallet, callee string, value string) {
 	check(m.SubmitChangeTreasuryAddressTransaction(callee, value))
+}
+
+func claimOwner(m *MultisigWallet, callee string) {
+	check(m.SubmitClaimOwnerTransaction(callee))
 }
 
 func unPauseIn(m *MultisigWallet, callee string) {
