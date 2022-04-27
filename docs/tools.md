@@ -43,7 +43,7 @@ https://viewblock.io/zilliqa/address/zil17c2804u3j3uwttl7r77e5rxuam5lmepdf2l87e?
 1. Deploy mutlisig wallet
 
 ```sh
-$ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_multisig --owners=0x4C4B65b9a732bd47aE0fb3bCe8Aa77E47e9dC634,0x907Cb4661099aB4DCE8AE1798b1006970f6a0b2D --signcount=2
+$ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_multisig --owners=0xf61477D7919478e5AfFe1fbd9A0CDCeee9fdE42d,0xE4fB901A2FA3C87ee681cEbb7D7256557f00b015 --signcount=2
 ```
 
 ### Deploy Protocol

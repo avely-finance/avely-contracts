@@ -61,6 +61,8 @@ func main() {
 			deployMultisig(p, owners, requiredSignaturesCount)
 		case "init_holder":
 			initHolder(p)
+		case "change_owner":
+			changeOwner(p, addr)
 		case "sync_buffers":
 			syncBuffers(p)
 		case "change_ssns":
@@ -198,6 +200,15 @@ func deployBuffer(p *Protocol) {
 		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Buffer deploy failed")
 	}
 	log.WithFields(logrus.Fields{"address": buffer.Addr}).Info("Buffer deploy is successfully completed")
+}
+
+func changeOwner(p *Protocol, new_address string) {
+	_, err := p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeOwner(new_address)
+
+	if err != nil {
+		log.WithFields(logrus.Fields{"error": err.Error()}).Fatal("Change owner failed")
+	}
+	log.Info("Change owner is successfully completed")
 }
 
 func unpauseIn(p *Protocol) {
