@@ -57,12 +57,18 @@ jobs:
     needs: ci
     if: github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v2
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GH_REGISTRY_TOKEN }}
+
+    - uses: actions/checkout@v3
 
     - name: Build Image
-      run: docker build --rm=false -f docker/Dockerfile.prod -t ezil/avely-watchers:latest .
+      run: docker build --rm=false -f docker/Dockerfile.prod -t ghcr.io/avely-finance/avely-watchers:latest .
 
-    - name: Push Image
-      run: |
-        docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
-        docker push ezil/avely-watchers:latest
+    - name: push image to GitHub Container Registry
+      run: docker push ghcr.io/avely-finance/avely-watchers:latest
