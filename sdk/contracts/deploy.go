@@ -9,8 +9,22 @@ import (
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
-func Deploy(sdk *AvelySDK, log *Log) *Protocol {
-	log.Debug("start to deploy")
+type ZilliqaStaking struct {
+	Zproxy *Zproxy
+	Zimpl  *Zimpl
+	Gzil   *Gzil
+}
+
+func NewZilliqaStaking(zproxy *Zproxy, zimpl *Zimpl, gzil *Gzil) *ZilliqaStaking {
+	return &ZilliqaStaking{
+		Zproxy: zproxy,
+		Zimpl:  zimpl,
+		Gzil:   gzil,
+	}
+}
+
+func DeployZilliqaStaking(sdk *AvelySDK, log *Log) *ZilliqaStaking {
+	log.Debug("start to deploy zilliqa staking contracts")
 
 	//deploy gzil
 	gzil, err := NewGzil(sdk)
@@ -20,28 +34,36 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("deploy Gzil succeed, address = " + gzil.Addr)
 
 	//deploy Zproxy
-	Zproxy, err := NewZproxy(sdk)
+	zproxy, err := NewZproxy(sdk)
 	if err != nil {
 		log.Fatal("deploy Zproxy error = " + err.Error())
 	}
-	log.Debug("deploy Zproxy succeed, address = " + Zproxy.Addr)
+	log.Debug("deploy Zproxy succeed, address = " + zproxy.Addr)
 
 	//deploy Zimpl
-	Zimpl, err := NewZimpl(sdk, Zproxy.Addr, gzil.Addr)
+	zimpl, err := NewZimpl(sdk, zproxy.Addr, gzil.Addr)
 	if err != nil {
 		log.Fatal("deploy Zimpl error = " + err.Error())
 	}
-	log.Debug("deploy Zimpl succeed, address = " + Zimpl.Addr)
+	log.Debug("deploy Zimpl succeed, address = " + zimpl.Addr)
+
+	return NewZilliqaStaking(zproxy, zimpl, gzil)
+}
+
+func Deploy(sdk *AvelySDK, log *Log) *Protocol {
+	log.Debug("start to deploy")
+
+	zilliqa := DeployZilliqaStaking(sdk, log)
 
 	// deploy stzil
-	StZIL, err := NewStZILContract(sdk, sdk.Cfg.Owner, Zimpl.Addr)
+	StZIL, err := NewStZILContract(sdk, sdk.Cfg.Owner, zilliqa.Zimpl.Addr)
 	if err != nil {
 		log.Fatal("deploy StZIL error = " + err.Error())
 	}
 	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -49,13 +71,13 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, StZIL.Addr, Zproxy.Addr)
+	Holder, err := NewHolderContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder)
+	return NewProtocol(zilliqa.Zproxy, zilliqa.Zimpl, StZIL, buffers, Holder)
 }
 
 // Restore ZProxy + Zimpl and deploy new versions of StZIL, Buffer and Holder
