@@ -39,7 +39,7 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p.SyncBufferAndHolder()
 
 	p.Unpause()
-	p.SetupZProxy()
+	SetupZilliqaStaking(p)
 	p.SetupShortcuts(log)
 
 	return p

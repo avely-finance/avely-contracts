@@ -4,7 +4,6 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	avelycore "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
@@ -169,40 +168,6 @@ func (p *Protocol) Unpause() {
 	check(p.StZIL.UnpauseOut())
 	check(p.StZIL.UnpauseZrc2())
 	p.StZIL.Wallet = prevWallet
-}
-
-func (p *Protocol) SetupZProxy() {
-	sdk := p.StZIL.Sdk
-	args := []core.ContractValue{
-		{
-			"newImplementation",
-			"ByStr20",
-			p.Zimpl.Addr,
-		},
-	}
-	check(p.Zproxy.Call("UpgradeTo", args, "0"))
-	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
-		check(p.Zproxy.AddSSN(ssnaddr, ssnaddr))
-	}
-	check(p.Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateStakingParameters(ToZil(sdk.Cfg.SsnInitialDelegateZil), ToZil(10))) //minstake (ssn not active if less), mindelegstake
-	check(p.Zproxy.Unpause())
-
-	//we need our SSN to be active, so delegating some stake to each
-	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
-		check(p.Zproxy.DelegateStake(ssnaddr, ToZil(sdk.Cfg.SsnInitialDelegateZil)))
-	}
-
-	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	check(p.Holder.DelegateStake(sdk.Cfg.StZilSsnAddress, ToZil(sdk.Cfg.HolderInitialDelegateZil)))
-
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-
-	// SSN will become active on next cycle
-	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
-	sdk.IncreaseBlocknum(10)
-	check(p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 }
 
 func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
