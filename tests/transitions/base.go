@@ -28,6 +28,7 @@ func NewTransitions() *Transitions {
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	log := GetLog()
 	p := Deploy(sdk, log)
+	SetupZilliqaStaking(p)
 
 	//add buffers to protocol, we need 3
 	buffer2, _ := p.DeployBuffer()
@@ -37,9 +38,9 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p.AddSSNs()
 	p.ChangeTreasuryAddress()
 	p.SyncBufferAndHolder()
-
 	p.Unpause()
-	SetupZilliqaStaking(p)
+	p.InitHolder()
+
 	p.SetupShortcuts(log)
 
 	return p
