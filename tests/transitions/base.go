@@ -74,7 +74,7 @@ func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *Mul
 }
 
 func (tr *Transitions) NextCycle(p *contracts.Protocol) {
-	sdk.IncreaseBlocknum(10)
+	sdk.IncreaseBlocknum(2)
 	prevWallet := p.Zproxy.Contract.Wallet
 
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)

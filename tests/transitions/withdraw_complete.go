@@ -42,7 +42,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertError(tx, "ClaimWithdrawalNoUnbonded")
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
-	sdk.IncreaseBlocknum(int32(delta))
+	sdk.IncreaseBlocknum(int(delta))
 
 	tr.NextCycle(p)
 	tools := tr.NextCycleOffchain(p)
@@ -246,7 +246,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertError(tx, "ClaimWithdrawalNoUnbonded")
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
-	sdk.IncreaseBlocknum(int32(delta))
+	sdk.IncreaseBlocknum(int(delta))
 
 	tr.NextCycle(p)
 	tools := tr.NextCycleOffchain(p)
