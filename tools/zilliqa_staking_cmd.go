@@ -5,6 +5,7 @@ import (
 
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/tests/transitions"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,6 +35,10 @@ func main() {
 	case "setup":
 		p := RestoreFromState(sdk, log)
 		SetupZilliqaStaking(p)
+	case "next_cycle":
+		p := RestoreFromState(sdk, log)
+		tr := transitions.InitTransitions(sdk)
+		tr.NextCycle(p)
 	default:
 		log.Fatal("Unknown command")
 	}
