@@ -31,6 +31,9 @@ func main() {
 			"proxy":   zilliqa.Zproxy.Addr,
 			"ssnlist": zilliqa.Zimpl.Addr,
 		}).Info("zilliqa staking deployed")
+	case "setup":
+		p := RestoreFromState(sdk, log)
+		SetupZilliqaStaking(p)
 	default:
 		log.Fatal("Unknown command")
 	}
