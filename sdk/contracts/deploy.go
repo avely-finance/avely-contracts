@@ -1,12 +1,7 @@
 package contracts
 
 import (
-	"log"
-	"runtime"
-	"strconv"
-
 	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
@@ -61,29 +56,28 @@ func SetupZilliqaStaking(p *Protocol) {
 			p.Zimpl.Addr,
 		},
 	}
-	check(p.Zproxy.Call("UpgradeTo", args, "0"))
+	CheckTx(p.Zproxy.Call("UpgradeTo", args, "0"))
 	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
-		check(p.Zproxy.AddSSN(ssnaddr, ssnaddr))
+		CheckTx(p.Zproxy.AddSSN(ssnaddr, ssnaddr))
 	}
-	check(p.Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateStakingParameters(ToZil(sdk.Cfg.SsnInitialDelegateZil), ToZil(10))) //minstake (ssn not active if less), mindelegstake
-	check(p.Zproxy.Unpause())
+	CheckTx(p.Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
+	CheckTx(p.Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
+	CheckTx(p.Zproxy.UpdateStakingParameters(ToZil(sdk.Cfg.SsnInitialDelegateZil), ToZil(10))) //minstake (ssn not active if less), mindelegstake
+	CheckTx(p.Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake to each
 	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
-		check(p.Zproxy.DelegateStake(ssnaddr, ToZil(sdk.Cfg.SsnInitialDelegateZil)))
+		CheckTx(p.Zproxy.DelegateStake(ssnaddr, ToZil(sdk.Cfg.SsnInitialDelegateZil)))
 	}
 
 	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	check(p.Holder.DelegateStake(sdk.Cfg.StZilSsnAddress, ToZil(sdk.Cfg.HolderInitialDelegateZil)))
-
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	CheckTx(p.Holder.DelegateStake(sdk.Cfg.StZilSsnAddress, ToZil(sdk.Cfg.HolderInitialDelegateZil)))
 
 	// SSN will become active on next cycle
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	sdk.IncreaseBlocknum(10)
-	check(p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
+	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	CheckTx(p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 }
 
 func Deploy(sdk *AvelySDK, log *Log) *Protocol {
@@ -203,13 +197,4 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("Restore holder succeed, address = " + Holder.Addr)
 
 	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder)
-}
-
-//TODO: move this function to core/sdk.go, rename to CheckTx
-func check(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
-	if err != nil {
-		_, file, no, _ := runtime.Caller(1)
-		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
-	}
-	return tx, err
 }

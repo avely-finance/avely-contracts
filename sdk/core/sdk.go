@@ -1,13 +1,16 @@
 package core
 
 import (
+	"log"
 	"net/url"
+	"runtime"
 	"strconv"
 
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/keytools"
 	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/ybbus/jsonrpc"
@@ -104,5 +107,13 @@ func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []co
 	}
 	tx, err := c.Call(transition, args, params, priority)
 
+	return tx, err
+}
+
+func CheckTx(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+	if err != nil {
+		_, file, no, _ := runtime.Caller(1)
+		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
+	}
 	return tx, err
 }
