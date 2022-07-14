@@ -47,34 +47,41 @@ func DeployZilliqaStaking(sdk *AvelySDK, log *Log) *ZilliqaStaking {
 	return NewZilliqaStaking(zproxy, zimpl, gzil)
 }
 
-func SetupZilliqaStaking(p *Protocol) {
-	sdk := p.StZIL.Sdk
+func SetupZilliqaStaking(sdk *AvelySDK, log *Log) {
+
+	//Restore Zproxy
+	Zproxy, err := RestoreZproxy(sdk, sdk.Cfg.ZproxyAddr)
+	if err != nil {
+		log.Fatal("Restore Zproxy error = " + err.Error())
+	}
+	log.Debug("Restore Zproxy succeed, address = " + Zproxy.Addr)
+
 	args := []core.ContractValue{
 		{
 			"newImplementation",
 			"ByStr20",
-			p.Zimpl.Addr,
+			sdk.Cfg.ZimplAddr,
 		},
 	}
-	CheckTx(p.Zproxy.Call("UpgradeTo", args, "0"))
+	CheckTx(Zproxy.Call("UpgradeTo", args, "0"))
 	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
-		CheckTx(p.Zproxy.AddSSN(ssnaddr, ssnaddr))
+		CheckTx(Zproxy.AddSSN(ssnaddr, ssnaddr))
 	}
-	CheckTx(p.Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
-	CheckTx(p.Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
-	CheckTx(p.Zproxy.UpdateStakingParameters(ToZil(sdk.Cfg.SsnInitialDelegateZil), ToZil(10))) //minstake (ssn not active if less), mindelegstake
-	CheckTx(p.Zproxy.Unpause())
+	CheckTx(Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
+	CheckTx(Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
+	CheckTx(Zproxy.UpdateStakingParameters(ToZil(sdk.Cfg.SsnInitialDelegateZil), ToZil(10))) //minstake (ssn not active if less), mindelegstake
+	CheckTx(Zproxy.Unpause())
 
 	//we need our SSN to be active, so delegating some stake to each
 	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
-		CheckTx(p.Zproxy.DelegateStake(ssnaddr, ToZil(sdk.Cfg.SsnInitialDelegateZil)))
+		CheckTx(Zproxy.DelegateStake(ssnaddr, ToZil(sdk.Cfg.SsnInitialDelegateZil)))
 	}
 
 	// SSN will become active on next cycle
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	sdk.IncreaseBlocknum(10)
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-	CheckTx(p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
+	Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	CheckTx(Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 }
 
 func Deploy(sdk *AvelySDK, log *Log) *Protocol {
