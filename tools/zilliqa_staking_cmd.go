@@ -33,8 +33,7 @@ func main() {
 			"ssnlist": zilliqa.Zimpl.Addr,
 		}).Info("zilliqa staking deployed")
 	case "setup":
-		p := RestoreFromState(sdk, log)
-		SetupZilliqaStaking(p)
+		SetupZilliqaStaking(sdk, log)
 	case "next_cycle":
 		p := RestoreFromState(sdk, log)
 		tr := transitions.InitTransitions(sdk)

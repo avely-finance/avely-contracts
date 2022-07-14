@@ -28,7 +28,9 @@ func NewTransitions() *Transitions {
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	log := GetLog()
 	p := Deploy(sdk, log)
-	SetupZilliqaStaking(p)
+	sdk.Cfg.ZproxyAddr = p.Zproxy.Addr
+	sdk.Cfg.ZimplAddr = p.Zimpl.Addr
+	SetupZilliqaStaking(sdk, log)
 
 	//add buffers to protocol, we need 3
 	buffer2, _ := p.DeployBuffer()
