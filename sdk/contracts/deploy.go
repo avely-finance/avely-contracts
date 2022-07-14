@@ -79,7 +79,7 @@ func SetupZilliqaStaking(sdk *AvelySDK, log *Log) {
 
 	// SSN will become active on next cycle
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
-	sdk.IncreaseBlocknum(10)
+	sdk.IncreaseBlocknum(2)
 	Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
 	CheckTx(Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 }
