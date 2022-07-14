@@ -46,6 +46,31 @@ https://viewblock.io/zilliqa/address/zil17c2804u3j3uwttl7r77e5rxuam5lmepdf2l87e?
 $ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_multisig --owners=0xf61477D7919478e5AfFe1fbd9A0CDCeee9fdE42d,0xE4fB901A2FA3C87ee681cEbb7D7256557f00b015 --signcount=2
 ```
 
+### Deploy Zilliqa staking contracts
+
+In order to be able to switch reward cycles, verifier role should be under control. Don't forget set VerifierKey in .env.testnet
+
+1. Deploy contracts
+
+```sh
+$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=deploy
+```
+
+2. Put addresses of gzil, proxy and ssnlist contracts into `config.json`
+
+3. Setup deployed contracts
+
+```sh
+$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=setup
+```
+
+4. You can increment reward cycle now
+
+```sh
+$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=next_cycle
+```
+
+
 ### Deploy Protocol
 
 1. Deploy basic contracts
@@ -56,7 +81,7 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=deploy
 
 2. Copy-paste new contract addresses to the `config.json`
 
-3. Deploy second buffer
+3. Deploy second, third buffers (run 2 times)
 
 ```sh
 $ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_buffer
@@ -68,7 +93,13 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=deploy_buffer
 $ go run tools/admin_cmd.go --chain=testnet --cmd=sync_buffers
 ```
 
-5. Unpause in/out/zrc2/all stZIL. (note: see multisig docs if owner is Multisig Wallet)
+5. Change SSNs
+
+```sh
+$ go run tools/admin_cmd.go --chain=testnet --cmd=change_ssns
+```
+
+6. Unpause in/out/zrc2/all stZIL. (note: see multisig docs if owner is Multisig Wallet)
 
 ```sh
 $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_in
@@ -86,17 +117,12 @@ $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_zrc2
 $ go run tools/admin_cmd.go --chain=testnet --cmd=unpause_all
 ```
 
-6. Init Holder with min stake
+7. Init Holder with min stake
 
 ```sh
 $ go run tools/admin_cmd.go --chain=testnet --cmd=init_holder
 ```
 
-7. Change SSNs
-
-```sh
-$ go run tools/admin_cmd.go --chain=testnet --cmd=change_ssns
-```
 
 ### Utils, information
 

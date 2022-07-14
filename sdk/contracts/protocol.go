@@ -4,9 +4,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
-	avelycore "github.com/avely-finance/avely-contracts/sdk/core"
+	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
@@ -129,8 +128,8 @@ func (p *Protocol) SyncBufferAndHolder() {
 	}
 
 	prevWallet := p.StZIL.Wallet
-	check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
-	check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).SetHolderAddress(p.Holder.Addr))
+	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).SetHolderAddress(p.Holder.Addr))
 	p.StZIL.Wallet = prevWallet
 }
 
@@ -142,7 +141,7 @@ func (p *Protocol) SyncBuffers() {
 	}
 
 	prevWallet := p.StZIL.Wallet
-	check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
 	p.StZIL.Wallet = prevWallet
 }
 
@@ -151,61 +150,27 @@ func (p *Protocol) AddSSNs() {
 
 	//reverse elements to keep order of stzil.ssn_addresses elements same as in config
 	for i := len(p.StZIL.Sdk.Cfg.SsnAddrs) - 1; i >= 0; i-- {
-		check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).AddSSN(p.StZIL.Sdk.Cfg.SsnAddrs[i]))
+		CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).AddSSN(p.StZIL.Sdk.Cfg.SsnAddrs[i]))
 	}
 	p.StZIL.Wallet = prevWallet
 }
 
 func (p *Protocol) ChangeTreasuryAddress() {
 	prevWallet := p.StZIL.Wallet
-	check(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.StZIL.Sdk.Cfg.TreasuryAddr))
+	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.StZIL.Sdk.Cfg.TreasuryAddr))
 	p.StZIL.Wallet = prevWallet
 }
 
 func (p *Protocol) Unpause() {
 	prevWallet := p.StZIL.Wallet
 	p.StZIL.UpdateWallet(p.StZIL.Sdk.Cfg.OwnerKey)
-	check(p.StZIL.UnpauseIn())
-	check(p.StZIL.UnpauseOut())
-	check(p.StZIL.UnpauseZrc2())
+	CheckTx(p.StZIL.UnpauseIn())
+	CheckTx(p.StZIL.UnpauseOut())
+	CheckTx(p.StZIL.UnpauseZrc2())
 	p.StZIL.Wallet = prevWallet
 }
 
-func (p *Protocol) SetupZProxy() {
-	sdk := p.StZIL.Sdk
-	args := []core.ContractValue{
-		{
-			"newImplementation",
-			"ByStr20",
-			p.Zimpl.Addr,
-		},
-	}
-	check(p.Zproxy.Call("UpgradeTo", args, "0"))
-	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
-		check(p.Zproxy.AddSSN(ssnaddr, ssnaddr))
-	}
-	check(p.Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
-	check(p.Zproxy.UpdateStakingParameters(ToZil(sdk.Cfg.SsnInitialDelegateZil), ToZil(10))) //minstake (ssn not active if less), mindelegstake
-	check(p.Zproxy.Unpause())
-
-	//we need our SSN to be active, so delegating some stake to each
-	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
-		check(p.Zproxy.DelegateStake(ssnaddr, ToZil(sdk.Cfg.SsnInitialDelegateZil)))
-	}
-
-	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	check(p.Holder.DelegateStake(sdk.Cfg.StZilSsnAddress, ToZil(sdk.Cfg.HolderInitialDelegateZil)))
-
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
-
-	// SSN will become active on next cycle
-	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
-	sdk.IncreaseBlocknum(10)
-	check(p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
-}
-
-func (p *Protocol) SetupShortcuts(log *avelycore.Log) {
+func (p *Protocol) SetupShortcuts(log *Log) {
 	log.AddShortcut("Zproxy", p.Zproxy.Addr)
 	log.AddShortcut("Zimpl", p.Zimpl.Addr)
 	log.AddShortcut("StZIL", p.StZIL.Addr)

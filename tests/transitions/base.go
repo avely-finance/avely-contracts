@@ -28,6 +28,9 @@ func NewTransitions() *Transitions {
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	log := GetLog()
 	p := Deploy(sdk, log)
+	sdk.Cfg.ZproxyAddr = p.Zproxy.Addr
+	sdk.Cfg.ZimplAddr = p.Zimpl.Addr
+	SetupZilliqaStaking(sdk, log)
 
 	//add buffers to protocol, we need 3
 	buffer2, _ := p.DeployBuffer()
@@ -37,9 +40,11 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p.AddSSNs()
 	p.ChangeTreasuryAddress()
 	p.SyncBufferAndHolder()
-
 	p.Unpause()
-	p.SetupZProxy()
+	p.InitHolder()
+
+	tr.NextCycle(p)
+
 	p.SetupShortcuts(log)
 
 	return p
@@ -73,7 +78,7 @@ func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *Mul
 }
 
 func (tr *Transitions) NextCycle(p *contracts.Protocol) {
-	sdk.IncreaseBlocknum(10)
+	sdk.IncreaseBlocknum(2)
 	prevWallet := p.Zproxy.Contract.Wallet
 
 	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
