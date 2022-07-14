@@ -64,7 +64,8 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 	ssnForInput := p.GetSsnAddressForInput()
 	AssertSuccess(p.StZIL.DelegateStake(ToZil(10)))
-	activeBufferAddr := calcActiveBufferAddr(2, new_buffers) // start from second cycle
+	lrc := p.Zimpl.GetLastRewardCycle()
+	activeBufferAddr := calcActiveBufferAddr(lrc, new_buffers)
 
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, ssnForInput, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
 

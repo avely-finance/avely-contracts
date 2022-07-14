@@ -1,13 +1,17 @@
 package core
 
 import (
+	"log"
 	"net/url"
+	"runtime"
 	"strconv"
+	"time"
 
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/keytools"
 	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
+	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	transaction2 "github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/ybbus/jsonrpc"
@@ -39,20 +43,41 @@ func (sdk *AvelySDK) GetWsURL() url.URL {
 
 // IncreaseBlocknum can be called if isolated server works in "manual" mode:
 // https://github.com/Zilliqa/zilliqa-isolated-server#running-the-isolated-server-with-manual-block-increase
-func (sdk *AvelySDK) IncreaseBlocknum(delta int32) (*jsonrpc.RPCResponse, error) {
-	rpcClient := jsonrpc.NewClient(sdk.Cfg.Api.HttpUrl)
-	params := []interface{}{delta}
-	tx, err := rpcClient.Call("IncreaseBlocknum", params)
+func (sdk *AvelySDK) IncreaseBlocknum(delta int) error {
+	//local blockchain
+	if sdk.Cfg.ChainId == 222 {
+		rpcClient := jsonrpc.NewClient(sdk.Cfg.Api.HttpUrl)
+		params := []interface{}{delta}
+		tx, err := rpcClient.Call("IncreaseBlocknum", params)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return err
+		} else if tx.Error != nil {
+			return tx.Error
+		}
+
+		return nil
 	}
 
-	if tx.Error != nil {
-		return nil, tx.Error
+	//for testnet/mainnet will wait required delta blocks
+	blockHeight := sdk.GetBlockHeight()
+	for {
+		time.Sleep(5 * time.Second)
+		cur := sdk.GetBlockHeight()
+		log.Printf("sdk.IncreaseBlocknum(): start block=%d, delta=%d, cur. block=%d", blockHeight, delta, cur)
+		if cur >= blockHeight+delta {
+			return nil
+		}
 	}
+}
 
-	return tx, nil
+//this function will only works for testnet or mainnet
+//it will not work for local server in manual mode
+func (sdk *AvelySDK) GetBlockHeight() int {
+	provider := sdk.InitProvider()
+	result, _ := provider.GetNumTxBlocks()
+	blockHeight, _ := strconv.Atoi(result)
+	return blockHeight
 }
 
 func (sdk *AvelySDK) GetBalance(addr string) string {
@@ -104,5 +129,13 @@ func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []co
 	}
 	tx, err := c.Call(transition, args, params, priority)
 
+	return tx, err
+}
+
+func CheckTx(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+	if err != nil {
+		_, file, no, _ := runtime.Caller(1)
+		log.Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
+	}
 	return tx, err
 }
