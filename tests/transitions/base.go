@@ -41,6 +41,8 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p.Unpause()
 	p.InitHolder()
 
+	tr.NextCycle(p)
+
 	p.SetupShortcuts(log)
 
 	return p
