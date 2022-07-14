@@ -70,9 +70,6 @@ func SetupZilliqaStaking(p *Protocol) {
 		CheckTx(p.Zproxy.DelegateStake(ssnaddr, ToZil(sdk.Cfg.SsnInitialDelegateZil)))
 	}
 
-	//we need to delegate something from Holder, in order to make Zimpl know holder's address
-	CheckTx(p.Holder.DelegateStake(sdk.Cfg.StZilSsnAddress, ToZil(sdk.Cfg.HolderInitialDelegateZil)))
-
 	// SSN will become active on next cycle
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	sdk.IncreaseBlocknum(10)
