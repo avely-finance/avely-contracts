@@ -14,20 +14,14 @@ import (
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
-type ZilSwap struct {
+type ASwap struct {
 	Contract
 }
 
-const blockShift = 3
+const ASwapBlockShift = 3
 
-func (z *ZilSwap) Initialize() (*transaction.Transaction, error) {
-	args := []core.ContractValue{}
-
-	return z.Call("Initialize", args, "0")
-}
-
-func (z *ZilSwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNum int) (*transaction.Transaction, error) {
-	deadline := blockNum + blockShift
+func (a *ASwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNum int) (*transaction.Transaction, error) {
+	deadline := blockNum + ASwapBlockShift
 
 	args := []core.ContractValue{
 		{
@@ -48,11 +42,11 @@ func (z *ZilSwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNu
 			Value: strconv.Itoa(deadline),
 		},
 	}
-	return z.Call("AddLiquidity", args, zilAmount)
+	return a.Call("AddLiquidity", args, zilAmount)
 }
 
-func (z *ZilSwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, recipientAddress string, blockNum int) (*transaction.Transaction, error) {
-	deadline := blockNum + blockShift
+func (a *ASwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, recipientAddress string, blockNum int) (*transaction.Transaction, error) {
+	deadline := blockNum + ASwapBlockShift
 
 	args := []core.ContractValue{
 		{
@@ -73,11 +67,11 @@ func (z *ZilSwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, re
 			Value: recipientAddress,
 		},
 	}
-	return z.Call("SwapExactZILForTokens", args, zilAmount)
+	return a.Call("SwapExactZILForTokens", args, zilAmount)
 }
 
-func NewZilSwap(sdk *AvelySDK) (*ZilSwap, error) {
-	contract := buildZilSwapContract(sdk)
+func NewASwap(sdk *AvelySDK, init_owner string, operators []string) (*ASwap, error) {
+	contract := buildASwapContract(sdk, init_owner, operators)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -95,20 +89,20 @@ func NewZilSwap(sdk *AvelySDK) (*ZilSwap, error) {
 			Wallet:   contract.Signer,
 		}
 
-		return &ZilSwap{Contract: contract}, nil
+		return &ASwap{Contract: contract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 		return nil, errors.New("deploy failed:" + string(data))
 	}
 }
 
-func RestoreZilSwap(sdk *AvelySDK, contractAddress string) (*ZilSwap, error) {
-	contract := buildZilSwapContract(sdk)
+func RestoreASwap(sdk *AvelySDK, contractAddress string, init_owner string, operators []string) (*ASwap, error) {
+	contract := buildASwapContract(sdk, init_owner, operators)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
 	if err != nil {
-		return nil, errors.New("Config has invalid ZilSwap address")
+		return nil, errors.New("Config has invalid ASwap address")
 	}
 
 	sdkContract := Contract{
@@ -119,11 +113,11 @@ func RestoreZilSwap(sdk *AvelySDK, contractAddress string) (*ZilSwap, error) {
 		Wallet:   contract.Signer,
 	}
 
-	return &ZilSwap{Contract: sdkContract}, nil
+	return &ASwap{Contract: sdkContract}, nil
 }
 
-func buildZilSwapContract(sdk *AvelySDK) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/zilswap/zilswap.scilla")
+func buildASwapContract(sdk *AvelySDK, init_owner string, operators []string) contract2.Contract {
+	code, _ := ioutil.ReadFile("contracts/aswap.scilla")
 	key := sdk.Cfg.AdminKey
 
 	init := []core.ContractValue{
@@ -132,13 +126,13 @@ func buildZilSwapContract(sdk *AvelySDK) contract2.Contract {
 			Type:  "Uint32",
 			Value: "0",
 		}, {
-			VName: "initial_owner",
+			VName: "init_owner",
 			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
+			Value: init_owner,
 		}, {
-			VName: "initial_fee",
-			Type:  "Uint256",
-			Value: "30",
+			VName: "operators",
+			Type:  "List ByStr20",
+			Value: operators,
 		},
 	}
 

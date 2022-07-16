@@ -51,8 +51,8 @@ let nil_addr_list = Nil {ByStr20}
 let zil_denom = Zil
 let zrc_denom = Token
 
-let one_msg =
-  fun (msg : Message) =>
+let one_msg = 
+  fun (msg : Message) => 
     let nil_msg = Nil {Message} in
       Cons {Message} msg nil_msg
 
@@ -336,7 +336,7 @@ end
 procedure CheckMinLP(lp: Uint128)
   min <- min_lp;
   is_min_lp = uint128_ge min lp;
-
+  
   match is_min_lp with
   | True =>
     err = CodeMinLP;
@@ -815,7 +815,7 @@ transition RemoveLiquidity(
       end;
 
       some_existing_balance <- balances[_sender][token_address];
-
+      
       existing_balance = option_uint128 zero128 some_existing_balance;
 
       new_balance = builtin sub existing_balance contribution_amount;
