@@ -1,6 +1,8 @@
 package transitions
 
 import (
+	"strconv"
+
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
@@ -9,12 +11,32 @@ import (
 const txId = 0 // the test transition should be the first
 
 func (tr *Transitions) MultisigWalletTests() {
+	multisigAswapActions(tr)
 	multisigGoldenFlowTest(tr)
 	multisigUpdateOwner(tr)
 	multisigChangeAdminTest(tr)
 	multisigChangeBuffersTest(tr)
 	multisigAddRemoveSSNTest(tr)
 	multisigManagableActions(tr)
+}
+
+func multisigAswapActions(tr *Transitions) {
+	owner := sdk.Cfg.Key1
+
+	//deploy multisig
+	owners := []string{sdk.Cfg.Addr1}
+	signCount := 1
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	//deploy aswap, set owner to multisig contract
+	init_owner := multisig.Addr
+	operators := []string{core.ZeroAddr}
+	aswap := tr.DeployASwap(init_owner, operators)
+
+	tx, _ := AssertMultisigSuccess(multisig.WithUser(owner).SubmitTogglePauseTransaction(aswap.Addr))
+	txId, _ := strconv.Atoi(tx.ID)
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
+	AssertEqual(Field(aswap, "pause"), "1")
 }
 
 func multisigGoldenFlowTest(tr *Transitions) {
