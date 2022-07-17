@@ -39,6 +39,13 @@ func (tr *Transitions) ASwap() {
 
 	//set treasury fee
 	new_fee := "12345"
+	AssertEqual(Field(aswap, "treasury_fee"), "500")
 	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryFee(new_fee))
 	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
+
+	//set liquidity fee
+	new_fee = "23456"
+	AssertEqual(Field(aswap, "liquidity_fee"), "10000")
+	AssertSuccess(aswap.WithUser(init_owner_key).SetLiquidityFee(new_fee))
+	AssertEqual(Field(aswap, "liquidity_fee"), new_fee)
 }

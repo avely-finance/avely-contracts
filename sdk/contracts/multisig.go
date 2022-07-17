@@ -333,6 +333,23 @@ func (s *MultisigWallet) SubmitSetTreasuryFeeTransaction(aswapAddr string, newFe
 	return s.Call("SubmitSetTreasuryFeeTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitSetLiquidityFeeTransaction(aswapAddr string, newFee string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: aswapAddr,
+		},
+		{
+			VName: "new_fee",
+			Type:  "Uint256",
+			Value: newFee,
+		},
+	}
+
+	return s.Call("SubmitSetLiquidityFeeTransaction", args, "0")
+}
+
 func (s *MultisigWallet) SubmitTogglePauseTransaction(aswapAddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
