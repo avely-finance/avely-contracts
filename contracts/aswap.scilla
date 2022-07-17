@@ -265,8 +265,8 @@ field balances: Map ByStr20 (Map ByStr20 Uint128) = Emp ByStr20 (Map ByStr20 Uin
 (* fee for liquidity providers *)
 field liquidity_fee: Uint256 = fee_demon
 
-(* fee for protocol *)
-field protocol_fee: Uint128 = Uint128 500
+(* fee for treasury *)
+field treasury_fee: Uint128 = Uint128 500
 
 (* Min number zil for LP providers. *)
 field min_lp: Uint128 = Uint128 100000000000000
@@ -513,7 +513,7 @@ procedure SwapOptions(
   recipient_address: ByStr20
 )
   lp_fee <- liquidity_fee;
-  proto_fee <- protocol_fee;
+  trea_fee <- treasury_fee;
   sup_token <- rewards_pool;
 
   match direction with
@@ -524,8 +524,8 @@ procedure SwapOptions(
     | Some pool =>
       match pool with
       | Pair zil_reserve token_reserve =>
-        proto_rewards = get_amount_with_fee input_token output_token sup_token proto_fee exact_amount;
-        exact_amount_after_fee = builtin sub exact_amount proto_rewards;
+        treasury_rewards = get_amount_with_fee input_token output_token sup_token trea_fee exact_amount;
+        exact_amount_after_fee = builtin sub exact_amount treasury_rewards;
         calculated_amount_u256 = output_for
           exact_amount_after_fee
           zil_reserve
@@ -536,7 +536,7 @@ procedure SwapOptions(
         CheckLimits calculated_amount_u128 limit_amount;
         accept;
 
-        RecieveRewards proto_rewards recipient_address sup_token;
+        RecieveRewards treasury_rewards recipient_address sup_token;
         MakeSwap
           output_token
           exact_amount_after_fee
@@ -577,10 +577,10 @@ procedure SwapOptions(
             zil_reserve
             token_reserve;
 
-        proto_rewards = get_amount_with_fee input_token output_token sup_token proto_fee output_zil_amount_u128;
-        output_zil_amount_u128 = builtin sub output_zil_amount_u128 proto_rewards;
+        treasury_rewards = get_amount_with_fee input_token output_token sup_token trea_fee output_zil_amount_u128;
+        output_zil_amount_u128 = builtin sub output_zil_amount_u128 treasury_rewards;
 
-        RecieveRewards proto_rewards recipient_address sup_token;
+        RecieveRewards treasury_rewards recipient_address sup_token;
         EmitSwap
           input_token
           output_token
@@ -617,8 +617,8 @@ procedure SwapOptions(
               input_zil_reserve
               half_lp_fee;
             output_zil_amount_u128 = fall_u256 zil_intermediate_amount_u256;
-            proto_rewards = get_amount_with_fee input_token output_token sup_token proto_fee output_zil_amount_u128;
-            zil_intermediate_amount = builtin sub output_zil_amount_u128 proto_rewards;
+            treasury_rewards = get_amount_with_fee input_token output_token sup_token trea_fee output_zil_amount_u128;
+            zil_intermediate_amount = builtin sub output_zil_amount_u128 treasury_rewards;
 
             (* Swap ZIL to output tokens. *)
             calculated_amount_u256 = output_for
@@ -630,7 +630,7 @@ procedure SwapOptions(
 
             CheckLimits output_tokens_amount_u128 limit_amount;
 
-            RecieveRewards proto_rewards recipient_address sup_token;
+            RecieveRewards treasury_rewards recipient_address sup_token;
             MakeSwap
               input_token
               exact_amount
@@ -949,9 +949,9 @@ transition SetLiquidityFee(new_fee: Uint256)
   liquidity_fee := new_fee
 end
 
-transition SetProtocolFee(new_fee: Uint128)
+transition SetTreasuryFee(new_fee: Uint128)
   OwnerOnly;
-  protocol_fee := new_fee
+  treasury_fee := new_fee
 end
 
 transition SetRewardsPool(new_addr: ByStr20)
