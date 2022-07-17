@@ -8,7 +8,7 @@ scilla_version 0
 
 import IntUtils BoolUtils ListUtils
 
-library DragonDexLib
+library ASwapLib
 
 type Error =
   | CodeNotContractOwner
@@ -240,7 +240,7 @@ let half_fee =
       builtin sub fee_demon diff
 
 
-contract DragonDexContract
+contract ASwapContract
 (
   init_owner: ByStr20,
   operators: List ByStr20
