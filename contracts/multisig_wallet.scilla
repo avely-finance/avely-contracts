@@ -106,8 +106,10 @@ type CalleeTransaction =
 (*****************************************************)
 (*               ASwap Transition                    *)
 (*****************************************************)
-(* SetTreasuryFee(new_fee: Uint128)                *)
+(* SetTreasuryFee(new_fee: Uint128)                  *)
 | SetTreasuryFee of Uint128
+(* SetLiquidityFee(new_fee: Uint256)                 *)
+| SetLiquidityFee of Uint256
 (* TogglePause()                                     *)
 | TogglePause
 
@@ -241,6 +243,12 @@ let custom_transaction_msg_as_list =
       | SetTreasuryFee new_fee =>
         {_recipient: calleeContract ;
          _tag: "SetTreasuryFee";
+         _amount: Uint128 0;
+         new_fee : new_fee }
+      (* SetLiquidityFee(new_fee: Uint128) *)
+      | SetLiquidityFee new_fee =>
+        {_recipient: calleeContract ;
+         _tag: "SetLiquidityFee";
          _amount: Uint128 0;
          new_fee : new_fee }
       (* TogglePause() *)
@@ -548,6 +556,12 @@ end
 (* Submit a new SetTreasuryFee transaction for future signoff *)
 transition SubmitSetTreasuryFeeTransaction (calleeContract : ByStr20, new_fee : Uint128)
   transaction = SetTreasuryFee new_fee;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SetLiquidityFee transaction for future signoff *)
+transition SubmitSetLiquidityFeeTransaction (calleeContract : ByStr20, new_fee : Uint256)
+  transaction = SetLiquidityFee new_fee;
   SubmitCustomTransaction calleeContract transaction
 end
 
