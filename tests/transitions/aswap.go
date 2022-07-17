@@ -36,4 +36,9 @@ func (tr *Transitions) ASwap() {
 	//toggle pause
 	AssertSuccess(aswap.WithUser(init_owner_key).TogglePause())
 	AssertEqual(Field(aswap, "pause"), "1")
+
+	//set treasury fee
+	new_fee := "12345"
+	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryFee(new_fee))
+	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
 }

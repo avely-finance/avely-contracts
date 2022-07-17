@@ -106,8 +106,11 @@ type CalleeTransaction =
 (*****************************************************)
 (*               ASwap Transition                    *)
 (*****************************************************)
+(* SetTreasuryFee(new_fee: Uint128)                *)
+| SetTreasuryFee of Uint128
 (* TogglePause()                                     *)
 | TogglePause
+
 
 (* Type of (outstanding) transactions *)
 type Transaction =
@@ -233,6 +236,13 @@ let custom_transaction_msg_as_list =
       | UnPauseZrc2 =>
         {_recipient: calleeContract ; _tag: "UnPauseZrc2"; _amount: Uint128 0 }
 
+
+      (* SetTreasuryFee(new_fee: Uint128) *)
+      | SetTreasuryFee new_fee =>
+        {_recipient: calleeContract ;
+         _tag: "SetTreasuryFee";
+         _amount: Uint128 0;
+         new_fee : new_fee }
       (* TogglePause() *)
       | TogglePause =>
         {_recipient: calleeContract ; _tag: "TogglePause"; _amount: Uint128 0 }
@@ -531,6 +541,13 @@ end
 (* Submit a new SubmitUnPauseZrc2Transaction transaction for future signoff *)
 transition SubmitUnPauseZrc2Transaction (calleeContract : ByStr20)
   transaction = UnPauseZrc2;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+
+(* Submit a new SetTreasuryFee transaction for future signoff *)
+transition SubmitSetTreasuryFeeTransaction (calleeContract : ByStr20, new_fee : Uint128)
+  transaction = SetTreasuryFee new_fee;
   SubmitCustomTransaction calleeContract transaction
 end
 

@@ -1,8 +1,6 @@
 package transitions
 
 import (
-	"strconv"
-
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
@@ -21,6 +19,7 @@ func (tr *Transitions) MultisigWalletTests() {
 }
 
 func multisigAswapActions(tr *Transitions) {
+	txIdLocal := 0
 	owner := sdk.Cfg.Key1
 
 	//deploy multisig
@@ -33,10 +32,18 @@ func multisigAswapActions(tr *Transitions) {
 	operators := []string{core.ZeroAddr}
 	aswap := tr.DeployASwap(init_owner, operators)
 
-	tx, _ := AssertMultisigSuccess(multisig.WithUser(owner).SubmitTogglePauseTransaction(aswap.Addr))
-	txId, _ := strconv.Atoi(tx.ID)
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txId))
+	//test ASwap.TogglePause
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitTogglePauseTransaction(aswap.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "pause"), "1")
+
+	//test ASwap.SetTreasuryFee
+	txIdLocal++
+	new_fee := "12345"
+	AssertEqual(Field(aswap, "treasury_fee"), "500")
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
 }
 
 func multisigGoldenFlowTest(tr *Transitions) {
