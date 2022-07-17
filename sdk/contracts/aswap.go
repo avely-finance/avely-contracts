@@ -43,6 +43,17 @@ func (a *ASwap) SetTreasuryFee(new_fee string) (*transaction.Transaction, error)
 	return a.Call("SetTreasuryFee", args, new_fee)
 }
 
+func (a *ASwap) SetLiquidityFee(new_fee string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "new_fee",
+			Type:  "Uint256",
+			Value: new_fee,
+		},
+	}
+	return a.Call("SetLiquidityFee", args, new_fee)
+}
+
 func (a *ASwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNum int) (*transaction.Transaction, error) {
 	deadline := blockNum + ASwapBlockShift
 
