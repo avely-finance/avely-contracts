@@ -316,6 +316,18 @@ func (s *MultisigWallet) SubmitUnPauseZrc2Transaction(stZilAddr string) (*transa
 	return s.Call("SubmitUnPauseZrc2Transaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitTogglePauseTransaction(aswapAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: aswapAddr,
+		},
+	}
+
+	return s.Call("SubmitTogglePauseTransaction", args, "0")
+}
+
 func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
 	// TOOD: add requiredSignaturesCount validation
 	contract := buildMultisigContract(sdk, owners, strconv.Itoa(requiredSignaturesCount))

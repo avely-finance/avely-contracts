@@ -12,9 +12,10 @@ func (tr *Transitions) ASwap() {
 
 	p := tr.DeployAndUpgrade()
 
-	init_owner := sdk.Cfg.Admin
+	init_owner_addr := sdk.Cfg.Admin
+	init_owner_key := sdk.Cfg.AdminKey
 	operators := []string{sdk.Cfg.Admin}
-	aswap := tr.DeployASwap(init_owner, operators)
+	aswap := tr.DeployASwap(init_owner_addr, operators)
 	stzil := p.StZIL
 
 	liquidityAmount := ToQA(1000)
@@ -31,4 +32,8 @@ func (tr *Transitions) ASwap() {
 	recipient := sdk.Cfg.Addr1
 	AssertSuccess(aswap.SwapExactZILForTokens(stzil.Contract.Addr, ToQA(10), "1", recipient, blockNum))
 	AssertEqual(stzil.BalanceOf(recipient).String(), ASwapOutput)
+
+	//toggle pause
+	AssertSuccess(aswap.WithUser(init_owner_key).TogglePause())
+	AssertEqual(Field(aswap, "pause"), "1")
 }

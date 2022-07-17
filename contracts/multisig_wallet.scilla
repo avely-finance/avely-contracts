@@ -65,10 +65,9 @@ let one = Uint32 1
 let transaction_inc = one
 
 (* Type of transactions. *)
-(* All calls are made to the stZIL contract *)
 type CalleeTransaction =
 (*****************************************************)
-(*               Proxy Transition                    *)
+(*               Stzil Transition                    *)
 (*****************************************************)
 (* ChangeAdmin(new_admin: ByStr20)                   *)
 | ChangeAdmin of ByStr20
@@ -104,6 +103,11 @@ type CalleeTransaction =
 | UnPauseOut
 (* UnPauseZrc2()                                     *)
 | UnPauseZrc2
+(*****************************************************)
+(*               ASwap Transition                    *)
+(*****************************************************)
+(* TogglePause()                                     *)
+| TogglePause
 
 (* Type of (outstanding) transactions *)
 type Transaction =
@@ -228,6 +232,12 @@ let custom_transaction_msg_as_list =
       (* UnPauseZrc2() *)
       | UnPauseZrc2 =>
         {_recipient: calleeContract ; _tag: "UnPauseZrc2"; _amount: Uint128 0 }
+
+      (* TogglePause() *)
+      | TogglePause =>
+        {_recipient: calleeContract ; _tag: "TogglePause"; _amount: Uint128 0 }
+
+
       end
     in
     one_msg msg
@@ -521,6 +531,12 @@ end
 (* Submit a new SubmitUnPauseZrc2Transaction transaction for future signoff *)
 transition SubmitUnPauseZrc2Transaction (calleeContract : ByStr20)
   transaction = UnPauseZrc2;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitTogglePauseTransaction transaction for future signoff *)
+transition SubmitTogglePauseTransaction (calleeContract : ByStr20)
+  transaction = TogglePause;
   SubmitCustomTransaction calleeContract transaction
 end
 

@@ -93,7 +93,7 @@ func AssertError(txn *transaction.Transaction, code string) {
 	AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
 }
 
-func AssertMultisigSuccess(txn *transaction.Transaction, err error) {
+func AssertMultisigSuccess(txn *transaction.Transaction, err error) (*transaction.Transaction, error) {
 	receipt, _ := json.Marshal(txn.Receipt)
 	txnData := string(receipt)
 
@@ -103,6 +103,7 @@ func AssertMultisigSuccess(txn *transaction.Transaction, err error) {
 		GetLog().Error(err)
 		GetLog().Fatal("ASSERT_MULTISIG_SUCCESS FAILED, " + file + ":" + strconv.Itoa(no))
 	}
+	return txn, err
 }
 
 func AssertMultisigError(txn *transaction.Transaction, code string) {
