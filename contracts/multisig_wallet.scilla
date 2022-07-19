@@ -108,6 +108,8 @@ type CalleeTransaction =
 (*****************************************************)
 (* SetTreasuryFee(new_fee: Uint128)                  *)
 | SetTreasuryFee of Uint128
+(* SetTreasuryAddress(new_address: ByStr20           *)
+| SetTreasuryAddress of ByStr20
 (* SetLiquidityFee(new_fee: Uint256)                 *)
 | SetLiquidityFee of Uint256
 (* TogglePause()                                     *)
@@ -245,6 +247,12 @@ let custom_transaction_msg_as_list =
          _tag: "SetTreasuryFee";
          _amount: Uint128 0;
          new_fee : new_fee }
+      (* SetTreasuryAddress(new_address: ByStr20) *)
+      | SetTreasuryAddress new_address =>
+        {_recipient: calleeContract ;
+         _tag: "SetTreasuryAddress";
+         _amount: Uint128 0;
+         new_address : new_address }
       (* SetLiquidityFee(new_fee: Uint128) *)
       | SetLiquidityFee new_fee =>
         {_recipient: calleeContract ;
@@ -556,6 +564,12 @@ end
 (* Submit a new SetTreasuryFee transaction for future signoff *)
 transition SubmitSetTreasuryFeeTransaction (calleeContract : ByStr20, new_fee : Uint128)
   transaction = SetTreasuryFee new_fee;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SetTreasuryAddress transaction for future signoff *)
+transition SubmitSetTreasuryAddressTransaction (calleeContract : ByStr20, new_address : ByStr20)
+  transaction = SetTreasuryAddress new_address;
   SubmitCustomTransaction calleeContract transaction
 end
 
