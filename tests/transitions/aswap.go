@@ -13,8 +13,7 @@ func (tr *Transitions) ASwap() {
 
 	init_owner_addr := sdk.Cfg.Admin
 	init_owner_key := sdk.Cfg.AdminKey
-	operators := []string{sdk.Cfg.Admin}
-	aswap := tr.DeployASwap(init_owner_addr, operators)
+	aswap := tr.DeployASwap(init_owner_addr)
 	stzil := p.StZIL
 
 	liquidityAmount := ToQA(1000)
@@ -63,4 +62,24 @@ func (tr *Transitions) ASwap() {
 		ParamsMap{},
 	})
 	AssertEqual(stzil.BalanceOf(recipient).String(), expectedSwapOutput)
+
+	//change owner
+	new_owner_addr := sdk.Cfg.Addr3
+	new_owner_key := sdk.Cfg.Key3
+
+	//CodeStagingOwnerMissing
+	tx, _ = aswap.WithUser(new_owner_key).ClaimOwner()
+	AssertASwapError(tx, -11)
+
+	AssertEqual(Field(aswap, "owner"), init_owner_addr)
+	AssertSuccess(aswap.WithUser(init_owner_key).ChangeOwner(new_owner_addr))
+	AssertEqual(Field(aswap, "staging_owner"), new_owner_addr)
+
+	//CodeStagingOwnerMissing
+	tx, _ = aswap.WithUser(init_owner_key).ClaimOwner()
+	AssertASwapError(tx, -12)
+
+	//claim owner
+	AssertSuccess(aswap.WithUser(new_owner_key).ClaimOwner())
+	AssertEqual(Field(aswap, "owner"), new_owner_addr)
 }
