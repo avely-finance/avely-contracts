@@ -205,18 +205,9 @@ let is_empty_pool =
       orb x_empty y_empty
 
 let get_amount_with_fee =
-  fun (input: ByStr20) =>
-  fun (output: ByStr20) =>
-  fun (sup: ByStr20) =>
   fun (fee: Uint128) =>
   fun (amount: Uint128) =>
-    let is_same_input = builtin eq input sup in
-    let is_same_output = builtin eq output sup in
-    let is_same = orb is_same_input is_same_output in
-      match is_same with
-      | True => zero128
-      | False => builtin div amount fee
-      end
+    builtin div amount fee
 
 let block_lte =
   fun (deadline_block: BNum) =>
@@ -268,11 +259,11 @@ field liquidity_fee: Uint256 = fee_demon
 (* fee for treasury *)
 field treasury_fee: Uint128 = Uint128 500
 
+(* address of treasury *)
+field treasury_address: ByStr20 = zero_address
+
 (* Min number zil for LP providers. *)
 field min_lp: Uint128 = Uint128 100000000000000
-
-(* A Pool for swap rewards. *)
-field rewards_pool: ByStr20 = zero_address
 
 (* Pause for contract *)
 field pause: Uint32 = zero32
@@ -468,37 +459,14 @@ procedure CallTransfer(to: ByStr20, amount: Uint128, recipient: ByStr20)
   send msgs
 end
 
-procedure RecieveRewards(exact_amount: Uint128, recipient_address: ByStr20, output_token: ByStr20)
-  some_pool <- pools[output_token];
-  is_zero = builtin eq exact_amount zero128;
-
+procedure ReceiveRewards(exact_amount: Uint128)
+  trea_addr <- treasury_address;
+  is_zero = builtin eq trea_addr zero_address;
   match is_zero with
   | True =>
+    (* don't send to nowhere *)
   | False =>
-    match some_pool with
-    | Some pool =>
-      match pool with
-      | Pair zil_reserve token_reserve =>
-        calculated_amount_u256 = output_for
-          exact_amount
-          zil_reserve
-          token_reserve
-          fee_demon;
-        calculated_amount_u128 = fall_u256 calculated_amount_u256;
-
-        MakeSwap
-          output_token
-          exact_amount
-          calculated_amount_u128
-          zil_denom
-          zil_reserve
-          token_reserve;
-        CallTransfer recipient_address calculated_amount_u128 output_token
-      end
-    | None =>
-      err = CodePoolMissing;
-      ThrowError err
-    end
+    AddFunds trea_addr exact_amount
   end
 end
 (* MSG CALL *)
@@ -514,7 +482,6 @@ procedure SwapOptions(
 )
   lp_fee <- liquidity_fee;
   trea_fee <- treasury_fee;
-  sup_token <- rewards_pool;
 
   match direction with
   | ZilToToken =>
@@ -524,7 +491,7 @@ procedure SwapOptions(
     | Some pool =>
       match pool with
       | Pair zil_reserve token_reserve =>
-        treasury_rewards = get_amount_with_fee input_token output_token sup_token trea_fee exact_amount;
+        treasury_rewards = get_amount_with_fee trea_fee exact_amount;
         exact_amount_after_fee = builtin sub exact_amount treasury_rewards;
         calculated_amount_u256 = output_for
           exact_amount_after_fee
@@ -536,7 +503,7 @@ procedure SwapOptions(
         CheckLimits calculated_amount_u128 limit_amount;
         accept;
 
-        RecieveRewards treasury_rewards recipient_address sup_token;
+        ReceiveRewards treasury_rewards;
         MakeSwap
           output_token
           exact_amount_after_fee
@@ -577,10 +544,10 @@ procedure SwapOptions(
             zil_reserve
             token_reserve;
 
-        treasury_rewards = get_amount_with_fee input_token output_token sup_token trea_fee output_zil_amount_u128;
+        treasury_rewards = get_amount_with_fee trea_fee output_zil_amount_u128;
         output_zil_amount_u128 = builtin sub output_zil_amount_u128 treasury_rewards;
 
-        RecieveRewards treasury_rewards recipient_address sup_token;
+        ReceiveRewards treasury_rewards;
         EmitSwap
           input_token
           output_token
@@ -617,7 +584,7 @@ procedure SwapOptions(
               input_zil_reserve
               half_lp_fee;
             output_zil_amount_u128 = fall_u256 zil_intermediate_amount_u256;
-            treasury_rewards = get_amount_with_fee input_token output_token sup_token trea_fee output_zil_amount_u128;
+            treasury_rewards = get_amount_with_fee trea_fee output_zil_amount_u128;
             zil_intermediate_amount = builtin sub output_zil_amount_u128 treasury_rewards;
 
             (* Swap ZIL to output tokens. *)
@@ -630,7 +597,7 @@ procedure SwapOptions(
 
             CheckLimits output_tokens_amount_u128 limit_amount;
 
-            RecieveRewards treasury_rewards recipient_address sup_token;
+            ReceiveRewards treasury_rewards;
             MakeSwap
               input_token
               exact_amount
@@ -954,24 +921,9 @@ transition SetTreasuryFee(new_fee: Uint128)
   treasury_fee := new_fee
 end
 
-transition SetRewardsPool(new_addr: ByStr20)
+transition SetTreasuryAddress(new_address: ByStr20)
   OwnerOnly;
-  some_pool <- pools[new_addr];
-
-  is_zero = builtin eq new_addr zero_address;
-
-  match is_zero with
-  | True =>
-    rewards_pool := zero_address
-  | False =>
-    match some_pool with
-    | Some pool =>
-      rewards_pool := new_addr
-    | None =>
-      err = CodePoolMissing;
-      ThrowError err
-    end
-  end
+  treasury_address := new_address
 end
 
 transition TogglePause()
