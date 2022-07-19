@@ -75,7 +75,7 @@ func (tr *Transitions) ASwap() {
 	AssertSuccess(aswap.WithUser(init_owner_key).ChangeOwner(new_owner_addr))
 	AssertEqual(Field(aswap, "staging_owner"), new_owner_addr)
 
-	//CodeStagingOwnerMissing
+	//CodeStagingOwnerInvalid
 	tx, _ = aswap.WithUser(init_owner_key).ClaimOwner()
 	AssertASwapError(tx, -12)
 
