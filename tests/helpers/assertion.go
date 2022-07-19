@@ -129,6 +129,19 @@ func AssertZimplError(txn *transaction.Transaction, code int32) {
 	AssertContainRaw("ASSERT_SSNLIST_ERROR", txError, errorMessage, file, no)
 }
 
+func AssertASwapError(txn *transaction.Transaction, code int32) {
+	_, file, no, _ := runtime.Caller(1)
+
+	if txn.Receipt.Success && txn.Status == core.Confirmed {
+		GetLog().Error("ASSERT_ASWAP_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
+	}
+
+	receipt, _ := json.Marshal(txn.Receipt)
+	txError := string(receipt)
+	errorMessage := fmt.Sprintf("(code : (Int32 %d))", code)
+	AssertContainRaw("ASSERT_ASWAP_ERROR", txError, errorMessage, file, no)
+}
+
 func AssertContainRaw(code, s1, s2, file string, no int) {
 	if !strings.Contains(s1, s2) {
 		GetLog().Error(code + " FAILED, " + file + ":" + strconv.Itoa(no))

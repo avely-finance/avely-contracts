@@ -67,14 +67,10 @@ let transaction_inc = one
 (* Type of transactions. *)
 type CalleeTransaction =
 (*****************************************************)
-(*               Stzil Transition                    *)
+(*               StZIL Transitions                   *)
 (*****************************************************)
 (* ChangeAdmin(new_admin: ByStr20)                   *)
 | ChangeAdmin of ByStr20
-(* ChangeOwner(new_owner: ByStr20)                   *)
-| ChangeOwner of ByStr20
-(* ClaimOwner()                                      *)
-| ClaimOwner
 (* ChangeTreasuryAddress(address: ByStr20)           *)
 | ChangeTreasuryAddress of ByStr20
 (* ChangeZimplAddress(address: ByStr20)              *)
@@ -104,7 +100,7 @@ type CalleeTransaction =
 (* UnPauseZrc2()                                     *)
 | UnPauseZrc2
 (*****************************************************)
-(*               ASwap Transition                    *)
+(*               ASwap Transitions                   *)
 (*****************************************************)
 (* SetTreasuryFee(new_fee: Uint128)                  *)
 | SetTreasuryFee of Uint128
@@ -114,6 +110,13 @@ type CalleeTransaction =
 | SetLiquidityFee of Uint256
 (* TogglePause()                                     *)
 | TogglePause
+(*****************************************************)
+(*               StZIL/ASwap Transitions             *)
+(*****************************************************)
+(* ChangeOwner(new_owner: ByStr20)                   *)
+| ChangeOwner of ByStr20
+(* ClaimOwner()                                      *)
+| ClaimOwner
 
 
 (* Type of (outstanding) transactions *)
@@ -156,23 +159,15 @@ let custom_transaction_msg_as_list =
   fun (calleeTransaction : CalleeTransaction) =>
     let msg =
       match calleeTransaction with
+
+      (* StZIL transitions *)
+
       (* ChangeAdmin(new_admin: ByStr20) *)
       | ChangeAdmin new_admin =>
         {_recipient: calleeContract ;
          _tag: "ChangeAdmin";
          _amount: Uint128 0;
          new_admin : new_admin}
-      (* ChangeOwner(new_owner: ByStr20) *)
-      | ChangeOwner new_owner =>
-        {_recipient: calleeContract ;
-         _tag: "ChangeOwner";
-         _amount: Uint128 0;
-         new_owner : new_owner}
-      (* ClaimOwner() *)
-      | ClaimOwner =>
-        {_recipient: calleeContract ;
-         _tag: "ClaimOwner";
-         _amount: Uint128 0}
       (* ChangeTreasuryAddress(address: ByStr20) *)
       | ChangeTreasuryAddress address =>
         {_recipient: calleeContract ;
@@ -240,6 +235,7 @@ let custom_transaction_msg_as_list =
       | UnPauseZrc2 =>
         {_recipient: calleeContract ; _tag: "UnPauseZrc2"; _amount: Uint128 0 }
 
+      (* ASwap transitions *)
 
       (* SetTreasuryFee(new_fee: Uint128) *)
       | SetTreasuryFee new_fee =>
@@ -262,6 +258,20 @@ let custom_transaction_msg_as_list =
       (* TogglePause() *)
       | TogglePause =>
         {_recipient: calleeContract ; _tag: "TogglePause"; _amount: Uint128 0 }
+
+      (* StZIL/ASwap transitions *)
+
+      (* ChangeOwner(new_owner: ByStr20) *)
+      | ChangeOwner new_owner =>
+        {_recipient: calleeContract ;
+         _tag: "ChangeOwner";
+         _amount: Uint128 0;
+         new_owner : new_owner}
+      (* ClaimOwner() *)
+      | ClaimOwner =>
+        {_recipient: calleeContract ;
+         _tag: "ClaimOwner";
+         _amount: Uint128 0}
 
 
       end
@@ -455,24 +465,12 @@ procedure SubmitCustomTransaction (calleeContract : ByStr20, calleeTransaction :
 end
 
 (***************************************************)
-(*               Proxy Transition                  *)
+(*               StZIL Transitions                 *)
 (***************************************************)
 
 (* Submit a new ChangeAdmin transaction for future signoff *)
 transition SubmitChangeAdminTransaction (calleeContract : ByStr20, new_admin : ByStr20)
   transaction = ChangeAdmin new_admin;
-  SubmitCustomTransaction calleeContract transaction
-end
-
-(* Submit a new ChangeOwner transaction for future signoff *)
-transition SubmitChangeOwnerTransaction (calleeContract : ByStr20, new_owner : ByStr20)
-  transaction = ChangeOwner new_owner;
-  SubmitCustomTransaction calleeContract transaction
-end
-
-(* Submit a new ClaimOwner transaction for future signoff *)
-transition SubmitClaimOwnerTransaction (calleeContract : ByStr20)
-  transaction = ClaimOwner;
   SubmitCustomTransaction calleeContract transaction
 end
 
@@ -561,6 +559,10 @@ transition SubmitUnPauseZrc2Transaction (calleeContract : ByStr20)
 end
 
 
+(***************************************************)
+(*               ASwap Transitions                 *)
+(***************************************************)
+
 (* Submit a new SetTreasuryFee transaction for future signoff *)
 transition SubmitSetTreasuryFeeTransaction (calleeContract : ByStr20, new_fee : Uint128)
   transaction = SetTreasuryFee new_fee;
@@ -584,6 +586,23 @@ transition SubmitTogglePauseTransaction (calleeContract : ByStr20)
   transaction = TogglePause;
   SubmitCustomTransaction calleeContract transaction
 end
+
+(***************************************************)
+(*               StZIL/ASwap Transitions           *)
+(***************************************************)
+
+(* Submit a new ChangeOwner transaction for future signoff *)
+transition SubmitChangeOwnerTransaction (calleeContract : ByStr20, new_owner : ByStr20)
+  transaction = ChangeOwner new_owner;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new ClaimOwner transaction for future signoff *)
+transition SubmitClaimOwnerTransaction (calleeContract : ByStr20)
+  transaction = ClaimOwner;
+  SubmitCustomTransaction calleeContract transaction
+end
+
 
 (* Sign off on an existing transaction *)
 transition SignTransaction (transactionId : Uint32)

@@ -67,9 +67,9 @@ func (tr *Transitions) DeployZilSwap() *ZilSwap {
 	return zilSwap
 }
 
-func (tr *Transitions) DeployASwap(init_owner string, operators []string) *ASwap {
+func (tr *Transitions) DeployASwap(init_owner string) *ASwap {
 	log := GetLog()
-	aswap, err := NewASwap(sdk, init_owner, operators)
+	aswap, err := NewASwap(sdk, init_owner)
 	if err != nil {
 		log.Fatal("deploy ASwap error = " + err.Error())
 	}
