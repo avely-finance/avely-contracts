@@ -32,6 +32,17 @@ func (a *ASwap) TogglePause() (*transaction.Transaction, error) {
 	return a.Call("TogglePause", args, "0")
 }
 
+func (a *ASwap) SetTreasuryAddress(new_address string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "new_address",
+			Type:  "ByStr20",
+			Value: new_address,
+		},
+	}
+	return a.Call("SetTreasuryAddress", args, "0")
+}
+
 func (a *ASwap) SetTreasuryFee(new_fee string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -40,7 +51,7 @@ func (a *ASwap) SetTreasuryFee(new_fee string) (*transaction.Transaction, error)
 			Value: new_fee,
 		},
 	}
-	return a.Call("SetTreasuryFee", args, new_fee)
+	return a.Call("SetTreasuryFee", args, "0")
 }
 
 func (a *ASwap) SetLiquidityFee(new_fee string) (*transaction.Transaction, error) {
@@ -51,7 +62,7 @@ func (a *ASwap) SetLiquidityFee(new_fee string) (*transaction.Transaction, error
 			Value: new_fee,
 		},
 	}
-	return a.Call("SetLiquidityFee", args, new_fee)
+	return a.Call("SetLiquidityFee", args, "0")
 }
 
 func (a *ASwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNum int) (*transaction.Transaction, error) {
