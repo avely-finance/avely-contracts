@@ -31,7 +31,7 @@ func (tr *Transitions) ASwap() {
 	AssertEqual(Field(aswap, "pause"), "1")
 
 	//set treasury fee
-	new_fee := "12345"
+	new_fee := "750"
 	AssertEqual(Field(aswap, "treasury_fee"), "500")
 	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryFee(new_fee))
 	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
@@ -50,8 +50,8 @@ func (tr *Transitions) ASwap() {
 
 	//do swap
 	recipient := sdk.Cfg.Addr1
-	expectedTreasuryRewards := "8100445524"
-	expectedSwapOutput := "9900196014898"
+	expectedTreasuryRewards := "133333333333"
+	expectedSwapOutput := "9887919312466"
 	AssertSuccess(aswap.WithUser(init_owner_key).TogglePause())
 	tx, _ := AssertSuccess(aswap.SwapExactZILForTokens(stzil.Contract.Addr, ToQA(100), "90", recipient, blockNum))
 	AssertTransition(tx, Transition{
