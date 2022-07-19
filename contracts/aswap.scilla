@@ -21,7 +21,8 @@ type Error =
   | CodeMinLP
   | CodeSameAddress
   | CodePausedContract
-  | CodeNotOperator
+  | CodeStagingOwnerMissing
+  | CodeStagingOwnerInvalid
 
 type Denom =
   | Zil
@@ -109,10 +110,15 @@ let make_error =
         _exception: "Contract was stoped";
         code: Int32 -10
       }
-    | CodeNotOperator =>
+    | CodeStagingOwnerMissing =>
       {
-        _exception: "Sender is not operator";
+        _exception: "Staging owner doesn't exist";
         code: Int32 -11
+      }
+    | CodeStagingOwnerInvalid =>
+      {
+        _exception: "Staging owner validation failed";
+        code: Int32 -12
       }
     end
 
@@ -216,14 +222,6 @@ let block_lte =
     let eq = builtin eq current_block deadline_block in
       orb lt eq
 
-let check_operators =
-  fun (operators: List ByStr20) =>
-  fun (sender: ByStr20) =>
-    let f =
-      fun (a: ByStr20) =>
-        builtin eq a sender in
-    addr_exists f operators
-
 let half_fee =
   fun (fee: Uint256) =>
     let diff = builtin sub fee_demon fee in
@@ -233,16 +231,14 @@ let half_fee =
 
 contract ASwapContract
 (
-  init_owner: ByStr20,
-  operators: List ByStr20
+  init_owner: ByStr20
 )
-
 
 (* Contract owner *)
 field owner: ByStr20 = init_owner
 
-(* operators approvals for onwer transfer *)
-field transfer_owner_approvals: Map ByStr20 (List ByStr20) = Emp ByStr20 (List ByStr20)
+(* Staging contract owner *)
+field staging_owner : Option ByStr20 = None {ByStr20}
 
 (* POOL token -> Pair{zil_reserve, token_reserve} *)
 field pools: Map ByStr20 (Pair Uint128 Uint128) = Emp ByStr20 (Pair Uint128 Uint128)
@@ -380,16 +376,6 @@ procedure OwnerOnly()
   | True =>
   | False =>
     err = CodeNotContractOwner;
-    ThrowError err
-  end
-end
-
-procedure OperatorOnly()
-  is_operator = check_operators operators _sender;
-  match is_operator with
-  | True =>
-  | False =>
-    err = CodeNotOperator;
     ThrowError err
   end
 end
@@ -939,31 +925,34 @@ transition TogglePause()
     pause := zero32
   end
 end
-(* admin interactions *)
 
-(* operator interactions *)
-transition TransferOwnership(new_owner: ByStr20)
-  OperatorOnly;
-  some_power <- transfer_owner_approvals[new_owner];
+transition ChangeOwner(new_owner: ByStr20)
+  OwnerOnly;
+  var_staging_owner = Some {ByStr20} new_owner;
+  staging_owner := var_staging_owner;
+  var_owner <- owner
+end
 
-  power_list = option_list_addr nil_addr_list some_power;
-  new_power_list = Cons {ByStr20} _sender power_list;
-  number_of_operators = list_length_addr operators;
-  number_of_power = list_length_addr new_power_list;
-
-  need_power = builtin div number_of_operators two32;
-  is_approved = builtin lt need_power number_of_power;
-
-  match is_approved with
-  | True =>
-    owner := new_owner;
-    delete transfer_owner_approvals[new_owner]
-  | False =>
-    transfer_owner_approvals[new_owner] := new_power_list
+transition ClaimOwner()
+  staging_owner_o <- staging_owner;
+  match staging_owner_o with
+  | Some staging_owner =>
+    is_stagingowner = builtin eq staging_owner _sender;
+    match is_stagingowner with
+    | True =>
+      owner := _sender;
+      tmp_staging_owner = None {ByStr20};
+      staging_owner := tmp_staging_owner
+    | False =>
+      err = CodeStagingOwnerInvalid;
+      ThrowError err
+    end
+  | None =>
+    err = CodeStagingOwnerMissing;
+    ThrowError err
   end
 end
-(* operator interactions *)
-
+(* admin interactions *)
 
 (* callbacks *)
 transition RecipientAcceptTransfer(sender: ByStr20, recipient: ByStr20, amount: Uint128)

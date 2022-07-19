@@ -20,17 +20,16 @@ func (tr *Transitions) MultisigWalletTests() {
 
 func multisigAswapActions(tr *Transitions) {
 	txIdLocal := 0
-	owner := sdk.Cfg.Key1
 
 	//deploy multisig
+	owner := sdk.Cfg.Key1
 	owners := []string{sdk.Cfg.Addr1}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
 	//deploy aswap, set owner to multisig contract
 	init_owner := multisig.Addr
-	operators := []string{core.ZeroAddr}
-	aswap := tr.DeployASwap(init_owner, operators)
+	aswap := tr.DeployASwap(init_owner)
 
 	//test ASwap.TogglePause
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitTogglePauseTransaction(aswap.Addr))
@@ -60,6 +59,25 @@ func multisigAswapActions(tr *Transitions) {
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "treasury_address"), new_address)
+
+	//deploy other multisig contract
+	newSignCount := 1
+	newOwner := sdk.Cfg.Key2
+	newOwners := []string{sdk.Cfg.Addr2}
+	newMultisig := tr.DeployMultisigWallet(newOwners, newSignCount)
+
+	//test ASwap.ChangeOwner()
+	txIdLocal++
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(aswap.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "staging_owner"), newMultisig.Addr)
+
+	//test ASwap.ClaimOwner()
+	//first transaction id is 0 for newly deployed multisig contract
+	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(aswap.Addr))
+	AssertMultisigSuccess(newMultisig.WithUser(newOwner).ExecuteTransaction(0))
+	AssertEqual(Field(aswap, "owner"), newMultisig.Addr)
+
 }
 
 func multisigGoldenFlowTest(tr *Transitions) {

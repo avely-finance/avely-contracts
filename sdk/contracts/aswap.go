@@ -115,8 +115,24 @@ func (a *ASwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, reci
 	return a.Call("SwapExactZILForTokens", args, zilAmount)
 }
 
-func NewASwap(sdk *AvelySDK, init_owner string, operators []string) (*ASwap, error) {
-	contract := buildASwapContract(sdk, init_owner, operators)
+func (a *ASwap) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_owner",
+			"ByStr20",
+			new_addr,
+		},
+	}
+	return a.Call("ChangeOwner", args, "0")
+}
+
+func (a *ASwap) ClaimOwner() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return a.Call("ClaimOwner", args, "0")
+}
+
+func NewASwap(sdk *AvelySDK, init_owner string) (*ASwap, error) {
+	contract := buildASwapContract(sdk, init_owner)
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -141,8 +157,8 @@ func NewASwap(sdk *AvelySDK, init_owner string, operators []string) (*ASwap, err
 	}
 }
 
-func RestoreASwap(sdk *AvelySDK, contractAddress string, init_owner string, operators []string) (*ASwap, error) {
-	contract := buildASwapContract(sdk, init_owner, operators)
+func RestoreASwap(sdk *AvelySDK, contractAddress string, init_owner string) (*ASwap, error) {
+	contract := buildASwapContract(sdk, init_owner)
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -161,7 +177,7 @@ func RestoreASwap(sdk *AvelySDK, contractAddress string, init_owner string, oper
 	return &ASwap{Contract: sdkContract}, nil
 }
 
-func buildASwapContract(sdk *AvelySDK, init_owner string, operators []string) contract2.Contract {
+func buildASwapContract(sdk *AvelySDK, init_owner string) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aswap.scilla")
 	key := sdk.Cfg.AdminKey
 
@@ -174,10 +190,6 @@ func buildASwapContract(sdk *AvelySDK, init_owner string, operators []string) co
 			VName: "init_owner",
 			Type:  "ByStr20",
 			Value: init_owner,
-		}, {
-			VName: "operators",
-			Type:  "List ByStr20",
-			Value: operators,
 		},
 	}
 
