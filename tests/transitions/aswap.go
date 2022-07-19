@@ -5,7 +5,7 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
-const ASwapOutput = "9900990099009"
+const ASwapOutput = "9881383789778"
 
 func (tr *Transitions) ASwap() {
 	Start("Swap via ASwap")
