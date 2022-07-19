@@ -52,6 +52,14 @@ func multisigAswapActions(tr *Transitions) {
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetLiquidityFeeTransaction(aswap.Addr, new_fee))
 	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "liquidity_fee"), new_fee)
+
+	//test ASwap.SetTreasuryAddress()
+	txIdLocal++
+	new_address := sdk.Cfg.Addr3
+	AssertEqual(Field(aswap, "treasury_address"), core.ZeroAddr)
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "treasury_address"), new_address)
 }
 
 func multisigGoldenFlowTest(tr *Transitions) {
