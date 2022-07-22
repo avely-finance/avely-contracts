@@ -14,7 +14,6 @@
 
 <!-- /MarkdownTOC -->
 
-
 ## Configuration
 
 Create and configure `.env.testnet` and `.env.mainnet`. Ask the team for private keys for shared admin and user accounts.
