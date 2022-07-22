@@ -160,12 +160,12 @@ func (cli *ASwapCli) printState() {
 func (cli *ASwapCli) togglePause() {
 	var tx *transaction.Transaction
 	var err error
-	if nil == cli.multisig {
-		//address setup
-		tx, err = cli.aswap.TogglePause()
-	} else {
+	if cli.isMultisig {
 		//multisig setup
 		tx, err = cli.multisig.SubmitTogglePauseTransaction(cli.aswap.Addr)
+	} else {
+		//address setup
+		tx, err = cli.aswap.TogglePause()
 	}
 
 	if err != nil {
@@ -177,12 +177,12 @@ func (cli *ASwapCli) togglePause() {
 func (cli *ASwapCli) setLiquidityFee() {
 	var tx *transaction.Transaction
 	var err error
-	if nil == cli.multisig {
-		//address setup
-		tx, err = cli.aswap.SetLiquidityFee(cli.value1)
-	} else {
+	if cli.isMultisig {
 		//multisig setup
 		tx, err = cli.multisig.SubmitSetLiquidityFeeTransaction(cli.aswap.Addr, cli.value1)
+	} else {
+		//address setup
+		tx, err = cli.aswap.SetLiquidityFee(cli.value1)
 	}
 
 	if err != nil {
@@ -194,12 +194,12 @@ func (cli *ASwapCli) setLiquidityFee() {
 func (cli *ASwapCli) setTreasuryFee() {
 	var tx *transaction.Transaction
 	var err error
-	if nil == cli.multisig {
-		//address setup
-		tx, err = cli.aswap.SetTreasuryFee(cli.value1)
-	} else {
+	if cli.isMultisig {
 		//multisig setup
 		tx, err = cli.multisig.SubmitSetTreasuryFeeTransaction(cli.aswap.Addr, cli.value1)
+	} else {
+		//address setup
+		tx, err = cli.aswap.SetTreasuryFee(cli.value1)
 	}
 
 	if err != nil {
@@ -211,12 +211,12 @@ func (cli *ASwapCli) setTreasuryFee() {
 func (cli *ASwapCli) setTreasuryAddress() {
 	var tx *transaction.Transaction
 	var err error
-	if nil == cli.multisig {
-		//address setup
-		tx, err = cli.aswap.SetTreasuryAddress(cli.value1)
-	} else {
+	if cli.isMultisig {
 		//multisig setup
 		tx, err = cli.multisig.SubmitSetTreasuryAddressTransaction(cli.aswap.Addr, cli.value1)
+	} else {
+		//address setup
+		tx, err = cli.aswap.SetTreasuryAddress(cli.value1)
 	}
 
 	if err != nil {
@@ -228,12 +228,12 @@ func (cli *ASwapCli) setTreasuryAddress() {
 func (cli *ASwapCli) changeOwner() {
 	var tx *transaction.Transaction
 	var err error
-	if nil == cli.multisig {
-		//address setup
-		tx, err = cli.aswap.ChangeOwner(cli.value1)
-	} else {
+	if cli.isMultisig {
 		//multisig setup
 		tx, err = cli.multisig.SubmitChangeOwnerTransaction(cli.aswap.Addr, cli.value1)
+	} else {
+		//address setup
+		tx, err = cli.aswap.ChangeOwner(cli.value1)
 	}
 
 	if err != nil {
