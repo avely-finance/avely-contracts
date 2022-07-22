@@ -5,12 +5,13 @@
 - [Configuration](#configuration)
 - [Roles](#roles)
 - [Admin commands](#admin-commands)
-    - [Deploy](#deploy)
-    - [Print state](#print-state)
-    - [Set Liquidity Fee](#set-liquidity-fee)
-    - [Set Treasury Fee](#set-treasury-fee)
-    - [Set Treasury Address](#set-treasury-address)
-    - [Change Owner](#change-owner)
+     - [Deploy](#deploy)
+     - [Print state](#print-state)
+     - [Set Liquidity Fee](#set-liquidity-fee)
+     - [Set Treasury Fee](#set-treasury-fee)
+     - [Set Treasury Address](#set-treasury-address)
+     - [Change Owner](#change-owner)
+     - [Claim Owner](#claim-owner)
 
 <!-- /MarkdownTOC -->
 
@@ -94,4 +95,12 @@ Command will call transition `ChangeOwner(new_owner: ByStr20)`
 
 ```sh
 $ go run tools/aswap_admin_cmd.go --chain=testnet --cmd=change_owner --value=0x0000000000000000000000000000000000000000
+```
+
+### Claim Owner
+
+Command will call transition `ClaimOwner()`
+
+```sh
+$ go run tools/aswap_admin_cmd.go --chain=testnet --cmd=claim_owner
 ```

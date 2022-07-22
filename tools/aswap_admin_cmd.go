@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"strings"
 
 	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
@@ -65,6 +66,8 @@ func main() {
 		cli.setTreasuryAddress()
 	case "change_owner":
 		cli.changeOwner()
+	case "claim_owner":
+		cli.claimOwner()
 	default:
 		log.WithFields(logrus.Fields{
 			"chain":   cli.chain,
@@ -253,20 +256,67 @@ func (cli *ASwapCli) changeOwner() {
 	cli.logInfo("ChangeOwner succeed", tx)
 }
 
+func (cli *ASwapCli) claimOwner() {
+	var tx *transaction.Transaction
+	var err error
+	if cli.isMultisig {
+		//multisig setup
+		tx, err = cli.multisig.SubmitClaimOwnerTransaction(cli.aswap.Addr)
+	} else {
+		//address setup
+		tx, err = cli.aswap.ClaimOwner()
+	}
+
+	if err != nil {
+		cli.logFatal("ClaimOwner error", err)
+	}
+	cli.logInfo("ClaimOwner succeed", tx)
+}
+
 func (cli *ASwapCli) addressIsContract(address string) bool {
 	provider := provider2.NewProvider(cli.config.Api.HttpUrl)
-	_, err := provider.GetSmartContractState(address[2:])
+	result, err := provider.GetSmartContractState(address[2:])
 	if err != nil {
+		//may be network error
 		log.WithError(err).WithFields(logrus.Fields{
 			"chain":         cli.chain,
 			"command":       cli.cmd,
-			"aswap_addr":    cli.aswap.Addr,
 			"owner":         cli.config.Owner,
 			"param_address": address,
+		}).Fatal("Can't get owner address/contract type")
+	} else if result.Error == nil {
+		//there is no error, state fetched
+		log.WithFields(logrus.Fields{
+			"chain":   cli.chain,
+			"command": cli.cmd,
+			"owner":   cli.config.Owner,
+			"address": address,
+		}).Debug("Address is contract")
+		return true
+
+	}
+	//https://dev.zilliqa.com/docs/apis/api-contract-get-smartcontract-state
+	//-5:Address not contract address
+	msg := strings.ToLower(result.Error.Message)
+	if -1 != strings.Index(msg, "not contract") {
+		log.WithFields(logrus.Fields{
+			"chain":     cli.chain,
+			"command":   cli.cmd,
+			"owner":     cli.config.Owner,
+			"address":   address,
+			"rpc_error": result.Error.Message,
 		}).Debug("Address is not contract")
 		return false
 	}
-	return true
+
+	log.WithFields(logrus.Fields{
+		"chain":     cli.chain,
+		"command":   cli.cmd,
+		"owner":     cli.config.Owner,
+		"address":   address,
+		"rpc_error": result.Error.Message,
+	}).Fatal("Can't get owner address/contract type")
+	return false
 }
 
 func (cli *ASwapCli) logFatal(message string, err error) {
