@@ -45,7 +45,8 @@ Admin, owner, verifier: 0xf61477D7919478e5AfFe1fbd9A0CDCeee9fdE42d
 
 ## Current protocol setup
 
-* ASwap: 0x7de8d9ce9fa4725b7e6811d96fb690d7d7f86b42
+* ASwap: 0x7de8d9ce9fa4725b7e6811d96fb690d7d7f86b42 (owner is *Admin*)
+* ASwap: 0xd93b636ecd4e6be8df62c0c0197b728fa4095111 (owner is *Multisig*)
 * Proxy: 0x310dbc947ae5250b7f84247eb52a4fdb85b5e35a
 * SsnList: 0x00cab6f10a801622c481ce7bf0737095fba39417
 * StZil: 0xbd815e711de2819e973758ce3389466b079150c1 [zil1hkq4uugau2qea9ehtr8r8z2xdvrez5xpfz8tl0](https://viewblock.io/zilliqa/address/zil1hkq4uugau2qea9ehtr8r8z2xdvrez5xpfz8tl0?network=testnet)
