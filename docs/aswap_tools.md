@@ -1,5 +1,20 @@
 # ASwap contract tools
 
+<!-- MarkdownTOC -->
+
+- [Configuration](#configuration)
+- [Roles](#roles)
+- [Admin commands](#admin-commands)
+    - [Deploy](#deploy)
+    - [Print state](#print-state)
+    - [Set Liquidity Fee](#set-liquidity-fee)
+    - [Set Treasury Fee](#set-treasury-fee)
+    - [Set Treasury Address](#set-treasury-address)
+    - [Change Owner](#change-owner)
+
+<!-- /MarkdownTOC -->
+
+
 ## Configuration
 
 Create and configure `.env.testnet` and `.env.mainnet`. Ask the team for private keys for shared admin and user accounts.
