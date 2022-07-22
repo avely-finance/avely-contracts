@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
@@ -30,6 +31,11 @@ func main() {
 		log.WithError(err).Fatal("Can't initialize ASwap CLI")
 	}
 
+	//is owner multisig?
+	if cli.addressIsContract(cli.config.Owner) {
+		cli.isMultisig = true
+	}
+
 	//process deploy command
 	if cli.cmd == "deploy" {
 		cli.deploy()
@@ -37,14 +43,13 @@ func main() {
 		return
 	}
 
+	//restore Multisig contact
+	if cli.isMultisig {
+		cli.multisig = cli.restoreMultisig()
+	}
+
 	//restore ASwap contract
 	cli.aswap = cli.restoreASwap()
-
-	//restore Multisig contact
-	if cli.addressIsContract(cli.config.Owner) {
-		cli.multisig = cli.restoreMultisig()
-		cli.isMultisig = true
-	}
 
 	//process command
 	switch cli.cmd {
@@ -96,18 +101,20 @@ func (cli *ASwapCli) deploy() {
 	aswap, err := NewASwap(cli.sdk, cli.config.Owner)
 	if err != nil {
 		log.WithError(err).WithFields(logrus.Fields{
-			"chain":   cli.chain,
-			"command": cli.cmd,
-			"value":   cli.value1,
-			"owner":   cli.config.Owner,
+			"chain":       cli.chain,
+			"command":     cli.cmd,
+			"value":       cli.value1,
+			"owner":       cli.config.Owner,
+			"is_multisig": cli.isMultisig,
 		}).Fatal("Can't deploy ASwap contract")
 	}
 	log.WithFields(logrus.Fields{
-		"chain":      cli.chain,
-		"command":    cli.cmd,
-		"value":      cli.value1,
-		"aswap_addr": aswap.Addr,
-		"owner":      cli.config.Owner,
+		"chain":       cli.chain,
+		"command":     cli.cmd,
+		"value":       cli.value1,
+		"aswap_addr":  aswap.Addr,
+		"owner":       cli.config.Owner,
+		"is_multisig": cli.isMultisig,
 	}).Info("ASwap contract deployed")
 }
 
@@ -115,18 +122,20 @@ func (cli *ASwapCli) restoreASwap() *ASwap {
 	aswap, err := RestoreASwap(cli.sdk, cli.config.ASwapAddr, "")
 	if err != nil {
 		log.WithError(err).WithFields(logrus.Fields{
-			"chain":   cli.chain,
-			"command": cli.cmd,
-			"value":   cli.value1,
-			"owner":   cli.config.Owner,
+			"chain":       cli.chain,
+			"command":     cli.cmd,
+			"value":       cli.value1,
+			"owner":       cli.config.Owner,
+			"is_multisig": cli.isMultisig,
 		}).Fatal("Can't restore ASwap contract")
 	}
 	log.WithFields(logrus.Fields{
-		"chain":      cli.chain,
-		"command":    cli.cmd,
-		"value":      cli.value1,
-		"aswap_addr": aswap.Addr,
-		"owner":      cli.config.Owner,
+		"chain":       cli.chain,
+		"command":     cli.cmd,
+		"value":       cli.value1,
+		"aswap_addr":  aswap.Addr,
+		"owner":       cli.config.Owner,
+		"is_multisig": cli.isMultisig,
 	}).Info("ASwap contract restored")
 	aswap.UpdateWallet(cli.config.OwnerKey)
 	return aswap
@@ -136,17 +145,19 @@ func (cli *ASwapCli) restoreMultisig() *MultisigWallet {
 	multisig, err := RestoreMultisigContract(cli.sdk, cli.config.Owner, []string{}, 0)
 	if err != nil {
 		log.WithError(err).WithFields(logrus.Fields{
-			"chain":   cli.chain,
-			"command": cli.cmd,
-			"value":   cli.value1,
-			"owner":   cli.config.Owner,
+			"chain":       cli.chain,
+			"command":     cli.cmd,
+			"value":       cli.value1,
+			"owner":       cli.config.Owner,
+			"is_multisig": cli.isMultisig,
 		}).Fatal("Can't restore Multisig contract")
 	}
 	log.WithFields(logrus.Fields{
-		"chain":   cli.chain,
-		"command": cli.cmd,
-		"value":   cli.value1,
-		"owner":   cli.config.Owner,
+		"chain":       cli.chain,
+		"command":     cli.cmd,
+		"value":       cli.value1,
+		"owner":       cli.config.Owner,
+		"is_multisig": cli.isMultisig,
 	}).Info("Multisig contract restored")
 	//OwnerKey is key of user who will submit multisig transactions
 	multisig.UpdateWallet(cli.config.OwnerKey)
@@ -243,8 +254,8 @@ func (cli *ASwapCli) changeOwner() {
 }
 
 func (cli *ASwapCli) addressIsContract(address string) bool {
-	provider := cli.aswap.Contract.Provider
-	_, err := provider.GetSmartContractCode(address[2:])
+	provider := provider2.NewProvider(cli.config.Api.HttpUrl)
+	_, err := provider.GetSmartContractState(address[2:])
 	if err != nil {
 		log.WithError(err).WithFields(logrus.Fields{
 			"chain":         cli.chain,
