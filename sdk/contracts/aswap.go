@@ -65,7 +65,7 @@ func (a *ASwap) SetLiquidityFee(new_fee string) (*transaction.Transaction, error
 	return a.Call("SetLiquidityFee", args, "0")
 }
 
-func (a *ASwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNum int) (*transaction.Transaction, error) {
+func (a *ASwap) AddLiquidity(_amount, tokenAddr, minContributionAmount, tokenAmount string, blockNum int) (*transaction.Transaction, error) {
 	deadline := blockNum + ASwapBlockShift
 
 	args := []core.ContractValue{
@@ -76,7 +76,7 @@ func (a *ASwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNum 
 		}, {
 			VName: "min_contribution_amount",
 			Type:  "Uint128",
-			Value: "0",
+			Value: minContributionAmount,
 		}, {
 			VName: "max_token_amount",
 			Type:  "Uint128",
@@ -87,10 +87,39 @@ func (a *ASwap) AddLiquidity(tokenAddr, zilAmount, tokenAmount string, blockNum 
 			Value: strconv.Itoa(deadline),
 		},
 	}
-	return a.Call("AddLiquidity", args, zilAmount)
+	return a.Call("AddLiquidity", args, _amount)
 }
 
-func (a *ASwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, recipientAddress string, blockNum int) (*transaction.Transaction, error) {
+func (a *ASwap) RemoveLiquidity(tokenAddress, contributionAmount, minZilAmount, minTokenAmount string, blockNum int) (*transaction.Transaction, error) {
+	deadline := blockNum + ASwapBlockShift
+
+	args := []core.ContractValue{
+		{
+			VName: "token_address",
+			Type:  "ByStr20",
+			Value: tokenAddress,
+		}, {
+			VName: "contribution_amount",
+			Type:  "Uint128",
+			Value: contributionAmount,
+		}, {
+			VName: "min_zil_amount",
+			Type:  "Uint128",
+			Value: minZilAmount,
+		}, {
+			VName: "min_token_amount",
+			Type:  "Uint128",
+			Value: minTokenAmount,
+		}, {
+			VName: "deadline_block",
+			Type:  "BNum",
+			Value: strconv.Itoa(deadline),
+		},
+	}
+	return a.Call("RemoveLiquidity", args, "0")
+}
+
+func (a *ASwap) SwapExactZILForTokens(_amount, tokenAddr, minTokenAmount, recipientAddress string, blockNum int) (*transaction.Transaction, error) {
 	deadline := blockNum + ASwapBlockShift
 
 	args := []core.ContractValue{
@@ -112,7 +141,36 @@ func (a *ASwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, reci
 			Value: recipientAddress,
 		},
 	}
-	return a.Call("SwapExactZILForTokens", args, zilAmount)
+	return a.Call("SwapExactZILForTokens", args, _amount)
+}
+
+func (a *ASwap) SwapExactTokensForZIL(tokenAddress, tokenAmount, minZilAmount, recipientAddress string, blockNum int) (*transaction.Transaction, error) {
+	deadline := blockNum + ASwapBlockShift
+
+	args := []core.ContractValue{
+		{
+			VName: "token_address",
+			Type:  "ByStr20",
+			Value: tokenAddress,
+		}, {
+			VName: "token_amount",
+			Type:  "Uint128",
+			Value: tokenAmount,
+		}, {
+			VName: "min_zil_amount",
+			Type:  "Uint128",
+			Value: minZilAmount,
+		}, {
+			VName: "deadline_block",
+			Type:  "BNum",
+			Value: strconv.Itoa(deadline),
+		}, {
+			VName: "recipient_address",
+			Type:  "ByStr20",
+			Value: recipientAddress,
+		},
+	}
+	return a.Call("SwapExactTokensForZIL", args, "0")
 }
 
 func (a *ASwap) ChangeOwner(new_addr string) (*transaction.Transaction, error) {

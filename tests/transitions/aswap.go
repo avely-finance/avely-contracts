@@ -24,7 +24,7 @@ func (tr *Transitions) ASwap() {
 
 	//add liquidity
 	AssertSuccess(stzil.IncreaseAllowance(aswap.Contract.Addr, ToQA(10000)))
-	AssertSuccess(aswap.AddLiquidity(stzil.Contract.Addr, liquidityAmount, liquidityAmount, blockNum))
+	AssertSuccess(aswap.AddLiquidity(liquidityAmount, stzil.Contract.Addr, "0", liquidityAmount, blockNum))
 
 	//toggle pause
 	AssertSuccess(aswap.WithUser(init_owner_key).TogglePause())
@@ -53,7 +53,7 @@ func (tr *Transitions) ASwap() {
 	expectedTreasuryRewards := "133333333333"
 	expectedSwapOutput := "9887919312466"
 	AssertSuccess(aswap.WithUser(init_owner_key).TogglePause())
-	tx, _ := AssertSuccess(aswap.SwapExactZILForTokens(stzil.Contract.Addr, ToQA(100), "90", recipient, blockNum))
+	tx, _ := AssertSuccess(aswap.SwapExactZILForTokens(ToQA(100), stzil.Contract.Addr, "90", recipient, blockNum))
 	AssertTransition(tx, Transition{
 		aswap.Addr, //sender
 		"AddFunds",
