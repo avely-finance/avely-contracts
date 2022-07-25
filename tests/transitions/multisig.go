@@ -9,12 +9,75 @@ import (
 const txId = 0 // the test transition should be the first
 
 func (tr *Transitions) MultisigWalletTests() {
+	multisigAswapActions(tr)
 	multisigGoldenFlowTest(tr)
 	multisigUpdateOwner(tr)
 	multisigChangeAdminTest(tr)
 	multisigChangeBuffersTest(tr)
 	multisigAddRemoveSSNTest(tr)
 	multisigManagableActions(tr)
+}
+
+func multisigAswapActions(tr *Transitions) {
+	txIdLocal := 0
+
+	//deploy multisig
+	owner := sdk.Cfg.Key1
+	owners := []string{sdk.Cfg.Addr1}
+	signCount := 1
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	//deploy aswap, set owner to multisig contract
+	init_owner := multisig.Addr
+	aswap := tr.DeployASwap(init_owner)
+
+	//test ASwap.TogglePause
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitTogglePauseTransaction(aswap.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "pause"), "1")
+
+	//test ASwap.SetTreasuryFee()
+	txIdLocal++
+	new_fee := "12345"
+	AssertEqual(Field(aswap, "treasury_fee"), "500")
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
+
+	//test ASwap.SetLiquidityFee()
+	txIdLocal++
+	new_fee = "23456"
+	AssertEqual(Field(aswap, "liquidity_fee"), "10000")
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetLiquidityFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "liquidity_fee"), new_fee)
+
+	//test ASwap.SetTreasuryAddress()
+	txIdLocal++
+	new_address := sdk.Cfg.Addr3
+	AssertEqual(Field(aswap, "treasury_address"), core.ZeroAddr)
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "treasury_address"), new_address)
+
+	//deploy other multisig contract
+	newSignCount := 1
+	newOwner := sdk.Cfg.Key2
+	newOwners := []string{sdk.Cfg.Addr2}
+	newMultisig := tr.DeployMultisigWallet(newOwners, newSignCount)
+
+	//test ASwap.ChangeOwner()
+	txIdLocal++
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(aswap.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "staging_owner"), newMultisig.Addr)
+
+	//test ASwap.ClaimOwner()
+	//first transaction id is 0 for newly deployed multisig contract
+	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(aswap.Addr))
+	AssertMultisigSuccess(newMultisig.WithUser(newOwner).ExecuteTransaction(0))
+	AssertEqual(Field(aswap, "owner"), newMultisig.Addr)
+
 }
 
 func multisigGoldenFlowTest(tr *Transitions) {

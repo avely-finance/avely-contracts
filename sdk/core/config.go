@@ -44,6 +44,7 @@ type Config struct {
 	Verifier                 string
 	VerifierKey              string
 
+	ASwapAddr    string
 	ZproxyAddr   string
 	GzilAddr     string
 	ZimplAddr    string

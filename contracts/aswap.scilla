@@ -8,7 +8,7 @@ scilla_version 0
 
 import IntUtils BoolUtils ListUtils
 
-library DragonDexLib
+library ASwapLib
 
 type Error =
   | CodeNotContractOwner
@@ -21,7 +21,8 @@ type Error =
   | CodeMinLP
   | CodeSameAddress
   | CodePausedContract
-  | CodeNotOperator
+  | CodeStagingOwnerMissing
+  | CodeStagingOwnerInvalid
 
 type Denom =
   | Zil
@@ -51,8 +52,8 @@ let nil_addr_list = Nil {ByStr20}
 let zil_denom = Zil
 let zrc_denom = Token
 
-let one_msg =
-  fun (msg : Message) =>
+let one_msg = 
+  fun (msg : Message) => 
     let nil_msg = Nil {Message} in
       Cons {Message} msg nil_msg
 
@@ -109,10 +110,15 @@ let make_error =
         _exception: "Contract was stoped";
         code: Int32 -10
       }
-    | CodeNotOperator =>
+    | CodeStagingOwnerMissing =>
       {
-        _exception: "Sender is not operator";
+        _exception: "Staging owner doesn't exist";
         code: Int32 -11
+      }
+    | CodeStagingOwnerInvalid =>
+      {
+        _exception: "Staging owner validation failed";
+        code: Int32 -12
       }
     end
 
@@ -205,18 +211,9 @@ let is_empty_pool =
       orb x_empty y_empty
 
 let get_amount_with_fee =
-  fun (input: ByStr20) =>
-  fun (output: ByStr20) =>
-  fun (sup: ByStr20) =>
   fun (fee: Uint128) =>
   fun (amount: Uint128) =>
-    let is_same_input = builtin eq input sup in
-    let is_same_output = builtin eq output sup in
-    let is_same = orb is_same_input is_same_output in
-      match is_same with
-      | True => zero128
-      | False => builtin div amount fee
-      end
+    builtin div amount fee
 
 let block_lte =
   fun (deadline_block: BNum) =>
@@ -225,14 +222,6 @@ let block_lte =
     let eq = builtin eq current_block deadline_block in
       orb lt eq
 
-let check_operators =
-  fun (operators: List ByStr20) =>
-  fun (sender: ByStr20) =>
-    let f =
-      fun (a: ByStr20) =>
-        builtin eq a sender in
-    addr_exists f operators
-
 let half_fee =
   fun (fee: Uint256) =>
     let diff = builtin sub fee_demon fee in
@@ -240,18 +229,16 @@ let half_fee =
       builtin sub fee_demon diff
 
 
-contract DragonDexContract
+contract ASwapContract
 (
-  init_owner: ByStr20,
-  operators: List ByStr20
+  init_owner: ByStr20
 )
-
 
 (* Contract owner *)
 field owner: ByStr20 = init_owner
 
-(* operators approvals for onwer transfer *)
-field transfer_owner_approvals: Map ByStr20 (List ByStr20) = Emp ByStr20 (List ByStr20)
+(* Staging contract owner *)
+field staging_owner : Option ByStr20 = None {ByStr20}
 
 (* POOL token -> Pair{zil_reserve, token_reserve} *)
 field pools: Map ByStr20 (Pair Uint128 Uint128) = Emp ByStr20 (Pair Uint128 Uint128)
@@ -265,14 +252,14 @@ field balances: Map ByStr20 (Map ByStr20 Uint128) = Emp ByStr20 (Map ByStr20 Uin
 (* fee for liquidity providers *)
 field liquidity_fee: Uint256 = fee_demon
 
-(* fee for protocol *)
-field protocol_fee: Uint128 = Uint128 500
+(* fee for treasury *)
+field treasury_fee: Uint128 = Uint128 500
+
+(* address of treasury *)
+field treasury_address: ByStr20 = zero_address
 
 (* Min number zil for LP providers. *)
 field min_lp: Uint128 = Uint128 100000000000000
-
-(* A Pool for swap rewards. *)
-field rewards_pool: ByStr20 = zero_address
 
 (* Pause for contract *)
 field pause: Uint32 = zero32
@@ -336,7 +323,7 @@ end
 procedure CheckMinLP(lp: Uint128)
   min <- min_lp;
   is_min_lp = uint128_ge min lp;
-
+  
   match is_min_lp with
   | True =>
     err = CodeMinLP;
@@ -389,16 +376,6 @@ procedure OwnerOnly()
   | True =>
   | False =>
     err = CodeNotContractOwner;
-    ThrowError err
-  end
-end
-
-procedure OperatorOnly()
-  is_operator = check_operators operators _sender;
-  match is_operator with
-  | True =>
-  | False =>
-    err = CodeNotOperator;
     ThrowError err
   end
 end
@@ -468,37 +445,14 @@ procedure CallTransfer(to: ByStr20, amount: Uint128, recipient: ByStr20)
   send msgs
 end
 
-procedure RecieveRewards(exact_amount: Uint128, recipient_address: ByStr20, output_token: ByStr20)
-  some_pool <- pools[output_token];
-  is_zero = builtin eq exact_amount zero128;
-
+procedure ReceiveRewards(exact_amount: Uint128)
+  trea_addr <- treasury_address;
+  is_zero = builtin eq trea_addr zero_address;
   match is_zero with
   | True =>
+    (* don't send to nowhere *)
   | False =>
-    match some_pool with
-    | Some pool =>
-      match pool with
-      | Pair zil_reserve token_reserve =>
-        calculated_amount_u256 = output_for
-          exact_amount
-          zil_reserve
-          token_reserve
-          fee_demon;
-        calculated_amount_u128 = fall_u256 calculated_amount_u256;
-
-        MakeSwap
-          output_token
-          exact_amount
-          calculated_amount_u128
-          zil_denom
-          zil_reserve
-          token_reserve;
-        CallTransfer recipient_address calculated_amount_u128 output_token
-      end
-    | None =>
-      err = CodePoolMissing;
-      ThrowError err
-    end
+    AddFunds trea_addr exact_amount
   end
 end
 (* MSG CALL *)
@@ -513,8 +467,7 @@ procedure SwapOptions(
   recipient_address: ByStr20
 )
   lp_fee <- liquidity_fee;
-  proto_fee <- protocol_fee;
-  sup_token <- rewards_pool;
+  trea_fee <- treasury_fee;
 
   match direction with
   | ZilToToken =>
@@ -524,8 +477,8 @@ procedure SwapOptions(
     | Some pool =>
       match pool with
       | Pair zil_reserve token_reserve =>
-        proto_rewards = get_amount_with_fee input_token output_token sup_token proto_fee exact_amount;
-        exact_amount_after_fee = builtin sub exact_amount proto_rewards;
+        treasury_rewards = get_amount_with_fee trea_fee exact_amount;
+        exact_amount_after_fee = builtin sub exact_amount treasury_rewards;
         calculated_amount_u256 = output_for
           exact_amount_after_fee
           zil_reserve
@@ -536,7 +489,7 @@ procedure SwapOptions(
         CheckLimits calculated_amount_u128 limit_amount;
         accept;
 
-        RecieveRewards proto_rewards recipient_address sup_token;
+        ReceiveRewards treasury_rewards;
         MakeSwap
           output_token
           exact_amount_after_fee
@@ -577,10 +530,10 @@ procedure SwapOptions(
             zil_reserve
             token_reserve;
 
-        proto_rewards = get_amount_with_fee input_token output_token sup_token proto_fee output_zil_amount_u128;
-        output_zil_amount_u128 = builtin sub output_zil_amount_u128 proto_rewards;
+        treasury_rewards = get_amount_with_fee trea_fee output_zil_amount_u128;
+        output_zil_amount_u128 = builtin sub output_zil_amount_u128 treasury_rewards;
 
-        RecieveRewards proto_rewards recipient_address sup_token;
+        ReceiveRewards treasury_rewards;
         EmitSwap
           input_token
           output_token
@@ -617,8 +570,8 @@ procedure SwapOptions(
               input_zil_reserve
               half_lp_fee;
             output_zil_amount_u128 = fall_u256 zil_intermediate_amount_u256;
-            proto_rewards = get_amount_with_fee input_token output_token sup_token proto_fee output_zil_amount_u128;
-            zil_intermediate_amount = builtin sub output_zil_amount_u128 proto_rewards;
+            treasury_rewards = get_amount_with_fee trea_fee output_zil_amount_u128;
+            zil_intermediate_amount = builtin sub output_zil_amount_u128 treasury_rewards;
 
             (* Swap ZIL to output tokens. *)
             calculated_amount_u256 = output_for
@@ -630,7 +583,7 @@ procedure SwapOptions(
 
             CheckLimits output_tokens_amount_u128 limit_amount;
 
-            RecieveRewards proto_rewards recipient_address sup_token;
+            ReceiveRewards treasury_rewards;
             MakeSwap
               input_token
               exact_amount
@@ -815,7 +768,7 @@ transition RemoveLiquidity(
       end;
 
       some_existing_balance <- balances[_sender][token_address];
-
+      
       existing_balance = option_uint128 zero128 some_existing_balance;
 
       new_balance = builtin sub existing_balance contribution_amount;
@@ -949,29 +902,14 @@ transition SetLiquidityFee(new_fee: Uint256)
   liquidity_fee := new_fee
 end
 
-transition SetProtocolFee(new_fee: Uint128)
+transition SetTreasuryFee(new_fee: Uint128)
   OwnerOnly;
-  protocol_fee := new_fee
+  treasury_fee := new_fee
 end
 
-transition SetRewardsPool(new_addr: ByStr20)
+transition SetTreasuryAddress(new_address: ByStr20)
   OwnerOnly;
-  some_pool <- pools[new_addr];
-
-  is_zero = builtin eq new_addr zero_address;
-
-  match is_zero with
-  | True =>
-    rewards_pool := zero_address
-  | False =>
-    match some_pool with
-    | Some pool =>
-      rewards_pool := new_addr
-    | None =>
-      err = CodePoolMissing;
-      ThrowError err
-    end
-  end
+  treasury_address := new_address
 end
 
 transition TogglePause()
@@ -987,31 +925,34 @@ transition TogglePause()
     pause := zero32
   end
 end
-(* admin interactions *)
 
-(* operator interactions *)
-transition TransferOwnership(new_owner: ByStr20)
-  OperatorOnly;
-  some_power <- transfer_owner_approvals[new_owner];
+transition ChangeOwner(new_owner: ByStr20)
+  OwnerOnly;
+  var_staging_owner = Some {ByStr20} new_owner;
+  staging_owner := var_staging_owner;
+  var_owner <- owner
+end
 
-  power_list = option_list_addr nil_addr_list some_power;
-  new_power_list = Cons {ByStr20} _sender power_list;
-  number_of_operators = list_length_addr operators;
-  number_of_power = list_length_addr new_power_list;
-
-  need_power = builtin div number_of_operators two32;
-  is_approved = builtin lt need_power number_of_power;
-
-  match is_approved with
-  | True =>
-    owner := new_owner;
-    delete transfer_owner_approvals[new_owner]
-  | False =>
-    transfer_owner_approvals[new_owner] := new_power_list
+transition ClaimOwner()
+  staging_owner_o <- staging_owner;
+  match staging_owner_o with
+  | Some staging_owner =>
+    is_stagingowner = builtin eq staging_owner _sender;
+    match is_stagingowner with
+    | True =>
+      owner := _sender;
+      tmp_staging_owner = None {ByStr20};
+      staging_owner := tmp_staging_owner
+    | False =>
+      err = CodeStagingOwnerInvalid;
+      ThrowError err
+    end
+  | None =>
+    err = CodeStagingOwnerMissing;
+    ThrowError err
   end
 end
-(* operator interactions *)
-
+(* admin interactions *)
 
 (* callbacks *)
 transition RecipientAcceptTransfer(sender: ByStr20, recipient: ByStr20, amount: Uint128)
