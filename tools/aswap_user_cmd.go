@@ -43,7 +43,7 @@ var aswapUserCliFlags = ASwapUserCliFlags{
 	TokenAmount:           &cli.IntFlag{Name: "token_amount", Usage: "Token amount", Required: true},
 	MaxTokenAmount:        &cli.IntFlag{Name: "max_token_amount", Usage: "Maximum token amount", Required: true},
 	MinTokenAmount:        &cli.IntFlag{Name: "min_token_amount", Usage: "Minimum token amount", Required: true},
-	DeadlineBlock:         &cli.IntFlag{Name: "deadline_block", Usage: "Deadline block", Required: true},
+	DeadlineBlock:         &cli.IntFlag{Name: "deadline_block", Usage: "Deadline block for localnet, gap for other", Required: true},
 }
 
 func main() {
@@ -85,22 +85,32 @@ func addLiquidity() *cli.Command {
 				log.WithError(err).Fatal("Can't initialize ASwap CLI")
 				return err
 			}
+
+			//token address
 			tokenAddress := ctx.String(aswapUserCliFlags.TokenAddress.Name)
 			if tokenAddress == "" {
 				tokenAddress = aswapUser.config.StZilAddr
 			}
+
+			//deadline block
+			deadlineBlock := ctx.Int(aswapUserCliFlags.DeadlineBlock.Name)
+			if aswapUser.chain != "local" {
+				//consider it as gap for testnet/mainnet
+				deadlineBlock += aswapUser.sdk.GetBlockHeight()
+			}
+
 			_, err = aswapUser.aswap.AddLiquidity(
 				ctx.String(aswapUserCliFlags.ZilAmount.Name),
 				tokenAddress,
 				ctx.String(aswapUserCliFlags.MinContributionAmount.Name),
 				ctx.String(aswapUserCliFlags.MaxTokenAmount.Name),
-				ctx.Int(aswapUserCliFlags.DeadlineBlock.Name),
+				deadlineBlock,
 			)
 			if err != nil {
-				log.WithError(err).WithFields(logrus.Fields{"token_address": tokenAddress}).Fatal("AddLiquidity error")
+				log.WithError(err).WithFields(logrus.Fields{"token_address": tokenAddress, "deadline_block": deadlineBlock}).Fatal("AddLiquidity error")
 				return err
 			}
-			log.WithFields(logrus.Fields{"token_address": tokenAddress}).Info("AddLiquidity succeed")
+			log.WithFields(logrus.Fields{"token_address": tokenAddress, "deadline_block": deadlineBlock}).Info("AddLiquidity succeed")
 			return nil
 		},
 	}
@@ -124,22 +134,31 @@ func removeLiquidity() *cli.Command {
 				log.WithError(err).Fatal("Can't initialize ASwap CLI")
 				return err
 			}
+
+			//token address
 			tokenAddress := ctx.String(aswapUserCliFlags.TokenAddress.Name)
 			if tokenAddress == "" {
 				tokenAddress = aswapUser.config.StZilAddr
+			}
+
+			//deadline block
+			deadlineBlock := ctx.Int(aswapUserCliFlags.DeadlineBlock.Name)
+			if aswapUser.chain != "local" {
+				//consider it as gap for testnet/mainnet
+				deadlineBlock += aswapUser.sdk.GetBlockHeight()
 			}
 			_, err = aswapUser.aswap.RemoveLiquidity(
 				tokenAddress,
 				ctx.String(aswapUserCliFlags.ContributionAmount.Name),
 				ctx.String(aswapUserCliFlags.MinZilAmount.Name),
 				ctx.String(aswapUserCliFlags.MinTokenAmount.Name),
-				ctx.Int(aswapUserCliFlags.DeadlineBlock.Name),
+				deadlineBlock,
 			)
 			if err != nil {
-				log.WithError(err).WithFields(logrus.Fields{"token_address": tokenAddress}).Fatal("RemoveLiquidity error")
+				log.WithError(err).WithFields(logrus.Fields{"token_address": tokenAddress, "deadline_block": deadlineBlock}).Fatal("RemoveLiquidity error")
 				return err
 			}
-			log.WithFields(logrus.Fields{"token_address": tokenAddress}).Info("RemoveLiquidity succeed")
+			log.WithFields(logrus.Fields{"token_address": tokenAddress, "deadline_block": deadlineBlock}).Info("RemoveLiquidity succeed")
 			return nil
 		},
 	}
@@ -163,22 +182,32 @@ func swapExactZilForTokens() *cli.Command {
 				log.WithError(err).Fatal("Can't initialize ASwap CLI")
 				return err
 			}
+
+			//token address
 			tokenAddress := ctx.String(aswapUserCliFlags.TokenAddress.Name)
 			if tokenAddress == "" {
 				tokenAddress = aswapUser.config.StZilAddr
 			}
+
+			//deadline block
+			deadlineBlock := ctx.Int(aswapUserCliFlags.DeadlineBlock.Name)
+			if aswapUser.chain != "local" {
+				//consider it as gap for testnet/mainnet
+				deadlineBlock += aswapUser.sdk.GetBlockHeight()
+			}
+
 			_, err = aswapUser.aswap.SwapExactZILForTokens(
 				ctx.String(aswapUserCliFlags.ZilAmount.Name),
 				tokenAddress,
 				ctx.String(aswapUserCliFlags.MinTokenAmount.Name),
 				ctx.String(aswapUserCliFlags.RecipientAddress.Name),
-				ctx.Int(aswapUserCliFlags.DeadlineBlock.Name),
+				deadlineBlock,
 			)
 			if err != nil {
-				log.WithError(err).WithFields(logrus.Fields{"token_address": tokenAddress}).Fatal("SwapExactZILForTokens error")
+				log.WithError(err).WithFields(logrus.Fields{"token_address": tokenAddress, "deadline_block": deadlineBlock}).Fatal("SwapExactZILForTokens error")
 				return err
 			}
-			log.WithFields(logrus.Fields{"token_address": tokenAddress}).Info("SwapExactZILForTokens succeed")
+			log.WithFields(logrus.Fields{"token_address": tokenAddress, "deadline_block": deadlineBlock}).Info("SwapExactZILForTokens succeed")
 			return nil
 		},
 	}
@@ -202,22 +231,32 @@ func swapExactTokensForZil() *cli.Command {
 				log.WithError(err).Fatal("Can't initialize ASwap CLI")
 				return err
 			}
+
+			//token address
 			tokenAddress := ctx.String(aswapUserCliFlags.TokenAddress.Name)
 			if tokenAddress == "" {
 				tokenAddress = aswapUser.config.StZilAddr
 			}
+
+			//deadline block
+			deadlineBlock := ctx.Int(aswapUserCliFlags.DeadlineBlock.Name)
+			if aswapUser.chain != "local" {
+				//consider it as gap for testnet/mainnet
+				deadlineBlock += aswapUser.sdk.GetBlockHeight()
+			}
+
 			_, err = aswapUser.aswap.SwapExactTokensForZIL(
 				tokenAddress,
 				ctx.String(aswapUserCliFlags.TokenAmount.Name),
 				ctx.String(aswapUserCliFlags.MinZilAmount.Name),
 				ctx.String(aswapUserCliFlags.RecipientAddress.Name),
-				ctx.Int(aswapUserCliFlags.DeadlineBlock.Name),
+				deadlineBlock,
 			)
 			if err != nil {
-				log.WithError(err).WithFields(logrus.Fields{"token_address": tokenAddress}).Fatal("SwapExactTokensForZIL error")
+				log.WithError(err).WithFields(logrus.Fields{"token_address": tokenAddress, "deadline_block": deadlineBlock}).Fatal("SwapExactTokensForZIL error")
 				return err
 			}
-			log.WithFields(logrus.Fields{"token_address": tokenAddress}).Info("SwapExactTokensForZIL succeed")
+			log.WithFields(logrus.Fields{"token_address": tokenAddress, "deadline_block": deadlineBlock}).Info("SwapExactTokensForZIL succeed")
 			return nil
 		},
 	}
@@ -228,9 +267,10 @@ func NewASwapUserCli(ctx *cli.Context) (*ASwapUserCli, error) {
 
 	log = NewLog()
 	config := NewConfig(chain)
+	sdk := NewAvelySDK(*config)
 
 	aswapUserCli := &ASwapUserCli{
-		sdk:    NewAvelySDK(*config),
+		sdk:    sdk,
 		config: config,
 		chain:  chain,
 	}

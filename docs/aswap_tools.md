@@ -126,7 +126,7 @@ USAGE:
 
 OPTIONS:
    --chain value                    Chain (default: "local")
-   --deadline_block value           Deadline block (default: 0)
+   --deadline_block value           Deadline block for localnet, gap for other (default: 0)
    --max_token_amount value         Maximum token amount (default: 0)
    --min_contribution_amount value  Minimum contribution amount (default: 0)
    --token_address value            Token address, StZil by default
@@ -154,7 +154,7 @@ USAGE:
 OPTIONS:
    --chain value                Chain (default: "local")
    --contribution_amount value  Contribution amount (default: 0)
-   --deadline_block value       Deadline block (default: 0)
+   --deadline_block value       Deadline block for localnet, gap for other (default: 0)
    --min_token_amount value     Minimum token amount (default: 0)
    --min_zil_amount value       Minimum ZIL amount (default: 0)
    --token_address value        Token address, StZil by default
@@ -180,7 +180,7 @@ USAGE:
 
 OPTIONS:
    --chain value              Chain (default: "local")
-   --deadline_block value     Deadline block (default: 0)
+   --deadline_block value     Deadline block for localnet, gap for other (default: 0)
    --min_token_amount value   Minimum token amount (default: 0)
    --recipient_address value  Recipient address
    --token_address value      Token address, StZil by default
@@ -207,7 +207,7 @@ USAGE:
 
 OPTIONS:
    --chain value              Chain (default: "local")
-   --deadline_block value     Deadline block (default: 0)
+   --deadline_block value     Deadline block for localnet, gap for other (default: 0)
    --min_zil_amount value     Minimum ZIL amount (default: 0)
    --recipient_address value  Recipient address
    --token_address value      Token address, StZil by default
