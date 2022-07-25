@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ASwapCli struct {
+type ASwapAdminCli struct {
 	sdk        *AvelySDK
 	config     *Config
 	chain      string
@@ -27,7 +27,7 @@ var log *Log
 func main() {
 
 	//init
-	cli, err := NewASwapCli()
+	cli, err := NewASwapAdminCli()
 	if err != nil {
 		log.WithError(err).Fatal("Can't initialize ASwap CLI")
 	}
@@ -79,7 +79,7 @@ func main() {
 	log.Info("Done")
 }
 
-func NewASwapCli() (*ASwapCli, error) {
+func NewASwapAdminCli() (*ASwapAdminCli, error) {
 	chainPtr := flag.String("chain", "local", "chain")
 	cmdPtr := flag.String("cmd", "default", "specific command")
 	valuePtr := flag.String("value", "", "new value")
@@ -89,7 +89,7 @@ func NewASwapCli() (*ASwapCli, error) {
 	log = NewLog()
 	config := NewConfig(*chainPtr)
 
-	return &ASwapCli{
+	return &ASwapAdminCli{
 		sdk:        NewAvelySDK(*config),
 		config:     config,
 		chain:      *chainPtr,
@@ -99,7 +99,7 @@ func NewASwapCli() (*ASwapCli, error) {
 	}, nil
 }
 
-func (cli *ASwapCli) deploy() {
+func (cli *ASwapAdminCli) deploy() {
 	//deploy is going from cli.config.Admin
 	aswap, err := NewASwap(cli.sdk, cli.config.Owner)
 	if err != nil {
@@ -121,7 +121,7 @@ func (cli *ASwapCli) deploy() {
 	}).Info("ASwap contract deployed")
 }
 
-func (cli *ASwapCli) restoreASwap() *ASwap {
+func (cli *ASwapAdminCli) restoreASwap() *ASwap {
 	aswap, err := RestoreASwap(cli.sdk, cli.config.ASwapAddr, "")
 	if err != nil {
 		log.WithError(err).WithFields(logrus.Fields{
@@ -144,7 +144,7 @@ func (cli *ASwapCli) restoreASwap() *ASwap {
 	return aswap
 }
 
-func (cli *ASwapCli) restoreMultisig() *MultisigWallet {
+func (cli *ASwapAdminCli) restoreMultisig() *MultisigWallet {
 	multisig, err := RestoreMultisigContract(cli.sdk, cli.config.Owner, []string{}, 0)
 	if err != nil {
 		log.WithError(err).WithFields(logrus.Fields{
@@ -167,11 +167,11 @@ func (cli *ASwapCli) restoreMultisig() *MultisigWallet {
 	return multisig
 }
 
-func (cli *ASwapCli) printState() {
+func (cli *ASwapAdminCli) printState() {
 	log.Info(cli.aswap.State())
 }
 
-func (cli *ASwapCli) togglePause() {
+func (cli *ASwapAdminCli) togglePause() {
 	var tx *transaction.Transaction
 	var err error
 	if cli.isMultisig {
@@ -188,7 +188,7 @@ func (cli *ASwapCli) togglePause() {
 	cli.logInfo("TogglePause succeed", tx)
 }
 
-func (cli *ASwapCli) setLiquidityFee() {
+func (cli *ASwapAdminCli) setLiquidityFee() {
 	var tx *transaction.Transaction
 	var err error
 	if cli.isMultisig {
@@ -205,7 +205,7 @@ func (cli *ASwapCli) setLiquidityFee() {
 	cli.logInfo("SetLiquidityFee succeed", tx)
 }
 
-func (cli *ASwapCli) setTreasuryFee() {
+func (cli *ASwapAdminCli) setTreasuryFee() {
 	var tx *transaction.Transaction
 	var err error
 	if cli.isMultisig {
@@ -222,7 +222,7 @@ func (cli *ASwapCli) setTreasuryFee() {
 	cli.logInfo("SetTreasuryFee succeed", tx)
 }
 
-func (cli *ASwapCli) setTreasuryAddress() {
+func (cli *ASwapAdminCli) setTreasuryAddress() {
 	var tx *transaction.Transaction
 	var err error
 	if cli.isMultisig {
@@ -239,7 +239,7 @@ func (cli *ASwapCli) setTreasuryAddress() {
 	cli.logInfo("SetTreasuryAddress succeed", tx)
 }
 
-func (cli *ASwapCli) changeOwner() {
+func (cli *ASwapAdminCli) changeOwner() {
 	var tx *transaction.Transaction
 	var err error
 	if cli.isMultisig {
@@ -256,7 +256,7 @@ func (cli *ASwapCli) changeOwner() {
 	cli.logInfo("ChangeOwner succeed", tx)
 }
 
-func (cli *ASwapCli) claimOwner() {
+func (cli *ASwapAdminCli) claimOwner() {
 	var tx *transaction.Transaction
 	var err error
 	if cli.isMultisig {
@@ -273,7 +273,7 @@ func (cli *ASwapCli) claimOwner() {
 	cli.logInfo("ClaimOwner succeed", tx)
 }
 
-func (cli *ASwapCli) addressIsContract(address string) bool {
+func (cli *ASwapAdminCli) addressIsContract(address string) bool {
 	provider := provider2.NewProvider(cli.config.Api.HttpUrl)
 	result, err := provider.GetSmartContractState(address[2:])
 	if err != nil {
@@ -319,7 +319,7 @@ func (cli *ASwapCli) addressIsContract(address string) bool {
 	return false
 }
 
-func (cli *ASwapCli) logFatal(message string, err error) {
+func (cli *ASwapAdminCli) logFatal(message string, err error) {
 	log.WithError(err).WithFields(logrus.Fields{
 		"chain":       cli.chain,
 		"command":     cli.cmd,
@@ -330,7 +330,7 @@ func (cli *ASwapCli) logFatal(message string, err error) {
 	}).Fatal(message)
 }
 
-func (cli *ASwapCli) logInfo(message string, tx *transaction.Transaction) {
+func (cli *ASwapAdminCli) logInfo(message string, tx *transaction.Transaction) {
 	log.WithFields(logrus.Fields{
 		"chain":       cli.chain,
 		"command":     cli.cmd,
