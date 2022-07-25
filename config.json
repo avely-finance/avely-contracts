@@ -30,6 +30,7 @@
     "VerifierKey": "",
     "Verifier": "0x10200e3da08ee88729469d6eabc055cb225821e7",
 
+    "ASwapAddr": "",
     "GzilAddr": "",
     "ZproxyAddr": "",
     "ZimplAddr": "",
@@ -77,6 +78,7 @@
     "Verifier": "0xf61477D7919478e5AfFe1fbd9A0CDCeee9fdE42d",
     "VerifierKey": "",
 
+    "ASwapAddr": "",
     "GzilAddr": "0x1054ca352567d936f5636d86aad23ac080cf685e",
     "ZproxyAddr": "0x310dbc947ae5250b7f84247eb52a4fdb85b5e35a",
     "ZimplAddr": "0x00cab6f10a801622c481ce7bf0737095fba39417",
@@ -122,6 +124,7 @@
     "VerifierKey": "",
     "Verifier": "0x10200e3da08ee88729469d6eabc055cb225821e7",
 
+    "ASwapAddr": "",
     "GzilAddr": "0xa845C1034CD077bD8D32be0447239c7E4be6cb21",
     "ZproxyAddr": "0x62A9d5D611CDCaE8D78005F31635898330e06B93",
     "ZimplAddr": "0xa7C67D49C82c7dc1B73D231640B2e4d0661D37c1",

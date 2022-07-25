@@ -79,35 +79,6 @@ func (s *MultisigWallet) SubmitChangeAdminTransaction(stZilAddr, newAdmin string
 	return s.Call("SubmitChangeAdminTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeOwnerTransaction(stZilAddr, newOwner string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			VName: "calleeContract",
-			Type:  "ByStr20",
-			Value: stZilAddr,
-		},
-		{
-			VName: "new_owner",
-			Type:  "ByStr20",
-			Value: newOwner,
-		},
-	}
-
-	return s.Call("SubmitChangeOwnerTransaction", args, "0")
-}
-
-func (s *MultisigWallet) SubmitClaimOwnerTransaction(stZilAddr string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			VName: "calleeContract",
-			Type:  "ByStr20",
-			Value: stZilAddr,
-		},
-	}
-
-	return s.Call("SubmitClaimOwnerTransaction", args, "0")
-}
-
 func (s *MultisigWallet) SubmitChangeTreasuryAddressTransaction(stZilAddr string, addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -314,6 +285,98 @@ func (s *MultisigWallet) SubmitUnPauseZrc2Transaction(stZilAddr string) (*transa
 	}
 
 	return s.Call("SubmitUnPauseZrc2Transaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitSetTreasuryFeeTransaction(aswapAddr string, newFee string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: aswapAddr,
+		},
+		{
+			VName: "new_fee",
+			Type:  "Uint128",
+			Value: newFee,
+		},
+	}
+
+	return s.Call("SubmitSetTreasuryFeeTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitSetTreasuryAddressTransaction(aswapAddr string, newAddress string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: aswapAddr,
+		},
+		{
+			VName: "new_address",
+			Type:  "ByStr20",
+			Value: newAddress,
+		},
+	}
+
+	return s.Call("SubmitSetTreasuryAddressTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitSetLiquidityFeeTransaction(aswapAddr string, newFee string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: aswapAddr,
+		},
+		{
+			VName: "new_fee",
+			Type:  "Uint256",
+			Value: newFee,
+		},
+	}
+
+	return s.Call("SubmitSetLiquidityFeeTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitTogglePauseTransaction(aswapAddr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: aswapAddr,
+		},
+	}
+
+	return s.Call("SubmitTogglePauseTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitChangeOwnerTransaction(calleeContract, newOwner string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: calleeContract,
+		},
+		{
+			VName: "new_owner",
+			Type:  "ByStr20",
+			Value: newOwner,
+		},
+	}
+
+	return s.Call("SubmitChangeOwnerTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitClaimOwnerTransaction(calleeContract string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: calleeContract,
+		},
+	}
+
+	return s.Call("SubmitClaimOwnerTransaction", args, "0")
 }
 
 func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {

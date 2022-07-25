@@ -108,7 +108,7 @@ func RestoreZilSwap(sdk *AvelySDK, contractAddress string) (*ZilSwap, error) {
 	b32, err := bech32.ToBech32Address(contractAddress)
 
 	if err != nil {
-		return nil, errors.New("Config has invalid Zimpl address")
+		return nil, errors.New("Config has invalid ZilSwap address")
 	}
 
 	sdkContract := Contract{

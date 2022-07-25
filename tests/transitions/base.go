@@ -67,6 +67,18 @@ func (tr *Transitions) DeployZilSwap() *ZilSwap {
 	return zilSwap
 }
 
+func (tr *Transitions) DeployASwap(init_owner string) *ASwap {
+	log := GetLog()
+	aswap, err := NewASwap(sdk, init_owner)
+	if err != nil {
+		log.Fatal("deploy ASwap error = " + err.Error())
+	}
+
+	log.Info("deploy ASwap succeed, address = " + aswap.Addr)
+
+	return aswap
+}
+
 func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *MultisigWallet {
 	log := GetLog()
 	multisig, err := NewMultisigContract(sdk, owners, signCount)
@@ -131,7 +143,9 @@ func (tr *Transitions) RunAll() {
 	tr.PerformAutoRestake()
 	tr.ChownStakeAll()
 	tr.AddToSwap()
+	tr.Transfer()
 	tr.TransferFrom()
+	tr.ASwap()
 	tr.MultisigWalletTests()
 
 	if !IsCI() {
