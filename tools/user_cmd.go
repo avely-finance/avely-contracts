@@ -15,7 +15,7 @@ var sdk *AvelySDK
 func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	cmd := flag.String("cmd", "default", "specific command")
-	usrPtr := flag.String("usr", "default", "an user ID")
+	usrPtr := flag.String("usr", "default", "an user ID or 'admin'")
 	amountPtr := flag.Int("amount", 0, "an amount of action")
 
 	flag.Parse()
@@ -53,18 +53,22 @@ func main() {
 }
 
 func setupUsr(p *Protocol, usr string) {
+	var keyValue reflect.Value
+	var key = ""
 	if usr == "default" {
 		log.Fatal("Undefined user")
+	} else if usr == "admin" {
+		pr := reflect.ValueOf(sdk.Cfg)
+		keyValue = reflect.Indirect(pr).FieldByName("AdminKey")
+	} else {
+		pr := reflect.ValueOf(sdk.Cfg)
+		keyValue = reflect.Indirect(pr).FieldByName("Key" + usr)
 	}
 
-	pr := reflect.ValueOf(sdk.Cfg)
-	keyValue := reflect.Indirect(pr).FieldByName("Key" + usr)
-
-	key := keyValue.Interface().(string)
-
+	key = keyValue.Interface().(string)
 	p.StZIL.UpdateWallet(key)
 
-	log.Info("Wallet has been updates to Key" + usr)
+	log.Info("Wallet has been updates to key of user=" + usr)
 }
 
 func delegate(p *Protocol, amount int) {
