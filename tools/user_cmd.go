@@ -16,6 +16,7 @@ func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	cmd := flag.String("cmd", "default", "specific command")
 	usrPtr := flag.String("usr", "default", "an user ID or 'admin'")
+	spenderPtr := flag.String("spender", "", "spender address")
 	amountPtr := flag.Int("amount", 0, "an amount of action")
 
 	flag.Parse()
@@ -23,6 +24,7 @@ func main() {
 	chain := *chainPtr
 	amount := *amountPtr
 	usr := *usrPtr
+	spender := *spenderPtr
 
 	log = NewLog()
 	config := NewConfig(chain)
@@ -45,6 +47,8 @@ func main() {
 	switch *cmd {
 	case "delegate":
 		delegate(p, amount)
+	case "increase_allowance":
+		increaseAllowance(p, spender, amount)
 	default:
 		log.Fatal("Unknown command")
 	}
@@ -82,5 +86,19 @@ func delegate(p *Protocol, amount int) {
 		log.Fatal("Delegate failed with error:" + err.Error())
 	} else {
 		log.Info("Delegate is successfully compelted. Tx: " + tx.ID)
+	}
+}
+
+func increaseAllowance(p *Protocol, spender string, amount int) {
+	if amount <= 0 {
+		log.Fatal("Amount should be greater than 0")
+	}
+
+	tx, err := p.StZIL.IncreaseAllowance(spender, utils.ToZil(amount))
+
+	if err != nil {
+		log.Fatal("IncreaseAllowance failed with error:" + err.Error())
+	} else {
+		log.Info("IncreaseAllowance is successfully compelted. Tx: " + tx.ID)
 	}
 }
