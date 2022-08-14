@@ -5,6 +5,7 @@ import (
 
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	. "github.com/avely-finance/avely-contracts/sdk/utils"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -100,10 +101,10 @@ func addLiquidity() *cli.Command {
 			}
 
 			_, err = aswapUser.aswap.AddLiquidity(
-				ctx.String(aswapUserCliFlags.ZilAmount.Name),
+				ToQA(ctx.Int(aswapUserCliFlags.ZilAmount.Name)),
 				tokenAddress,
-				ctx.String(aswapUserCliFlags.MinContributionAmount.Name),
-				ctx.String(aswapUserCliFlags.MaxTokenAmount.Name),
+				ToQA(ctx.Int(aswapUserCliFlags.MinContributionAmount.Name)),
+				ToQA(ctx.Int(aswapUserCliFlags.MaxTokenAmount.Name)),
 				deadlineBlock,
 			)
 			if err != nil {
@@ -149,9 +150,9 @@ func removeLiquidity() *cli.Command {
 			}
 			_, err = aswapUser.aswap.RemoveLiquidity(
 				tokenAddress,
-				ctx.String(aswapUserCliFlags.ContributionAmount.Name),
-				ctx.String(aswapUserCliFlags.MinZilAmount.Name),
-				ctx.String(aswapUserCliFlags.MinTokenAmount.Name),
+				ToQA(ctx.Int(aswapUserCliFlags.ContributionAmount.Name)),
+				ToQA(ctx.Int(aswapUserCliFlags.MinZilAmount.Name)),
+				ToQA(ctx.Int(aswapUserCliFlags.MinTokenAmount.Name)),
 				deadlineBlock,
 			)
 			if err != nil {
@@ -197,9 +198,9 @@ func swapExactZilForTokens() *cli.Command {
 			}
 
 			_, err = aswapUser.aswap.SwapExactZILForTokens(
-				ctx.String(aswapUserCliFlags.ZilAmount.Name),
+				ToQA(ctx.Int(aswapUserCliFlags.ZilAmount.Name)),
 				tokenAddress,
-				ctx.String(aswapUserCliFlags.MinTokenAmount.Name),
+				ToQA(ctx.Int(aswapUserCliFlags.MinTokenAmount.Name)),
 				ctx.String(aswapUserCliFlags.RecipientAddress.Name),
 				deadlineBlock,
 			)
@@ -247,8 +248,8 @@ func swapExactTokensForZil() *cli.Command {
 
 			_, err = aswapUser.aswap.SwapExactTokensForZIL(
 				tokenAddress,
-				ctx.String(aswapUserCliFlags.TokenAmount.Name),
-				ctx.String(aswapUserCliFlags.MinZilAmount.Name),
+				ToQA(ctx.Int(aswapUserCliFlags.TokenAmount.Name)),
+				ToQA(ctx.Int(aswapUserCliFlags.MinZilAmount.Name)),
 				ctx.String(aswapUserCliFlags.RecipientAddress.Name),
 				deadlineBlock,
 			)
