@@ -146,6 +146,7 @@ func (tr *Transitions) RunAll() {
 	tr.Transfer()
 	tr.TransferFrom()
 	tr.ASwap()
+	tr.ASwapGolden()
 	tr.MultisigWalletTests()
 
 	if !IsCI() {
