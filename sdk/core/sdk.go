@@ -82,6 +82,9 @@ func (sdk *AvelySDK) GetBlockHeight() int {
 
 func (sdk *AvelySDK) GetBalance(addr string) string {
 	provider := sdk.InitProvider()
+	if addr[0:2] == "0x" {
+		addr = addr[2:]
+	}
 	balAndNonce, err := provider.GetBalance(addr)
 	if err != nil {
 		panic(err)
