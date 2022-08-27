@@ -204,15 +204,12 @@ func (tr *Transitions) ASwapGolden() {
 	recordBalance(-1, nil)
 
 	//1) user 1 add liquidity 1000:1000
-	user1Balance, _ := new(big.Int).SetString(sdk.GetBalance(Addr1), 10)
 	tx, _ := AssertSuccess(Stzil.WithUser(Key1).IncreaseAllowance(Aswap.Contract.Addr, liqPair.stzil))
-	user1TxFee := getTxFee(tx)
 	recordBalance(1, tx)
 	//allowances[_sender][spender] := new_allowance;
 	AssertEqual(Field(Stzil, "allowances", Addr1, Aswap.Addr), liqPair.stzil)
 	//func (a *Aswap) AddLiquidity(_amount, tokenAddr, minContributionAmount, tokenAmount string, blockNum int)
 	tx, _ = AssertSuccess(Aswap.WithUser(Key1).AddLiquidity(liqPair.zil, Stzil.Contract.Addr, liqPair.zil, liqPair.stzil, blockNum))
-	user1TxFee = user1TxFee.Add(user1TxFee, getTxFee(tx))
 	recordBalance(1, tx)
 	//pools[Aswap.addr] := [zil, stzil];
 	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "0"), liqPair.zil)
@@ -222,12 +219,10 @@ func (tr *Transitions) ASwapGolden() {
 	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(1000))
 
 	//2) user 2 swap 500 stzil for zil
-	user2Balance, _ := new(big.Int).SetString(sdk.GetBalance(Addr2), 10)
 	amountIn := calcSwapInputZilForTokens(ToQA(500))
 	expectedSwapOutput := calcSwapOutputZilForTokens(amountIn)
 	minTokenAmount := "1"
 	tx, _ = AssertSuccess(Aswap.WithUser(Key2).SwapExactZILForTokens(amountIn, Stzil.Contract.Addr, minTokenAmount, Addr2, blockNum+1))
-	user2TxFee := getTxFee(tx)
 	recordBalance(2, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
@@ -242,12 +237,10 @@ func (tr *Transitions) ASwapGolden() {
 	user2StzilBalanceStr := expectedSwapOutput
 
 	//3a) user 3 swap 250 stzil for zil
-	user3Balance, _ := new(big.Int).SetString(sdk.GetBalance(Addr3), 10)
 	amountIn = calcSwapInputZilForTokens(ToQA(250))
 	expectedSwapOutput = calcSwapOutputZilForTokens(amountIn)
 	minTokenAmount = "1"
 	tx, _ = AssertSuccess(Aswap.WithUser(sdk.Cfg.Key3).SwapExactZILForTokens(amountIn, Stzil.Contract.Addr, minTokenAmount, Addr3, blockNum+1))
-	user3TxFee := getTxFee(tx)
 	recordBalance(3, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
@@ -263,13 +256,11 @@ func (tr *Transitions) ASwapGolden() {
 	//3b) user 3 add 250 stzil to pool
 	pairIn := calcAddLiquidity(LiquidityPair{stzil: ToQA(250)})
 	tx, _ = AssertSuccess(Stzil.WithUser(Key3).IncreaseAllowance(Aswap.Contract.Addr, pairIn.stzil))
-	user3TxFee = user3TxFee.Add(user3TxFee, getTxFee(tx))
 	recordBalance(3, tx)
 	//allowances[_sender][spender] := new_allowance;
 	AssertEqual(Field(Stzil, "allowances", Addr3, Aswap.Addr), pairIn.stzil)
 	//func (a *Aswap) AddLiquidity(_amount, tokenAddr, minContributionAmount, tokenAmount string, blockNum int)
 	tx, _ = AssertSuccess(Aswap.WithUser(Key3).AddLiquidity(pairIn.zil, Stzil.Addr, "1", pairIn.stzil, blockNum+1))
-	user3TxFee = user3TxFee.Add(user3TxFee, getTxFee(tx))
 	recordBalance(3, tx)
 	AssertEqual(Stzil.BalanceOf(Addr3).String(), "0")
 	//pools[Aswap.addr] := [zil, stzil];
@@ -282,7 +273,6 @@ func (tr *Transitions) ASwapGolden() {
 	expectedSwapOutput = calcSwapOutputZilForTokens(amountIn)
 	minTokenAmount = "1"
 	tx, _ = AssertSuccess(Aswap.WithUser(Key2).SwapExactZILForTokens(amountIn, Stzil.Contract.Addr, minTokenAmount, Addr2, blockNum+1))
-	user2TxFee = user2TxFee.Add(user2TxFee, getTxFee(tx))
 	recordBalance(2, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
@@ -303,7 +293,6 @@ func (tr *Transitions) ASwapGolden() {
 	pairOut := calcRemoveLiquidityOutput(Addr1, ToQA(1000))
 	//RemoveLiquidity(tokenAddress, contributionAmount, minZilAmount, minTokenAmount string, blockNum int) (*transaction.Transaction, error)
 	tx, _ = AssertSuccess(Aswap.WithUser(Key1).RemoveLiquidity(Stzil.Addr, ToQA(1000), "1", "1", blockNum+1))
-	user1TxFee = user1TxFee.Add(user1TxFee, getTxFee(tx))
 	recordBalance(1, tx)
 	//data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 	//GetLog().Info(string(data))
@@ -322,7 +311,6 @@ func (tr *Transitions) ASwapGolden() {
 	user3Contribution := Field(Aswap, "balances", Addr3, Stzil.Addr)
 	//RemoveLiquidity(tokenAddress, contributionAmount, minZilAmount, minTokenAmount string, blockNum int) (*transaction.Transaction, error)
 	tx, _ = AssertSuccess(Aswap.WithUser(Key3).RemoveLiquidity(Stzil.Addr, user3Contribution, "1", "1", blockNum+1))
-	user3TxFee = user3TxFee.Add(user3TxFee, getTxFee(tx))
 	recordBalance(3, tx)
 	//data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 	//GetLog().Info(string(data))
@@ -335,32 +323,6 @@ func (tr *Transitions) ASwapGolden() {
 	})
 	AssertEqual(Stzil.BalanceOf(Addr1).String(), pairOut3.stzil)
 	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), "0")
-
-	curBalance1, _ := new(big.Int).SetString(sdk.GetBalance(Addr1), 10)
-	profit1 := new(big.Int).Sub(curBalance1, user1Balance)
-	profit1 = profit1.Add(profit1, user1TxFee)
-
-	GetLog().Info("curBalance1=" + curBalance1.String())
-	GetLog().Info("user1Balance=" + user1Balance.String())
-	GetLog().Info("user1TxFee=" + user1TxFee.String())
-
-	//panic(1)
-
-	curBalance2, _ := new(big.Int).SetString(sdk.GetBalance(Addr2), 10)
-	profit2 := new(big.Int).Sub(curBalance2, user2Balance)
-	profit2 = profit2.Add(profit2, user2TxFee)
-
-	GetLog().Info("curBalance2=" + curBalance2.String())
-	GetLog().Info("user2Balance=" + user2Balance.String())
-	GetLog().Info("user2TxFee=" + user2TxFee.String())
-
-	curBalance3, _ := new(big.Int).SetString(sdk.GetBalance(Addr3), 10)
-	profit3 := new(big.Int).Sub(curBalance3, user3Balance)
-	profit3 = profit3.Add(profit3, user3TxFee)
-
-	GetLog().Info("curBalance3=" + curBalance3.String())
-	GetLog().Info("user3Balance=" + user3Balance.String())
-	GetLog().Info("user3TxFee=" + user3TxFee.String())
 
 	fmt.Println(recapBalance())
 }
