@@ -250,7 +250,7 @@ func (tr *Transitions) ASwapGolden() {
 	exactZil := calcInputSwapExactZilForTokens(ToQA(250))
 	expectedSwapOutput = calcOutputSwapExactZilForTokens(exactZil)
 	minTokenAmount := "1"
-	tx, _ = AssertSuccess(Aswap.WithUser(sdk.Cfg.Key3).SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr3, blockNum+1))
+	tx, _ = AssertSuccess(Aswap.WithUser(Key3).SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr3, blockNum+1))
 	recordBalance(3, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
