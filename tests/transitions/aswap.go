@@ -196,14 +196,15 @@ func (tr *Transitions) ASwapGolden() {
 	tr.setupGoldenFlow()
 	blockNum := Proto.GetBlockHeight()
 
-	//mint some stzil and transfer it to user 1
-	liqPair := LiquidityPair{zil: ToQA(1000), stzil: ToQA(1000)}
-	AssertSuccess(Stzil.WithUser(sdk.Cfg.AdminKey).DelegateStake(liqPair.zil))
-	AssertSuccess(Stzil.WithUser(sdk.Cfg.AdminKey).Transfer(Addr1, liqPair.stzil))
+	//mint some stzil and transfer 1000stzil to user 1, 500stzil to user 2
+	AssertSuccess(Stzil.WithUser(sdk.Cfg.AdminKey).DelegateStake(ToQA(1500)))
+	AssertSuccess(Stzil.WithUser(sdk.Cfg.AdminKey).Transfer(Addr1, ToQA(1000)))
+	AssertSuccess(Stzil.WithUser(sdk.Cfg.AdminKey).Transfer(Addr2, ToQA(500)))
 
 	recordBalance(-1, nil)
 
 	//1) user 1 add liquidity 1000:1000
+	liqPair := LiquidityPair{zil: ToQA(1000), stzil: ToQA(1000)}
 	tx, _ := AssertSuccess(Stzil.WithUser(Key1).IncreaseAllowance(Aswap.Contract.Addr, liqPair.stzil))
 	recordBalance(1, tx)
 	//allowances[_sender][spender] := new_allowance;
@@ -218,40 +219,49 @@ func (tr *Transitions) ASwapGolden() {
 	AssertEqual(Stzil.BalanceOf(Addr1).String(), "0")
 	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(1000))
 
-	//2) user 2 swap 500 stzil for zil
-	amountIn := calcSwapInputZilForTokens(ToQA(500))
-	expectedSwapOutput := calcSwapOutputZilForTokens(amountIn)
-	minTokenAmount := "1"
-	tx, _ = AssertSuccess(Aswap.WithUser(Key2).SwapExactZILForTokens(amountIn, Stzil.Contract.Addr, minTokenAmount, Addr2, blockNum+1))
+	//2) user 2 sell 500 stzil to swap for zil
+	exactStzil := ToQA(500)
+	tx, _ = AssertSuccess(Stzil.WithUser(Key2).IncreaseAllowance(Aswap.Contract.Addr, exactStzil))
+	recordBalance(2, tx)
+	expectedSwapOutput, treasuryFee := calcOutputSwapExactTokensForZil(exactStzil)
+	minZilAmount := "1"
+	//SwapExactTokensForZIL(tokenAddress, tokenAmount, minZilAmount, recipientAddress string, blockNum int)
+	tx, _ = AssertSuccess(Aswap.WithUser(Key2).SwapExactTokensForZIL(Stzil.Contract.Addr, exactStzil, minZilAmount, Addr2, blockNum+1))
 	recordBalance(2, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
 		"AddFunds",
 		Field(Aswap, "treasury_address"),
-		calcTreasuryReward(amountIn),
+		treasuryFee,
 		ParamsMap{},
 	})
-	AssertEqual(Stzil.BalanceOf(Addr2).String(), ToQA(500))
-	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), ToQA(500))
-	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(500))
-	user2StzilBalanceStr := expectedSwapOutput
+	AssertTransition(tx, Transition{
+		Aswap.Addr, //sender
+		"AddFunds",
+		Addr2,
+		expectedSwapOutput,
+		ParamsMap{},
+	})
+	AssertEqual(Stzil.BalanceOf(Addr2).String(), "0")
+	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), ToQA(1500))
+	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(1500))
 
-	//3a) user 3 swap 250 stzil for zil
-	amountIn = calcSwapInputZilForTokens(ToQA(250))
-	expectedSwapOutput = calcSwapOutputZilForTokens(amountIn)
-	minTokenAmount = "1"
-	tx, _ = AssertSuccess(Aswap.WithUser(sdk.Cfg.Key3).SwapExactZILForTokens(amountIn, Stzil.Contract.Addr, minTokenAmount, Addr3, blockNum+1))
+	//3a) user 3 buy 250 stzil from swap for zil
+	exactZil := calcInputSwapExactZilForTokens(ToQA(250))
+	expectedSwapOutput = calcOutputSwapExactZilForTokens(exactZil)
+	minTokenAmount := "1"
+	tx, _ = AssertSuccess(Aswap.WithUser(sdk.Cfg.Key3).SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr3, blockNum+1))
 	recordBalance(3, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
 		"AddFunds",
 		Field(Aswap, "treasury_address"),
-		calcTreasuryReward(amountIn),
+		calcTreasuryReward(exactZil),
 		ParamsMap{},
 	})
 	AssertEqual(Stzil.BalanceOf(Addr3).String(), ToQA(250))
-	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(250))
-	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), ToQA(250))
+	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(1250))
+	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), ToQA(1250))
 
 	//3b) user 3 add 250 stzil to pool
 	pairIn := calcAddLiquidity(LiquidityPair{stzil: ToQA(250)})
@@ -265,34 +275,32 @@ func (tr *Transitions) ASwapGolden() {
 	AssertEqual(Stzil.BalanceOf(Addr3).String(), "0")
 	//pools[Aswap.addr] := [zil, stzil];
 	AssertEqual(Stzil.BalanceOf(Addr3).String(), "0")
-	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(500))
-	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), ToQA(500))
+	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(1500))
+	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), ToQA(1500))
 
 	//4) user 2 "buy" 100 stzil at swap
-	amountIn = calcSwapInputZilForTokens(ToQA(100))
-	expectedSwapOutput = calcSwapOutputZilForTokens(amountIn)
+	exactZil = calcInputSwapExactZilForTokens(ToQA(100))
+	expectedSwapOutput = calcOutputSwapExactZilForTokens(exactZil)
 	minTokenAmount = "1"
-	tx, _ = AssertSuccess(Aswap.WithUser(Key2).SwapExactZILForTokens(amountIn, Stzil.Contract.Addr, minTokenAmount, Addr2, blockNum+1))
+	tx, _ = AssertSuccess(Aswap.WithUser(Key2).SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr2, blockNum+1))
 	recordBalance(2, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
 		"AddFunds",
 		Field(Aswap, "treasury_address"),
-		calcTreasuryReward(amountIn),
+		calcTreasuryReward(exactZil),
 		ParamsMap{},
 	})
-	user2StzilBalance, _ := new(big.Int).SetString(user2StzilBalanceStr, 10)
+	user2StzilBalance := big.NewInt(0)
 	newOutput, _ := new(big.Int).SetString(expectedSwapOutput, 10)
 	user2StzilBalance = user2StzilBalance.Add(user2StzilBalance, newOutput)
 	AssertEqual(Stzil.BalanceOf(Addr2).String(), user2StzilBalance.String())
-	AssertEqual(Stzil.BalanceOf(Addr2).String(), ToQA(600))
-	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), ToQA(400))
-	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), ToQA(400))
 
 	//5) user1 remove liquidity
-	pairOut := calcRemoveLiquidityOutput(Addr1, ToQA(1000))
+	contribution := ToQA(1000)
+	pairOut := calcRemoveLiquidityOutput(Addr1, contribution)
 	//RemoveLiquidity(tokenAddress, contributionAmount, minZilAmount, minTokenAmount string, blockNum int) (*transaction.Transaction, error)
-	tx, _ = AssertSuccess(Aswap.WithUser(Key1).RemoveLiquidity(Stzil.Addr, ToQA(1000), "1", "1", blockNum+1))
+	tx, _ = AssertSuccess(Aswap.WithUser(Key1).RemoveLiquidity(Stzil.Addr, contribution, "1", "1", blockNum+1))
 	recordBalance(1, tx)
 	//data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 	//GetLog().Info(string(data))
@@ -303,8 +311,14 @@ func (tr *Transitions) ASwapGolden() {
 		pairOut.zil,
 		ParamsMap{},
 	})
+	AssertTransition(tx, Transition{
+		Aswap.Addr, //sender
+		"Transfer",
+		Stzil.Addr,
+		"0",
+		ParamsMap{"to": Addr1, "amount": pairOut.stzil},
+	})
 	AssertEqual(Stzil.BalanceOf(Addr1).String(), pairOut.stzil)
-	AssertEqual(Stzil.BalanceOf(Addr1).String(), ToQA(200))
 
 	//6) user3 remove liquidity
 	pairOut3 := calcRemoveLiquidityOutput(Addr3, "all")
@@ -321,7 +335,6 @@ func (tr *Transitions) ASwapGolden() {
 		pairOut3.zil,
 		ParamsMap{},
 	})
-	AssertEqual(Stzil.BalanceOf(Addr1).String(), pairOut3.stzil)
 	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), "0")
 
 	fmt.Println(recapBalance())
@@ -430,13 +443,14 @@ func calcRemoveLiquidityOutput(senderAddr, contribution string) LiquidityPair {
 	return LiquidityPair{zil: zilAmount.String(), stzil: stzilAmount.String()}
 }
 
-func calcSwapOutputZilForTokens(amntIn string) string {
+func calcOutputSwapExactZilForTokens(amntIn string) string {
 	//1) substract treasury fee
 	amountIn, _ := new(big.Int).SetString(amntIn, 10)
 	treasuryFeeCalculated, _ := new(big.Int).SetString(calcTreasuryReward(amntIn), 10)
 	afterTreasuryFee := new(big.Int).Sub(amountIn, treasuryFeeCalculated)
 
 	//2) constant product formula
+	//see let output_for
 	zilReserve, _ := new(big.Int).SetString(Field(Aswap, "pools", Stzil.Addr, "arguments", "0"), 10)
 	tokenReserve, _ := new(big.Int).SetString(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), 10)
 	lpFee, _ := new(big.Int).SetString(Field(Aswap, "liquidity_fee"), 10)
@@ -451,7 +465,48 @@ func calcSwapOutputZilForTokens(amntIn string) string {
 	return amountOut.String()
 }
 
-func calcSwapInputZilForTokens(amntOut string) string {
+/*
+let output_for =
+  fun (input_amount: Uint128) =>
+  fun (input_reserve: Uint128) =>
+  fun (output_reserve: Uint128) =>
+  fun (fee: Uint256) =>
+    let exact_amount_u256 = grow_u128 input_amount in
+    let input_reserve_u256 = grow_u128 input_reserve in
+    let output_reserve_u256 = grow_u128 output_reserve in
+    let exact_amount_after_fee = builtin mul exact_amount_u256 fee in
+    let numerator = builtin mul exact_amount_after_fee output_reserve_u256 in
+    let input_reserve_after_fee = builtin mul input_reserve_u256 fee_demon in
+    let denominator = builtin add input_reserve_after_fee exact_amount_after_fee in
+      builtin div numerator denominator
+*/
+func calcOutputSwapExactTokensForZil(amntIn string) (string, string) {
+	//1) constant product formula
+	//input_amount: exactTokens
+	//input_reserve: total tokens
+	//output reserve: total zil
+	exactAmount, _ := new(big.Int).SetString(amntIn, 10)
+	zilReserve, _ := new(big.Int).SetString(Field(Aswap, "pools", Stzil.Addr, "arguments", "0"), 10)
+	tokenReserve, _ := new(big.Int).SetString(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), 10)
+	lpFee, _ := new(big.Int).SetString(Field(Aswap, "liquidity_fee"), 10)
+	lpFeeDenom, _ := new(big.Int).SetString("10000", 10)
+	afterLPFee := new(big.Int).Mul(exactAmount, lpFee)
+	nominator := new(big.Int).Mul(afterLPFee, zilReserve)
+
+	denom := new(big.Int).Mul(lpFeeDenom, tokenReserve)
+	denom = denom.Add(denom, afterLPFee)
+
+	amountOut := new(big.Int).Div(nominator, denom)
+
+	//2) substract treasury fee, SwapOptions, TokenToZil =>...
+	//treasury_rewards = get_amount_with_fee trea_fee output_zil_amount_u128;
+	//output_zil_amount_u128 = builtin sub output_zil_amount_u128 treasury_rewards;
+	treasuryFeeCalculated, _ := new(big.Int).SetString(calcTreasuryReward(amountOut.String()), 10)
+	afterTreasuryFee := new(big.Int).Sub(amountOut, treasuryFeeCalculated)
+	return afterTreasuryFee.String(), treasuryFeeCalculated.String()
+}
+
+func calcInputSwapExactZilForTokens(amntOut string) string {
 	amountOut, _ := new(big.Int).SetString(amntOut, 10)
 
 	treasuryFee, _ := new(big.Int).SetString(Field(Aswap, "treasury_fee"), 10)
