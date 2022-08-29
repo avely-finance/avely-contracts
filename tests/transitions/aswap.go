@@ -551,21 +551,25 @@ type BalanceRecord struct {
 	TxTag      string
 	ASwapZil   *big.Int
 	ASwapStzil *big.Int
+	StzilZil   *big.Int
+	StzilStzil *big.Int
 	Balances   []UserBalance
 }
 type BalanceSheet []BalanceRecord
 
 func recapBalance() string {
-	res := fmt.Sprintf("%22s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|\n",
-		"Tag", "AZil", "AStzil",
+	res := fmt.Sprintf("%22s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|%6s|\n",
+		"Tag", "AZil", "AStzil", "SZil", "SStzil",
 		"1-ΔZil", "1-Zil", "1Δ-ST", "1-ST", "1-ΔFee", "1-Fee",
 		"2-ΔZil", "2-Zil", "2Δ-ST", "2-ST", "2-ΔFee", "2-Fee",
 		"3-ΔZil", "3-Zil", "3Δ-ST", "3-ST", "3-ΔFee", "3-Fee",
 	)
 	for _, record := range Archive {
-		res += fmt.Sprintf("%22s|%6s|%6s|", record.TxTag,
+		res += fmt.Sprintf("%22s|%6s|%6s|%6s|%6s|", record.TxTag,
 			FromQA(record.ASwapZil.String()),
 			FromQA(record.ASwapStzil.String()),
+			FromQA(record.StzilZil.String()),
+			FromQA(record.StzilStzil.String()),
 		)
 		for i := 1; i <= 3; i++ {
 			res += fmt.Sprintf("%6s|%6s|%6s|%6s|%6s|%6s|",
@@ -601,10 +605,14 @@ func recordBalance(userId int, tx *transaction.Transaction) {
 		aswapStzil, _ = new(big.Int).SetString(Field(Aswap, "pools", Stzil.Addr, "arguments", "1"), 10)
 	}
 
+	stzilZil, _ := new(big.Int).SetString(Field(Stzil, "totalstakeamount"), 10)
+	stzilStzil, _ := new(big.Int).SetString(Field(Stzil, "total_supply"), 10)
 	balanceRecord := BalanceRecord{
 		TxTag:      tag,
 		ASwapZil:   aswapZil,
 		ASwapStzil: aswapStzil,
+		StzilZil:   stzilZil,
+		StzilStzil: stzilStzil,
 		Balances:   make([]UserBalance, 4),
 	}
 
