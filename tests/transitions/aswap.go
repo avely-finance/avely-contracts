@@ -319,6 +319,7 @@ func (tr *Transitions) ASwapGolden() {
 		ParamsMap{"to": Addr1, "amount": pairOut.stzil},
 	})
 	AssertEqual(Stzil.BalanceOf(Addr1).String(), pairOut.stzil)
+	AssertEqual(Field(Aswap, "balances", Addr1), "")
 
 	//6) user3 remove liquidity
 	pairOut3 := calcRemoveLiquidityOutput(Addr3, "all")
@@ -336,6 +337,8 @@ func (tr *Transitions) ASwapGolden() {
 		ParamsMap{},
 	})
 	AssertEqual(Stzil.BalanceOf(Aswap.Addr).String(), "0")
+	AssertEqual(Field(Aswap, "balances", Addr3), "")
+	AssertEqual(Field(Aswap, "balances"), "{}")
 
 	fmt.Println(recapBalance())
 }
