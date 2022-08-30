@@ -618,6 +618,20 @@ procedure SwapOptions(
 end
 (* iterations *)
 
+procedure ClearBalancesMapIfEmpty(address: ByStr20)
+  o_user_balances <- balances[address];
+  match o_user_balances with
+  | Some var_user_balances =>
+    map_size = builtin size var_user_balances;
+    is_map_empty = builtin eq map_size zero32;
+    match is_map_empty with
+    | True => (* empty map *)
+      delete balances[address]
+    | False => (* contains other records *)
+    end
+  | None => (* nothing to delete *)
+  end
+end
 
 (* user interactions *)
 transition AddLiquidity(
@@ -799,6 +813,7 @@ transition RemoveLiquidity(
         end
       end;
 
+      ClearBalancesMapIfEmpty _sender;
       CallTransfer _sender token_amount_u128 token_address;
       AddFunds _sender zil_amount_u128;
 
