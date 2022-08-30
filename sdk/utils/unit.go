@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math/big"
 )
 
 const qa = "000000000000"
@@ -19,4 +20,10 @@ func ToStZil(amount int) string {
 
 func ToQA(amount int) string {
 	return ToZil(amount)
+}
+
+func FromQA(qa string) string {
+	QA, _ := new(big.Int).SetString(qa, 10)
+	ZIL := QA.Div(QA, big.NewInt(1000000000000))
+	return ZIL.String()
 }
