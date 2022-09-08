@@ -99,7 +99,7 @@ func (tr *Transitions) NextCycle(p *contracts.Protocol) {
 	zimplSsnList := p.Zimpl.GetSsnList()
 	ssnRewardFactor := make(map[string]string)
 	for _, ssn := range zimplSsnList {
-		ssnRewardFactor[ssn] = "100"
+		ssnRewardFactor[ssn] = utils.ToQA(400)
 	}
 	ssnRewardFactor[sdk.Cfg.StZilSsnAddress] = sdk.Cfg.StZilSsnRewardShare
 	AssertSuccess(p.Zproxy.AssignStakeRewardList(ssnRewardFactor, utils.ToQA(1000)))
