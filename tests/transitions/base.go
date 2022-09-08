@@ -7,6 +7,7 @@ import (
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -101,7 +102,7 @@ func (tr *Transitions) NextCycle(p *contracts.Protocol) {
 		ssnRewardFactor[ssn] = "100"
 	}
 	ssnRewardFactor[sdk.Cfg.StZilSsnAddress] = sdk.Cfg.StZilSsnRewardShare
-	AssertSuccess(p.Zproxy.AssignStakeRewardList(ssnRewardFactor, "10000"))
+	AssertSuccess(p.Zproxy.AssignStakeRewardList(ssnRewardFactor, utils.ToQA(1000)))
 
 	p.Zproxy.Contract.Wallet = prevWallet
 }
