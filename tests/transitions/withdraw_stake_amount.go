@@ -79,6 +79,12 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+10))
 	AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Addr2), ToStZil(10))
 
+	AssertEvent(txn, Event{p.StZIL.Addr, "Burnt", ParamsMap{
+		"burner":       p.StZIL.Addr,
+		"burn_account": sdk.Cfg.Addr2,
+		"amount":       ToStZil(5),
+	}})
+
 	withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
 
 	AssertEqual(withdrawal.TokenAmount.String(), ToStZil(5))

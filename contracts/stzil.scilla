@@ -788,7 +788,12 @@ procedure UpdateTokenBalance(initiator: ByStr20, stake_amt: Uint128)
   end;
 
   IncreaseTotalStakeAmt stake_amt;
-  IncreaseTotalSupplyAmt token_amt
+  IncreaseTotalSupplyAmt token_amt;
+
+  (* emit mint event *)
+  e = { _eventname: "Minted"; minter: _this_address; recipient: initiator; amount: token_amt };
+  event e
+
 end
 
 procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Uint128)
@@ -852,6 +857,10 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, from_ssn: ByStr20, withdraw_tok
     (* Subtract withdrawn amounts from total counters *)
     DecreaseTotalStakeAmt withdraw_stake_amt;
     DecreaseTotalSupplyAmt withdraw_token_amt;
+
+    (* emit burn event *)
+    e = { _eventname: "Burnt"; burner: _this_address; burn_account: initiator; amount: withdraw_token_amt };
+    event e;
 
     (* call Holder contract *)
     HolderWithdrawStakeAmt from_ssn withdraw_stake_amt
