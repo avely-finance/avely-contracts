@@ -26,7 +26,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	// Success delegate
 	ssnIn := p.GetSsnAddressForInput()
-	AssertSuccess(p.StZIL.DelegateStake(ToZil(20)))
+	tx, _ = AssertSuccess(p.StZIL.DelegateStake(ToZil(20)))
 
 	lastrewardcycle := strconv.Itoa(p.Zimpl.GetLastRewardCycle())
 
@@ -35,6 +35,11 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	AssertEqual(Field(p.StZIL, "totalstakeamount"), ToZil(totalSsnInitialDelegateZil+20))
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+20))
+	AssertEvent(tx, Event{p.StZIL.Addr, "Minted", ParamsMap{
+		"minter":    p.StZIL.Addr,
+		"recipient": sdk.Cfg.Addr1,
+		"amount":    ToStZil(20),
+	}})
 
 	if totalSsnInitialDelegateZil == 0 {
 		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), "")
