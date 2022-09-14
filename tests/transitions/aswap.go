@@ -1,17 +1,12 @@
 package transitions
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
-	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
-	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	"github.com/Zilliqa/gozilliqa-sdk/contract"
-	core2 "github.com/Zilliqa/gozilliqa-sdk/core"
-	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
@@ -49,6 +44,13 @@ t.LogDebug()
 //t.AssertEqual(balance1_before, fmt.Sprintf("%s", needed))*/
 
 func (tr *Transitions) ASwap() {
+	aswapBasic(tr)
+	aswapGolden(tr)
+	aswapMultisig(tr)
+	aswapOwnerOnly(tr)
+}
+
+func aswapBasic(tr *Transitions) {
 	Start("Swap via ASwap")
 
 	p := tr.DeployAndUpgrade()
@@ -125,6 +127,68 @@ func (tr *Transitions) ASwap() {
 	AssertEqual(Field(aswap, "owner"), new_owner_addr)
 }
 
+func aswapMultisig(tr *Transitions) {
+	txIdLocal := 0
+
+	//deploy multisig
+	owner := sdk.Cfg.Key1
+	owners := []string{sdk.Cfg.Addr1}
+	signCount := 1
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	//deploy aswap, set owner to multisig contract
+	init_owner := multisig.Addr
+	aswap := tr.DeployASwap(init_owner)
+
+	//test ASwap.TogglePause
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitTogglePauseTransaction(aswap.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "pause"), "1")
+
+	//test ASwap.SetTreasuryFee()
+	txIdLocal++
+	new_fee := "12345"
+	AssertEqual(Field(aswap, "treasury_fee"), "500")
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
+
+	//test ASwap.SetLiquidityFee()
+	txIdLocal++
+	new_fee = "23456"
+	AssertEqual(Field(aswap, "liquidity_fee"), "10000")
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetLiquidityFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "liquidity_fee"), new_fee)
+
+	//test ASwap.SetTreasuryAddress()
+	txIdLocal++
+	new_address := sdk.Cfg.Addr3
+	AssertEqual(Field(aswap, "treasury_address"), core.ZeroAddr)
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "treasury_address"), new_address)
+
+	//deploy other multisig contract
+	newSignCount := 1
+	newOwner := sdk.Cfg.Key2
+	newOwners := []string{sdk.Cfg.Addr2}
+	newMultisig := tr.DeployMultisigWallet(newOwners, newSignCount)
+
+	//test ASwap.ChangeOwner()
+	txIdLocal++
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(aswap.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "staging_owner"), newMultisig.Addr)
+
+	//test ASwap.ClaimOwner()
+	//first transaction id is 0 for newly deployed multisig contract
+	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(aswap.Addr))
+	AssertMultisigSuccess(newMultisig.WithUser(newOwner).ExecuteTransaction(0))
+	AssertEqual(Field(aswap, "owner"), newMultisig.Addr)
+
+}
+
 func (tr *Transitions) setupGoldenFlow() (*contracts.Protocol, *contracts.ASwap, *contracts.StZIL) {
 
 	Proto = tr.DeployAndUpgrade()
@@ -180,14 +244,14 @@ func (tr *Transitions) setupGoldenFlow() (*contracts.Protocol, *contracts.ASwap,
 	Addresses[3] = Addr3
 	Archive = make([]BalanceRecord, 0)
 
-	addFunds(Addr1, ToQA(5000))
-	addFunds(Addr2, ToQA(5000))
-	addFunds(Addr3, ToQA(5000))
+	sdk.AddFunds(Addr1, ToQA(5000))
+	sdk.AddFunds(Addr2, ToQA(5000))
+	sdk.AddFunds(Addr3, ToQA(5000))
 
 	return Proto, Aswap, Stzil
 }
 
-func (tr *Transitions) ASwapGolden() {
+func aswapGolden(tr *Transitions) {
 
 	//TODO: to make this test suite completely correct, we need to maintain pools/balances/contributions here
 
@@ -341,43 +405,6 @@ func (tr *Transitions) ASwapGolden() {
 	AssertEqual(Field(Aswap, "balances"), "{}")
 
 	fmt.Println(recapBalance())
-}
-
-func addFunds(recipient, amount string) (*transaction.Transaction, error) {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(sdk.Cfg.AdminKey)
-	provider := provider2.NewProvider(sdk.Cfg.Api.HttpUrl)
-
-	gasPrice, _ := provider.GetMinimumGasPrice()
-
-	if recipient[0:2] == "0x" {
-		recipient = recipient[2:]
-	}
-
-	b32, _ := bech32.ToBech32Address("0x" + recipient)
-
-	tx := &transaction.Transaction{
-		Version:      strconv.FormatInt(int64(util.Pack(sdk.Cfg.ChainId, 1)), 10),
-		SenderPubKey: "",
-		ToAddr:       b32,
-		Amount:       amount,
-		GasPrice:     gasPrice,
-		GasLimit:     "40000",
-		Code:         "",
-		Data:         "",
-		Priority:     false,
-		Nonce:        "",
-	}
-	wallet.Sign(tx, *provider)
-	rsp, _ := provider.CreateTransaction(tx.ToTransactionPayload())
-	resMap := rsp.Result.(map[string]interface{})
-	hash := resMap["TranID"].(string)
-	//fmt.Printf("hash is %s\n", hash)
-	tx.Confirm(hash, 1000, 0, provider)
-	if tx.Status == core2.Confirmed {
-		return tx, nil
-	}
-	return nil, errors.New("Can't confirm transaction")
 }
 
 func getTxFee(tx *transaction.Transaction) *big.Int {
@@ -652,4 +679,29 @@ func recordBalance(userId int, tx *transaction.Transaction) {
 
 	}
 	Archive = append(Archive, balanceRecord)
+}
+
+func aswapOwnerOnly(tr *Transitions) {
+
+	Start("aswapOwnerOnly")
+
+	init_owner_addr := sdk.Cfg.Admin
+	aswap := tr.DeployASwap(init_owner_addr)
+	// Use non-owner user for Aswap, expecting errors
+	aswap.UpdateWallet(sdk.Cfg.Key2)
+
+	tx, _ := aswap.SetLiquidityFee("12345")
+	AssertASwapError(tx, -1)
+
+	tx, _ = aswap.SetTreasuryFee("12345")
+	AssertASwapError(tx, -1)
+
+	tx, _ = aswap.SetTreasuryAddress(core.ZeroAddr)
+	AssertASwapError(tx, -1)
+
+	tx, _ = aswap.TogglePause()
+	AssertASwapError(tx, -1)
+
+	tx, _ = aswap.ChangeOwner(core.ZeroAddr)
+	AssertASwapError(tx, -1)
 }

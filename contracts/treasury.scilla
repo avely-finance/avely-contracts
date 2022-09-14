@@ -1,0 +1,123 @@
+scilla_version 0
+
+import IntUtils
+
+(***************************************************)
+(*               Associated library                *)
+(***************************************************)
+
+library AvelyTreasuryLib
+
+type Error =
+  | InsufficientFunds
+  | OwnerValidationFailed
+  | StagingOwnerNotExists
+  | StagingOwnerValidationFailed
+
+let make_error =
+  fun (result: Error) =>
+    let result_code =
+      match result with
+      | InsufficientFunds                => "InsufficientFunds"
+      | OwnerValidationFailed            => "OwnerValidationFailed"
+      | StagingOwnerNotExists            => "StagingOwnerNotExists"
+      | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
+      end
+    in
+    { _exception: "Error"; code: result_code }
+
+let one_msg =
+  fun (msg : Message) =>
+    let nil_msg = Nil {Message} in
+      Cons {Message} msg nil_msg
+
+(***************************************************)
+(*             The contract definition             *)
+(***************************************************)
+
+contract AvelyTreasury
+(
+  init_owner: ByStr20
+)
+
+field owner         : ByStr20 = init_owner
+field staging_owner : Option ByStr20 = None {ByStr20}
+
+
+(************************************************************)
+(*              Procedures                                  *)
+(************************************************************)
+
+procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
+end
+
+procedure RequireOwner()
+  var_owner <- owner;
+  is_owner = builtin eq _sender var_owner;
+  match is_owner with
+  | True  =>
+  | False =>
+    e = OwnerValidationFailed;
+    ThrowError e
+  end
+end
+
+(************************************************************)
+(*              Transitions                                 *)
+(************************************************************)
+
+transition ChangeOwner(new_owner: ByStr20)
+  RequireOwner;
+  var_staging_owner = Some {ByStr20} new_owner;
+  staging_owner := var_staging_owner;
+  var_owner <- owner;
+  e = {_eventname: "ChangeOwner"; current_owner: var_owner; new_owner: new_owner};
+  event e
+end
+
+transition ClaimOwner()
+  staging_owner_o <- staging_owner;
+  match staging_owner_o with
+  | Some staging_owner =>
+    is_stagingowner = builtin eq staging_owner _sender;
+    match is_stagingowner with
+    | True =>
+      owner := _sender;
+      tmp_staging_owner = None {ByStr20};
+      staging_owner := tmp_staging_owner;
+      e = {_eventname: "ClaimOwner"; new_owner: _sender};
+      event e
+    | False =>
+      e = StagingOwnerValidationFailed;
+      ThrowError e
+    end
+  | None =>
+    e = StagingOwnerNotExists;
+    ThrowError e
+  end
+end
+
+transition Withdraw(recipient: ByStr20, amount: Uint128)
+  RequireOwner;
+  balance <- _balance;
+  is_sufficient = uint128_le amount balance;
+  match is_sufficient with
+  | True =>
+    msg = {
+      _tag: "AddFunds";
+      _recipient: recipient;
+      _amount: amount
+    };
+    msgs = one_msg msg;
+    send msgs
+  | False =>
+    e = InsufficientFunds;
+    ThrowError e
+  end
+end
+
+transition AddFunds()
+  accept
+end
