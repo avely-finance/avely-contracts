@@ -80,6 +80,18 @@ func (tr *Transitions) DeployASwap(init_owner string) *ASwap {
 	return aswap
 }
 
+func (tr *Transitions) DeployTreasury(init_owner string) *TreasuryContract {
+	log := GetLog()
+	treasury, err := NewTreasuryContract(sdk, init_owner)
+	if err != nil {
+		log.Fatal("deploy Treasury error = " + err.Error())
+	}
+
+	log.Info("deploy Treasury succeed, address = " + treasury.Addr)
+
+	return treasury
+}
+
 func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *MultisigWallet {
 	log := GetLog()
 	multisig, err := NewMultisigContract(sdk, owners, signCount)
@@ -113,7 +125,10 @@ func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol) *actions.AdminAc
 	tools.TxLogClear()
 	prevWallet := p.StZIL.Contract.Wallet
 	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
-	tools.DrainBufferAuto(p)
+	err := tools.DrainBufferAuto(p)
+	if err != nil {
+		GetLog().Fatal("Can't drain buffer")
+	}
 	showOnly := false
 	tools.ChownStakeReDelegate(p, showOnly)
 	//tools.AutoRestake(p)
@@ -146,9 +161,9 @@ func (tr *Transitions) RunAll() {
 	tr.AddToSwap()
 	tr.Transfer()
 	tr.TransferFrom()
-	tr.ASwap()
-	tr.ASwapGolden()
 	tr.MultisigWalletTests()
+	tr.ASwap()
+	tr.Treasury()
 
 	if !IsCI() {
 		tr.DrainBuffer()

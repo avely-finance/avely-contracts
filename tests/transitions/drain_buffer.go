@@ -17,9 +17,7 @@ func (tr *Transitions) DrainBuffer() {
 	p := tr.DeployAndUpgrade()
 
 	rewardsFee := "1000" //10% of feeDenom=10000
-	treasuryAddr := sdk.Cfg.Addr3
 	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeTreasuryAddress(treasuryAddr))
 	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
 
 	ssnForInput := p.GetSsnAddressForInput()

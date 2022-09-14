@@ -379,6 +379,28 @@ func (s *MultisigWallet) SubmitClaimOwnerTransaction(calleeContract string) (*tr
 	return s.Call("SubmitClaimOwnerTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitWithdrawTransaction(treasuryAddr, recipient, amount string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: treasuryAddr,
+		},
+		{
+			VName: "recipient",
+			Type:  "ByStr20",
+			Value: recipient,
+		},
+		{
+			VName: "amount",
+			Type:  "Uint128",
+			Value: amount,
+		},
+	}
+
+	return s.Call("SubmitWithdrawTransaction", args, "0")
+}
+
 func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
 	// TOOD: add requiredSignaturesCount validation
 	contract := buildMultisigContract(sdk, owners, strconv.Itoa(requiredSignaturesCount))

@@ -45,7 +45,7 @@
       "0x0000000000000000000000000000000000000003"
     ],
     "HolderAddr": "",
-    "TreasuryAddr": "0x381f4008505e940ad7681ec3468a719060caf796"
+    "TreasuryAddr": ""
   },
   "testnet": {
     "Api": {
