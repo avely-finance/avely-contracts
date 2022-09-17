@@ -63,8 +63,6 @@ func main() {
 	switch cli.cmd {
 	case "print_state":
 		cli.printState()
-	//case "set_liquidity_fee":
-	//	cli.setLiquidityFee()
 	case "change_owner":
 		cli.changeOwner()
 	case "claim_owner":
@@ -204,23 +202,6 @@ func getActorKey(sdk *AvelySDK, usr string) string {
 func (cli *TreasuryAdminCli) printState() {
 	log.Info(cli.treasury.State())
 }
-
-/*func (cli *TreasuryAdminCli) setLiquidityFee() {
-	var tx *transaction.Transaction
-	var err error
-	if cli.isMultisig {
-		//multisig setup
-		tx, err = cli.multisig.SubmitSetLiquidityFeeTransaction(cli.treasury.Addr, cli.recipient)
-	} else {
-		//address setup
-		tx, err = cli.treasury.SetLiquidityFee(cli.recipient)
-	}
-
-	if err != nil {
-		cli.logFatal("SetLiquidityFee error", err)
-	}
-	cli.logInfo("SetLiquidityFee succeed", tx)
-}*/
 
 func (cli *TreasuryAdminCli) changeOwner() {
 	var tx *transaction.Transaction
