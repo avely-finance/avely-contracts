@@ -1,15 +1,12 @@
 scilla_version 0
 
-import IntUtils
-
 (***************************************************)
 (*               Associated library                *)
 (***************************************************)
 
-library AvelyTreasuryLib
+library AvelySsnLib
 
 type Error =
-  | InsufficientFunds
   | OwnerValidationFailed
   | StagingOwnerNotExists
   | StagingOwnerValidationFailed
@@ -18,7 +15,6 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | InsufficientFunds                => "InsufficientFunds"
       | OwnerValidationFailed            => "OwnerValidationFailed"
       | StagingOwnerNotExists            => "StagingOwnerNotExists"
       | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
@@ -31,17 +27,21 @@ let one_msg =
     let nil_msg = Nil {Message} in
       Cons {Message} msg nil_msg
 
+let uint128_zero = Uint128 0
+
 (***************************************************)
 (*             The contract definition             *)
 (***************************************************)
 
-contract AvelyTreasury
+contract AvelySsn
 (
-  init_owner: ByStr20
+  init_owner: ByStr20,
+  init_zproxy: ByStr20
 )
 
 field owner         : ByStr20 = init_owner
 field staging_owner : Option ByStr20 = None {ByStr20}
+field zproxy        : ByStr20 = init_zproxy
 
 
 (************************************************************)
@@ -99,28 +99,39 @@ transition ClaimOwner()
   end
 end
 
-transition Withdraw(recipient: ByStr20, amount: Uint128)
+transition ChangeZproxy(new_address: ByStr20)
   RequireOwner;
-  balance <- _balance;
-  is_sufficient = uint128_le amount balance;
-  match is_sufficient with
-  | True =>
-    msg = {
-      _tag: "AddFunds";
-      _recipient: recipient;
-      _amount: amount
-    };
-    msgs = one_msg msg;
-    send msgs
-  | False =>
-    e = InsufficientFunds;
-    ThrowError e
-  end
+  zproxy := new_address;
+  e = { _eventname: "ChangeZproxy"; new_address: new_address };
+  event e
 end
 
-(* Add native funds to wallet *)
-transition AddFunds()
-  accept;
-  e = { _eventname: "FundsAdded"; sender: _sender; amount : _amount};
-  event e
+transition UpdateReceivingAddr(new_addr: ByStr20)
+  RequireOwner;
+
+  var_zproxy <- zproxy;
+  msg = {_tag: "UpdateReceivingAddr"; _recipient: var_zproxy; _amount: uint128_zero ; new_addr: new_addr };
+  msgs = one_msg msg;
+  send msgs
+
+end
+
+transition UpdateComm(new_rate: Uint128)
+  RequireOwner;
+
+  var_zproxy <- zproxy;
+  msg = {_tag: "UpdateComm"; _recipient: var_zproxy; _amount: uint128_zero ; new_rate: new_rate };
+  msgs = one_msg msg;
+  send msgs
+
+end
+
+transition WithdrawComm()
+  RequireOwner;
+
+  var_zproxy <- zproxy;
+  msg = {_tag: "WithdrawComm"; _recipient: var_zproxy; _amount: uint128_zero };
+  msgs = one_msg msg;
+  send msgs
+
 end
