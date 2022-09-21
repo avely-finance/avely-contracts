@@ -1,15 +1,15 @@
-# ASwap contract tools
+# Treasury contract tools
 
 <!-- MarkdownTOC -->
 
 - [Configuration](#configuration)
 - [Roles](#roles)
 - [Admin commands](#admin-commands)
-   - [Deploy](#deploy)
-   - [Print state](#print-state)
-   - [Withdraw](#withdraw)
-   - [Change Owner](#change-owner)
-   - [Claim Owner](#claim-owner)
+     - [Deploy](#deploy)
+     - [Print state](#print-state)
+     - [Withdraw](#withdraw)
+     - [Change Owner](#change-owner)
+     - [Claim Owner](#claim-owner)
 
 <!-- /MarkdownTOC -->
 
