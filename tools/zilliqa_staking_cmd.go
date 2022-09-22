@@ -15,10 +15,12 @@ var sdk *AvelySDK
 func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	cmdPtr := flag.String("cmd", "default", "specific command")
+	addrPtr := flag.String("addr", "", "address")
 
 	flag.Parse()
 
 	cmd := *cmdPtr
+	addr := *addrPtr
 
 	log = NewLog()
 	config := NewConfig(*chainPtr)
@@ -38,6 +40,13 @@ func main() {
 		p := RestoreFromState(sdk, log)
 		tr := transitions.InitTransitions(sdk)
 		tr.NextCycle(p)
+	case "add_ssn":
+		Zproxy, err := RestoreZproxy(sdk, sdk.Cfg.ZproxyAddr)
+		if err != nil {
+			log.Fatal("Restore Zproxy error = " + err.Error())
+		}
+		log.Debug("Restore Zproxy succeed, address = " + Zproxy.Addr)
+		Zproxy.AddSSN(addr, addr)
 	default:
 		log.Fatal("Unknown command")
 	}
