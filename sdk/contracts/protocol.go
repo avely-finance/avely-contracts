@@ -10,24 +10,26 @@ import (
 )
 
 type Protocol struct {
-	Zproxy  *Zproxy
-	Zimpl   *Zimpl
-	StZIL   *StZIL
-	Buffers []*BufferContract
-	Holder  *HolderContract
+	Zproxy   *Zproxy
+	Zimpl    *Zimpl
+	StZIL    *StZIL
+	Buffers  []*BufferContract
+	Holder   *HolderContract
+	Treasury *TreasuryContract
 }
 
-func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, stzil *StZIL, buffers []*BufferContract, holder *HolderContract) *Protocol {
+func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, stzil *StZIL, buffers []*BufferContract, holder *HolderContract, treasury *TreasuryContract) *Protocol {
 	if len(buffers) == 0 {
 		log.Fatal("Protocol should have at least one buffer")
 	}
 
 	return &Protocol{
-		Zproxy:  zproxy,
-		Zimpl:   zimpl,
-		StZIL:   stzil,
-		Buffers: buffers,
-		Holder:  holder,
+		Zproxy:   zproxy,
+		Zimpl:    zimpl,
+		StZIL:    stzil,
+		Buffers:  buffers,
+		Holder:   holder,
+		Treasury: treasury,
 	}
 }
 
@@ -157,7 +159,7 @@ func (p *Protocol) AddSSNs() {
 
 func (p *Protocol) ChangeTreasuryAddress() {
 	prevWallet := p.StZIL.Wallet
-	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.StZIL.Sdk.Cfg.TreasuryAddr))
+	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.Treasury.Addr))
 	p.StZIL.Wallet = prevWallet
 }
 

@@ -45,7 +45,7 @@
       "0x0000000000000000000000000000000000000003"
     ],
     "HolderAddr": "",
-    "TreasuryAddr": "0x381f4008505e940ad7681ec3468a719060caf796"
+    "TreasuryAddr": ""
   },
   "testnet": {
     "Api": {
@@ -60,7 +60,7 @@
     "ChainId": 333,
     "TxConfrimMaxAttempts": 10,
     "TxConfirmIntervalSec": 15,
-    "StZilSsnAddress": "0x73f16753ea97C770201Fd6Ae04073348c483239f",
+    "StZilSsnAddress": "0x4fa3e5baa11ab3002db512d762aa3429a609435e",
     "StZilSsnRewardShare": "50",
     "HolderInitialDelegateZil": "10",
     "SsnInitialDelegateZil": "1000",

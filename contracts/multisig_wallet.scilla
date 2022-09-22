@@ -111,7 +111,23 @@ type CalleeTransaction =
 (* TogglePause()                                     *)
 | TogglePause
 (*****************************************************)
-(*               StZIL/ASwap Transitions             *)
+(*              Treasury Transitions                 *)
+(*****************************************************)
+(* Withdraw(recipient: ByStr20, amount: Uint128)     *)
+| Withdraw of ByStr20 Uint128
+(*****************************************************)
+(*                SSN Transitions                    *)
+(*****************************************************)
+(* ChangeZproxy(new_address: ByStr20)                *)
+| ChangeZproxy of ByStr20
+(* UpdateReceivingAddr(new_addr: ByStr20)            *)
+| UpdateReceivingAddr of ByStr20
+(* UpdateComm(new_rate: Uint128)                     *)
+| UpdateComm of Uint128
+(* WithdrawComm()                                    *)
+| WithdrawComm
+(*****************************************************)
+(*         StZIL/ASwap/Treasury/SSN Transitions      *)
 (*****************************************************)
 (* ChangeOwner(new_owner: ByStr20)                   *)
 | ChangeOwner of ByStr20
@@ -259,7 +275,40 @@ let custom_transaction_msg_as_list =
       | TogglePause =>
         {_recipient: calleeContract ; _tag: "TogglePause"; _amount: Uint128 0 }
 
-      (* StZIL/ASwap transitions *)
+      (* Treasury transitions *)
+
+      (* Withdraw(recipient: ByStr20, amount: Uint128) *)
+      | Withdraw recipient amount =>
+        {_recipient: calleeContract ;
+         _tag: "Withdraw";
+         _amount: Uint128 0;
+         recipient : recipient;
+         amount : amount }
+
+      (* SSN transitions *)
+
+      (* ChangeZproxy(new_address: ByStr20) *)
+      | ChangeZproxy new_address =>
+        {_recipient: calleeContract ;
+         _tag: "ChangeZproxy";
+         _amount: Uint128 0;
+         new_address : new_address }
+      | UpdateReceivingAddr new_addr =>
+        {_recipient: calleeContract ;
+         _tag: "UpdateReceivingAddr";
+         _amount: Uint128 0;
+         new_addr : new_addr }
+      | UpdateComm new_rate =>
+        {_recipient: calleeContract ;
+         _tag: "UpdateComm";
+         _amount: Uint128 0;
+         new_rate : new_rate }
+      | WithdrawComm =>
+        {_recipient: calleeContract ;
+         _tag: "WithdrawComm";
+         _amount: Uint128 0 }
+
+      (* StZIL/ASwap/Treasury/SSN transitions *)
 
       (* ChangeOwner(new_owner: ByStr20) *)
       | ChangeOwner new_owner =>
@@ -588,7 +637,45 @@ transition SubmitTogglePauseTransaction (calleeContract : ByStr20)
 end
 
 (***************************************************)
-(*               StZIL/ASwap Transitions           *)
+(*             Treasury Transitions                *)
+(***************************************************)
+
+(* Submit a new SubmitWithdrawTransaction transaction for future signoff *)
+transition SubmitWithdrawTransaction (calleeContract : ByStr20, recipient: ByStr20, amount: Uint128)
+  transaction = Withdraw recipient amount;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(***************************************************)
+(*               SSN Transitions                   *)
+(***************************************************)
+
+(* Submit a new SubmitChangeZproxyTransaction transaction for future signoff *)
+transition SubmitChangeZproxyTransaction (calleeContract : ByStr20, new_address: ByStr20)
+  transaction = ChangeZproxy new_address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitUpdateReceivingAddrTransaction transaction for future signoff *)
+transition SubmitUpdateReceivingAddrTransaction (calleeContract : ByStr20, new_addr: ByStr20)
+  transaction = UpdateReceivingAddr new_addr;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitUpdateCommTransaction transaction for future signoff *)
+transition SubmitUpdateCommTransaction (calleeContract : ByStr20, new_rate: Uint128)
+  transaction = UpdateComm new_rate;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new SubmitWithdrawCommTransaction transaction for future signoff *)
+transition SubmitWithdrawCommTransaction (calleeContract : ByStr20)
+  transaction = WithdrawComm;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(***************************************************)
+(*        StZIL/ASwap/Treasury/SSN Transitions     *)
 (***************************************************)
 
 (* Submit a new ChangeOwner transaction for future signoff *)

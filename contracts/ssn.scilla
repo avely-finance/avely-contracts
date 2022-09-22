@@ -1,0 +1,137 @@
+scilla_version 0
+
+(***************************************************)
+(*               Associated library                *)
+(***************************************************)
+
+library AvelySsnLib
+
+type Error =
+  | OwnerValidationFailed
+  | StagingOwnerNotExists
+  | StagingOwnerValidationFailed
+
+let make_error =
+  fun (result: Error) =>
+    let result_code =
+      match result with
+      | OwnerValidationFailed            => "OwnerValidationFailed"
+      | StagingOwnerNotExists            => "StagingOwnerNotExists"
+      | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
+      end
+    in
+    { _exception: "Error"; code: result_code }
+
+let one_msg =
+  fun (msg : Message) =>
+    let nil_msg = Nil {Message} in
+      Cons {Message} msg nil_msg
+
+let uint128_zero = Uint128 0
+
+(***************************************************)
+(*             The contract definition             *)
+(***************************************************)
+
+contract AvelySsn
+(
+  init_owner: ByStr20,
+  init_zproxy: ByStr20
+)
+
+field owner         : ByStr20 = init_owner
+field staging_owner : Option ByStr20 = None {ByStr20}
+field zproxy        : ByStr20 = init_zproxy
+
+
+(************************************************************)
+(*              Procedures                                  *)
+(************************************************************)
+
+procedure ThrowError(err: Error)
+  e = make_error err;
+  throw e
+end
+
+procedure RequireOwner()
+  var_owner <- owner;
+  is_owner = builtin eq _sender var_owner;
+  match is_owner with
+  | True  =>
+  | False =>
+    e = OwnerValidationFailed;
+    ThrowError e
+  end
+end
+
+(************************************************************)
+(*              Transitions                                 *)
+(************************************************************)
+
+transition ChangeOwner(new_owner: ByStr20)
+  RequireOwner;
+  var_staging_owner = Some {ByStr20} new_owner;
+  staging_owner := var_staging_owner;
+  var_owner <- owner;
+  e = {_eventname: "ChangeOwner"; current_owner: var_owner; new_owner: new_owner};
+  event e
+end
+
+transition ClaimOwner()
+  staging_owner_o <- staging_owner;
+  match staging_owner_o with
+  | Some staging_owner =>
+    is_stagingowner = builtin eq staging_owner _sender;
+    match is_stagingowner with
+    | True =>
+      owner := _sender;
+      tmp_staging_owner = None {ByStr20};
+      staging_owner := tmp_staging_owner;
+      e = {_eventname: "ClaimOwner"; new_owner: _sender};
+      event e
+    | False =>
+      e = StagingOwnerValidationFailed;
+      ThrowError e
+    end
+  | None =>
+    e = StagingOwnerNotExists;
+    ThrowError e
+  end
+end
+
+transition ChangeZproxy(new_address: ByStr20)
+  RequireOwner;
+  zproxy := new_address;
+  e = { _eventname: "ChangeZproxy"; new_address: new_address };
+  event e
+end
+
+transition UpdateReceivingAddr(new_addr: ByStr20)
+  RequireOwner;
+
+  var_zproxy <- zproxy;
+  msg = {_tag: "UpdateReceivingAddr"; _recipient: var_zproxy; _amount: uint128_zero ; new_addr: new_addr };
+  msgs = one_msg msg;
+  send msgs
+
+end
+
+transition UpdateComm(new_rate: Uint128)
+  RequireOwner;
+
+  var_zproxy <- zproxy;
+  msg = {_tag: "UpdateComm"; _recipient: var_zproxy; _amount: uint128_zero ; new_rate: new_rate };
+  msgs = one_msg msg;
+  send msgs
+
+end
+
+transition WithdrawComm()
+  RequireOwner;
+
+  var_zproxy <- zproxy;
+  msg = {_tag: "WithdrawComm"; _recipient: var_zproxy; _amount: uint128_zero };
+  msgs = one_msg msg;
+  send msgs
+
+end
