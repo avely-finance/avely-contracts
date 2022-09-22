@@ -1,12 +1,15 @@
 package core
 
 import (
+	"errors"
 	"log"
 	"net/url"
 	"runtime"
 	"strconv"
 	"time"
 
+	"github.com/Zilliqa/gozilliqa-sdk/account"
+	"github.com/Zilliqa/gozilliqa-sdk/bech32"
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	"github.com/Zilliqa/gozilliqa-sdk/keytools"
@@ -90,6 +93,43 @@ func (sdk *AvelySDK) GetBalance(addr string) string {
 		panic(err)
 	}
 	return balAndNonce.Balance
+}
+
+func (sdk *AvelySDK) AddFunds(recipient, amount string) (*transaction.Transaction, error) {
+	wallet := account.NewWallet()
+	wallet.AddByPrivateKey(sdk.Cfg.AdminKey)
+	provider := provider2.NewProvider(sdk.Cfg.Api.HttpUrl)
+
+	gasPrice, _ := provider.GetMinimumGasPrice()
+
+	if recipient[0:2] == "0x" {
+		recipient = recipient[2:]
+	}
+
+	b32, _ := bech32.ToBech32Address("0x" + recipient)
+
+	tx := &transaction.Transaction{
+		Version:      strconv.FormatInt(int64(util.Pack(sdk.Cfg.ChainId, 1)), 10),
+		SenderPubKey: "",
+		ToAddr:       b32,
+		Amount:       amount,
+		GasPrice:     gasPrice,
+		GasLimit:     "40000",
+		Code:         "",
+		Data:         "",
+		Priority:     false,
+		Nonce:        "",
+	}
+	wallet.Sign(tx, *provider)
+	rsp, _ := provider.CreateTransaction(tx.ToTransactionPayload())
+	resMap := rsp.Result.(map[string]interface{})
+	hash := resMap["TranID"].(string)
+	//fmt.Printf("hash is %s\n", hash)
+	tx.Confirm(hash, 1000, 0, provider)
+	if tx.Status == core.Confirmed {
+		return tx, nil
+	}
+	return nil, errors.New("Can't confirm transaction")
 }
 
 func (sdk *AvelySDK) GetAddressFromPrivateKey(privateKey string) string {

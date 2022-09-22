@@ -111,7 +111,14 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(zilliqa.Zproxy, zilliqa.Zimpl, StZIL, buffers, Holder)
+	// deploy treasury
+	Treasury, err := NewTreasuryContract(sdk, sdk.Cfg.Owner)
+	if err != nil {
+		log.Fatal("deploy Treasury error = " + err.Error())
+	}
+	log.Debug("deploy Treasury succeed, address = " + Treasury.Addr)
+
+	return NewProtocol(zilliqa.Zproxy, zilliqa.Zimpl, StZIL, buffers, Holder, Treasury)
 }
 
 // Restore ZProxy + Zimpl and deploy new versions of StZIL, Buffer and Holder
@@ -154,7 +161,14 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder)
+	// deploy treasury
+	Treasury, err := NewTreasuryContract(sdk, sdk.Cfg.Owner)
+	if err != nil {
+		log.Fatal("deploy Treasury error = " + err.Error())
+	}
+	log.Debug("deploy Treasury succeed, address = " + StZIL.Addr)
+
+	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder, Treasury)
 }
 
 func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
@@ -200,5 +214,12 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	}
 	log.Debug("Restore holder succeed, address = " + Holder.Addr)
 
-	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder)
+	// Restore treasury
+	Treasury, err := RestoreTreasuryContract(sdk, sdk.Cfg.TreasuryAddr, sdk.Cfg.Owner)
+	if err != nil {
+		log.Fatal("Restore Treasury error = " + err.Error())
+	}
+	log.Debug("Restore Treasury succeed, address = " + Treasury.Addr)
+
+	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder, Treasury)
 }

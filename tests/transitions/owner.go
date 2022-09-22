@@ -97,7 +97,7 @@ func checkChangeRewardsFee(p *contracts.Protocol) {
 func checkChangeTreasuryAddress(p *contracts.Protocol) {
 	AssertSuccess(p.StZIL.ChangeTreasuryAddress(core.ZeroAddr))
 	AssertEqual(Field(p.StZIL, "treasury_address"), core.ZeroAddr)
-	AssertSuccess(p.StZIL.ChangeTreasuryAddress(sdk.Cfg.TreasuryAddr))
+	AssertSuccess(p.StZIL.ChangeTreasuryAddress(p.Treasury.Addr))
 }
 
 func checkChangeZimplAddress(p *contracts.Protocol) {
