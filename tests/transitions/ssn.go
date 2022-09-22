@@ -152,17 +152,17 @@ func ssnOperations(tr *Transitions) {
 
 	//change receiving address, expect success
 	txIdLocal := 0
-	new_addr := sdk.Cfg.Admin
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateReceivingAddrTransaction(ssn.Addr, new_addr))
+	treasury_addr := p.Treasury.Addr
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateReceivingAddrTransaction(ssn.Addr, treasury_addr))
 	tx, _ := AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
 	//data, _ := json.MarshalIndent(tx, "", "     ")
 	//GetLog().Fatal(string(data))
 	AssertEvent(tx, Event{
 		p.Zimpl.Addr, //sender
 		"UpdateReceivingAddr",
-		ParamsMap{"ssn_addr": ssn.Addr, "new_addr": new_addr},
+		ParamsMap{"ssn_addr": ssn.Addr, "new_addr": treasury_addr},
 	})
-	AssertEqual(Field(p.Zimpl, "ssnlist", addr, "arguments", "9"), new_addr)
+	AssertEqual(Field(p.Zimpl, "ssnlist", addr, "arguments", "9"), treasury_addr)
 
 	//change comission, expect success
 	//change cycle: comission change allowed once per cycle
@@ -189,6 +189,7 @@ func ssnOperations(tr *Transitions) {
 
 	txIdLocal++
 	//expect comission withdrawn successfully
+	expectedCommission := "8230452599999"
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawCommTransaction(ssn.Addr))
 	tx, _ = AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
 	AssertEvent(tx, Event{
@@ -196,4 +197,12 @@ func ssnOperations(tr *Transitions) {
 		"SSN withdraw reward",
 		ParamsMap{"ssn_addr": ssn.Addr},
 	})
+	AssertTransition(tx, Transition{
+		p.Zimpl.Addr, //sender
+		"AddFunds",
+		treasury_addr,
+		expectedCommission,
+		ParamsMap{},
+	})
+
 }
