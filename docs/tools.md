@@ -70,6 +70,11 @@ $ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=setup
 $ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=next_cycle
 ```
 
+5. Add SSN:
+
+```sh
+$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=add_ssn --addr=0x....
+```
 
 ### Deploy Protocol
 

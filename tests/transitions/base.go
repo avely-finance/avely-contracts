@@ -92,6 +92,18 @@ func (tr *Transitions) DeployTreasury(init_owner string) *TreasuryContract {
 	return treasury
 }
 
+func (tr *Transitions) DeploySsn(init_owner, init_zproxy string) *SsnContract {
+	log := GetLog()
+	ssn, err := NewSsnContract(sdk, init_owner, init_zproxy)
+	if err != nil {
+		log.Fatal("deploy SSN contract error = " + err.Error())
+	}
+
+	log.Info("deploy SSN contract succeed, address = " + ssn.Addr)
+
+	return ssn
+}
+
 func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *MultisigWallet {
 	log := GetLog()
 	multisig, err := NewMultisigContract(sdk, owners, signCount)
@@ -147,6 +159,7 @@ func (tr *Transitions) FocusOn(focus string) {
 }
 
 func (tr *Transitions) RunAll() {
+	tr.Ssn()
 	tr.Owner()
 	tr.DelegateStakeSuccess()
 	tr.DelegateStakeBuffersRotation()

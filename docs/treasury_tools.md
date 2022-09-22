@@ -1,15 +1,15 @@
-# ASwap contract tools
+# Treasury contract tools
 
 <!-- MarkdownTOC -->
 
 - [Configuration](#configuration)
 - [Roles](#roles)
 - [Admin commands](#admin-commands)
-   - [Deploy](#deploy)
-   - [Print state](#print-state)
-   - [Withdraw](#withdraw)
-   - [Change Owner](#change-owner)
-   - [Claim Owner](#claim-owner)
+     - [Deploy](#deploy)
+     - [Print state](#print-state)
+     - [Withdraw](#withdraw)
+     - [Change Owner](#change-owner)
+     - [Claim Owner](#claim-owner)
 
 <!-- /MarkdownTOC -->
 
@@ -34,7 +34,10 @@ After deploy all admin transitions will be executed by *Owner*.
 $ go run tools/treasury_admin_cmd.go --chain=testnet --cmd=deploy
 ```
 
-After successful deploy put deployed contract address to config.js and/or .env.your-chain
+After successful deploy:
+
+* Put deployed contract address to config.js and/or .env.your-chain
+* [Set Treasury Address](aswap_tools.md#set-treasury-address) in ASwap-contract.
 
 ### Print state
 
