@@ -81,7 +81,7 @@ func aswapBasic(tr *Transitions) {
 	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
 
 	//set treasury address
-	treasury_address := sdk.Cfg.Addr2
+	treasury_address := p.Treasury.Addr
 	AssertEqual(Field(aswap, "treasury_address"), core.ZeroAddr)
 	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryAddress(treasury_address))
 	AssertEqual(Field(aswap, "treasury_address"), treasury_address)
@@ -208,7 +208,7 @@ func (tr *Transitions) setupGoldenFlow() (*contracts.Protocol, *contracts.ASwap,
 	AssertEqual(Field(Aswap, "treasury_fee"), new_fee)
 
 	//set treasury address
-	treasury_address := sdk.Cfg.Addr2
+	treasury_address := Proto.Treasury.Addr
 	AssertEqual(Field(Aswap, "treasury_address"), core.ZeroAddr)
 	AssertSuccess(Aswap.WithUser(init_owner_key).SetTreasuryAddress(treasury_address))
 	AssertEqual(Field(Aswap, "treasury_address"), treasury_address)
