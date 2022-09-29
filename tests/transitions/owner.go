@@ -22,6 +22,8 @@ func (tr *Transitions) Owner() {
 	checkChangeTreasuryAddress(p)
 	checkChangeZimplAddress(p)
 	checkUpdateStakingParameters(p)
+	//this test is last because all SSNs will be un-whitelisted
+	checkRemoveSSN(p)
 
 	newOwnerAddr := sdk.Cfg.Addr3
 	newOwnerKey := sdk.Cfg.Key3
@@ -75,6 +77,21 @@ func checkAddSSNExists(p *contracts.Protocol) {
 	ssnlist := p.StZIL.GetSsnWhitelist()
 	tx, _ := p.StZIL.AddSSN(ssnlist[0])
 	AssertError(tx, "SsnAddressExists")
+}
+
+func checkRemoveSSN(p *contracts.Protocol) {
+	ssnlist := p.StZIL.GetSsnWhitelist()
+	//unwhitelist all ssn addresses except first one (zero-indexed)
+	for i := 1; i < len(ssnlist); i++ {
+		AssertSuccess(p.StZIL.RemoveSSN(ssnlist[i]))
+	}
+	//try to remove last whitelisted SSN, expect error
+	tx, _ := p.StZIL.RemoveSSN(ssnlist[0])
+	AssertError(tx, "SsnAddressesEmpty")
+
+	//remove last whitelisted SSN on paused contract, expect success
+	AssertSuccess(p.StZIL.PauseIn())
+	AssertSuccess(p.StZIL.RemoveSSN(ssnlist[0]))
 }
 
 func checkSetHolderAddress(p *contracts.Protocol) {
