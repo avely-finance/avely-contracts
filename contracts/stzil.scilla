@@ -1140,8 +1140,16 @@ transition RemoveSSN(ssnaddr: ByStr20)
   is_whitelisted = is_addr_in_list var_ssn_addresses ssnaddr;
   match is_whitelisted with
   | True =>
-    new_list = remove_addr_from_list ssnaddr var_ssn_addresses;
-    ssn_addresses := new_list
+      new_list = remove_addr_from_list ssnaddr var_ssn_addresses;
+      var_is_paused_in <- is_paused_in;
+      match var_is_paused_in with
+      | True =>
+        (* in-operations are paused, it's safe to set ssn_addresses to empty list *)
+      | False =>
+        (* in-operations aren't paused, so ssn addresses list must not be empty *)
+        RequireSsnAddresses new_list
+      end;
+      ssn_addresses := new_list
   | False =>
     e = SsnAddressDoesNotExist;
     ThrowError e
@@ -1195,6 +1203,7 @@ end
 (* offchain-tools calls this transition every new cycle *)
 transition PerformAutoRestake()
   RequireAdmin;
+  RequireNotPausedIn;
 
   auto_restake_amt <- autorestakeamount;
   IsDelegStakeSufficient auto_restake_amt;
@@ -1483,6 +1492,7 @@ end
 (* transfers funds from other ssn to active ssn *)
 transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   RequireAdmin;
+  RequireNotPausedIn;
 
   var_ssn_addresses <- ssn_addresses;
   is_whitelisted = is_addr_in_list var_ssn_addresses from_ssn;
