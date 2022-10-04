@@ -41,7 +41,7 @@ func main() {
 	case "next_cycle":
 		p := RestoreFromState(sdk, log)
 		tr := transitions.InitTransitions(sdk)
-		tr.NextCycle(p)
+		tr.NextCycleWithAmount(p, amount)
 	case "add_ssn":
 		Zproxy, err := RestoreZproxy(sdk, sdk.Cfg.ZproxyAddr)
 		if err != nil {
