@@ -16,11 +16,13 @@ func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	cmdPtr := flag.String("cmd", "default", "specific command")
 	addrPtr := flag.String("addr", "", "address")
+	amountPtr := flag.Int("amount", 0, "an amount of action")
 
 	flag.Parse()
 
 	cmd := *cmdPtr
 	addr := *addrPtr
+	amount := *amountPtr
 
 	log = NewLog()
 	config := NewConfig(*chainPtr)
