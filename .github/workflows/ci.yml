@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  IMAGE_NAME: watchers
+  IMAGE_VERSION: latest
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -58,17 +62,19 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GH_REGISTRY_TOKEN }}
+    - name: Log in to registry
+      # This is where you will update the PAT to GITHUB_TOKEN
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
 
     - uses: actions/checkout@v3
 
     - name: Build Image
-      run: docker build --rm=false -f docker/Dockerfile.prod -t ghcr.io/avely-finance/avely-watchers:latest .
+      run: docker build --rm=false -f docker/Dockerfile.prod --tag $IMAGE_NAME .
 
     - name: push image to GitHub Container Registry
-      run: docker push ghcr.io/avely-finance/avely-watchers:latest
+      run: |
+        IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+        echo IMAGE_ID=$IMAGE_ID
+        echo IMAGE_VERSION=$IMAGE_VERSION
+        docker tag $IMAGE_NAME $IMAGE_ID:$IMAGE_VERSION
+        docker push $IMAGE_ID:$IMAGE_VERSION
