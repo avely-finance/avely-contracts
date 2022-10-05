@@ -36,7 +36,7 @@ This way we can change reward cycle ourselves.
 * create .env.testnet (change [.env.example](https://github.com/avely-finance/avely-contracts/blob/main/.env.example)) and put sensitive information there (ask team)
 * execute
 ```sh
-$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=next_cycle
+$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=next_cycle --amount=100
 ```
 
 ## Roles

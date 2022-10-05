@@ -67,7 +67,7 @@ $ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=setup
 4. You can increment reward cycle now
 
 ```sh
-$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=next_cycle
+$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=next_cycle --amount=100
 ```
 
 5. Add SSN:

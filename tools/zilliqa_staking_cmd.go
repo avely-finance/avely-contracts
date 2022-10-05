@@ -16,11 +16,13 @@ func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	cmdPtr := flag.String("cmd", "default", "specific command")
 	addrPtr := flag.String("addr", "", "address")
+	amountPtr := flag.Int("amount", 0, "an amount of action")
 
 	flag.Parse()
 
 	cmd := *cmdPtr
 	addr := *addrPtr
+	amount := *amountPtr
 
 	log = NewLog()
 	config := NewConfig(*chainPtr)
@@ -39,7 +41,7 @@ func main() {
 	case "next_cycle":
 		p := RestoreFromState(sdk, log)
 		tr := transitions.InitTransitions(sdk)
-		tr.NextCycle(p)
+		tr.NextCycleWithAmount(p, amount)
 	case "add_ssn":
 		Zproxy, err := RestoreZproxy(sdk, sdk.Cfg.ZproxyAddr)
 		if err != nil {

@@ -46,6 +46,7 @@ func (c *Contract) Call(transition string, params []core.ContractValue, amount s
 	if err != nil {
 		return tx, err
 	}
+
 	tx.Confirm(tx.ID, c.Sdk.Cfg.TxConfrimMaxAttempts, c.Sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
 	if tx.Status != core.Confirmed {
 		err := errors.New("transaction didn't get confirmed")
