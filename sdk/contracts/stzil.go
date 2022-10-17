@@ -184,6 +184,9 @@ func (a *StZIL) GetStZilPrice() *big.Float {
 	state := NewState(raw)
 
 	total_supply := state.Dig("0.result.total_supply").BigFloat()
+	if 0 == big.NewFloat(0).Cmp(total_supply) {
+		return big.NewFloat(-1)
+	}
 	totalstakeamount := state.Dig("1.result.totalstakeamount").BigFloat()
 
 	return DivBF(totalstakeamount, total_supply)

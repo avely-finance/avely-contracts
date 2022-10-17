@@ -137,7 +137,7 @@ func (tr *Transitions) NextCycleWithAmount(p *contracts.Protocol, amountPerSSN i
 	p.Zproxy.Contract.Wallet = prevWallet
 }
 
-func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol) *actions.AdminActions {
+func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol, options ...bool) *actions.AdminActions {
 	tools := actions.NewAdminActions(GetLog())
 	tools.TxLogMode(true)
 	tools.TxLogClear()
@@ -149,7 +149,16 @@ func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol) *actions.AdminAc
 	}
 	showOnly := false
 	tools.ChownStakeReDelegate(p, showOnly)
-	//tools.AutoRestake(p)
+
+	//sometimes we need to disable autorestake in order to simplify calculations in tests
+	enableAutorestake := true
+	if len(options) > 0 {
+		enableAutorestake = options[0]
+	}
+	if enableAutorestake {
+		tools.AutoRestake(p)
+	}
+
 	p.StZIL.Contract.Wallet = prevWallet
 	return tools
 }
