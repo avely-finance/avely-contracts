@@ -134,7 +134,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).DelegateStake(ToZil(5000)))
 
 	tr.NextCycle(p)
-	tr.NextCycleOffchain(p)
+	tr.NextCycleOffchain(p, false)
 
 	ssnWhitelistLight := p.GetSsnAddressForInput()
 	AssertNotEqual(ssnWhitelistHeavy, ssnWhitelistLight)
@@ -154,10 +154,10 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Addr1), ToStZil(5000+5000+4000+3000))
 
 	tr.NextCycle(p)
-	tr.NextCycleOffchain(p)
+	tr.NextCycleOffchain(p, false)
 
 	tr.NextCycle(p)
-	tr.NextCycleOffchain(p)
+	tr.NextCycleOffchain(p, false)
 
 	//stake is on holder now, splitted between SSNs
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnWhitelistHeavy), ToZil(sdk.Cfg.HolderInitialDelegateZil+5000))
@@ -247,7 +247,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	sdk.IncreaseBlocknum(int(delta))
 
 	tr.NextCycle(p)
-	tools := tr.NextCycleOffchain(p)
+	tools := tr.NextCycleOffchain(p, false)
 
 	unbondedWithdrawalsBlocks := p.GetClaimWithdrawalBlocks()
 	AssertEqual(readyBlocks[0], strconv.Itoa(unbondedWithdrawalsBlocks[0]))
