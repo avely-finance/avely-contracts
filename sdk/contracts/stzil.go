@@ -198,6 +198,12 @@ func (s *StZIL) GetTreasuryAddress() string {
 	return state.Dig("result.treasury_address").String()
 }
 
+func (s *StZIL) GetMinDelegStake() string {
+	rawState := s.Contract.SubState("mindelegstake", []string{})
+	state := NewState(rawState)
+	return state.Dig("result.mindelegstake").String()
+}
+
 func (a *StZIL) ChangeBuffers(newBuffers []string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

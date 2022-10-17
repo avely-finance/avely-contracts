@@ -218,8 +218,13 @@ func (a *AdminActions) AutoRestake(p *Protocol) error {
 		return nil
 	}
 
-	if autorestakeamount.Cmp(big.NewInt(10000000000000)) < 1 { // autorestakeamount <= 10 ZIL
-		a.log.Info("Autorestake is lower than min delegate amount. " + autorestakeamount.String())
+	minDelegStake := p.StZIL.GetMinDelegStake()
+	minDelegStakeBI, _ := big.NewInt(0).SetString(minDelegStake, 10)
+	if autorestakeamount.Cmp(minDelegStakeBI) < 0 { // autorestakeamount < 10 ZIL (default value)
+		a.log.WithFields(logrus.Fields{
+			"autorestake":   autorestakeamount.String(),
+			"mindelegstake": minDelegStake,
+		}).Info("Autorestake is lower than min delegate amount")
 		return nil
 	}
 
