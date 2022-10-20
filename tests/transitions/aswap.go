@@ -74,9 +74,14 @@ func aswapBasic(tr *Transitions) {
 	AssertSuccess(aswap.WithUser(init_owner_key).TogglePause())
 	AssertEqual(Field(aswap, "pause"), "1")
 
-	//set treasury fee
-	new_fee := "750"
+	//set treasury fee, check zero
+	new_fee := "0"
 	AssertEqual(Field(aswap, "treasury_fee"), "500")
+	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryFee(new_fee))
+	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
+
+	//set treasury fee
+	new_fee = "750"
 	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryFee(new_fee))
 	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
 
@@ -314,6 +319,7 @@ func aswapGolden(tr *Transitions) {
 	exactZil := calcInputSwapExactZilForTokens(ToQA(250))
 	expectedSwapOutput = calcOutputSwapExactZilForTokens(exactZil)
 	minTokenAmount := "1"
+
 	tx, _ = AssertSuccess(Aswap.WithUser(Key3).SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr3, blockNum+1))
 	recordBalance(3, tx)
 	AssertTransition(tx, Transition{
@@ -552,6 +558,9 @@ func calcInputSwapExactZilForTokens(amntOut string) string {
 
 	afterTreasuryFee := new(big.Int).Div(nominator, denom)
 	//fix big num math innacuracy, see https://github.com/Uniswap/v2-periphery/blob/0335e8f7e1bd1e8d8329fd300aea2ef2f36dd19f/contracts/libraries/UniswapV2Library.sol#L58
+	if treasuryFee.Cmp(big.NewInt(0)) == 0 {
+		return afterTreasuryFee.Add(afterTreasuryFee, big.NewInt(1)).String()
+	}
 	afterTreasuryFee = afterTreasuryFee.Add(afterTreasuryFee, big.NewInt(1))
 	beforeTreasuryFee := new(big.Int).Mul(afterTreasuryFee, treasuryFee)
 	denom = new(big.Int).Sub(treasuryFee, big.NewInt(1))
@@ -562,6 +571,9 @@ func calcInputSwapExactZilForTokens(amntOut string) string {
 
 func calcTreasuryReward(amount string) string {
 	treasury_fee := Field(Aswap, "treasury_fee")
+	if treasury_fee == "0" {
+		return "0"
+	}
 	biAmt, _ := new(big.Int).SetString(amount, 10)
 	biFee, _ := new(big.Int).SetString(treasury_fee, 10)
 	feeRes := new(big.Int).Div(biAmt, biFee)
