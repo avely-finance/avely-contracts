@@ -89,7 +89,7 @@ func AssertError(txn *transaction.Transaction, code string) {
 
 	receipt, _ := json.Marshal(txn.Receipt)
 	txError := string(receipt)
-	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (String \\\"%s\\\"))])", code)
+	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %s))])", code)
 	AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
 }
 
