@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"regexp"
 	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
@@ -200,7 +201,7 @@ func NewASwap(sdk *AvelySDK, init_owner string) (*ASwap, error) {
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
-		contract := Contract{
+		sdkContract := Contract{
 			Sdk:      sdk,
 			Provider: *contract.Provider,
 			Addr:     "0x" + tx.ContractAddress,
@@ -208,7 +209,11 @@ func NewASwap(sdk *AvelySDK, init_owner string) (*ASwap, error) {
 			Wallet:   contract.Signer,
 		}
 
-		return &ASwap{Contract: contract}, nil
+		aswap := &ASwap{Contract: sdkContract}
+		aswap.ErrorCodes = aswap.ParseErrorCodes(contract.Code)
+
+		return aswap, nil
+
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 		return nil, errors.New("deploy failed:" + string(data))
@@ -232,7 +237,10 @@ func RestoreASwap(sdk *AvelySDK, contractAddress string, init_owner string) (*AS
 		Wallet:   contract.Signer,
 	}
 
-	return &ASwap{Contract: sdkContract}, nil
+	aswap := &ASwap{Contract: sdkContract}
+	aswap.ErrorCodes = aswap.ParseErrorCodes(contract.Code)
+
+	return aswap, nil
 }
 
 func buildASwapContract(sdk *AvelySDK, init_owner string) contract2.Contract {
@@ -260,4 +268,14 @@ func buildASwapContract(sdk *AvelySDK, init_owner string) contract2.Contract {
 		Init:     init,
 		Signer:   wallet,
 	}
+}
+
+func (a *ASwap) ParseErrorCodes(contractCode string) ContractErrorCodes {
+	codes := make(ContractErrorCodes)
+	re := regexp.MustCompile(`(?s)\| *?([A-Za-z0-9]+) *?=>.*?code *?: *?Int32 *?([0-9-]+)`)
+	results := re.FindAllStringSubmatch(contractCode, -1)
+	for _, row := range results {
+		codes[row[1]] = row[2]
+	}
+	return codes
 }

@@ -483,6 +483,7 @@ func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
+		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 		return &MultisigWallet{Contract: sdkContract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
@@ -498,7 +499,6 @@ func RestoreMultisigContract(sdk *AvelySDK, contractAddress string, owners []str
 	if err != nil {
 		return nil, errors.New("Config has invalid MultisigWallet address")
 	}
-
 	sdkContract := Contract{
 		Sdk:      sdk,
 		Provider: *contract.Provider,
@@ -506,6 +506,7 @@ func RestoreMultisigContract(sdk *AvelySDK, contractAddress string, owners []str
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
+	sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 	return &MultisigWallet{Contract: sdkContract}, nil
 }
 

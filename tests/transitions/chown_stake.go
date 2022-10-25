@@ -219,14 +219,14 @@ func (tr *Transitions) ChownStakeStZilErrors() {
 
 	//offchain-tool calls ChownStakeConfirmSwap(addr1), but addr1 didn't called RequestDelegatorSwap before, expecting error
 	tx, _ := p.StZIL.WithUser(sdk.Cfg.VerifierKey).ChownStakeConfirmSwap(addr1)
-	AssertError(tx, "ChownStakeSwapRequestNotFound")
+	AssertError(tx, p.StZIL.ErrorCode("ChownStakeSwapRequestNotFound"))
 
 	//key1 requests swap with NOT buffer address
 	tx, _ = AssertSuccess(p.Zproxy.WithUser(key1).RequestDelegatorSwap(ssn[2]))
 
 	//call ChownStake for addr1, expecting error
 	tx, _ = p.StZIL.WithUser(sdk.Cfg.VerifierKey).ChownStakeConfirmSwap(addr1)
-	AssertError(tx, "BufferAddrUnknown")
+	AssertError(tx, p.StZIL.ErrorCode("BufferAddrUnknown"))
 
 	//key1 requests swap with NOT next buffer address
 	activeBuffer := p.GetActiveBuffer()
@@ -288,7 +288,7 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 	//key1 requests delegator swap, but he has buffered deposit, expecting DelegHasBufferedDeposit
 	nextBuffer := p.GetBufferToSwapWith().Addr
 	tx, _ := p.Zproxy.RequestDelegatorSwap(nextBuffer)
-	AssertZimplError(tx, -8)
+	AssertZimplError(tx, p.Zimpl.ErrorCode("DelegHasBufferedDeposit"))
 
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
@@ -296,14 +296,14 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 
 	//key1 requests delegator swap, but he has buffered deposit in previous cycle, expecting DelegHasBufferedDeposit
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
-	AssertZimplError(tx, -8)
+	AssertZimplError(tx, p.Zimpl.ErrorCode("DelegHasBufferedDeposit"))
 
 	tr.NextCycle(p)
 	nextBuffer = p.GetBufferToSwapWith().Addr
 
 	//key1 requests delegator swap, but he has unclaimed rewards, expecting DelegHasUnwithdrawRewards
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
-	AssertZimplError(tx, -12)
+	AssertZimplError(tx, p.Zimpl.ErrorCode("DelegHasUnwithdrawRewards"))
 
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[1]))
@@ -392,7 +392,7 @@ func (tr *Transitions) ChownStakeRequireDrainBuffer() {
 
 	//offchain-tool calls ChownStakeConfirmSwap(addr1) before DrainBuffer(), expecting error
 	tx, _ = p.StZIL.WithUser(sdk.Cfg.VerifierKey).ChownStakeConfirmSwap(addr1)
-	AssertError(tx, "BufferNotDrained")
+	AssertError(tx, p.StZIL.ErrorCode("BufferNotDrained"))
 
 	//drain buffer
 	tr.NextCycleOffchain(p)

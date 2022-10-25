@@ -14,7 +14,7 @@ func (tr *Transitions) PerformAutoRestake() {
 
 	AssertSuccess(p.StZIL.IncreaseAutoRestakeAmount(ToZil(1)))
 	txn, _ := p.StZIL.PerformAutoRestake()
-	AssertError(txn, "DelegStakeNotEnough")
+	AssertError(txn, p.StZIL.ErrorCode("DelegStakeNotEnough"))
 
 	// increases to 100
 	AssertSuccess(p.StZIL.IncreaseAutoRestakeAmount(ToZil(99)))

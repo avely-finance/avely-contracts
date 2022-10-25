@@ -164,6 +164,7 @@ func NewHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string) (*HolderCont
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
+		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 		return &HolderContract{Contract: sdkContract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
@@ -186,6 +187,7 @@ func RestoreHolderContract(sdk *AvelySDK, contractAddress, stZilAddr, zproxyAddr
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
+	sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 	return &HolderContract{Contract: sdkContract}, nil
 }
 
