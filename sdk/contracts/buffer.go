@@ -169,6 +169,7 @@ func NewBufferContract(sdk *AvelySDK, stZilAddr, zproxyAddr string) (*BufferCont
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
+		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 		return &BufferContract{Contract: sdkContract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
@@ -192,6 +193,7 @@ func RestoreBufferContract(sdk *AvelySDK, contractAddress, stZilAddr, zproxyAddr
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
+	sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 
 	return &BufferContract{Contract: sdkContract}, nil
 }

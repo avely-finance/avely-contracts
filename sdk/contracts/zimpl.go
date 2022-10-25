@@ -61,15 +61,16 @@ func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 	if tx.Status == core.Confirmed {
 		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
 
-		contract := Contract{
+		sdkContract := Contract{
 			Sdk:      sdk,
 			Provider: *contract.Provider,
 			Addr:     "0x" + tx.ContractAddress,
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
+		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 
-		return &Zimpl{Contract: contract}, nil
+		return &Zimpl{Contract: sdkContract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 		return nil, errors.New("deploy failed:" + string(data))
@@ -92,6 +93,7 @@ func RestoreZimpl(sdk *AvelySDK, contractAddress, ZproxyAddr, GzilAddr string) (
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
+	sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 
 	return &Zimpl{Contract: sdkContract}, nil
 }
