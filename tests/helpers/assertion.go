@@ -116,7 +116,7 @@ func AssertMultisigError(txn *transaction.Transaction, code string) {
 	AssertContainRaw("ASSERT_ERROR", txError, code, file, no)
 }
 
-func AssertZimplError(txn *transaction.Transaction, code int32) {
+func AssertZimplError(txn *transaction.Transaction, code string) {
 	_, file, no, _ := runtime.Caller(1)
 
 	if txn.Receipt.Success && txn.Status == core.Confirmed {
@@ -125,7 +125,7 @@ func AssertZimplError(txn *transaction.Transaction, code int32) {
 
 	receipt, _ := json.Marshal(txn.Receipt)
 	txError := string(receipt)
-	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %d))])", code)
+	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %s))])", code)
 	AssertContainRaw("ASSERT_SSNLIST_ERROR", txError, errorMessage, file, no)
 }
 

@@ -288,7 +288,7 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 	//key1 requests delegator swap, but he has buffered deposit, expecting DelegHasBufferedDeposit
 	nextBuffer := p.GetBufferToSwapWith().Addr
 	tx, _ := p.Zproxy.RequestDelegatorSwap(nextBuffer)
-	AssertZimplError(tx, -8)
+	AssertZimplError(tx, p.Zimpl.ErrorCode("DelegHasBufferedDeposit"))
 
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
@@ -296,14 +296,14 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 
 	//key1 requests delegator swap, but he has buffered deposit in previous cycle, expecting DelegHasBufferedDeposit
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
-	AssertZimplError(tx, -8)
+	AssertZimplError(tx, p.Zimpl.ErrorCode("DelegHasBufferedDeposit"))
 
 	tr.NextCycle(p)
 	nextBuffer = p.GetBufferToSwapWith().Addr
 
 	//key1 requests delegator swap, but he has unclaimed rewards, expecting DelegHasUnwithdrawRewards
 	tx, _ = p.Zproxy.WithUser(key1).RequestDelegatorSwap(nextBuffer)
-	AssertZimplError(tx, -12)
+	AssertZimplError(tx, p.Zimpl.ErrorCode("DelegHasUnwithdrawRewards"))
 
 	//key1 claims rewards
 	AssertSuccess(p.Zproxy.WithUser(key1).WithdrawStakeRewards(ssn[1]))
