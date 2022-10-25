@@ -210,7 +210,7 @@ func NewASwap(sdk *AvelySDK, init_owner string) (*ASwap, error) {
 		}
 
 		aswap := &ASwap{Contract: sdkContract}
-		aswap.ErrorCodes = aswap.ParseErrorCodes1(contract.Code)
+		aswap.ErrorCodes = aswap.ParseErrorCodes(contract.Code)
 
 		return aswap, nil
 
@@ -238,7 +238,7 @@ func RestoreASwap(sdk *AvelySDK, contractAddress string, init_owner string) (*AS
 	}
 
 	aswap := &ASwap{Contract: sdkContract}
-	aswap.ErrorCodes = aswap.ParseErrorCodes1(contract.Code)
+	aswap.ErrorCodes = aswap.ParseErrorCodes(contract.Code)
 
 	return aswap, nil
 }
@@ -270,7 +270,7 @@ func buildASwapContract(sdk *AvelySDK, init_owner string) contract2.Contract {
 	}
 }
 
-func (a *ASwap) ParseErrorCodes1(contractCode string) ContractErrorCodes {
+func (a *ASwap) ParseErrorCodes(contractCode string) ContractErrorCodes {
 	codes := make(ContractErrorCodes)
 	re := regexp.MustCompile(`(?s)\| *?([A-Za-z0-9]+) *?=>.*?code *?: *?Int32 *?([0-9-]+)`)
 	results := re.FindAllStringSubmatch(contractCode, -1)
