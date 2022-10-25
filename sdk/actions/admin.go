@@ -51,7 +51,7 @@ func (a *AdminActions) TxLogClear() {
 func (a *AdminActions) HasTxError(txn *transaction.Transaction, errorCode string) bool {
 	receipt, _ := json.Marshal(txn.Receipt)
 	receiptStr := string(receipt)
-	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (String \\\"%s\\\"))])", errorCode)
+	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %s))])", errorCode)
 	return strings.Contains(receiptStr, errorMessage)
 }
 

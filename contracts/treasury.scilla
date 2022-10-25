@@ -18,10 +18,10 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | InsufficientFunds                => "-260"
-      | OwnerValidationFailed            => "-261"
-      | StagingOwnerNotExists            => "-262"
-      | StagingOwnerValidationFailed     => "-263"
+      | InsufficientFunds                => Int32 -260
+      | OwnerValidationFailed            => Int32 -261
+      | StagingOwnerNotExists            => Int32 -262
+      | StagingOwnerValidationFailed     => Int32 -263
       end
     in
     { _exception: "Error"; code: result_code }

@@ -15,9 +15,9 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | OwnerValidationFailed            => "OwnerValidationFailed"
-      | StagingOwnerNotExists            => "StagingOwnerNotExists"
-      | StagingOwnerValidationFailed     => "StagingOwnerValidationFailed"
+      | OwnerValidationFailed            => Int32 -240
+      | StagingOwnerNotExists            => Int32 -241
+      | StagingOwnerValidationFailed     => Int32 -242
       end
     in
     { _exception: "Error"; code: result_code }

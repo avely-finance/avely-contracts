@@ -149,7 +149,7 @@ func (c *Contract) BatchSubState(params [][]interface{}) (string, error) {
 
 func (c *Contract) ParseErrorCodes(contractCode string) ContractErrorCodes {
 	codes := make(ContractErrorCodes)
-	re := regexp.MustCompilePOSIX(`\| *?([A-Za-z0-9]+) *?=> *?"([A-Za-z0-9-]+)"\n`)
+	re := regexp.MustCompilePOSIX(`\| *?([A-Za-z0-9]+) *?=> *?Int32 *?([0-9-]+)\n`)
 	results := re.FindAllStringSubmatch(contractCode, -1)
 	for _, row := range results {
 		codes[row[1]] = row[2]
