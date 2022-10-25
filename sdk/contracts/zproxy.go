@@ -243,6 +243,7 @@ func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
+		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 
 		return &Zproxy{Contract: sdkContract}, nil
 	} else {
@@ -267,6 +268,7 @@ func RestoreZproxy(sdk *AvelySDK, contractAddress string) (*Zproxy, error) {
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
+	sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 
 	return &Zproxy{Contract: sdkContract}, nil
 }
