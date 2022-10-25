@@ -63,7 +63,7 @@ func NewConfig(chain string) *Config {
 	path := ".env." + chain
 	err := godotenv.Load(path)
 	if err != nil {
-		log.Fatalf("Error loading %s file", path)
+		log.Printf("WARNING! There is no '%s' file. Please, make sure you set up the correct ENV manually", path)
 	}
 
 	viper.AddConfigPath(".")
