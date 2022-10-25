@@ -40,17 +40,17 @@ func multisigGoldenFlowTest(tr *Transitions) {
 	txId := 0 // the test transition should be the first
 
 	tx, _ := multisig.WithUser(admin).SignTransaction(txId)
-	AssertMultisigError(tx, "-1") // NonOwnerCannotSign
+	AssertMultisigError(tx, multisig.ErrorCode("NonOwnerCannotSign"))
 
 	tx, _ = multisig.WithUser(owner2).SignTransaction(txId + 1)
-	AssertMultisigError(tx, "-2") // UnknownTransactionId
+	AssertMultisigError(tx, multisig.ErrorCode("UnknownTransactionId"))
 
 	AssertMultisigSuccess(multisig.WithUser(owner2).SignTransaction(txId))
 
 	// revoke and sign again
 	AssertMultisigSuccess(multisig.WithUser(owner1).RevokeSignature(txId))
 	tx, _ = multisig.WithUser(owner2).ExecuteTransaction(txId)
-	AssertMultisigError(tx, "-9") // NotEnoughSignatures
+	AssertMultisigError(tx, multisig.ErrorCode("NotEnoughSignatures"))
 
 	// treasury address should be changed after execution
 	AssertMultisigSuccess(multisig.WithUser(owner1).SignTransaction(txId))
