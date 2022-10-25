@@ -18,10 +18,10 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | StZILValidationFailed           => "StZILValidationFailed"
-      | CantFetchZimplAddress           => "CantFetchZimplAddress"
-      | ClaimRewardsBufferFundsMismatch => "ClaimRewardsBufferFundsMismatch"
-      | ZimplValidationFailed           => "ZimplValidationFailed"
+      | StZILValidationFailed           => "-200"
+      | CantFetchZimplAddress           => "-201"
+      | ClaimRewardsBufferFundsMismatch => "-202"
+      | ZimplValidationFailed           => "-203"
       end
     in
     { _exception: "Error"; code: result_code }

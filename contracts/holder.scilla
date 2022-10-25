@@ -28,14 +28,14 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
-      | StZILValidationFailed                    => "StZILValidationFailed"
-      | CantFetchZimplAddress                   => "CantFetchZimplAddress"
-      | ClaimRewardsHolderFundsMismatch         => "ClaimRewardsHolderFundsMismatch"
-      | CompleteWithdrawalHolderFundsMismatch   => "CompleteWithdrawalHolderFundsMismatch"
-      | CompleteWithdrawalHolderFundsZero       => "CompleteWithdrawalHolderFundsZero"
-      | CompleteWithdrawalHolderNoUnbondedStake => "CompleteWithdrawalHolderNoUnbondedStake"
-      | HolderAlreadyInitialized                => "HolderAlreadyInitialized"
-      | ZimplValidationFailed                   => "ZimplValidationFailed"
+      | StZILValidationFailed                   => "-220"
+      | CantFetchZimplAddress                   => "-221"
+      | ClaimRewardsHolderFundsMismatch         => "-222"
+      | CompleteWithdrawalHolderFundsMismatch   => "-223"
+      | CompleteWithdrawalHolderFundsZero       => "-224"
+      | CompleteWithdrawalHolderNoUnbondedStake => "-225"
+      | HolderAlreadyInitialized                => "-226"
+      | ZimplValidationFailed                   => "-227"
       end
     in
     { _exception: "Error"; code: result_code }
