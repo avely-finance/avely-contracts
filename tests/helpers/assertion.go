@@ -129,7 +129,7 @@ func AssertZimplError(txn *transaction.Transaction, code int32) {
 	AssertContainRaw("ASSERT_SSNLIST_ERROR", txError, errorMessage, file, no)
 }
 
-func AssertASwapError(txn *transaction.Transaction, code int32) {
+func AssertASwapError(txn *transaction.Transaction, code string) {
 	_, file, no, _ := runtime.Caller(1)
 
 	if txn.Receipt.Success && txn.Status == core.Confirmed {
@@ -138,7 +138,7 @@ func AssertASwapError(txn *transaction.Transaction, code int32) {
 
 	receipt, _ := json.Marshal(txn.Receipt)
 	txError := string(receipt)
-	errorMessage := fmt.Sprintf("(code : (Int32 %d))", code)
+	errorMessage := fmt.Sprintf("(code : (Int32 %s))", code)
 	AssertContainRaw("ASSERT_ASWAP_ERROR", txError, errorMessage, file, no)
 }
 
