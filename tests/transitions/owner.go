@@ -31,7 +31,7 @@ func (tr *Transitions) Owner() {
 	//claim not existent staging owner, expecting error
 	p.StZIL.UpdateWallet(newOwnerKey)
 	tx, _ := p.StZIL.ClaimOwner()
-	AssertError(tx, "StagingOwnerNotExists")
+	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerNotExists"))
 
 	//change owner, expecting success
 	p.StZIL.UpdateWallet(sdk.Cfg.OwnerKey)
@@ -43,7 +43,7 @@ func (tr *Transitions) Owner() {
 	wrongActor := sdk.Cfg.Key1
 	p.StZIL.UpdateWallet(wrongActor)
 	tx, _ = p.StZIL.ClaimOwner()
-	AssertError(tx, "StagingOwnerValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerValidationFailed"))
 
 	//claim owner with correct user, expecting success
 	p.StZIL.UpdateWallet(newOwnerKey)
@@ -70,13 +70,13 @@ func checkChangeAdmin(p *contracts.Protocol) {
 func checkChangeBuffersEmpty(p *contracts.Protocol) {
 	new_buffers := []string{}
 	tx, _ := p.StZIL.ChangeBuffers(new_buffers)
-	AssertError(tx, "BuffersEmpty")
+	AssertError(tx, p.StZIL.ErrorCode("BuffersEmpty"))
 }
 
 func checkAddSSNExists(p *contracts.Protocol) {
 	ssnlist := p.StZIL.GetSsnWhitelist()
 	tx, _ := p.StZIL.AddSSN(ssnlist[0])
-	AssertError(tx, "SsnAddressExists")
+	AssertError(tx, p.StZIL.ErrorCode("SsnAddressExists"))
 }
 
 func checkRemoveSSN(p *contracts.Protocol) {
@@ -87,7 +87,7 @@ func checkRemoveSSN(p *contracts.Protocol) {
 	}
 	//try to remove last whitelisted SSN, expect error
 	tx, _ := p.StZIL.RemoveSSN(ssnlist[0])
-	AssertError(tx, "SsnAddressesEmpty")
+	AssertError(tx, p.StZIL.ErrorCode("SsnAddressesEmpty"))
 
 	//remove last whitelisted SSN on paused contract, expect success
 	AssertSuccess(p.StZIL.PauseIn())
@@ -97,14 +97,14 @@ func checkRemoveSSN(p *contracts.Protocol) {
 func checkSetHolderAddress(p *contracts.Protocol) {
 	AssertEqual(Field(p.StZIL, "holder_address"), p.Holder.Addr)
 	tx, _ := p.StZIL.SetHolderAddress(core.ZeroAddr)
-	AssertError(tx, "HolderAlreadySet")
+	AssertError(tx, p.StZIL.ErrorCode("HolderAlreadySet"))
 }
 
 func checkChangeRewardsFee(p *contracts.Protocol) {
 	prevValue := Field(p.StZIL, "rewards_fee")
 	//try to change fee, expecting error, because fee_denom=10000
 	tx, _ := p.StZIL.ChangeRewardsFee("12345")
-	AssertError(tx, "InvalidRewardsFee")
+	AssertError(tx, p.StZIL.ErrorCode("InvalidRewardsFee"))
 	goodValue := "2345"
 	AssertSuccess(p.StZIL.ChangeRewardsFee(goodValue))
 	AssertEqual(Field(p.StZIL, "rewards_fee"), goodValue)

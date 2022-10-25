@@ -176,7 +176,7 @@ func multisigAddRemoveSSNTest(tr *Transitions) {
 	//try to remove non-existent ssn, expect SsnAddressDoesNotExist error
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitRemoveSSNTransaction(stzil.Addr, core.ZeroAddr))
 	tx, _ := multisig.WithUser(owner).ExecuteTransaction(txId + 1)
-	AssertError(tx, "SsnAddressDoesNotExist")
+	AssertError(tx, p.StZIL.ErrorCode("SsnAddressDoesNotExist"))
 
 	//remove ssn, added before; expect success
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitRemoveSSNTransaction(stzil.Addr, newAddress))

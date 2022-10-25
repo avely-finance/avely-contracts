@@ -39,7 +39,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
 	readyBlocks = append(readyBlocks, block1)
 	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
-	AssertError(tx, "ClaimWithdrawalNoUnbonded")
+	AssertError(tx, p.StZIL.ErrorCode("ClaimWithdrawalNoUnbonded"))
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
 	sdk.IncreaseBlocknum(int(delta))
@@ -167,7 +167,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 
 	//it's impossible to withdraw amount, bigger than amount on heaviest SSN
 	tx, _ := p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(7000))
-	AssertError(tx, "WithdrawAmountTooBig")
+	AssertError(tx, p.StZIL.ErrorCode("WithdrawAmountTooBig"))
 
 	//slash SSNs
 	AssertSuccess(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).RemoveSSN(ssnSlashHeavy))
@@ -241,7 +241,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
 	readyBlocks = append(readyBlocks, block1)
 	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
-	AssertError(tx, "ClaimWithdrawalNoUnbonded")
+	AssertError(tx, p.StZIL.ErrorCode("ClaimWithdrawalNoUnbonded"))
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
 	sdk.IncreaseBlocknum(int(delta))
