@@ -34,7 +34,7 @@ func (tr *Transitions) DrainBuffer() {
 	AssertEqual(bufferToDrain, activeBuffer)
 	//try to consolidate in holder without rewards claiming, excepting Zimpl.DelegHasUnwithdrawRewards -12 error
 	txn, _ := p.StZIL.ConsolidateInHolder(bufferToDrain)
-	AssertZimplError(txn, -12)
+	AssertZimplError(txn, p.Zimpl.ErrorCode("DelegHasUnwithdrawRewards"))
 
 	tools := tr.NextCycleOffchain(p)
 
