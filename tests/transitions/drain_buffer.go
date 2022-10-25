@@ -34,7 +34,7 @@ func (tr *Transitions) DrainBuffer() {
 	AssertEqual(bufferToDrain, activeBuffer)
 	//try to consolidate in holder without rewards claiming, excepting Zimpl.DelegHasUnwithdrawRewards -12 error
 	txn, _ := p.StZIL.ConsolidateInHolder(bufferToDrain)
-	AssertZimplError(txn, -12)
+	AssertZimplError(txn, p.Zimpl.ErrorCode("DelegHasUnwithdrawRewards"))
 
 	tools := tr.NextCycleOffchain(p)
 
@@ -82,28 +82,28 @@ func (tr *Transitions) DrainBuffer() {
 
 	//rewards claiming from holder/non-ssn address will return DelegDoesNotExistAtSSN error
 	txn, _ = p.StZIL.ClaimRewards(p.Holder.Addr, core.ZeroAddr)
-	AssertError(txn, "DelegDoesNotExistAtSSN")
+	AssertError(txn, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN"))
 
 	//rewards claiming from buffer/empty ssn address will return DelegDoesNotExistAtSSN error
 	txn, _ = p.StZIL.ClaimRewards(bufferToDrain, sdk.Cfg.SsnAddrs[0])
-	AssertError(txn, "DelegDoesNotExistAtSSN")
+	AssertError(txn, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN"))
 
 	//rewards claiming from buffer/non-ssn address will return DelegDoesNotExistAtSSN error
 	txn, _ = p.StZIL.ClaimRewards(bufferToDrain, core.ZeroAddr)
-	AssertError(txn, "DelegDoesNotExistAtSSN")
+	AssertError(txn, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN"))
 
 	//rewards claiming from non-buffer address, expecting BufferAddrUnknown error
 	txn, _ = p.StZIL.ClaimRewards(core.ZeroAddr, core.ZeroAddr)
-	AssertError(txn, "BufferOrHolderValidationFailed")
+	AssertError(txn, p.StZIL.ErrorCode("BufferOrHolderValidationFailed"))
 
 	//repeat consolidate, excepting BufferAlreadyDrained error
 	//we don't call complete tools.DrainBufferAuto(p), because it will not run twice for same buffer/lrc
 	txn, _ = p.StZIL.ConsolidateInHolder(bufferToDrain)
-	AssertError(txn, "BufferAlreadyDrained")
+	AssertError(txn, p.StZIL.ErrorCode("BufferAlreadyDrained"))
 
 	//repeat consolidate with non-buffer address, excepting BufferAddrUnknown error
 	txn, _ = p.StZIL.ConsolidateInHolder(core.ZeroAddr)
-	AssertError(txn, "BufferAddrUnknown")
+	AssertError(txn, p.StZIL.ErrorCode("BufferAddrUnknown"))
 }
 
 func checkRewards(p *Protocol, txn *transaction.Transaction, bufferToDrain string) {

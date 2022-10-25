@@ -460,6 +460,7 @@ func NewStZILContract(sdk *AvelySDK, owner, zimplAddr string) (*StZIL, error) {
 			Bech32:   b32,
 			Wallet:   contract.Signer,
 		}
+		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 		return &StZIL{Contract: sdkContract}, nil
 	} else {
 		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
@@ -483,6 +484,7 @@ func RestoreStZILContract(sdk *AvelySDK, contractAddress, owner, zimplAddr strin
 		Bech32:   b32,
 		Wallet:   contract.Signer,
 	}
+	sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 	return &StZIL{Contract: sdkContract}, nil
 }
 

@@ -40,7 +40,7 @@ func ssnChangeOwner(tr *Transitions) {
 	//try to claim owner, expect error
 	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(ssn.Addr))
 	tx, _ := newMultisig.WithUser(newOwner).ExecuteTransaction(txIdLocal2)
-	AssertError(tx, "StagingOwnerNotExists")
+	AssertError(tx, ssn.ErrorCode("StagingOwnerNotExists"))
 
 	//initiate owner change
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(ssn.Addr, newMultisig.Addr))
@@ -49,7 +49,7 @@ func ssnChangeOwner(tr *Transitions) {
 
 	//try to claim owner with wrong user, expect error
 	tx, _ = ssn.WithUser(sdk.Cfg.Key2).ClaimOwner()
-	AssertError(tx, "StagingOwnerValidationFailed")
+	AssertError(tx, ssn.ErrorCode("StagingOwnerValidationFailed"))
 
 	//claim owner
 	txIdLocal2++
@@ -72,19 +72,19 @@ func ssnRequireOwner(tr *Transitions) {
 	ssn.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, _ := ssn.ChangeOwner(sdk.Cfg.Addr3)
-	AssertError(tx, "OwnerValidationFailed")
+	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = ssn.ChangeZproxy(sdk.Cfg.Addr3)
-	AssertError(tx, "OwnerValidationFailed")
+	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = ssn.UpdateReceivingAddr(sdk.Cfg.Addr3)
-	AssertError(tx, "OwnerValidationFailed")
+	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = ssn.UpdateComm(12345)
-	AssertError(tx, "OwnerValidationFailed")
+	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = ssn.WithdrawComm()
-	AssertError(tx, "OwnerValidationFailed")
+	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 }
 
 func ssnChangeZproxy(tr *Transitions) {

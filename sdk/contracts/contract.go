@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
@@ -22,12 +23,15 @@ type ProtocolContract interface {
 	State() string
 }
 
+type ContractErrorCodes map[string]string
+
 type Contract struct {
-	Sdk      *AvelySDK
-	Provider provider2.Provider
-	Addr     string
-	Bech32   string
-	Wallet   *account.Wallet
+	Sdk        *AvelySDK
+	Provider   provider2.Provider
+	Addr       string
+	Bech32     string
+	Wallet     *account.Wallet
+	ErrorCodes ContractErrorCodes
 }
 
 func (c *Contract) UpdateWallet(newKey string) {
@@ -141,4 +145,18 @@ func (c *Contract) BatchSubState(params [][]interface{}) (string, error) {
 	}
 
 	return string(result), nil
+}
+
+func (c *Contract) ParseErrorCodes(contractCode string) ContractErrorCodes {
+	codes := make(ContractErrorCodes)
+	re := regexp.MustCompilePOSIX(`\| *?([A-Za-z0-9]+) *?=> *?Int32 *?([0-9-]+)\n`)
+	results := re.FindAllStringSubmatch(contractCode, -1)
+	for _, row := range results {
+		codes[row[1]] = row[2]
+	}
+	return codes
+}
+
+func (c *Contract) ErrorCode(errorName string) string {
+	return c.ErrorCodes[errorName]
 }

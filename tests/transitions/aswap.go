@@ -115,17 +115,17 @@ func aswapBasic(tr *Transitions) {
 	new_owner_addr := sdk.Cfg.Addr3
 	new_owner_key := sdk.Cfg.Key3
 
-	//CodeStagingOwnerMissing
+	//try to claim owner without staging owner, expect error
 	tx, _ = aswap.WithUser(new_owner_key).ClaimOwner()
-	AssertASwapError(tx, -11)
+	AssertASwapError(tx, aswap.ErrorCode("CodeStagingOwnerMissing"))
 
 	AssertEqual(Field(aswap, "owner"), init_owner_addr)
 	AssertSuccess(aswap.WithUser(init_owner_key).ChangeOwner(new_owner_addr))
 	AssertEqual(Field(aswap, "staging_owner"), new_owner_addr)
 
-	//CodeStagingOwnerInvalid
+	//try to claim owner with invalid user, expect error
 	tx, _ = aswap.WithUser(init_owner_key).ClaimOwner()
-	AssertASwapError(tx, -12)
+	AssertASwapError(tx, aswap.ErrorCode("CodeStagingOwnerInvalid"))
 
 	//claim owner
 	AssertSuccess(aswap.WithUser(new_owner_key).ClaimOwner())
@@ -703,17 +703,17 @@ func aswapOwnerOnly(tr *Transitions) {
 	aswap.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, _ := aswap.SetLiquidityFee("12345")
-	AssertASwapError(tx, -1)
+	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
 
 	tx, _ = aswap.SetTreasuryFee("12345")
-	AssertASwapError(tx, -1)
+	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
 
 	tx, _ = aswap.SetTreasuryAddress(core.ZeroAddr)
-	AssertASwapError(tx, -1)
+	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
 
 	tx, _ = aswap.TogglePause()
-	AssertASwapError(tx, -1)
+	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
 
 	tx, _ = aswap.ChangeOwner(core.ZeroAddr)
-	AssertASwapError(tx, -1)
+	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
 }
