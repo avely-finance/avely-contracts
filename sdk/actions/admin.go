@@ -90,7 +90,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 			a.log.WithFields(fields).Info("ClaimRewards Holder success")
 		} else {
 			fields["error"] = tx.Receipt
-			if a.HasTxError(tx, "DelegDoesNotExistAtSSN") {
+			if a.HasTxError(tx, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN")) {
 				a.log.WithFields(fields).Warning("ClaimRewards Holder reported DelegDoesNotExistAtSSN error")
 			} else {
 				a.log.WithFields(fields).Error("ClaimRewards Holder fatal error")
@@ -112,7 +112,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 			a.log.WithFields(fields).Info("ClaimRewards Buffer success")
 		} else {
 			fields["error"] = tx.Receipt
-			if a.HasTxError(tx, "DelegDoesNotExistAtSSN") {
+			if a.HasTxError(tx, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN")) {
 				a.log.WithFields(fields).Warning("ClaimRewards Buffer reported DelegDoesNotExistAtSSN error")
 			} else {
 				a.log.WithFields(fields).Error("ClaimRewards Buffer fatal error")
@@ -169,7 +169,7 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 			a.TxLog("ChownStakeReDelegate_"+fromSsn, tx, err)
 			fields["tx"] = tx.ID
 			fields["error"] = tx.Receipt
-			if a.HasTxError(tx, "DelegDoesNotExistAtSSN") {
+			if a.HasTxError(tx, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN")) {
 				a.log.WithFields(fields).Warning("ChownStakeReDelegate reported DelegDoesNotExistAtSSN error")
 			} else {
 				a.log.WithFields(fields).Error("ChownStakeReDelegate failed")
