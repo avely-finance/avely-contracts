@@ -28,7 +28,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	p.StZIL.UpdateWallet(sdk.Cfg.Key3)
 	txn, _ := p.StZIL.WithdrawStakeAmt(ToStZil(10))
 
-	AssertError(txn, "DelegDoesNotExistAtSSN")
+	AssertError(txn, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN"))
 
 	/*******************************************************************************
 	 * 2. Check withdrawal under delegator
@@ -43,7 +43,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	Start("WithdwarStakeAmount, step 2A")
 	txn, _ = p.StZIL.WithdrawStakeAmt(ToStZil(100))
 
-	AssertError(txn, "DelegHasNoSufficientAmt")
+	AssertError(txn, p.StZIL.ErrorCode("DelegHasNoSufficientAmt"))
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+15))
 
 	/*******************************************************************************
@@ -53,7 +53,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	Start("WithdwarStakeAmount, step 2C")
 	txn, _ = p.StZIL.WithdrawStakeAmt(ToStZil(10))
 
-	AssertError(txn, "DelegStakeNotEnough")
+	AssertError(txn, p.StZIL.ErrorCode("DelegStakeNotEnough"))
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+15))
 
 	/*******************************************************************************

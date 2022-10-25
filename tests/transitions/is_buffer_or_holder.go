@@ -12,11 +12,11 @@ func (tr *Transitions) IsBufferOrHolder() {
 	p := tr.DeployAndUpgrade()
 
 	tx, _ := p.StZIL.ClaimRewardsSuccessCallBack()
-	AssertError(tx, "BufferOrHolderValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("BufferOrHolderValidationFailed"))
 
 	tx, _ = p.StZIL.DelegateStakeSuccessCallBack(ToZil(1))
-	AssertError(tx, "BufferOrHolderValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("BufferOrHolderValidationFailed"))
 
 	tx, _ = p.StZIL.CompleteWithdrawalSuccessCallBack()
-	AssertError(tx, "BufferOrHolderValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("BufferOrHolderValidationFailed"))
 }

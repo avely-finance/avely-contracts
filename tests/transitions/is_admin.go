@@ -15,14 +15,15 @@ func (tr *Transitions) IsAdmin() {
 	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, _ := p.StZIL.IncreaseAutoRestakeAmount(ToZil(1))
-	AssertError(tx, "AdminValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
+
 	tx, _ = p.StZIL.PerformAutoRestake()
-	AssertError(tx, "AdminValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
 	tx, _ = p.StZIL.ClaimRewards(p.GetBuffer().Addr, sdk.Cfg.SsnAddrs[0])
-	AssertError(tx, "AdminValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
 	readyBlocks := []string{}
 	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
-	AssertError(tx, "AdminValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
 	tx, _ = p.StZIL.ChownStakeReDelegate(sdk.Cfg.Addr3, ToZil(1))
-	AssertError(tx, "AdminValidationFailed")
+	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
 }

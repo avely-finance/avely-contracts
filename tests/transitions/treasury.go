@@ -39,7 +39,7 @@ func treasuryChangeOwner(tr *Transitions) {
 	//try to claim owner, expect error
 	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(treasury.Addr))
 	tx, _ := newMultisig.WithUser(newOwner).ExecuteTransaction(txIdLocal2)
-	AssertError(tx, "StagingOwnerNotExists")
+	AssertError(tx, treasury.ErrorCode("StagingOwnerNotExists"))
 
 	//initiate owner change
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(treasury.Addr, newMultisig.Addr))
@@ -48,7 +48,7 @@ func treasuryChangeOwner(tr *Transitions) {
 
 	//try to claim owner with wrong user, expect error
 	tx, _ = treasury.WithUser(sdk.Cfg.Key2).ClaimOwner()
-	AssertError(tx, "StagingOwnerValidationFailed")
+	AssertError(tx, treasury.ErrorCode("StagingOwnerValidationFailed"))
 
 	//claim owner
 	txIdLocal2++
@@ -77,7 +77,7 @@ func treasuryFunds(tr *Transitions) {
 	//try to withdraw amount exceeding _balance, expect error
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawTransaction(treasury.Addr, sdk.Cfg.Admin, ToQA(12345)))
 	tx, _ := multisig.WithUser(owner).ExecuteTransaction(txIdLocal)
-	AssertError(tx, "InsufficientFunds")
+	AssertError(tx, treasury.ErrorCode("InsufficientFunds"))
 
 	//withdraw valid amount, expect success
 	txIdLocal++
@@ -125,8 +125,8 @@ func treasuryRequireOwner(tr *Transitions) {
 	p.Treasury.UpdateWallet(sdk.Cfg.Key2)
 
 	tx, _ := p.Treasury.ChangeOwner(sdk.Cfg.Addr3)
-	AssertError(tx, "OwnerValidationFailed")
+	AssertError(tx, p.Treasury.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = p.Treasury.Withdraw(core.ZeroAddr, "123")
-	AssertError(tx, "OwnerValidationFailed")
+	AssertError(tx, p.Treasury.ErrorCode("OwnerValidationFailed"))
 }

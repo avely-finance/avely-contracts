@@ -22,7 +22,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	// Because of DelegHasNoSufficientAmt
 	tx, _ := p.StZIL.DelegateStake(ToZil(1))
-	AssertError(tx, "DelegStakeNotEnough")
+	AssertError(tx, p.StZIL.ErrorCode("DelegStakeNotEnough"))
 
 	// Success delegate
 	ssnIn := p.GetSsnAddressForInput()
@@ -86,7 +86,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 func delegateStakeHolder(p *contracts.Protocol) {
 	tx, _ := p.Holder.DelegateStake(sdk.Cfg.StZilSsnAddress, ToZil(1))
-	AssertError(tx, "HolderAlreadyInitialized")
+	AssertError(tx, p.Holder.ErrorCode("HolderAlreadyInitialized"))
 }
 
 func calcActiveBufferAddr(cycle int, buffers []string) string {
