@@ -8,9 +8,25 @@ import (
 const swapOutput = "9871580343970"
 
 func (tr *Transitions) Fungible() {
+	tr.FungibleAllowanceErrors()
 	tr.AddToSwap()
 	tr.TransferFrom()
 	tr.Transfer()
+}
+
+func (tr *Transitions) FungibleAllowanceErrors() {
+	Start("Test ZRC-2 errors")
+
+	p := tr.DeployAndUpgrade()
+
+	amount := ToQA(1000)
+	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).DelegateStake(amount))
+
+	tx, _ := p.StZIL.IncreaseAllowance(sdk.Cfg.Addr1, amount)
+	AssertError(tx, p.StZIL.ErrorCode("CodeIsSender"))
+
+	tx, _ = p.StZIL.DecreaseAllowance(sdk.Cfg.Addr1, amount)
+	AssertError(tx, p.StZIL.ErrorCode("CodeIsSender"))
 }
 
 func (tr *Transitions) AddToSwap() {
@@ -47,7 +63,7 @@ func (tr *Transitions) Transfer() {
 	amount := ToQA(100)
 
 	tx, _ := stzil.WithUser(sdk.Cfg.Key1).Transfer(to, amount)
-	AssertError(tx, p.StZIL.ErrorCode("InsufficientFunds"))
+	AssertError(tx, p.StZIL.ErrorCode("CodeInsufficientFunds"))
 
 	AssertSuccess(stzil.WithUser(sdk.Cfg.Key1).DelegateStake(amount))
 
@@ -77,7 +93,7 @@ func (tr *Transitions) TransferFrom() {
 	AssertEqual(stzil.BalanceOf(to).String(), ToQA(0))
 
 	tx, _ := stzil.TransferFrom(from, to, amount)
-	AssertError(tx, p.StZIL.ErrorCode("InsufficientAllowance"))
+	AssertError(tx, p.StZIL.ErrorCode("CodeInsufficientAllowance"))
 
 	// Allow admin user to spend User1 money
 	AssertSuccess(stzil.WithUser(sdk.Cfg.Key1).IncreaseAllowance(sdk.Cfg.Admin, amount))

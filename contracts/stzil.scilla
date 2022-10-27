@@ -11,6 +11,12 @@ type Withdrawal =
   | Withdrawal of Uint128 Uint128
 
 type Error =
+  (* ZRC-2 error codes *)
+  | CodeIsSender
+  | CodeInsufficientFunds
+  | CodeInsufficientAllowance
+  | CodeNotOwner
+  (* Custom error codes *)
   | AdminValidationFailed
   | BufferAddrUnknown
   | BufferAlreadyDrained
@@ -31,15 +37,11 @@ type Error =
   | DelegStakeFundsMismatch
   | DelegStakeNotEnough
   | InvalidTotalAmt
-  | InsufficientFunds
-  | InsufficientAllowance
   | InvalidRewardsFee
-  | IsSender
   | HolderAlreadySet
   | NotPausedIn
   | NotPausedOut
   | NotPausedZrc2
-  | OwnerValidationFailed
   | PausedIn
   | PausedOut
   | PausedZrc2
@@ -54,6 +56,12 @@ let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
+      (* ZRC-2 error codes *)
+      | CodeIsSender                     => Int32 -1
+      | CodeInsufficientFunds            => Int32 -2
+      | CodeInsufficientAllowance        => Int32 -3
+      | CodeNotOwner                     => Int32 -4
+      (* Custom error codes *)
       | AdminValidationFailed            => Int32 -100
       | BufferAddrUnknown                => Int32 -101
       | BufferAlreadyDrained             => Int32 -102
@@ -74,15 +82,11 @@ let make_error =
       | DelegStakeFundsMismatch          => Int32 -117
       | DelegStakeNotEnough              => Int32 -118
       | InvalidTotalAmt                  => Int32 -119
-      | InsufficientFunds                => Int32 -120
-      | InsufficientAllowance            => Int32 -121
       | InvalidRewardsFee                => Int32 -122
-      | IsSender                         => Int32 -123
       | HolderAlreadySet                 => Int32 -124
       | NotPausedIn                      => Int32 -125
       | NotPausedOut                     => Int32 -126
       | NotPausedZrc2                    => Int32 -127
-      | OwnerValidationFailed            => Int32 -128
       | PausedOut                        => Int32 -129
       | PausedIn                         => Int32 -130
       | PausedZrc2                       => Int32 -131
@@ -403,7 +407,7 @@ procedure RequireOwner()
   match is_owner with
   | True  =>
   | False =>
-    e = OwnerValidationFailed;
+    e = CodeNotOwner;
     ThrowError e
   end
 end
@@ -1526,7 +1530,7 @@ procedure RequireNotSender(address: ByStr20)
   is_sender = builtin eq _sender address;
   match is_sender with
   | True =>
-    err = IsSender;
+    err = CodeIsSender;
     ThrowError err
   | False =>
   end
@@ -1550,7 +1554,7 @@ procedure AuthorizedMoveIfSufficientBalance(from: ByStr20, to: ByStr20, amount: 
     balances[to] := new_to_bal
   | False =>
     (* Balance not sufficient *)
-    err = InsufficientFunds;
+    err = CodeInsufficientFunds;
     ThrowError err
   end
 end
@@ -1631,7 +1635,7 @@ transition TransferFrom(from: ByStr20, to: ByStr20, amount: Uint128)
     msgs = two_msgs msg_to_recipient msg_to_sender;
     send msgs
   | False =>
-    err = InsufficientAllowance;
+    err = CodeInsufficientAllowance;
     ThrowError err
   end
 end
