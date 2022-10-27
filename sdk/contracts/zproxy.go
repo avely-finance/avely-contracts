@@ -236,6 +236,7 @@ func (p *Zproxy) ChangeBNumReq(bnum int) (*transaction.Transaction, error) {
 	}
 	return p.Call("ChangeBNumReq", args, "0")
 }
+
 func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
 	contract := buildZproxyContract(sdk)
 
