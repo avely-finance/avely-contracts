@@ -16,7 +16,7 @@ func main() {
 	chainPtr := flag.String("chain", "local", "chain")
 	cmdPtr := flag.String("cmd", "default", "specific command")
 	addrPtr := flag.String("addr", "", "address")
-	amountPtr := flag.Int("amount", 0, "an amount of action")
+	amountPtr := flag.Int("amount", 0, "an amount/number of action")
 
 	flag.Parse()
 
@@ -49,6 +49,13 @@ func main() {
 		}
 		log.Debug("Restore Zproxy succeed, address = " + Zproxy.Addr)
 		Zproxy.AddSSN(addr, addr)
+	case "change_bnum_req":
+		Zproxy, err := RestoreZproxy(sdk, sdk.Cfg.ZproxyAddr)
+		if err != nil {
+			log.Fatal("Restore Zproxy error = " + err.Error())
+		}
+		log.Debug("Restore Zproxy succeed, address = " + Zproxy.Addr)
+		Zproxy.ChangeBNumReq(amount)
 	default:
 		log.Fatal("Unknown command")
 	}

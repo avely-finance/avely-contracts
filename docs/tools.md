@@ -76,6 +76,12 @@ $ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=next_cycle --amount=
 $ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=add_ssn --addr=0x....
 ```
 
+6. It's possible to change `bnum_req` field (bonding period in terms of number of blocks; set to be equivalent to 14 days in mainnet by default)
+
+```sh
+$ go run tools/zilliqa_staking_cmd.go --chain=testnet --cmd=change_bnum_req --amount=100
+```
+
 ### Deploy Protocol
 
 1. Deploy basic contracts
