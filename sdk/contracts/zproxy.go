@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"strconv"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -223,6 +224,17 @@ func (p *Zproxy) WithdrawStakeAmt(ssnaddr, amount string) (*transaction.Transact
 		},
 	}
 	return p.Call("WithdrawStakeAmt", args, "0")
+}
+
+func (p *Zproxy) ChangeBNumReq(bnum int) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"input_bnum_req",
+			"Uint128",
+			strconv.Itoa(bnum),
+		},
+	}
+	return p.Call("ChangeBNumReq", args, "0")
 }
 
 func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
