@@ -64,22 +64,22 @@ func callPauseUnpauseNonAdmin(p *contracts.Protocol) {
 	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
 
 	tx, _ := p.StZIL.PauseIn()
-	AssertError(tx, p.StZIL.ErrorCode("OwnerValidationFailed"))
+	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
 	tx, _ = p.StZIL.UnpauseIn()
-	AssertError(tx, p.StZIL.ErrorCode("OwnerValidationFailed"))
+	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
 	tx, _ = p.StZIL.PauseOut()
-	AssertError(tx, p.StZIL.ErrorCode("OwnerValidationFailed"))
+	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
 	tx, _ = p.StZIL.UnpauseOut()
-	AssertError(tx, p.StZIL.ErrorCode("OwnerValidationFailed"))
+	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
 	tx, _ = p.StZIL.PauseZrc2()
-	AssertError(tx, p.StZIL.ErrorCode("OwnerValidationFailed"))
+	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
 	tx, _ = p.StZIL.UnpauseZrc2()
-	AssertError(tx, p.StZIL.ErrorCode("OwnerValidationFailed"))
+	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 }
 
 func callPausedIn(p *contracts.Protocol) {
