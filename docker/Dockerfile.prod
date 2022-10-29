@@ -27,6 +27,8 @@ LABEL "org.opencontainers.image.source"="https://github.com/avely-finance/avely-
 
 COPY --from=certs /etc/ssl/certs /etc/ssl/certs
 COPY ./docker/docker-entrypoint.sh /sbin/
+COPY ./config.json /dapp/config.json
+
 RUN chmod +x /sbin/*.sh
 
 WORKDIR /dapp/
