@@ -79,6 +79,8 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 
 	//claim rewards from holder
 	for _, ssn := range ssnlist {
+		// TODO: Don't claim if Holder does not have rewards on this SSN
+
 		tx, err := p.StZIL.ClaimRewards(p.Holder.Addr, ssn)
 		fields := logrus.Fields{
 			"tx":             tx.ID,
@@ -90,17 +92,13 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 			a.log.WithFields(fields).Info("ClaimRewards Holder success")
 		} else {
 			fields["error"] = tx.Receipt
-			if a.HasTxError(tx, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN")) {
-				a.log.WithFields(fields).Warning("ClaimRewards Holder reported DelegDoesNotExistAtSSN error")
-			} else {
-				a.log.WithFields(fields).Error("ClaimRewards Holder fatal error")
-				return errors.New("Buffer drain is failed at ClaimRewards Holder step")
-			}
+			a.log.WithFields(fields).Error("ClaimRewards Holder error")
 		}
 	}
 
 	//claim rewards from buffer
 	for _, ssn := range ssnlist {
+		// TODO: Don't claim if Buffer does not have rewards on this SSN
 		tx, err := p.StZIL.ClaimRewards(bufferToDrain, ssn)
 		fields := logrus.Fields{
 			"tx":             tx.ID,
@@ -112,12 +110,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 			a.log.WithFields(fields).Info("ClaimRewards Buffer success")
 		} else {
 			fields["error"] = tx.Receipt
-			if a.HasTxError(tx, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN")) {
-				a.log.WithFields(fields).Warning("ClaimRewards Buffer reported DelegDoesNotExistAtSSN error")
-			} else {
-				a.log.WithFields(fields).Error("ClaimRewards Buffer fatal error")
-				return errors.New("Buffer drain is failed at ClaimRewards Buffer step")
-			}
+			a.log.WithFields(fields).Error("ClaimRewards Buffer error")
 		}
 	}
 
