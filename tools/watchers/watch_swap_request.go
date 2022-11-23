@@ -35,7 +35,6 @@ func main() {
 	log.SetOutputStdout()
 	log.AddSlackHook(sdk.Cfg.Slack.HookUrl, sdk.Cfg.Slack.LogLevel)
 	protocol := contracts.RestoreFromState(sdk, log)
-	url := sdk.GetWsURL()
 
 	watcher := &SwapRequestWatcher{
 		gap:        *gapPtr,
@@ -49,7 +48,7 @@ func main() {
 		"gap":  *gapPtr,
 		"mode": *modePtr,
 	}).Debug("Start swap request watcher")
-	blockWatcher := utils.CreateBlockWatcher(url, log)
+	blockWatcher := utils.CreateBlockWatcher(sdk, log)
 	blockWatcher.AddObserver(watcher)
 	blockWatcher.Start()
 }

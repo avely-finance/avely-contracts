@@ -69,18 +69,19 @@ func (p *Protocol) GetBufferByOffset(offset int) *BufferContract {
 }
 
 func (p *Protocol) GetBlockHeight() int {
-	result := ""
 	if p.StZIL.Sdk.Cfg.Chain == "local" {
 		//Isolated server has limited set of API methods: https://github.com/Zilliqa/zilliqa-isolated-server#available-apis
 		//GetNumTxBlocks is not available.
 		//So we'll take BlockNum from receipt of safe transaction.
 		tx, _ := p.Zproxy.UpdateVerifier(p.StZIL.Sdk.Cfg.Verifier)
-		result = tx.Receipt.EpochNum
+		result := tx.Receipt.EpochNum
+		blockHeight, _ := strconv.Atoi(result)
+		return blockHeight
+
 	} else {
-		result, _ = p.StZIL.Contract.Provider.GetNumTxBlocks()
+		result, _ := p.StZIL.Sdk.GetBlockHeight()
+		return result
 	}
-	blockHeight, _ := strconv.Atoi(result)
-	return blockHeight
 }
 
 func (p *Protocol) GetClaimWithdrawalBlocks() []int {
