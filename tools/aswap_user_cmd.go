@@ -97,7 +97,8 @@ func addLiquidity() *cli.Command {
 			deadlineBlock := ctx.Int(aswapUserCliFlags.DeadlineBlock.Name)
 			if aswapUser.chain != "local" {
 				//consider it as gap for testnet/mainnet
-				deadlineBlock += aswapUser.sdk.GetBlockHeight()
+				blockHeight, _ := aswapUser.sdk.GetBlockHeight()
+				deadlineBlock += blockHeight
 			}
 
 			_, err = aswapUser.aswap.AddLiquidity(
@@ -146,7 +147,8 @@ func removeLiquidity() *cli.Command {
 			deadlineBlock := ctx.Int(aswapUserCliFlags.DeadlineBlock.Name)
 			if aswapUser.chain != "local" {
 				//consider it as gap for testnet/mainnet
-				deadlineBlock += aswapUser.sdk.GetBlockHeight()
+				blockHeight, _ := aswapUser.sdk.GetBlockHeight()
+				deadlineBlock += blockHeight
 			}
 			_, err = aswapUser.aswap.RemoveLiquidity(
 				tokenAddress,
@@ -194,7 +196,8 @@ func swapExactZilForTokens() *cli.Command {
 			deadlineBlock := ctx.Int(aswapUserCliFlags.DeadlineBlock.Name)
 			if aswapUser.chain != "local" {
 				//consider it as gap for testnet/mainnet
-				deadlineBlock += aswapUser.sdk.GetBlockHeight()
+				blockHeight, _ := aswapUser.sdk.GetBlockHeight()
+				deadlineBlock += blockHeight
 			}
 
 			_, err = aswapUser.aswap.SwapExactZILForTokens(
@@ -243,7 +246,8 @@ func swapExactTokensForZil() *cli.Command {
 			deadlineBlock := ctx.Int(aswapUserCliFlags.DeadlineBlock.Name)
 			if aswapUser.chain != "local" {
 				//consider it as gap for testnet/mainnet
-				deadlineBlock += aswapUser.sdk.GetBlockHeight()
+				blockHeight, _ := aswapUser.sdk.GetBlockHeight()
+				deadlineBlock += blockHeight
 			}
 
 			_, err = aswapUser.aswap.SwapExactTokensForZIL(

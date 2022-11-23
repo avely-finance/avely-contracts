@@ -29,7 +29,6 @@ func main() {
 	log.SetOutputStdout()
 	log.AddSlackHook(sdk.Cfg.Slack.HookUrl, sdk.Cfg.Slack.LogLevel)
 	protocol := contracts.RestoreFromState(sdk, log)
-	url := sdk.GetWsURL()
 
 	claimWatcher := &ClaimWithdrawalWatcher{
 		gap:        *gapPtr,
@@ -39,7 +38,7 @@ func main() {
 	}
 
 	log.Debug("Start claim withdrawal watcher")
-	blockWatcher := utils.CreateBlockWatcher(url, log)
+	blockWatcher := utils.CreateBlockWatcher(sdk, log)
 	blockWatcher.AddObserver(claimWatcher)
 	blockWatcher.Start()
 }
