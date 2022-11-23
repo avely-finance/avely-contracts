@@ -63,10 +63,10 @@ func (sdk *AvelySDK) IncreaseBlocknum(delta int) error {
 	}
 
 	//for testnet/mainnet will wait required delta blocks
-	blockHeight := sdk.GetBlockHeight()
+	blockHeight, _ := sdk.GetBlockHeight()
 	for {
 		time.Sleep(5 * time.Second)
-		cur := sdk.GetBlockHeight()
+		cur, _ := sdk.GetBlockHeight()
 		log.Printf("sdk.IncreaseBlocknum(): start block=%d, delta=%d, cur. block=%d", blockHeight, delta, cur)
 		if cur >= blockHeight+delta {
 			return nil
@@ -76,11 +76,15 @@ func (sdk *AvelySDK) IncreaseBlocknum(delta int) error {
 
 //this function will only works for testnet or mainnet
 //it will not work for local server in manual mode
-func (sdk *AvelySDK) GetBlockHeight() int {
+func (sdk *AvelySDK) GetBlockHeight() (int, error) {
 	provider := sdk.InitProvider()
-	result, _ := provider.GetNumTxBlocks()
-	blockHeight, _ := strconv.Atoi(result)
-	return blockHeight
+	result, err := provider.GetNumTxBlocks()
+
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.Atoi(result)
 }
 
 func (sdk *AvelySDK) GetBalance(addr string) string {
