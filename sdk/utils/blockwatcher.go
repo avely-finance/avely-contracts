@@ -1,12 +1,9 @@
 package utils
 
 import (
-	"net/url"
 	"time"
 
-	"github.com/Zilliqa/gozilliqa-sdk/subscription"
 	"github.com/avely-finance/avely-contracts/sdk/core"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -22,12 +19,12 @@ type Observable struct {
 
 type BlockWatcher struct {
 	Observable
-	url url.URL
+	sdk *core.AvelySDK
 	log *core.Log
 }
 
-func CreateBlockWatcher(url url.URL, log *core.Log) *BlockWatcher {
-	return &BlockWatcher{url: url, log: log}
+func CreateBlockWatcher(sdk *core.AvelySDK, log *core.Log) *BlockWatcher {
+	return &BlockWatcher{sdk: sdk, log: log}
 }
 
 type SocketError struct {
@@ -51,35 +48,26 @@ func (s *SocketError) isExpired() bool {
 
 func (cw *BlockWatcher) Start() {
 	log := cw.log
-	subscriber := subscription.BuildNewBlockSubscriber(cw.url)
-	_, ec, msg := subscriber.Start()
-	var prevErr *SocketError
-	var err *SocketError
 
-	log.WithFields(logrus.Fields{"url": cw.url.String()}).Debug("Start block watcher")
+	log.Debug("Block short polling watcher is ready to tick every 10 seconds")
+	ticker := time.NewTicker(time.Second * 10).C
 
-	for {
-		select {
-		case message := <-msg:
-			if blockNum, found := cw.getBlockNum(message); found {
+	go func() {
+		for {
+			select {
+			case <-ticker:
+				blockNum, err := cw.sdk.GetBlockHeight()
+
+				if err != nil {
+					log.Error("Got fatal error during fetchin block height: " + err.Error())
+				}
+
 				cw.NotifyAll(blockNum)
 			}
-		case e := <-ec:
-			err = NewSocketError(e)
-			_ = subscriber.Ws.Close()
-			if prevErr == nil || prevErr.isExpired() {
-				// reconnect
-				subscriber = subscription.BuildNewBlockSubscriber(cw.url)
-				_, ec, msg = subscriber.Start()
-				// re-assign prev error to the current
-				prevErr = err
-				err = nil
-			} else {
-				log.Error("Got fatal error: " + err.Error())
-				break
-			}
 		}
-	}
+	}()
+
+	time.Sleep(time.Duration(1<<63 - 1))
 }
 
 func (cw *BlockWatcher) getBlockNum(message []byte) (int, bool) {
