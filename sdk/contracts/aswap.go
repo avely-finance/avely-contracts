@@ -190,8 +190,21 @@ func (a *ASwap) ClaimOwner() (*transaction.Transaction, error) {
 	return a.Call("ClaimOwner", args, "0")
 }
 
-func NewASwap(sdk *AvelySDK, init_owner string) (*ASwap, error) {
-	contract := buildASwapContract(sdk, init_owner)
+func NewASwap(sdk *AvelySDK, init_owner string, deployer *account.Wallet) (*ASwap, error) {
+	init := []core.ContractValue{
+		{
+			VName: "_scilla_version",
+			Type:  "Uint32",
+			Value: "0",
+		}, {
+			VName: "init_owner",
+			Type:  "ByStr20",
+			Value: init_owner,
+		},
+	}
+
+	contract := buildASwapContract(sdk, init)
+	contract.Signer = deployer
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -220,8 +233,8 @@ func NewASwap(sdk *AvelySDK, init_owner string) (*ASwap, error) {
 	}
 }
 
-func RestoreASwap(sdk *AvelySDK, contractAddress string, init_owner string) (*ASwap, error) {
-	contract := buildASwapContract(sdk, init_owner)
+func RestoreASwap(sdk *AvelySDK, contractAddress string) (*ASwap, error) {
+	contract := buildASwapContract(sdk, []core.ContractValue{})
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -243,30 +256,14 @@ func RestoreASwap(sdk *AvelySDK, contractAddress string, init_owner string) (*AS
 	return aswap, nil
 }
 
-func buildASwapContract(sdk *AvelySDK, init_owner string) contract2.Contract {
+func buildASwapContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/aswap.scilla")
-	key := sdk.Cfg.AdminKey
-
-	init := []core.ContractValue{
-		{
-			VName: "_scilla_version",
-			Type:  "Uint32",
-			Value: "0",
-		}, {
-			VName: "init_owner",
-			Type:  "ByStr20",
-			Value: init_owner,
-		},
-	}
-
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }
 

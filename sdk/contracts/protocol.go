@@ -4,6 +4,7 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
@@ -33,8 +34,8 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, stzil *StZIL, buffers []*BufferCo
 	}
 }
 
-func (p *Protocol) DeployBuffer() (*BufferContract, error) {
-	return NewBufferContract(p.StZIL.Sdk, p.StZIL.Addr, p.Zproxy.Addr)
+func (p *Protocol) DeployBuffer(deployer *account.Wallet) (*BufferContract, error) {
+	return NewBufferContract(p.StZIL.Sdk, p.StZIL.Addr, p.Zproxy.Addr, deployer)
 }
 
 func (p *Protocol) GetSsnAddressForInput() string {

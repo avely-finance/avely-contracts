@@ -36,8 +36,8 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	SetupZilliqaStaking(sdk, log)
 
 	//add buffers to protocol, we need 3
-	buffer2, _ := p.DeployBuffer()
-	buffer3, _ := p.DeployBuffer()
+	buffer2, _ := p.DeployBuffer(celestials.Admin)
+	buffer3, _ := p.DeployBuffer(celestials.Admin)
 	p.Buffers = append(p.Buffers, buffer2, buffer3)
 
 	p.AddSSNs()
@@ -72,7 +72,7 @@ func (tr *Transitions) DeployZilSwap() *ZilSwap {
 
 func (tr *Transitions) DeployASwap(init_owner string) *ASwap {
 	log := GetLog()
-	aswap, err := NewASwap(sdk, init_owner)
+	aswap, err := NewASwap(sdk, init_owner, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy ASwap error = " + err.Error())
 	}
