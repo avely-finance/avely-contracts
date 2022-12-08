@@ -12,7 +12,7 @@ func (tr *Transitions) Owner() {
 	Start("StZIL contract owner transitions")
 
 	p := tr.DeployAndUpgrade()
-	p.StZIL.UpdateWallet(sdk.Cfg.OwnerKey)
+	p.StZIL.SetSigner(celestials.Owner)
 
 	checkChangeAdmin(p)
 	checkChangeBuffersEmpty(p)
@@ -34,9 +34,9 @@ func (tr *Transitions) Owner() {
 	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerNotExists"))
 
 	//change owner, expecting success
-	p.StZIL.UpdateWallet(sdk.Cfg.OwnerKey)
+	p.StZIL.SetSigner(celestials.Owner)
 	tx, _ = AssertSuccess(p.StZIL.ChangeOwner(newOwnerAddr))
-	AssertEvent(tx, Event{p.StZIL.Addr, "ChangeOwner", ParamsMap{"current_owner": sdk.Cfg.Owner, "new_owner": newOwnerAddr}})
+	AssertEvent(tx, Event{p.StZIL.Addr, "ChangeOwner", ParamsMap{"current_owner": utils.GetAddressByWallet(celestials.Owner), "new_owner": newOwnerAddr}})
 	AssertEqual(Field(p.StZIL, "staging_owner_address"), newOwnerAddr)
 
 	//claim owner with wrong user, expecting error
@@ -57,7 +57,7 @@ func checkChangeAdmin(p *contracts.Protocol) {
 	newAdminAddr := sdk.Cfg.Addr3
 
 	//change admin, expecting success
-	p.StZIL.UpdateWallet(sdk.Cfg.OwnerKey)
+	p.StZIL.SetSigner(celestials.Owner)
 	tx, _ := AssertSuccess(p.StZIL.ChangeAdmin(newAdminAddr))
 	AssertEvent(tx, Event{
 		Sender:    p.StZIL.Addr,

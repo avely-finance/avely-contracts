@@ -40,8 +40,10 @@ func (c *Contract) UpdateWallet(newKey string) {
 	c.Wallet = wallet
 }
 
-func (c *Contract) WithWallet(wallet *account.Wallet) {
+func (c *Contract) SetSigner(wallet *account.Wallet) *Contract {
 	c.Wallet = wallet
+
+	return c
 }
 
 func (c *Contract) Call(transition string, params []core.ContractValue, amount string) (*transaction.Transaction, error) {

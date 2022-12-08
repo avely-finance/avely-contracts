@@ -64,8 +64,10 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	}
 
 	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr, anotherBuffer.Addr}
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
+	p.StZIL.SetSigner(celestials.Owner)
+	AssertSuccess(p.StZIL.ChangeBuffers(new_buffers))
+
+	p.StZIL.SetSigner(celestials.Admin) //back to admin
 
 	ssnForInput := p.GetSsnAddressForInput()
 	AssertSuccess(p.StZIL.DelegateStake(ToZil(10)))
