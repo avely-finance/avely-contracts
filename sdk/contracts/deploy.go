@@ -97,7 +97,7 @@ func Deploy(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
 	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -148,7 +148,7 @@ func DeployOnlyAvely(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol 
 	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -199,7 +199,7 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	// Restore buffers
 	buffers := []*BufferContract{}
 	for _, addr := range sdk.Cfg.BufferAddrs {
-		Buffer, err := RestoreBufferContract(sdk, addr, StZIL.Addr, Zproxy.Addr)
+		Buffer, err := RestoreBufferContract(sdk, addr)
 		if err != nil {
 			log.Fatal("Restore buffer error = " + err.Error())
 		}
