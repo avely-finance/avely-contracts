@@ -17,9 +17,8 @@ type Gzil struct {
 	Contract
 }
 
-func NewGzil(sdk *AvelySDK) (*Gzil, error) {
+func NewGzil(sdk *AvelySDK, deployer *account.Wallet) (*Gzil, error) {
 	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/gzil.scilla")
-	key := sdk.Cfg.AdminKey
 
 	init := []core.ContractValue{
 		{
@@ -30,12 +29,12 @@ func NewGzil(sdk *AvelySDK) (*Gzil, error) {
 		{
 			VName: "contract_owner",
 			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
+			Value: "0x" + deployer.DefaultAccount.Address,
 		},
 		{
 			VName: "init_minter",
 			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
+			Value: "0x" + deployer.DefaultAccount.Address,
 		},
 		{
 			VName: "name",
@@ -64,14 +63,11 @@ func NewGzil(sdk *AvelySDK) (*Gzil, error) {
 		},
 	}
 
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
-
 	contract := contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   deployer,
 	}
 
 	tx, err := sdk.DeployTo(&contract)
@@ -87,7 +83,7 @@ func NewGzil(sdk *AvelySDK) (*Gzil, error) {
 			Provider: *contract.Provider,
 			Addr:     "0x" + tx.ContractAddress,
 			Bech32:   b32,
-			Wallet:   wallet,
+			Wallet:   deployer,
 		}
 		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
 		return &Gzil{Contract: sdkContract}, nil

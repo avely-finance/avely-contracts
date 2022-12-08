@@ -33,7 +33,7 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p := Deploy(sdk, celestials, log)
 	sdk.Cfg.ZproxyAddr = p.Zproxy.Addr
 	sdk.Cfg.ZimplAddr = p.Zimpl.Addr
-	SetupZilliqaStaking(sdk, log)
+	SetupZilliqaStaking(sdk, celestials, log)
 
 	//add buffers to protocol, we need 3
 	buffer2, _ := p.DeployBuffer(celestials.Admin)
@@ -55,7 +55,7 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 
 func (tr *Transitions) DeployZilSwap() *ZilSwap {
 	log := GetLog()
-	zilSwap, err := NewZilSwap(sdk)
+	zilSwap, err := NewZilSwap(sdk, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy zilSwap error = " + err.Error())
 	}
@@ -84,7 +84,7 @@ func (tr *Transitions) DeployASwap(init_owner string) *ASwap {
 
 func (tr *Transitions) DeployTreasury(init_owner string) *TreasuryContract {
 	log := GetLog()
-	treasury, err := NewTreasuryContract(sdk, init_owner)
+	treasury, err := NewTreasuryContract(sdk, init_owner, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy Treasury error = " + err.Error())
 	}
@@ -96,7 +96,7 @@ func (tr *Transitions) DeployTreasury(init_owner string) *TreasuryContract {
 
 func (tr *Transitions) DeploySsn(init_owner, init_zproxy string) *SsnContract {
 	log := GetLog()
-	ssn, err := NewSsnContract(sdk, init_owner, init_zproxy)
+	ssn, err := NewSsnContract(sdk, init_owner, init_zproxy, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy SSN contract error = " + err.Error())
 	}
@@ -108,7 +108,7 @@ func (tr *Transitions) DeploySsn(init_owner, init_zproxy string) *SsnContract {
 
 func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *MultisigWallet {
 	log := GetLog()
-	multisig, err := NewMultisigContract(sdk, owners, signCount)
+	multisig, err := NewMultisigContract(sdk, owners, signCount, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy MultisigContract error = " + err.Error())
 	}

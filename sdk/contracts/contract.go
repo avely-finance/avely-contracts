@@ -40,6 +40,10 @@ func (c *Contract) UpdateWallet(newKey string) {
 	c.Wallet = wallet
 }
 
+func (c *Contract) WithWallet(wallet *account.Wallet) {
+	c.Wallet = wallet
+}
+
 func (c *Contract) Call(transition string, params []core.ContractValue, amount string) (*transaction.Transaction, error) {
 	contract := contract2.Contract{
 		Address: c.Bech32,

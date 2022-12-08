@@ -61,8 +61,21 @@ func (a *TreasuryContract) ClaimOwner() (*transaction.Transaction, error) {
 	return a.Call("ClaimOwner", args, "0")
 }
 
-func NewTreasuryContract(sdk *AvelySDK, init_owner string) (*TreasuryContract, error) {
-	contract := buildTreasuryContract(sdk, init_owner)
+func NewTreasuryContract(sdk *AvelySDK, init_owner string, deployer *account.Wallet) (*TreasuryContract, error) {
+	init := []core.ContractValue{
+		{
+			VName: "_scilla_version",
+			Type:  "Uint32",
+			Value: "0",
+		}, {
+			VName: "init_owner",
+			Type:  "ByStr20",
+			Value: init_owner,
+		},
+	}
+
+	contract := buildTreasuryContract(sdk, init)
+	contract.Signer = deployer
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -87,8 +100,8 @@ func NewTreasuryContract(sdk *AvelySDK, init_owner string) (*TreasuryContract, e
 	}
 }
 
-func RestoreTreasuryContract(sdk *AvelySDK, contractAddress string, init_owner string) (*TreasuryContract, error) {
-	contract := buildTreasuryContract(sdk, init_owner)
+func RestoreTreasuryContract(sdk *AvelySDK, contractAddress string) (*TreasuryContract, error) {
+	contract := buildTreasuryContract(sdk, []core.ContractValue{})
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -107,29 +120,13 @@ func RestoreTreasuryContract(sdk *AvelySDK, contractAddress string, init_owner s
 	return &TreasuryContract{Contract: sdkContract}, nil
 }
 
-func buildTreasuryContract(sdk *AvelySDK, init_owner string) contract2.Contract {
+func buildTreasuryContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/treasury.scilla")
-	key := sdk.Cfg.AdminKey
-
-	init := []core.ContractValue{
-		{
-			VName: "_scilla_version",
-			Type:  "Uint32",
-			Value: "0",
-		}, {
-			VName: "init_owner",
-			Type:  "ByStr20",
-			Value: init_owner,
-		},
-	}
-
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }
