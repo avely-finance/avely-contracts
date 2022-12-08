@@ -147,8 +147,25 @@ func (b *HolderContract) DelegateStake(ssnaddr, amount string) (*transaction.Tra
 	return b.Call("DelegateStake", args, amount)
 }
 
-func NewHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string) (*HolderContract, error) {
-	contract := buildHolderContract(sdk, stZilAddr, zproxyAddr)
+func NewHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string, deployer *account.Wallet) (*HolderContract, error) {
+	init := []core.ContractValue{
+		{
+			VName: "_scilla_version",
+			Type:  "Uint32",
+			Value: "0",
+		}, {
+			VName: "init_stzil_address",
+			Type:  "ByStr20",
+			Value: stZilAddr,
+		}, {
+			VName: "init_zproxy_address",
+			Type:  "ByStr20",
+			Value: zproxyAddr,
+		},
+	}
+
+	contract := buildHolderContract(sdk, init)
+	contract.Signer = deployer
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -172,8 +189,8 @@ func NewHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string) (*HolderCont
 	}
 }
 
-func RestoreHolderContract(sdk *AvelySDK, contractAddress, stZilAddr, zproxyAddr string) (*HolderContract, error) {
-	contract := buildHolderContract(sdk, stZilAddr, zproxyAddr)
+func RestoreHolderContract(sdk *AvelySDK, contractAddress string) (*HolderContract, error) {
+	contract := buildHolderContract(sdk, []core.ContractValue{})
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 	if err != nil {
@@ -191,33 +208,13 @@ func RestoreHolderContract(sdk *AvelySDK, contractAddress, stZilAddr, zproxyAddr
 	return &HolderContract{Contract: sdkContract}, nil
 }
 
-func buildHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string) contract2.Contract {
+func buildHolderContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/holder.scilla")
-	key := sdk.Cfg.AdminKey
-
-	init := []core.ContractValue{
-		{
-			VName: "_scilla_version",
-			Type:  "Uint32",
-			Value: "0",
-		}, {
-			VName: "init_stzil_address",
-			Type:  "ByStr20",
-			Value: stZilAddr,
-		}, {
-			VName: "init_zproxy_address",
-			Type:  "ByStr20",
-			Value: zproxyAddr,
-		},
-	}
-
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }
