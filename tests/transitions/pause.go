@@ -51,7 +51,7 @@ func (tr *Transitions) Pause() {
 }
 
 func unPauseEmptyBuffers() {
-	p := contracts.Deploy(sdk, GetLog())
+	p := contracts.Deploy(sdk, celestials, GetLog())
 	tx, _ := p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
 	AssertError(tx, p.StZIL.ErrorCode("BuffersEmpty"))
 	p.SyncBufferAndHolder()

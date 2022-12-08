@@ -12,9 +12,11 @@ import (
 )
 
 var sdk *AvelySDK
+var celestials *Celestials
 
-func InitTransitions(sdkValue *AvelySDK) *Transitions {
+func InitTransitions(sdkValue *AvelySDK, celestialsValue *Celestials) *Transitions {
 	sdk = sdkValue
+	celestials = celestialsValue
 
 	return NewTransitions()
 }
@@ -28,7 +30,7 @@ func NewTransitions() *Transitions {
 
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	log := GetLog()
-	p := Deploy(sdk, log)
+	p := Deploy(sdk, celestials, log)
 	sdk.Cfg.ZproxyAddr = p.Zproxy.Addr
 	sdk.Cfg.ZimplAddr = p.Zimpl.Addr
 	SetupZilliqaStaking(sdk, log)
