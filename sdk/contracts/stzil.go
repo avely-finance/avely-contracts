@@ -442,55 +442,7 @@ func (a *StZIL) UnpauseZrc2() (*transaction.Transaction, error) {
 	return a.Call("UnPauseZrc2", args, "0")
 }
 
-func NewStZILContract(sdk *AvelySDK, owner, zimplAddr string) (*StZIL, error) {
-	contract := buildStZILContract(sdk, owner, zimplAddr)
-
-	tx, err := sdk.DeployTo(&contract)
-	if err != nil {
-		return nil, err
-	}
-	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
-	if tx.Status == core.Confirmed {
-		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
-
-		sdkContract := Contract{
-			Sdk:      sdk,
-			Provider: *contract.Provider,
-			Addr:     "0x" + tx.ContractAddress,
-			Bech32:   b32,
-			Wallet:   contract.Signer,
-		}
-		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
-		return &StZIL{Contract: sdkContract}, nil
-	} else {
-		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
-		return nil, errors.New("deploy failed:" + string(data))
-	}
-}
-
-func RestoreStZILContract(sdk *AvelySDK, contractAddress, owner, zimplAddr string) (*StZIL, error) {
-	contract := buildStZILContract(sdk, owner, zimplAddr)
-
-	b32, err := bech32.ToBech32Address(contractAddress)
-
-	if err != nil {
-		return nil, errors.New("Config has invalid StZIL address")
-	}
-
-	sdkContract := Contract{
-		Sdk:      sdk,
-		Provider: *contract.Provider,
-		Addr:     contractAddress,
-		Bech32:   b32,
-		Wallet:   contract.Signer,
-	}
-	sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
-	return &StZIL{Contract: sdkContract}, nil
-}
-
-func buildStZILContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/stzil.scilla")
-
+func NewStZILContract(sdk *AvelySDK, ownerAddr string, zimplAddr string, deployer *account.Wallet) (*StZIL, error) {
 	init := []core.ContractValue{
 		{
 			VName: "_scilla_version",
@@ -499,11 +451,11 @@ func buildStZILContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contra
 		}, {
 			VName: "contract_owner",
 			Type:  "ByStr20",
-			Value: owner,
+			Value: ownerAddr,
 		}, {
 			VName: "init_admin_address",
 			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(sdk.Cfg.AdminKey),
+			Value: "0x" + deployer.DefaultAccount.Address,
 		}, {
 			VName: "init_zimpl_address",
 			Type:  "ByStr20",
@@ -527,13 +479,60 @@ func buildStZILContract(sdk *AvelySDK, owner, zimplAddr string) contract2.Contra
 		},
 	}
 
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(sdk.Cfg.AdminKey)
+	contract := buildStZILContract(sdk, init)
+	contract.Signer = deployer
+
+	tx, err := sdk.DeployTo(&contract)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Confirm(tx.ID, sdk.Cfg.TxConfrimMaxAttempts, sdk.Cfg.TxConfirmIntervalSec, contract.Provider)
+	if tx.Status == core.Confirmed {
+		b32, _ := bech32.ToBech32Address(tx.ContractAddress)
+
+		sdkContract := Contract{
+			Sdk:      sdk,
+			Provider: *contract.Provider,
+			Addr:     "0x" + tx.ContractAddress,
+			Bech32:   b32,
+			Wallet:   contract.Signer,
+		}
+		sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
+		return &StZIL{Contract: sdkContract}, nil
+	} else {
+		data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
+		return nil, errors.New("deploy failed:" + string(data))
+	}
+}
+
+func RestoreStZILContract(sdk *AvelySDK, contractAddress string) (*StZIL, error) {
+	contract := buildStZILContract(sdk, []core.ContractValue{})
+
+	b32, err := bech32.ToBech32Address(contractAddress)
+
+	if err != nil {
+		return nil, errors.New("Config has invalid StZIL address")
+	}
+
+	sdkContract := Contract{
+		Sdk:      sdk,
+		Provider: *contract.Provider,
+		Addr:     contractAddress,
+		Bech32:   b32,
+		Wallet:   contract.Signer,
+	}
+	sdkContract.ErrorCodes = sdkContract.ParseErrorCodes(contract.Code)
+	return &StZIL{Contract: sdkContract}, nil
+}
+
+func buildStZILContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
+	code, _ := ioutil.ReadFile("contracts/stzil.scilla")
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }

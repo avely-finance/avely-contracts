@@ -84,13 +84,13 @@ func SetupZilliqaStaking(sdk *AvelySDK, log *Log) {
 	CheckTx(Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 }
 
-func Deploy(sdk *AvelySDK, log *Log) *Protocol {
+func Deploy(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
 	log.Debug("start to deploy")
 
 	zilliqa := DeployZilliqaStaking(sdk, log)
 
 	// deploy stzil
-	StZIL, err := NewStZILContract(sdk, sdk.Cfg.Owner, zilliqa.Zimpl.Addr)
+	StZIL, err := NewStZILContract(sdk, "0x"+celestials.Owner.DefaultAccount.Address, zilliqa.Zimpl.Addr, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy StZIL error = " + err.Error())
 	}
@@ -122,7 +122,7 @@ func Deploy(sdk *AvelySDK, log *Log) *Protocol {
 }
 
 // Restore ZProxy + Zimpl and deploy new versions of StZIL, Buffer and Holder
-func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
+func DeployOnlyAvely(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
 	log.Debug("start to DeployOnlyAvely")
 
 	//Restore Zproxy
@@ -140,7 +140,8 @@ func DeployOnlyAvely(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
 	// deploy stzil
-	StZIL, err := NewStZILContract(sdk, sdk.Cfg.Owner, Zimpl.Addr)
+	StZIL, err := NewStZILContract(sdk, "0x"+celestials.Owner.DefaultAccount.Address, Zimpl.Addr, celestials.Admin)
+
 	if err != nil {
 		log.Fatal("deploy StZIL error = " + err.Error())
 	}
@@ -189,7 +190,7 @@ func RestoreFromState(sdk *AvelySDK, log *Log) *Protocol {
 	log.Debug("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
 	// Restore stzil
-	StZIL, err := RestoreStZILContract(sdk, sdk.Cfg.StZilAddr, sdk.GetAddressFromPrivateKey(sdk.Cfg.OwnerKey), Zimpl.Addr)
+	StZIL, err := RestoreStZILContract(sdk, sdk.Cfg.StZilAddr)
 	if err != nil {
 		log.Fatal("Restore StZIL error = " + err.Error())
 	}

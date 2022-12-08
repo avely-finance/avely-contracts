@@ -12,6 +12,7 @@ const CHAIN = "local"
 
 func main() {
 	config := NewConfig(CHAIN)
+	celestials := LoadCelestialsFromEnv(CHAIN)
 	sdk := NewAvelySDK(*config)
 	log := helpers.GetLog()
 
@@ -26,7 +27,8 @@ func main() {
 
 	log.AddShortcuts(shortcuts)
 
-	tr := InitTransitions(sdk)
+	log.Print(celestials)
+	tr := InitTransitions(sdk, celestials)
 
 	focusPtr := flag.String("focus", "default", "a focus test suite")
 
