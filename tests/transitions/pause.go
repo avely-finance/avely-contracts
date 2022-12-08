@@ -12,15 +12,17 @@ func (tr *Transitions) Pause() {
 	unPauseEmptyBuffers()
 
 	p := tr.DeployAndUpgrade()
-	p.StZIL.UpdateWallet(sdk.Cfg.OwnerKey)
+	p.StZIL.SetSigner(celestials.Owner)
 
 	callPausedIn(p)
 	callPausedOut(p)
 	callPausedZrc2(p)
 	callPauseUnpauseNonAdmin(p)
 
+	// make sure we work under owner account
+	p.StZIL.SetSigner(celestials.Owner)
 	//pause-in contract, expecting success
-	tx, _ := AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).PauseIn())
+	tx, _ := AssertSuccess(p.StZIL.PauseIn())
 	AssertEvent(tx, Event{p.StZIL.Addr, "PauseIn", ParamsMap{"is_paused_in": "1"}})
 	AssertEqual(Field(p.StZIL, "is_paused_in"), "True")
 
@@ -52,10 +54,14 @@ func (tr *Transitions) Pause() {
 
 func unPauseEmptyBuffers() {
 	p := contracts.Deploy(sdk, celestials, GetLog())
-	tx, _ := p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+	p.StZIL.SetSigner(celestials.Owner)
+
+	tx, _ := p.StZIL.UnpauseIn()
 	AssertError(tx, p.StZIL.ErrorCode("BuffersEmpty"))
-	p.SyncBufferAndHolder()
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+
+	p.SyncBufferAndHolder(celestials.Owner)
+
+	tx, _ = p.StZIL.UnpauseIn()
 	AssertError(tx, p.StZIL.ErrorCode("SsnAddressesEmpty"))
 }
 
@@ -95,10 +101,12 @@ func callPausedIn(p *contracts.Protocol) {
 	tx, _ = p.StZIL.WithUser(sdk.Cfg.Key1).ChownStakeConfirmSwap(sdk.Cfg.Addr1)
 	AssertError(tx, p.StZIL.ErrorCode("PausedIn"))
 
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn())
+	p.StZIL.SetSigner(celestials.Owner)
+	AssertSuccess(p.StZIL.UnpauseIn())
 }
 
 func callPausedOut(p *contracts.Protocol) {
+	p.StZIL.SetSigner(celestials.Owner)
 	//call transitions, when contract is paused-out; expecting errors
 	AssertSuccess(p.StZIL.PauseOut())
 
@@ -122,16 +130,16 @@ func callPausedZrc2(p *contracts.Protocol) {
 	GetLog().Info(tx)
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).TransferFrom(sdk.Cfg.Addr1, sdk.Cfg.Addr2, ToQA(10000))
+	tx, _ = p.StZIL.TransferFrom(sdk.Cfg.Addr1, sdk.Cfg.Addr2, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).Transfer(sdk.Cfg.Addr2, ToQA(10000))
+	tx, _ = p.StZIL.Transfer(sdk.Cfg.Addr2, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).IncreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
+	tx, _ = p.StZIL.IncreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).DecreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
+	tx, _ = p.StZIL.DecreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
 	AssertSuccess(p.StZIL.UnpauseZrc2())

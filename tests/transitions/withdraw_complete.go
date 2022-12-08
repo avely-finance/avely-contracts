@@ -119,7 +119,8 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	p := tr.DeployAndUpgrade()
 
 	rewardsFee := "1000" //10% of feeDenom=10000
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
+	p.StZIL.SetSigner(celestials.Owner)
+	AssertSuccess(p.StZIL.ChangeRewardsFee(rewardsFee))
 	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
 
 	//totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
@@ -170,8 +171,9 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertError(tx, p.StZIL.ErrorCode("WithdrawAmountTooBig"))
 
 	//slash SSNs
-	AssertSuccess(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).RemoveSSN(ssnSlashHeavy))
-	AssertSuccess(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).RemoveSSN(ssnSlashLight))
+	p.StZIL.SetSigner(celestials.Owner)
+	AssertSuccess(p.StZIL.RemoveSSN(ssnSlashHeavy))
+	AssertSuccess(p.StZIL.RemoveSSN(ssnSlashLight))
 
 	//withdraw and check from which SSN stake will be withdrawn
 	tx, _ = AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).WithdrawStakeAmt(ToStZil(3000)))

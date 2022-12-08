@@ -2,6 +2,7 @@ package contracts
 
 import (
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
 func Deploy(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
@@ -10,7 +11,7 @@ func Deploy(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
 	zilliqa := DeployZilliqaStaking(sdk, celestials, log)
 
 	// deploy stzil
-	StZIL, err := NewStZILContract(sdk, "0x"+celestials.Owner.DefaultAccount.Address, zilliqa.Zimpl.Addr, celestials.Admin)
+	StZIL, err := NewStZILContract(sdk, utils.GetAddressByWallet(celestials.Owner), zilliqa.Zimpl.Addr, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy StZIL error = " + err.Error())
 	}
@@ -32,7 +33,7 @@ func Deploy(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
 	// deploy treasury
-	Treasury, err := NewTreasuryContract(sdk, sdk.Cfg.Owner, celestials.Admin)
+	Treasury, err := NewTreasuryContract(sdk, utils.GetAddressByWallet(celestials.Owner), celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy Treasury error = " + err.Error())
 	}
@@ -83,7 +84,7 @@ func DeployOnlyAvely(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol 
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
 	// deploy treasury
-	Treasury, err := NewTreasuryContract(sdk, sdk.Cfg.Owner, celestials.Admin)
+	Treasury, err := NewTreasuryContract(sdk, utils.GetAddressByWallet(celestials.Owner), celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy Treasury error = " + err.Error())
 	}

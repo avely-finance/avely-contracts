@@ -40,10 +40,10 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	buffer3, _ := p.DeployBuffer(celestials.Admin)
 	p.Buffers = append(p.Buffers, buffer2, buffer3)
 
-	p.AddSSNs()
-	p.ChangeTreasuryAddress()
-	p.SyncBufferAndHolder()
-	p.Unpause()
+	p.AddSSNs(celestials.Owner)
+	p.ChangeTreasuryAddress(celestials.Owner)
+	p.SyncBufferAndHolder(celestials.Owner)
+	p.Unpause(celestials.Owner)
 	p.InitHolder()
 
 	tr.NextCycle(p)

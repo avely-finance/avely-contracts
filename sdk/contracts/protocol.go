@@ -124,7 +124,7 @@ func (p *Protocol) InitHolder() (*transaction.Transaction, error) {
 	return p.Holder.DelegateStake(p.StZIL.Sdk.Cfg.StZilSsnAddress, ToZil(p.StZIL.Sdk.Cfg.HolderInitialDelegateZil))
 }
 
-func (p *Protocol) SyncBufferAndHolder() {
+func (p *Protocol) SyncBufferAndHolder(owner *account.Wallet) {
 	new_buffers := []string{}
 
 	for _, b := range p.Buffers {
@@ -132,12 +132,14 @@ func (p *Protocol) SyncBufferAndHolder() {
 	}
 
 	prevWallet := p.StZIL.Wallet
-	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
-	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).SetHolderAddress(p.Holder.Addr))
+	p.StZIL.SetSigner(owner)
+
+	CheckTx(p.StZIL.ChangeBuffers(new_buffers))
+	CheckTx(p.StZIL.SetHolderAddress(p.Holder.Addr))
 	p.StZIL.Wallet = prevWallet
 }
 
-func (p *Protocol) SyncBuffers() {
+func (p *Protocol) SyncBuffers(owner *account.Wallet) {
 	new_buffers := []string{}
 
 	for _, b := range p.Buffers {
@@ -145,29 +147,35 @@ func (p *Protocol) SyncBuffers() {
 	}
 
 	prevWallet := p.StZIL.Wallet
-	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
+	p.StZIL.SetSigner(owner)
+
+	CheckTx(p.StZIL.ChangeBuffers(new_buffers))
 	p.StZIL.Wallet = prevWallet
 }
 
-func (p *Protocol) AddSSNs() {
+func (p *Protocol) AddSSNs(owner *account.Wallet) {
 	prevWallet := p.StZIL.Wallet
+	p.StZIL.SetSigner(owner)
 
 	//reverse elements to keep order of stzil.ssn_addresses elements same as in config
 	for i := len(p.StZIL.Sdk.Cfg.SsnAddrs) - 1; i >= 0; i-- {
-		CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).AddSSN(p.StZIL.Sdk.Cfg.SsnAddrs[i]))
+		CheckTx(p.StZIL.AddSSN(p.StZIL.Sdk.Cfg.SsnAddrs[i]))
 	}
 	p.StZIL.Wallet = prevWallet
 }
 
-func (p *Protocol) ChangeTreasuryAddress() {
+func (p *Protocol) ChangeTreasuryAddress(owner *account.Wallet) {
 	prevWallet := p.StZIL.Wallet
-	CheckTx(p.StZIL.WithUser(p.StZIL.Sdk.Cfg.OwnerKey).ChangeTreasuryAddress(p.Treasury.Addr))
+	p.StZIL.SetSigner(owner)
+
+	CheckTx(p.StZIL.ChangeTreasuryAddress(p.Treasury.Addr))
 	p.StZIL.Wallet = prevWallet
 }
 
-func (p *Protocol) Unpause() {
+func (p *Protocol) Unpause(owner *account.Wallet) {
 	prevWallet := p.StZIL.Wallet
-	p.StZIL.UpdateWallet(p.StZIL.Sdk.Cfg.OwnerKey)
+	p.StZIL.SetSigner(owner)
+
 	CheckTx(p.StZIL.UnpauseIn())
 	CheckTx(p.StZIL.UnpauseOut())
 	CheckTx(p.StZIL.UnpauseZrc2())

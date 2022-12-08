@@ -55,7 +55,7 @@ func SetupZilliqaStaking(sdk *AvelySDK, celestials *Celestials, log *Log) {
 		log.Fatal("Restore Zproxy error = " + err.Error())
 	}
 	log.Debug("Restore Zproxy succeed, address = " + Zproxy.Addr)
-	Zproxy.WithWallet(celestials.Admin)
+	Zproxy.SetSigner(celestials.Admin)
 
 	args := []core.ContractValue{
 		{
