@@ -263,7 +263,8 @@ func (tr *Transitions) ChownStakeStZilErrors() {
 	AssertEqual(Field(p.Zimpl, "deleg_swap_request", addr2), nextBuffer.Addr)
 
 	//call ChownStake for addr2, expecting swap reject
-	tx, _ = AssertSuccess(p.StZIL.WithUser(sdk.Cfg.AdminKey).ChownStakeConfirmSwap(addr2))
+	p.StZIL.SetSigner(celestials.Admin)
+	tx, _ = AssertSuccess(p.StZIL.ChownStakeConfirmSwap(addr2))
 	AssertTransition(tx, Transition{
 		nextBuffer.Addr, //sender
 		"RejectDelegatorSwap",
@@ -336,7 +337,7 @@ func chownStakeSetup(tr *Transitions, p *contracts.Protocol) {
 	prevWallet := p.Zproxy.Contract.Wallet
 
 	//add test SSNs to main staking contract
-	p.Zproxy.UpdateWallet(sdk.Cfg.AdminKey)
+	p.Zproxy.SetSigner(celestials.Admin)
 	AssertSuccess(p.Zproxy.AddSSN(ssn[0], "SSN 0"))
 	AssertSuccess(p.Zproxy.AddSSN(ssn[1], "SSN 1"))
 	AssertSuccess(p.Zproxy.AddSSN(ssn[2], "SSN 2"))

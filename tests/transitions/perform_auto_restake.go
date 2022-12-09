@@ -8,7 +8,7 @@ import (
 func (tr *Transitions) PerformAutoRestake() {
 	p := tr.DeployAndUpgrade()
 
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.SetSigner(celestials.Admin)
 
 	AssertEqual(Field(p.StZIL, "autorestakeamount"), ToZil(0))
 

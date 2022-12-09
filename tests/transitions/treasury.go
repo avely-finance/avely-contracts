@@ -5,6 +5,7 @@ import (
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	"github.com/tyler-smith/go-bip39"
@@ -72,10 +73,12 @@ func treasuryFunds(tr *Transitions) {
 	txIdLocal := 0
 
 	//add funds
-	treasury.WithUser(sdk.Cfg.AdminKey).AddFunds(ToQA(100))
+	treasury.SetSigner(celestials.Admin)
+	treasury.AddFunds(ToQA(100))
 
 	//try to withdraw amount exceeding _balance, expect error
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawTransaction(treasury.Addr, sdk.Cfg.Admin, ToQA(12345)))
+	admin := utils.GetAddressByWallet(celestials.Admin)
+	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawTransaction(treasury.Addr, admin, ToQA(12345)))
 	tx, _ := multisig.WithUser(owner).ExecuteTransaction(txIdLocal)
 	AssertError(tx, treasury.ErrorCode("InsufficientFunds"))
 
@@ -92,7 +95,7 @@ func treasuryFunds(tr *Transitions) {
 	//RcptKey1 := util.EncodeHex(account1.PrivateKey)
 
 	//add some funds to newly created account
-	sdk.AddFunds(RcptAddr1, ToQA(1000))
+	sdk.AddFunds(celestials.Admin, RcptAddr1, ToQA(1000))
 
 	recipient := RcptAddr1
 	balanceBefore, _ := new(big.Int).SetString(sdk.GetBalance(recipient), 10)

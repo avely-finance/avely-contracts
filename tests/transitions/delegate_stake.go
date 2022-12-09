@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -41,10 +42,11 @@ func (tr *Transitions) DelegateStakeSuccess() {
 		"amount":    ToStZil(20),
 	}})
 
+	admin := utils.GetAddressByWallet(celestials.Admin)
 	if totalSsnInitialDelegateZil == 0 {
-		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), "")
+		AssertEqual(Field(p.StZIL, "balances", admin), "")
 	} else {
-		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), ToStZil(totalSsnInitialDelegateZil))
+		AssertEqual(Field(p.StZIL, "balances", admin), ToStZil(totalSsnInitialDelegateZil))
 	}
 	AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Addr1), ToStZil(20))
 

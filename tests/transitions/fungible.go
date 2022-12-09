@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -96,8 +97,11 @@ func (tr *Transitions) TransferFrom() {
 	AssertError(tx, p.StZIL.ErrorCode("CodeInsufficientAllowance"))
 
 	// Allow admin user to spend User1 money
-	AssertSuccess(stzil.WithUser(sdk.Cfg.Key1).IncreaseAllowance(sdk.Cfg.Admin, amount))
-	AssertSuccess(stzil.WithUser(sdk.Cfg.AdminKey).TransferFrom(from, to, amount))
+	admin := celestials.Admin
+	AssertSuccess(stzil.WithUser(sdk.Cfg.Key1).IncreaseAllowance(utils.GetAddressByWallet(admin), amount))
+
+	stzil.SetSigner(admin)
+	AssertSuccess(stzil.TransferFrom(from, to, amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), ToQA(0))
 	AssertEqual(stzil.BalanceOf(to).String(), amount)

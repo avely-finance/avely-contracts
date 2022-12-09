@@ -144,7 +144,8 @@ func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol, options ...bool)
 	tools.TxLogMode(true)
 	tools.TxLogClear()
 	prevWallet := p.StZIL.Contract.Wallet
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.SetSigner(celestials.Admin)
+
 	err := tools.DrainBufferAuto(p)
 	if err != nil {
 		GetLog().Fatal("Can't drain buffer")
