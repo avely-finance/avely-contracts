@@ -65,7 +65,7 @@ func ssnRequireOwner(tr *Transitions) {
 	Start("ssnRequireOwner")
 
 	//deploy SSN
-	init_owner := sdk.Cfg.Admin
+	init_owner := utils.GetAddressByWallet(celestials.Admin)
 	init_zproxy := core.ZeroAddr
 	ssn := tr.DeploySsn(init_owner, init_zproxy)
 

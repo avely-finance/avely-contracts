@@ -62,7 +62,7 @@ func checkChangeAdmin(p *contracts.Protocol) {
 	AssertEvent(tx, Event{
 		Sender:    p.StZIL.Addr,
 		EventName: "ChangeAdmin",
-		Params:    ParamsMap{"old_admin": sdk.Cfg.Admin, "new_admin": newAdminAddr},
+		Params:    ParamsMap{"old_admin": utils.GetAddressByWallet(celestials.Admin), "new_admin": newAdminAddr},
 	})
 	AssertEqual(Field(p.StZIL, "admin_address"), newAdminAddr)
 }

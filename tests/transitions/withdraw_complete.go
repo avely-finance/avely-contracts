@@ -3,6 +3,7 @@ package transitions
 import (
 	"strconv"
 
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -36,7 +37,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tx, _ = p.StZIL.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.SetSigner(celestials.Admin)
 	readyBlocks = append(readyBlocks, block1)
 	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, p.StZIL.ErrorCode("ClaimWithdrawalNoUnbonded"))
@@ -55,7 +56,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	AssertEqual(withdrawal.TokenAmount.String(), ToStZil(10))
 	AssertEqual(withdrawal.StakeAmount.String(), ToStZil(10))
 
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.SetSigner(celestials.Admin)
 	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertTransition(tx, Transition{
 		p.StZIL.Addr,         //sender
@@ -102,9 +103,9 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	if totalSsnInitialDelegateZil == 0 {
 		AssertEqual(Field(p.StZIL, "balances"), "{}")
-		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), "")
+		AssertEqual(Field(p.StZIL, "balances", utils.GetAddressByWallet(celestials.Admin)), "")
 	} else {
-		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), ToStZil(totalSsnInitialDelegateZil))
+		AssertEqual(Field(p.StZIL, "balances", utils.GetAddressByWallet(celestials.Admin)), ToStZil(totalSsnInitialDelegateZil))
 	}
 
 	AssertEqual(Field(p.StZIL, "withdrawal_unbonded"), "{}")
@@ -121,7 +122,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	rewardsFee := "1000" //10% of feeDenom=10000
 	p.StZIL.SetSigner(celestials.Owner)
 	AssertSuccess(p.StZIL.ChangeRewardsFee(rewardsFee))
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
+	p.StZIL.SetSigner(celestials.Admin)
 
 	//totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
 	//for now to activate SSNs we delegate required stakes through Zproxy as admin
@@ -240,7 +241,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	tx, _ = p.StZIL.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.SetSigner(celestials.Admin)
 	readyBlocks = append(readyBlocks, block1)
 	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, p.StZIL.ErrorCode("ClaimWithdrawalNoUnbonded"))
@@ -259,7 +260,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(withdrawal.TokenAmount.String(), ToStZil(17000))
 	AssertEqual(withdrawal.StakeAmount.String(), ToStZil(17000))
 
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.SetSigner(celestials.Admin)
 	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertTransition(tx, Transition{
 		p.StZIL.Addr,         //sender

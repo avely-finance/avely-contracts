@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -104,9 +105,9 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil))
 	if totalSsnInitialDelegateZil == 0 {
 		AssertEqual(Field(p.StZIL, "balances"), "{}")
-		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), "")
+		AssertEqual(Field(p.StZIL, "balances", utils.GetAddressByWallet(celestials.Admin)), "")
 	} else {
-		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), ToStZil(totalSsnInitialDelegateZil))
+		AssertEqual(Field(p.StZIL, "balances", utils.GetAddressByWallet(celestials.Admin)), ToStZil(totalSsnInitialDelegateZil))
 	}
 	//there is holder's initial stake
 	if bnum1 == bnum2 {

@@ -33,8 +33,8 @@ type Config struct {
 	ProtocolRewardsFee       int
 	// Owner                    string
 	// OwnerKey                 string
-	Admin       string
-	AdminKey    string
+	// Admin       string
+	// AdminKey    string
 	Addr1       string
 	Key1        string
 	Addr2       string

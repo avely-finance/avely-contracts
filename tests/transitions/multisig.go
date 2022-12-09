@@ -3,6 +3,7 @@ package transitions
 import (
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
@@ -20,7 +21,6 @@ func (tr *Transitions) MultisigWalletTests() {
 func multisigGoldenFlowTest(tr *Transitions) {
 	Start("MultisigWalletTests contract transitions")
 
-	admin := sdk.Cfg.AdminKey
 	owner1 := sdk.Cfg.Key1
 	owner2 := sdk.Cfg.Key2
 
@@ -32,14 +32,15 @@ func multisigGoldenFlowTest(tr *Transitions) {
 
 	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr, celestials.Admin)
 
-	newAddr := sdk.Cfg.Admin // could be any random address
+	newAddr := utils.GetAddressByWallet(celestials.Admin) // could be any random address
 
 	// after submitting transaction it automatically signed by the _sender
 	AssertMultisigSuccess(multisig.WithUser(owner1).SubmitChangeTreasuryAddressTransaction(stzil.Addr, newAddr))
 
 	txId := 0 // the test transition should be the first
 
-	tx, _ := multisig.WithUser(admin).SignTransaction(txId)
+	multisig.SetSigner(celestials.Admin)
+	tx, _ := multisig.SignTransaction(txId)
 	AssertMultisigError(tx, multisig.ErrorCode("NonOwnerCannotSign"))
 
 	tx, _ = multisig.WithUser(owner2).SignTransaction(txId + 1)
@@ -55,7 +56,8 @@ func multisigGoldenFlowTest(tr *Transitions) {
 	// treasury address should be changed after execution
 	AssertMultisigSuccess(multisig.WithUser(owner1).SignTransaction(txId))
 	//field treasury_address      : ByStr20 = init_admin_address
-	AssertEqual(stzil.GetTreasuryAddress(), sdk.Cfg.Admin)
+
+	AssertEqual(stzil.GetTreasuryAddress(), newAddr)
 	AssertMultisigSuccess(multisig.WithUser(owner2).ExecuteTransaction(txId))
 	AssertEqual(stzil.GetTreasuryAddress(), newAddr)
 }
@@ -118,7 +120,7 @@ func multisigManagableActions(tr *Transitions) {
 
 	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr, celestials.Admin)
 
-	newAddr := sdk.Cfg.Admin // could be any random address
+	newAddr := utils.GetAddressByWallet(celestials.Admin) // could be any random address
 
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeTreasuryAddressTransaction(stzil.Addr, newAddr))
 	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeZimplAddressTransaction(stzil.Addr, newAddr))

@@ -4,6 +4,7 @@ import (
 	"flag"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/tests/transitions"
 )
@@ -21,7 +22,7 @@ func main() {
 		"addr1":    config.Addr1,
 		"addr2":    config.Addr2,
 		"addr3":    config.Addr3,
-		"admin":    config.Admin,
+		"admin":    utils.GetAddressByWallet(celestials.Admin),
 		"verifier": config.Verifier,
 	}
 
