@@ -17,19 +17,18 @@ func main() {
 	sdk := NewAvelySDK(*config)
 	log := helpers.GetLog()
 
+	tr := InitTransitions(sdk, celestials)
+
 	shortcuts := map[string]string{
 		"stzilssn": config.StZilSsnAddress,
-		"addr1":    config.Addr1,
-		"addr2":    config.Addr2,
-		"addr3":    config.Addr3,
+		"alice":    utils.GetAddressByWallet(tr.Alice),
+		"bob":      utils.GetAddressByWallet(tr.Bob),
+		"eve":      utils.GetAddressByWallet(tr.Eve),
 		"admin":    utils.GetAddressByWallet(celestials.Admin),
 		"verifier": config.Verifier,
 	}
 
 	log.AddShortcuts(shortcuts)
-
-	log.Print(celestials)
-	tr := InitTransitions(sdk, celestials)
 
 	focusPtr := flag.String("focus", "default", "a focus test suite")
 

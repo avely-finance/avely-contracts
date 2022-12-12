@@ -35,8 +35,8 @@ type Config struct {
 	// OwnerKey                 string
 	// Admin       string
 	// AdminKey    string
-	Addr1       string
-	Key1        string
+	// Addr1       string
+	// Key1        string
 	Addr2       string
 	Key2        string
 	Addr3       string

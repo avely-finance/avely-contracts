@@ -40,8 +40,7 @@ func (tr *Transitions) Owner() {
 	AssertEqual(Field(p.StZIL, "staging_owner_address"), newOwnerAddr)
 
 	//claim owner with wrong user, expecting error
-	wrongActor := sdk.Cfg.Key1
-	p.StZIL.UpdateWallet(wrongActor)
+	p.StZIL.SetSigner(alice)
 	tx, _ = p.StZIL.ClaimOwner()
 	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerValidationFailed"))
 

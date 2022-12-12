@@ -1,31 +1,60 @@
 package transitions
 
 import (
+	"log"
+	"os"
 	"reflect"
 
+	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/avely-finance/avely-contracts/sdk/actions"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	"github.com/joho/godotenv"
 )
 
 var sdk *AvelySDK
 var celestials *Celestials
 
+var alice *account.Wallet
+var bob *account.Wallet
+var eve *account.Wallet
+
+func LoadUsersFromEnv(chain string) {
+	path := ".env." + chain
+	err := godotenv.Load(path)
+	if err != nil {
+		log.Printf("WARNING! There is no '%s' file. Please, make sure you set up the correct ENV manually", path)
+	}
+
+	alice = account.NewWallet()
+	alice.AddByPrivateKey(os.Getenv("KEY1"))
+
+	bob = account.NewWallet()
+	bob.AddByPrivateKey(os.Getenv("KEY2"))
+
+	eve = account.NewWallet()
+	eve.AddByPrivateKey(os.Getenv("KEY3"))
+}
+
 func InitTransitions(sdkValue *AvelySDK, celestialsValue *Celestials) *Transitions {
 	sdk = sdkValue
 	celestials = celestialsValue
+	LoadUsersFromEnv("local")
 
-	return NewTransitions()
+	return &Transitions{
+		Alice: alice,
+		Bob:   bob,
+		Eve:   eve,
+	}
 }
 
 type Transitions struct {
-}
-
-func NewTransitions() *Transitions {
-	return &Transitions{}
+	Alice *account.Wallet
+	Bob   *account.Wallet
+	Eve   *account.Wallet
 }
 
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
