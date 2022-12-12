@@ -33,13 +33,13 @@ func ssnChangeOwner(tr *Transitions) {
 
 	//deploy other multisig contract
 	newSignCount := 1
-	newOwner := sdk.Cfg.Key2
-	newOwners := []string{sdk.Cfg.Addr2}
+	newOwners := []string{utils.GetAddressByWallet(bob)}
 	newMultisig := tr.DeployMultisigWallet(newOwners, newSignCount)
 
 	//try to claim owner, expect error
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(ssn.Addr))
-	tx, _ := newMultisig.WithUser(newOwner).ExecuteTransaction(txIdLocal2)
+	newMultisig.SetSigner(bob)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(ssn.Addr))
+	tx, _ := newMultisig.ExecuteTransaction(txIdLocal2)
 	AssertError(tx, ssn.ErrorCode("StagingOwnerNotExists"))
 
 	//initiate owner change
@@ -49,13 +49,15 @@ func ssnChangeOwner(tr *Transitions) {
 	AssertEqual(Field(ssn, "staging_owner"), newMultisig.Addr)
 
 	//try to claim owner with wrong user, expect error
-	tx, _ = ssn.WithUser(sdk.Cfg.Key2).ClaimOwner()
+	ssn.SetSigner(bob)
+	tx, _ = ssn.ClaimOwner()
 	AssertError(tx, ssn.ErrorCode("StagingOwnerValidationFailed"))
 
 	//claim owner
 	txIdLocal2++
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(ssn.Addr))
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).ExecuteTransaction(txIdLocal2))
+	newMultisig.SetSigner(bob)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(ssn.Addr))
+	AssertMultisigSuccess(newMultisig.ExecuteTransaction(txIdLocal2))
 	AssertEqual(Field(ssn, "owner"), newMultisig.Addr)
 
 }
@@ -70,7 +72,7 @@ func ssnRequireOwner(tr *Transitions) {
 	ssn := tr.DeploySsn(init_owner, init_zproxy)
 
 	// Use non-owner user, expecting errors
-	ssn.UpdateWallet(sdk.Cfg.Key2)
+	ssn.SetSigner(bob)
 
 	tx, _ := ssn.ChangeOwner(sdk.Cfg.Addr3)
 	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))

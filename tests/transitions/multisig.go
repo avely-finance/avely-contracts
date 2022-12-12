@@ -92,8 +92,8 @@ func multisigUpdateOwner(tr *Transitions) {
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
 	// deploy new multisig with new owners
-	owner2 := sdk.Cfg.Key2
-	newOwners := []string{sdk.Cfg.Addr2}
+	owner2 := bob
+	newOwners := []string{utils.GetAddressByWallet(owner2)}
 	newMultisig := tr.DeployMultisigWallet(newOwners, signCount)
 
 	newOwner := newMultisig.Addr
@@ -108,8 +108,9 @@ func multisigUpdateOwner(tr *Transitions) {
 	AssertEqual(Field(stzil, "staging_owner_address"), newOwner)
 
 	// claim owner using; newMultisig has also the first tx in order
-	AssertMultisigSuccess(newMultisig.WithUser(owner2).SubmitClaimOwnerTransaction(stzil.Addr))
-	AssertMultisigSuccess(newMultisig.WithUser(owner2).ExecuteTransaction(txId))
+	newMultisig.SetSigner(owner2)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(stzil.Addr))
+	AssertMultisigSuccess(newMultisig.ExecuteTransaction(txId))
 	AssertEqual(Field(stzil, "owner_address"), newOwner)
 }
 

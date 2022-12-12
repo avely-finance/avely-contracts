@@ -12,7 +12,7 @@ func (tr *Transitions) IsAdmin() {
 	p := tr.DeployAndUpgrade()
 
 	// Use non-admin user for StZIL, expecting errors
-	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
+	p.StZIL.SetSigner(bob)
 
 	tx, _ := p.StZIL.IncreaseAutoRestakeAmount(ToZil(1))
 	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))

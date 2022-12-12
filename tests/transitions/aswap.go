@@ -706,7 +706,7 @@ func aswapOwnerOnly(tr *Transitions) {
 	init_owner_addr := utils.GetAddressByWallet(celestials.Admin)
 	aswap := tr.DeployASwap(init_owner_addr)
 	// Use non-owner user for Aswap, expecting errors
-	aswap.UpdateWallet(sdk.Cfg.Key2)
+	aswap.SetSigner(bob)
 
 	tx, _ := aswap.SetLiquidityFee("12345")
 	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
