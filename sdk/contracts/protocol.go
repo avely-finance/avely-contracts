@@ -74,7 +74,7 @@ func (p *Protocol) GetBlockHeight() int {
 		//Isolated server has limited set of API methods: https://github.com/Zilliqa/zilliqa-isolated-server#available-apis
 		//GetNumTxBlocks is not available.
 		//So we'll take BlockNum from receipt of safe transaction.
-		tx, _ := p.Zproxy.UpdateVerifier(p.StZIL.Sdk.Cfg.Verifier)
+		tx, _ := p.Zproxy.Unpause()
 		result := tx.Receipt.EpochNum
 		blockHeight, _ := strconv.Atoi(result)
 		return blockHeight

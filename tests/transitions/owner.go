@@ -25,11 +25,11 @@ func (tr *Transitions) Owner() {
 	//this test is last because all SSNs will be un-whitelisted
 	checkRemoveSSN(p)
 
-	newOwnerAddr := sdk.Cfg.Addr3
-	newOwnerKey := sdk.Cfg.Key3
+	newOwner := eve
+	newOwnerAddr := utils.GetAddressByWallet(eve)
 
 	//claim not existent staging owner, expecting error
-	p.StZIL.UpdateWallet(newOwnerKey)
+	p.StZIL.SetSigner(newOwner)
 	tx, _ := p.StZIL.ClaimOwner()
 	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerNotExists"))
 
@@ -45,7 +45,7 @@ func (tr *Transitions) Owner() {
 	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerValidationFailed"))
 
 	//claim owner with correct user, expecting success
-	p.StZIL.UpdateWallet(newOwnerKey)
+	p.StZIL.SetSigner(newOwner)
 	tx, _ = AssertSuccess(p.StZIL.ClaimOwner())
 	AssertEvent(tx, Event{p.StZIL.Addr, "ClaimOwner", ParamsMap{"new_owner": newOwnerAddr}})
 	AssertEqual(Field(p.StZIL, "owner_address"), newOwnerAddr)
@@ -53,7 +53,7 @@ func (tr *Transitions) Owner() {
 }
 
 func checkChangeAdmin(p *contracts.Protocol) {
-	newAdminAddr := sdk.Cfg.Addr3
+	newAdminAddr := utils.GetAddressByWallet(eve)
 
 	//change admin, expecting success
 	p.StZIL.SetSigner(celestials.Owner)

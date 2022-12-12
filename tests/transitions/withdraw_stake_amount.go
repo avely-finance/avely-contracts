@@ -26,7 +26,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * 1. non delegator(sdk.Cfg.Addr4) try to withdraw stake, should fail
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 1")
-	p.StZIL.UpdateWallet(sdk.Cfg.Key3)
+	p.StZIL.SetSigner(eve)
 	txn, _ := p.StZIL.WithdrawStakeAmt(ToStZil(10))
 
 	AssertError(txn, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN"))

@@ -73,14 +73,15 @@ func ssnRequireOwner(tr *Transitions) {
 
 	// Use non-owner user, expecting errors
 	ssn.SetSigner(bob)
+	randomAddr := utils.GetAddressByWallet(eve)
 
-	tx, _ := ssn.ChangeOwner(sdk.Cfg.Addr3)
+	tx, _ := ssn.ChangeOwner(randomAddr)
 	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
-	tx, _ = ssn.ChangeZproxy(sdk.Cfg.Addr3)
+	tx, _ = ssn.ChangeZproxy(randomAddr)
 	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
-	tx, _ = ssn.UpdateReceivingAddr(sdk.Cfg.Addr3)
+	tx, _ = ssn.UpdateReceivingAddr(randomAddr)
 	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = ssn.UpdateComm(12345)

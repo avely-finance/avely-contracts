@@ -21,6 +21,7 @@ var celestials *Celestials
 var alice *account.Wallet
 var bob *account.Wallet
 var eve *account.Wallet
+var verifier *account.Wallet
 
 func LoadUsersFromEnv(chain string) {
 	path := ".env." + chain
@@ -37,6 +38,9 @@ func LoadUsersFromEnv(chain string) {
 
 	eve = account.NewWallet()
 	eve.AddByPrivateKey(os.Getenv("KEY3"))
+
+	verifier = account.NewWallet()
+	verifier.AddByPrivateKey(os.Getenv("VERIFIERKEY"))
 }
 
 func InitTransitions(sdkValue *AvelySDK, celestialsValue *Celestials) *Transitions {
@@ -45,16 +49,18 @@ func InitTransitions(sdkValue *AvelySDK, celestialsValue *Celestials) *Transitio
 	LoadUsersFromEnv("local")
 
 	return &Transitions{
-		Alice: alice,
-		Bob:   bob,
-		Eve:   eve,
+		Alice:    alice,
+		Bob:      bob,
+		Eve:      eve,
+		Verifier: verifier,
 	}
 }
 
 type Transitions struct {
-	Alice *account.Wallet
-	Bob   *account.Wallet
-	Eve   *account.Wallet
+	Alice    *account.Wallet
+	Bob      *account.Wallet
+	Eve      *account.Wallet
+	Verifier *account.Wallet
 }
 
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
@@ -62,7 +68,7 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p := Deploy(sdk, celestials, log)
 	sdk.Cfg.ZproxyAddr = p.Zproxy.Addr
 	sdk.Cfg.ZimplAddr = p.Zimpl.Addr
-	SetupZilliqaStaking(sdk, celestials, log)
+	SetupZilliqaStaking(sdk, celestials, verifier, log)
 
 	//add buffers to protocol, we need 3
 	buffer2, _ := p.DeployBuffer(celestials.Admin)
@@ -154,7 +160,7 @@ func (tr *Transitions) NextCycleWithAmount(p *contracts.Protocol, amountPerSSN i
 	totalAmount := 0
 	prevWallet := p.Zproxy.Contract.Wallet
 
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	p.Zproxy.SetSigner(verifier)
 
 	zimplSsnList := p.Zimpl.GetSsnList()
 	ssnRewardFactor := make(map[string]string)

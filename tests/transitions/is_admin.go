@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -24,6 +25,8 @@ func (tr *Transitions) IsAdmin() {
 	readyBlocks := []string{}
 	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
-	tx, _ = p.StZIL.ChownStakeReDelegate(sdk.Cfg.Addr3, ToZil(1))
+
+	eveAddr := utils.GetAddressByWallet(eve)
+	tx, _ = p.StZIL.ChownStakeReDelegate(eveAddr, ToZil(1))
 	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
 }
