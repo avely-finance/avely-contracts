@@ -1,8 +1,10 @@
 package contracts
 
 import (
+	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
@@ -47,8 +49,7 @@ func DeployZilliqaStaking(sdk *AvelySDK, celestials *Celestials, log *Log) *Zill
 	return NewZilliqaStaking(zproxy, zimpl, gzil)
 }
 
-func SetupZilliqaStaking(sdk *AvelySDK, celestials *Celestials, log *Log) {
-
+func SetupZilliqaStaking(sdk *AvelySDK, celestials *Celestials, verifier *account.Wallet, log *Log) {
 	//Restore Zproxy
 	Zproxy, err := RestoreZproxy(sdk, sdk.Cfg.ZproxyAddr)
 	if err != nil {
@@ -68,8 +69,11 @@ func SetupZilliqaStaking(sdk *AvelySDK, celestials *Celestials, log *Log) {
 	for _, ssnaddr := range sdk.Cfg.SsnAddrs {
 		CheckTx(Zproxy.AddSSN(ssnaddr, ssnaddr))
 	}
-	CheckTx(Zproxy.UpdateVerifierRewardAddr(sdk.Cfg.Verifier))
-	CheckTx(Zproxy.UpdateVerifier(sdk.Cfg.Verifier))
+
+	verifierAddr := utils.GetAddressByWallet(verifier)
+
+	CheckTx(Zproxy.UpdateVerifierRewardAddr(verifierAddr))
+	CheckTx(Zproxy.UpdateVerifier(verifierAddr))
 	CheckTx(Zproxy.UpdateStakingParameters(ToZil(sdk.Cfg.SsnInitialDelegateZil), ToZil(10))) //minstake (ssn not active if less), mindelegstake
 	CheckTx(Zproxy.Unpause())
 
@@ -81,6 +85,6 @@ func SetupZilliqaStaking(sdk *AvelySDK, celestials *Celestials, log *Log) {
 	// SSN will become active on next cycle
 	//we need to increase blocknum, in order to Gzil won't mint anything. Really minting is over.
 	sdk.IncreaseBlocknum(2)
-	Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	Zproxy.SetSigner(verifier)
 	CheckTx(Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 }

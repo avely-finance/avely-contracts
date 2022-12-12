@@ -31,18 +31,6 @@ type Config struct {
 	HolderInitialDelegateZil int
 	SsnInitialDelegateZil    int
 	ProtocolRewardsFee       int
-	// Owner                    string
-	// OwnerKey                 string
-	// Admin       string
-	// AdminKey    string
-	// Addr1       string
-	// Key1        string
-	// Addr2       string
-	// Key2        string
-	Addr3       string
-	Key3        string
-	Verifier    string
-	VerifierKey string
 
 	ASwapAddr    string
 	ZproxyAddr   string

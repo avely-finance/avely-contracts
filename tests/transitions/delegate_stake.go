@@ -80,7 +80,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, ssnForInput, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
 
 	//next reward cycle
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	p.Zproxy.SetSigner(verifier)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 
 	ssnIn := p.GetSsnAddressForInput()

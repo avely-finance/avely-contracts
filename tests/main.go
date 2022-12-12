@@ -25,7 +25,7 @@ func main() {
 		"bob":      utils.GetAddressByWallet(tr.Bob),
 		"eve":      utils.GetAddressByWallet(tr.Eve),
 		"admin":    utils.GetAddressByWallet(celestials.Admin),
-		"verifier": config.Verifier,
+		"verifier": utils.GetAddressByWallet(tr.Verifier),
 	}
 
 	log.AddShortcuts(shortcuts)

@@ -115,11 +115,11 @@ func aswapBasic(tr *Transitions) {
 	AssertEqual(stzil.BalanceOf(aliceAddr).String(), expectedSwapOutput)
 
 	//change owner
-	new_owner_addr := sdk.Cfg.Addr3
-	new_owner_key := sdk.Cfg.Key3
+	new_owner_addr := utils.GetAddressByWallet(eve)
 
 	//try to claim owner without staging owner, expect error
-	tx, _ = aswap.WithUser(new_owner_key).ClaimOwner()
+	aswap.SetSigner(eve)
+	tx, _ = aswap.ClaimOwner()
 	AssertASwapError(tx, aswap.ErrorCode("CodeStagingOwnerMissing"))
 
 	AssertEqual(Field(aswap, "owner"), init_owner_addr)
@@ -133,7 +133,8 @@ func aswapBasic(tr *Transitions) {
 	AssertASwapError(tx, aswap.ErrorCode("CodeStagingOwnerInvalid"))
 
 	//claim owner
-	AssertSuccess(aswap.WithUser(new_owner_key).ClaimOwner())
+	aswap.SetSigner(eve)
+	AssertSuccess(aswap.ClaimOwner())
 	AssertEqual(Field(aswap, "owner"), new_owner_addr)
 }
 
@@ -173,7 +174,7 @@ func aswapMultisig(tr *Transitions) {
 
 	//test ASwap.SetTreasuryAddress()
 	txIdLocal++
-	new_address := sdk.Cfg.Addr3
+	new_address := utils.GetAddressByWallet(eve)
 	AssertEqual(Field(aswap, "treasury_address"), core.ZeroAddr)
 	AssertMultisigSuccess(multisig.SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
 	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))

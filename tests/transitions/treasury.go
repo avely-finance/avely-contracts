@@ -133,8 +133,9 @@ func treasuryRequireOwner(tr *Transitions) {
 
 	// Use non-owner user, expecting errors
 	p.Treasury.SetSigner(bob)
+	randomAddr := utils.GetAddressByWallet(eve)
 
-	tx, _ := p.Treasury.ChangeOwner(sdk.Cfg.Addr3)
+	tx, _ := p.Treasury.ChangeOwner(randomAddr)
 	AssertError(tx, p.Treasury.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = p.Treasury.Withdraw(core.ZeroAddr, "123")
