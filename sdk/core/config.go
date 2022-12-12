@@ -37,8 +37,8 @@ type Config struct {
 	// AdminKey    string
 	// Addr1       string
 	// Key1        string
-	Addr2       string
-	Key2        string
+	// Addr2       string
+	// Key2        string
 	Addr3       string
 	Key3        string
 	Verifier    string

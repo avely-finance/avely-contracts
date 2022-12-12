@@ -1,7 +1,6 @@
 package transitions
 
 import (
-	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
@@ -25,8 +24,9 @@ func (tr *Transitions) ChownStakeSuccess() {
 
 	chownStakeSetup(tr, p)
 
-	_, key2, addr2, ssn, _, userStake := chownStakeDefineParams(p)
+	ssn, _, userStake := chownStakeDefineParams(p)
 	addr1 := utils.GetAddressByWallet(alice)
+	addr2 := utils.GetAddressByWallet(bob)
 
 	total_supply := Field(p.StZIL, "total_supply")
 	totalstakeamount := Field(p.StZIL, "totalstakeamount")
@@ -48,7 +48,9 @@ func (tr *Transitions) ChownStakeSuccess() {
 	p.Zproxy.SetSigner(alice)
 	AssertSuccess(p.Zproxy.DelegateStake(ssn[1], stake1_1))
 	AssertSuccess(p.Zproxy.DelegateStake(ssn[2], stake1_2))
-	AssertSuccess(p.Zproxy.WithUser(key2).DelegateStake(ssn[1], stake2_1))
+
+	p.Zproxy.SetSigner(bob)
+	AssertSuccess(p.Zproxy.DelegateStake(ssn[1], stake2_1))
 
 	//key1, key2 wait 2 reward cycles (they should have no buffered depo in current/prev cycles, else swap request will fail)
 	tr.NextCycle(p)
@@ -70,7 +72,8 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
 	//key2 requests swap
-	tx, _ = AssertSuccess(p.Zproxy.WithUser(key2).RequestDelegatorSwap(nextBuffer))
+	p.Zproxy.SetSigner(bob)
+	tx, _ = AssertSuccess(p.Zproxy.RequestDelegatorSwap(nextBuffer))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 
 	//offchain-tool calls ChownStakeConfirmSwap(addr1), expecting success
@@ -97,7 +100,8 @@ func (tr *Transitions) ChownStakeSuccess() {
 	tr.NextCycle(p)
 	//key2 delegates through StZIL
 	//this isn't a part of transfer process, but delegate can happen before offchain-tool calls
-	AssertSuccess(p.StZIL.WithUser(key2).DelegateStake(stake2_stzil))
+	p.StZIL.SetSigner(bob)
+	AssertSuccess(p.StZIL.DelegateStake(stake2_stzil))
 	tools := tr.NextCycleOffchain(p)
 
 	//nextBuffer becomes active
@@ -147,7 +151,7 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 
 	chownStakeSetup(tr, p)
 
-	_, _, _, ssn, _, userStake := chownStakeDefineParams(p)
+	ssn, _, userStake := chownStakeDefineParams(p)
 	addr1 := utils.GetAddressByWallet(alice)
 
 	total_supply := Field(p.StZIL, "total_supply")
@@ -214,8 +218,9 @@ func (tr *Transitions) ChownStakeStZilErrors() {
 
 	chownStakeSetup(tr, p)
 
-	_, key2, addr2, ssn, _, userStake := chownStakeDefineParams(p)
+	ssn, _, userStake := chownStakeDefineParams(p)
 	addr1 := utils.GetAddressByWallet(alice)
+	addr2 := utils.GetAddressByWallet(bob)
 
 	//key1 delegates to main contract
 	p.Zproxy.SetSigner(alice)
@@ -276,7 +281,8 @@ func (tr *Transitions) ChownStakeStZilErrors() {
 	})
 
 	//key2 has no deposits, but made swap request
-	tx, _ = AssertSuccess(p.Zproxy.WithUser(key2).RequestDelegatorSwap(nextBuffer.Addr))
+	p.Zproxy.SetSigner(bob)
+	tx, _ = AssertSuccess(p.Zproxy.RequestDelegatorSwap(nextBuffer.Addr))
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer.Addr}})
 	AssertEqual(Field(p.Zimpl, "deleg_swap_request", addr2), nextBuffer.Addr)
 
@@ -299,7 +305,7 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 	p := tr.DeployAndUpgrade()
 
 	chownStakeSetup(tr, p)
-	_, _, _, ssn, _, userStake := chownStakeDefineParams(p)
+	ssn, _, userStake := chownStakeDefineParams(p)
 	addr1 := utils.GetAddressByWallet(alice)
 
 	//key1 delegates to main contract, expecting success
@@ -342,21 +348,19 @@ func (tr *Transitions) ChownStakeZimplErrors() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 }
 
-func chownStakeDefineParams(p *contracts.Protocol) (*account.Wallet, string, string, []string, string, string) {
+func chownStakeDefineParams(p *contracts.Protocol) ([]string, string, string) {
 	// key1 := sdk.Cfg.Key1
 	// addr1 := sdk.Cfg.Addr1
-	key2 := sdk.Cfg.Key2
-	addr2 := sdk.Cfg.Addr2
 	ssn := []string{"0x1000000000000000000000000000000000000000", "0x1000000000000000000000000000000000000001",
 		"0x1000000000000000000000000000000000000002", "0x1000000000000000000000000000000000000003",
 		"0x1000000000000000000000000000000000000004", "0x1000000000000000000000000000000000000005"}
 	minStake := Field(p.Zimpl, "minstake")
 	userStake := ToZil(10)
-	return alice, key2, addr2, ssn, minStake, userStake
+	return ssn, minStake, userStake
 }
 
 func chownStakeSetup(tr *Transitions, p *contracts.Protocol) {
-	_, _, _, ssn, minStake, _ := chownStakeDefineParams(p)
+	ssn, minStake, _ := chownStakeDefineParams(p)
 
 	prevWallet := p.Zproxy.Contract.Wallet
 
@@ -389,7 +393,7 @@ func (tr *Transitions) ChownStakeRequireDrainBuffer() {
 
 	chownStakeSetup(tr, p)
 
-	alice, _, _, ssn, _, userStake := chownStakeDefineParams(p)
+	ssn, _, userStake := chownStakeDefineParams(p)
 	aliceAddr := utils.GetAddressByWallet(alice)
 
 	//key1 delegates to main contract

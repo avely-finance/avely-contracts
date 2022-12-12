@@ -19,7 +19,7 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	/*******************************************************************************
 	 * 0. delegator (sdk.Cfg.Addr2) delegate 15 zil
 	 *******************************************************************************/
-	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
+	p.StZIL.SetSigner(bob)
 	AssertSuccess(p.StZIL.DelegateStake(ToZil(15)))
 
 	/*******************************************************************************
@@ -35,7 +35,8 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	 * 2. Check withdrawal under delegator
 	 *******************************************************************************/
 
-	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
+	p.StZIL.SetSigner(bob)
+	bobAddr := utils.GetAddressByWallet(bob)
 
 	/*******************************************************************************
 	 * 2A. delegator trying to withdraw more than staked, should fail
@@ -75,18 +76,18 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	})
 	bnum1 := txn.Receipt.EpochNum
 
-	newDelegBalanceZil := p.StZIL.ZilBalanceOf(sdk.Cfg.Addr2).String()
+	newDelegBalanceZil := p.StZIL.ZilBalanceOf(bobAddr).String()
 	AssertEqual(Field(p.StZIL, "totalstakeamount"), StrAdd(ToZil(totalSsnInitialDelegateZil), newDelegBalanceZil))
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+10))
-	AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Addr2), ToStZil(10))
+	AssertEqual(Field(p.StZIL, "balances", bobAddr), ToStZil(10))
 
 	AssertEvent(txn, Event{p.StZIL.Addr, "Burnt", ParamsMap{
 		"burner":       p.StZIL.Addr,
-		"burn_account": sdk.Cfg.Addr2,
+		"burn_account": bobAddr,
 		"amount":       ToStZil(5),
 	}})
 
-	withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
+	withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum1, bobAddr).Withdrawal()
 
 	AssertEqual(withdrawal.TokenAmount.String(), ToStZil(5))
 	AssertEqual(withdrawal.StakeAmount.String(), ToStZil(5))
@@ -111,12 +112,12 @@ func (tr *Transitions) WithdrawStakeAmount() {
 	}
 	//there is holder's initial stake
 	if bnum1 == bnum2 {
-		withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum1, sdk.Cfg.Addr2).Withdrawal()
+		withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum1, bobAddr).Withdrawal()
 		AssertEqual(withdrawal.TokenAmount.String(), ToStZil(15))
 		AssertEqual(withdrawal.StakeAmount.String(), ToStZil(15))
 	} else {
 		//second withdrawal happened in next block
-		withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum2, sdk.Cfg.Addr2).Withdrawal()
+		withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum2, bobAddr).Withdrawal()
 		AssertEqual(withdrawal.TokenAmount.String(), ToStZil(10))
 		AssertEqual(withdrawal.StakeAmount.String(), ToStZil(10))
 	}

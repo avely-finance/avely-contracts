@@ -12,7 +12,7 @@ func (tr *Transitions) IsOwner() {
 	p := tr.DeployAndUpgrade()
 
 	// Use non-owner user for StZIL, expecting errors
-	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
+	p.StZIL.SetSigner(bob)
 
 	tx, _ := p.StZIL.ChangeAdmin(sdk.Cfg.Addr3)
 	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))

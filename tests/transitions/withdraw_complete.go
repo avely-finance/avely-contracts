@@ -35,7 +35,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tx, _ = p.StZIL.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
+	p.StZIL.SetSigner(bob)
 	tx, _ = p.StZIL.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
@@ -248,7 +248,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	tx, _ = p.StZIL.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
-	p.StZIL.UpdateWallet(sdk.Cfg.Key2)
+	p.StZIL.SetSigner(bob)
 	tx, _ = p.StZIL.CompleteWithdrawal()
 	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 

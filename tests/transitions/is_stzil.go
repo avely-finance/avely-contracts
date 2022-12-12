@@ -12,7 +12,7 @@ func (tr *Transitions) IsStZil() {
 
 	// Use non-admin user for Buffer
 	buffer := p.GetBuffer()
-	buffer.UpdateWallet(sdk.Cfg.Key2)
+	buffer.SetSigner(bob)
 
 	tx, _ := buffer.DelegateStake(sdk.Cfg.StZilSsnAddress, ToZil(1))
 	AssertError(tx, buffer.ErrorCode("StZILValidationFailed"))
@@ -28,7 +28,7 @@ func (tr *Transitions) IsStZil() {
 	AssertError(tx, buffer.ErrorCode("StZILValidationFailed"))
 
 	// Use non-admin user for p.Holder
-	p.Holder.UpdateWallet(sdk.Cfg.Key2)
+	p.Holder.SetSigner(bob)
 
 	tx, _ = p.Holder.WithdrawStakeAmt(sdk.Cfg.StZilSsnAddress, ToZil(1))
 	AssertError(tx, p.Holder.ErrorCode("StZILValidationFailed"))
