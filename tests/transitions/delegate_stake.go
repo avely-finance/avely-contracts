@@ -19,7 +19,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	delegateStakeHolder(p)
 
-	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
+	p.StZIL.SetSigner(alice)
 
 	// Because of DelegHasNoSufficientAmt
 	tx, _ := p.StZIL.DelegateStake(ToZil(1))
@@ -30,6 +30,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	tx, _ = AssertSuccess(p.StZIL.DelegateStake(ToZil(20)))
 
 	lastrewardcycle := strconv.Itoa(p.Zimpl.GetLastRewardCycle())
+	aliceAddr := utils.GetAddressByWallet(alice)
 
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetActiveBuffer().Addr, ssnIn, lastrewardcycle), ToZil(20))
 	AssertEqual(Field(p.StZIL, "_balance"), "0")
@@ -38,7 +39,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+20))
 	AssertEvent(tx, Event{p.StZIL.Addr, "Minted", ParamsMap{
 		"minter":    p.StZIL.Addr,
-		"recipient": sdk.Cfg.Addr1,
+		"recipient": aliceAddr,
 		"amount":    ToStZil(20),
 	}})
 
@@ -48,7 +49,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	} else {
 		AssertEqual(Field(p.StZIL, "balances", admin), ToStZil(totalSsnInitialDelegateZil))
 	}
-	AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Addr1), ToStZil(20))
+	AssertEqual(Field(p.StZIL, "balances", aliceAddr), ToStZil(20))
 
 	// Check delegate to the next cycle
 	p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare)

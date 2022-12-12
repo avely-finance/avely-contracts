@@ -22,8 +22,7 @@ func ssnChangeOwner(tr *Transitions) {
 	txIdLocal2 := 0
 
 	//deploy multisig
-	owner := sdk.Cfg.Key1
-	owners := []string{sdk.Cfg.Addr1}
+	owners := []string{utils.GetAddressByWallet(alice)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -44,8 +43,9 @@ func ssnChangeOwner(tr *Transitions) {
 	AssertError(tx, ssn.ErrorCode("StagingOwnerNotExists"))
 
 	//initiate owner change
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(ssn.Addr, newMultisig.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal1))
+	multisig.SetSigner(alice)
+	AssertMultisigSuccess(multisig.SubmitChangeOwnerTransaction(ssn.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal1))
 	AssertEqual(Field(ssn, "staging_owner"), newMultisig.Addr)
 
 	//try to claim owner with wrong user, expect error

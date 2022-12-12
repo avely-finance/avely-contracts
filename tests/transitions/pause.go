@@ -2,6 +2,7 @@ package transitions
 
 import (
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -67,7 +68,7 @@ func unPauseEmptyBuffers() {
 
 func callPauseUnpauseNonAdmin(p *contracts.Protocol) {
 	//call pause/unpause admin transitions with non-admin user; expecting errors
-	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
+	p.StZIL.SetSigner(alice)
 
 	tx, _ := p.StZIL.PauseIn()
 	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
@@ -98,7 +99,10 @@ func callPausedIn(p *contracts.Protocol) {
 	tx, _ = p.StZIL.DelegateStake(ToZil(10))
 	AssertError(tx, p.StZIL.ErrorCode("PausedIn"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.Key1).ChownStakeConfirmSwap(sdk.Cfg.Addr1)
+	aliceAddr := utils.GetAddressByWallet(alice)
+
+	p.StZIL.SetSigner(alice)
+	tx, _ = p.StZIL.ChownStakeConfirmSwap(aliceAddr)
 	AssertError(tx, p.StZIL.ErrorCode("PausedIn"))
 
 	p.StZIL.SetSigner(celestials.Owner)
@@ -130,16 +134,19 @@ func callPausedZrc2(p *contracts.Protocol) {
 	GetLog().Info(tx)
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.TransferFrom(sdk.Cfg.Addr1, sdk.Cfg.Addr2, ToQA(10000))
+	from := utils.GetAddressByWallet(alice)
+	to := utils.GetAddressByWallet(bob)
+
+	tx, _ = p.StZIL.TransferFrom(from, to, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.Transfer(sdk.Cfg.Addr2, ToQA(10000))
+	tx, _ = p.StZIL.Transfer(to, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.IncreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
+	tx, _ = p.StZIL.IncreaseAllowance(from, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.DecreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
+	tx, _ = p.StZIL.DecreaseAllowance(from, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
 	AssertSuccess(p.StZIL.UnpauseZrc2())

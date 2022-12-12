@@ -22,8 +22,8 @@ func treasuryChangeOwner(tr *Transitions) {
 	txIdLocal2 := 0
 
 	//deploy multisig
-	owner := sdk.Cfg.Key1
-	owners := []string{sdk.Cfg.Addr1}
+	owner := alice
+	owners := []string{utils.GetAddressByWallet(alice)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -43,8 +43,9 @@ func treasuryChangeOwner(tr *Transitions) {
 	AssertError(tx, treasury.ErrorCode("StagingOwnerNotExists"))
 
 	//initiate owner change
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(treasury.Addr, newMultisig.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal1))
+	multisig.SetSigner(owner)
+	AssertMultisigSuccess(multisig.SubmitChangeOwnerTransaction(treasury.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal1))
 	AssertEqual(Field(treasury, "staging_owner"), newMultisig.Addr)
 
 	//try to claim owner with wrong user, expect error
@@ -61,8 +62,8 @@ func treasuryChangeOwner(tr *Transitions) {
 
 func treasuryFunds(tr *Transitions) {
 	//deploy multisig
-	owner := sdk.Cfg.Key1
-	owners := []string{sdk.Cfg.Addr1}
+	owner := alice
+	owners := []string{utils.GetAddressByWallet(alice)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -78,8 +79,9 @@ func treasuryFunds(tr *Transitions) {
 
 	//try to withdraw amount exceeding _balance, expect error
 	admin := utils.GetAddressByWallet(celestials.Admin)
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawTransaction(treasury.Addr, admin, ToQA(12345)))
-	tx, _ := multisig.WithUser(owner).ExecuteTransaction(txIdLocal)
+	multisig.SetSigner(owner)
+	AssertMultisigSuccess(multisig.SubmitWithdrawTransaction(treasury.Addr, admin, ToQA(12345)))
+	tx, _ := multisig.ExecuteTransaction(txIdLocal)
 	AssertError(tx, treasury.ErrorCode("InsufficientFunds"))
 
 	//withdraw valid amount, expect success
@@ -100,8 +102,10 @@ func treasuryFunds(tr *Transitions) {
 	recipient := RcptAddr1
 	balanceBefore, _ := new(big.Int).SetString(sdk.GetBalance(recipient), 10)
 	GetLog().Info(balanceBefore.String())
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawTransaction(treasury.Addr, recipient, ToQA(25)))
-	tx, _ = AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+
+	multisig.SetSigner(owner)
+	AssertMultisigSuccess(multisig.SubmitWithdrawTransaction(treasury.Addr, recipient, ToQA(25)))
+	tx, _ = AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertTransition(tx, Transition{
 		treasury.Addr, //sender
 		"AddFunds",

@@ -102,7 +102,9 @@ func aswapBasic(tr *Transitions) {
 	expectedTreasuryRewards := "133333333333"
 	expectedSwapOutput := "9887919312466"
 	AssertSuccess(aswap.TogglePause())
-	tx, _ := AssertSuccess(aswap.SwapExactZILForTokens(ToQA(100), stzil.Contract.Addr, "90", sdk.Cfg.Addr1, blockNum))
+	aliceAddr := utils.GetAddressByWallet(alice)
+
+	tx, _ := AssertSuccess(aswap.SwapExactZILForTokens(ToQA(100), stzil.Contract.Addr, "90", aliceAddr, blockNum))
 	AssertTransition(tx, Transition{
 		aswap.Addr, //sender
 		"AddFunds",
@@ -110,7 +112,7 @@ func aswapBasic(tr *Transitions) {
 		expectedTreasuryRewards,
 		ParamsMap{},
 	})
-	AssertEqual(stzil.BalanceOf(sdk.Cfg.Addr1).String(), expectedSwapOutput)
+	AssertEqual(stzil.BalanceOf(aliceAddr).String(), expectedSwapOutput)
 
 	//change owner
 	new_owner_addr := sdk.Cfg.Addr3
@@ -139,8 +141,7 @@ func aswapMultisig(tr *Transitions) {
 	txIdLocal := 0
 
 	//deploy multisig
-	owner := sdk.Cfg.Key1
-	owners := []string{sdk.Cfg.Addr1}
+	owners := []string{utils.GetAddressByWallet(alice)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -149,50 +150,51 @@ func aswapMultisig(tr *Transitions) {
 	aswap := tr.DeployASwap(init_owner)
 
 	//test ASwap.TogglePause
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitTogglePauseTransaction(aswap.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	multisig.SetSigner(alice)
+	AssertMultisigSuccess(multisig.SubmitTogglePauseTransaction(aswap.Addr))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "pause"), "1")
 
 	//test ASwap.SetTreasuryFee()
 	txIdLocal++
 	new_fee := "12345"
 	AssertEqual(Field(aswap, "treasury_fee"), "500")
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryFeeTransaction(aswap.Addr, new_fee))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertMultisigSuccess(multisig.SubmitSetTreasuryFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
 
 	//test ASwap.SetLiquidityFee()
 	txIdLocal++
 	new_fee = "23456"
 	AssertEqual(Field(aswap, "liquidity_fee"), "10000")
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetLiquidityFeeTransaction(aswap.Addr, new_fee))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertMultisigSuccess(multisig.SubmitSetLiquidityFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "liquidity_fee"), new_fee)
 
 	//test ASwap.SetTreasuryAddress()
 	txIdLocal++
 	new_address := sdk.Cfg.Addr3
 	AssertEqual(Field(aswap, "treasury_address"), core.ZeroAddr)
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertMultisigSuccess(multisig.SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "treasury_address"), new_address)
 
 	//deploy other multisig contract
 	newSignCount := 1
-	newOwner := sdk.Cfg.Key2
-	newOwners := []string{sdk.Cfg.Addr2}
+	newOwners := []string{utils.GetAddressByWallet(bob)}
 	newMultisig := tr.DeployMultisigWallet(newOwners, newSignCount)
 
 	//test ASwap.ChangeOwner()
 	txIdLocal++
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(aswap.Addr, newMultisig.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertMultisigSuccess(multisig.SubmitChangeOwnerTransaction(aswap.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "staging_owner"), newMultisig.Addr)
 
 	//test ASwap.ClaimOwner()
 	//first transaction id is 0 for newly deployed multisig contract
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(aswap.Addr))
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).ExecuteTransaction(0))
+	newMultisig.SetSigner(bob)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(aswap.Addr))
+	AssertMultisigSuccess(newMultisig.ExecuteTransaction(0))
 	AssertEqual(Field(aswap, "owner"), newMultisig.Addr)
 
 }
