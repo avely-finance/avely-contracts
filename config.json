@@ -1,13 +1,7 @@
 {
   "local": {
     "Api": {
-      "HttpUrl": "http://zilliqa_server:5555",
-      "WebsocketUrl": "dev-ws.zilliqa.com",
-      "WebsocketSchema": "wss"
-    },
-    "Slack": {
-      "HookUrl": "",
-      "LogLevel": "info"
+      "HttpUrl": "http://zilliqa_server:5555"
     },
     "ChainId": 222,
     "TxConfrimMaxAttempts": 5,
@@ -37,13 +31,7 @@
   },
   "testnet": {
     "Api": {
-      "HttpUrl": "https://dev-api.zilliqa.com",
-      "WebsocketUrl": "dev-ws.zilliqa.com",
-      "WebsocketSchema": "wss"
-    },
-    "Slack": {
-      "HookUrl": "",
-      "LogLevel": "info"
+      "HttpUrl": "https://dev-api.zilliqa.com"
     },
     "ChainId": 333,
     "TxConfrimMaxAttempts": 10,
@@ -73,13 +61,7 @@
   },
   "mainnet": {
     "Api": {
-      "HttpUrl": "https://api.zilliqa.com",
-      "WebsocketUrl": "api-ws.zilliqa.com",
-      "WebsocketSchema": "wss"
-    },
-    "Slack": {
-      "HookUrl": "",
-      "LogLevel": "info"
+      "HttpUrl": "https://api.zilliqa.com"
     },
     "ChainId": 1,
     "TxConfrimMaxAttempts": 15,
