@@ -43,7 +43,7 @@ type Config struct {
 	TreasuryAddr string
 }
 
-func NewConfig(chain string) *Config {
+func NewConfig(configPath string, chain string) *Config {
 	config := &Config{
 		Chain: chain,
 	}
@@ -54,7 +54,7 @@ func NewConfig(chain string) *Config {
 		log.Printf("WARNING! There is no '%s' file. Please, make sure you set up the correct ENV manually", path)
 	}
 
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(configPath)
 	viper.SetConfigName("config")
 
 	err = viper.ReadInConfig()

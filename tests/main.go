@@ -12,7 +12,7 @@ import (
 const CHAIN = "local"
 
 func main() {
-	config := NewConfig(CHAIN)
+	config := NewConfig(".", CHAIN)
 	celestials := LoadCelestialsFromEnv(CHAIN)
 	sdk := NewAvelySDK(*config)
 	log := helpers.GetLog()
