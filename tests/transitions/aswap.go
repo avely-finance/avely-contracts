@@ -11,6 +11,7 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	"github.com/tyler-smith/go-bip39"
@@ -55,8 +56,8 @@ func aswapBasic(tr *Transitions) {
 
 	p := tr.DeployAndUpgrade()
 
-	init_owner_addr := sdk.Cfg.Admin
-	init_owner_key := sdk.Cfg.AdminKey
+	init_owner_addr := utils.GetAddressByWallet(celestials.Admin)
+
 	aswap := tr.DeployASwap(init_owner_addr)
 	stzil := p.StZIL
 
@@ -71,37 +72,39 @@ func aswapBasic(tr *Transitions) {
 	AssertSuccess(aswap.AddLiquidity(liquidityAmount, stzil.Contract.Addr, "0", liquidityAmount, blockNum))
 
 	//toggle pause
-	AssertSuccess(aswap.WithUser(init_owner_key).TogglePause())
+	AssertSuccess(aswap.TogglePause())
 	AssertEqual(Field(aswap, "pause"), "1")
 
 	//set treasury fee, check zero
 	new_fee := "0"
 	AssertEqual(Field(aswap, "treasury_fee"), "500")
-	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryFee(new_fee))
+	AssertSuccess(aswap.SetTreasuryFee(new_fee))
 	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
 
 	//set treasury fee
 	new_fee = "750"
-	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryFee(new_fee))
+	AssertSuccess(aswap.SetTreasuryFee(new_fee))
 	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
 
 	//set treasury address
 	treasury_address := p.Treasury.Addr
 	AssertEqual(Field(aswap, "treasury_address"), core.ZeroAddr)
-	AssertSuccess(aswap.WithUser(init_owner_key).SetTreasuryAddress(treasury_address))
+	AssertSuccess(aswap.SetTreasuryAddress(treasury_address))
 	AssertEqual(Field(aswap, "treasury_address"), treasury_address)
 
 	//set liquidity fee
 	new_fee = "1000"
 	AssertEqual(Field(aswap, "liquidity_fee"), "10000")
-	AssertSuccess(aswap.WithUser(init_owner_key).SetLiquidityFee(new_fee))
+	AssertSuccess(aswap.SetLiquidityFee(new_fee))
 	AssertEqual(Field(aswap, "liquidity_fee"), new_fee)
 
 	//do swap
 	expectedTreasuryRewards := "133333333333"
 	expectedSwapOutput := "9887919312466"
-	AssertSuccess(aswap.WithUser(init_owner_key).TogglePause())
-	tx, _ := AssertSuccess(aswap.SwapExactZILForTokens(ToQA(100), stzil.Contract.Addr, "90", sdk.Cfg.Addr1, blockNum))
+	AssertSuccess(aswap.TogglePause())
+	aliceAddr := utils.GetAddressByWallet(alice)
+
+	tx, _ := AssertSuccess(aswap.SwapExactZILForTokens(ToQA(100), stzil.Contract.Addr, "90", aliceAddr, blockNum))
 	AssertTransition(tx, Transition{
 		aswap.Addr, //sender
 		"AddFunds",
@@ -109,26 +112,29 @@ func aswapBasic(tr *Transitions) {
 		expectedTreasuryRewards,
 		ParamsMap{},
 	})
-	AssertEqual(stzil.BalanceOf(sdk.Cfg.Addr1).String(), expectedSwapOutput)
+	AssertEqual(stzil.BalanceOf(aliceAddr).String(), expectedSwapOutput)
 
 	//change owner
-	new_owner_addr := sdk.Cfg.Addr3
-	new_owner_key := sdk.Cfg.Key3
+	new_owner_addr := utils.GetAddressByWallet(eve)
 
 	//try to claim owner without staging owner, expect error
-	tx, _ = aswap.WithUser(new_owner_key).ClaimOwner()
+	aswap.SetSigner(eve)
+	tx, _ = aswap.ClaimOwner()
 	AssertASwapError(tx, aswap.ErrorCode("CodeStagingOwnerMissing"))
 
 	AssertEqual(Field(aswap, "owner"), init_owner_addr)
-	AssertSuccess(aswap.WithUser(init_owner_key).ChangeOwner(new_owner_addr))
+
+	aswap.SetSigner(celestials.Admin) // use original owner
+	AssertSuccess(aswap.ChangeOwner(new_owner_addr))
 	AssertEqual(Field(aswap, "staging_owner"), new_owner_addr)
 
 	//try to claim owner with invalid user, expect error
-	tx, _ = aswap.WithUser(init_owner_key).ClaimOwner()
+	tx, _ = aswap.ClaimOwner()
 	AssertASwapError(tx, aswap.ErrorCode("CodeStagingOwnerInvalid"))
 
 	//claim owner
-	AssertSuccess(aswap.WithUser(new_owner_key).ClaimOwner())
+	aswap.SetSigner(eve)
+	AssertSuccess(aswap.ClaimOwner())
 	AssertEqual(Field(aswap, "owner"), new_owner_addr)
 }
 
@@ -136,8 +142,7 @@ func aswapMultisig(tr *Transitions) {
 	txIdLocal := 0
 
 	//deploy multisig
-	owner := sdk.Cfg.Key1
-	owners := []string{sdk.Cfg.Addr1}
+	owners := []string{utils.GetAddressByWallet(alice)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -146,50 +151,51 @@ func aswapMultisig(tr *Transitions) {
 	aswap := tr.DeployASwap(init_owner)
 
 	//test ASwap.TogglePause
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitTogglePauseTransaction(aswap.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	multisig.SetSigner(alice)
+	AssertMultisigSuccess(multisig.SubmitTogglePauseTransaction(aswap.Addr))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "pause"), "1")
 
 	//test ASwap.SetTreasuryFee()
 	txIdLocal++
 	new_fee := "12345"
 	AssertEqual(Field(aswap, "treasury_fee"), "500")
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryFeeTransaction(aswap.Addr, new_fee))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertMultisigSuccess(multisig.SubmitSetTreasuryFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "treasury_fee"), new_fee)
 
 	//test ASwap.SetLiquidityFee()
 	txIdLocal++
 	new_fee = "23456"
 	AssertEqual(Field(aswap, "liquidity_fee"), "10000")
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetLiquidityFeeTransaction(aswap.Addr, new_fee))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertMultisigSuccess(multisig.SubmitSetLiquidityFeeTransaction(aswap.Addr, new_fee))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "liquidity_fee"), new_fee)
 
 	//test ASwap.SetTreasuryAddress()
 	txIdLocal++
-	new_address := sdk.Cfg.Addr3
+	new_address := utils.GetAddressByWallet(eve)
 	AssertEqual(Field(aswap, "treasury_address"), core.ZeroAddr)
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertMultisigSuccess(multisig.SubmitSetTreasuryAddressTransaction(aswap.Addr, new_address))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "treasury_address"), new_address)
 
 	//deploy other multisig contract
 	newSignCount := 1
-	newOwner := sdk.Cfg.Key2
-	newOwners := []string{sdk.Cfg.Addr2}
+	newOwners := []string{utils.GetAddressByWallet(bob)}
 	newMultisig := tr.DeployMultisigWallet(newOwners, newSignCount)
 
 	//test ASwap.ChangeOwner()
 	txIdLocal++
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(aswap.Addr, newMultisig.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	AssertMultisigSuccess(multisig.SubmitChangeOwnerTransaction(aswap.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "staging_owner"), newMultisig.Addr)
 
 	//test ASwap.ClaimOwner()
 	//first transaction id is 0 for newly deployed multisig contract
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(aswap.Addr))
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).ExecuteTransaction(0))
+	newMultisig.SetSigner(bob)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(aswap.Addr))
+	AssertMultisigSuccess(newMultisig.ExecuteTransaction(0))
 	AssertEqual(Field(aswap, "owner"), newMultisig.Addr)
 
 }
@@ -198,34 +204,33 @@ func (tr *Transitions) setupGoldenFlow() (*contracts.Protocol, *contracts.ASwap,
 
 	Proto = tr.DeployAndUpgrade()
 
-	init_owner_addr := sdk.Cfg.Admin
-	init_owner_key := sdk.Cfg.AdminKey
+	init_owner_addr := utils.GetAddressByWallet(celestials.Admin)
 	Aswap = tr.DeployASwap(init_owner_addr)
 	Stzil = Proto.StZIL
 
 	//toggle pause
-	AssertSuccess(Aswap.WithUser(init_owner_key).TogglePause())
+	AssertSuccess(Aswap.TogglePause())
 	AssertEqual(Field(Aswap, "pause"), "1")
 
 	//set treasury fee 0.3% = 1/333
 	new_fee := "333"
-	AssertSuccess(Aswap.WithUser(init_owner_key).SetTreasuryFee(new_fee))
+	AssertSuccess(Aswap.SetTreasuryFee(new_fee))
 	AssertEqual(Field(Aswap, "treasury_fee"), new_fee)
 
 	//set treasury address
 	treasury_address := Proto.Treasury.Addr
 	AssertEqual(Field(Aswap, "treasury_address"), core.ZeroAddr)
-	AssertSuccess(Aswap.WithUser(init_owner_key).SetTreasuryAddress(treasury_address))
+	AssertSuccess(Aswap.SetTreasuryAddress(treasury_address))
 	AssertEqual(Field(Aswap, "treasury_address"), treasury_address)
 
 	//set liquidity fee
 	new_fee = "9940"
 	AssertEqual(Field(Aswap, "liquidity_fee"), "10000")
-	AssertSuccess(Aswap.WithUser(init_owner_key).SetLiquidityFee(new_fee))
+	AssertSuccess(Aswap.SetLiquidityFee(new_fee))
 	AssertEqual(Field(Aswap, "liquidity_fee"), new_fee)
 
 	//toggle pause
-	AssertSuccess(Aswap.WithUser(init_owner_key).TogglePause())
+	AssertSuccess(Aswap.TogglePause())
 	AssertEqual(Field(Aswap, "pause"), "0")
 
 	//Generate a mnemonic for memorization or user-friendly seeds
@@ -249,9 +254,9 @@ func (tr *Transitions) setupGoldenFlow() (*contracts.Protocol, *contracts.ASwap,
 	Addresses[3] = Addr3
 	Archive = make([]BalanceRecord, 0)
 
-	sdk.AddFunds(Addr1, ToQA(5000))
-	sdk.AddFunds(Addr2, ToQA(5000))
-	sdk.AddFunds(Addr3, ToQA(5000))
+	sdk.AddFunds(celestials.Admin, Addr1, ToQA(5000))
+	sdk.AddFunds(celestials.Admin, Addr2, ToQA(5000))
+	sdk.AddFunds(celestials.Admin, Addr3, ToQA(5000))
 
 	return Proto, Aswap, Stzil
 }
@@ -266,9 +271,11 @@ func aswapGolden(tr *Transitions) {
 	blockNum := Proto.GetBlockHeight()
 
 	//mint some stzil and transfer 1000stzil to user 1, 500stzil to user 2
-	AssertSuccess(Stzil.WithUser(sdk.Cfg.AdminKey).DelegateStake(ToQA(1500)))
-	AssertSuccess(Stzil.WithUser(sdk.Cfg.AdminKey).Transfer(Addr1, ToQA(1000)))
-	AssertSuccess(Stzil.WithUser(sdk.Cfg.AdminKey).Transfer(Addr2, ToQA(500)))
+	Stzil.SetSigner(celestials.Admin)
+
+	AssertSuccess(Stzil.DelegateStake(ToQA(1500)))
+	AssertSuccess(Stzil.Transfer(Addr1, ToQA(1000)))
+	AssertSuccess(Stzil.Transfer(Addr2, ToQA(500)))
 
 	recordBalance(-1, nil)
 
@@ -697,10 +704,10 @@ func aswapOwnerOnly(tr *Transitions) {
 
 	Start("aswapOwnerOnly")
 
-	init_owner_addr := sdk.Cfg.Admin
+	init_owner_addr := utils.GetAddressByWallet(celestials.Admin)
 	aswap := tr.DeployASwap(init_owner_addr)
 	// Use non-owner user for Aswap, expecting errors
-	aswap.UpdateWallet(sdk.Cfg.Key2)
+	aswap.SetSigner(bob)
 
 	tx, _ := aswap.SetLiquidityFee("12345")
 	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))

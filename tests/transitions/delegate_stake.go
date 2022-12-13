@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -18,7 +19,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 
 	delegateStakeHolder(p)
 
-	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
+	p.StZIL.SetSigner(alice)
 
 	// Because of DelegHasNoSufficientAmt
 	tx, _ := p.StZIL.DelegateStake(ToZil(1))
@@ -29,6 +30,7 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	tx, _ = AssertSuccess(p.StZIL.DelegateStake(ToZil(20)))
 
 	lastrewardcycle := strconv.Itoa(p.Zimpl.GetLastRewardCycle())
+	aliceAddr := utils.GetAddressByWallet(alice)
 
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", p.GetActiveBuffer().Addr, ssnIn, lastrewardcycle), ToZil(20))
 	AssertEqual(Field(p.StZIL, "_balance"), "0")
@@ -37,16 +39,17 @@ func (tr *Transitions) DelegateStakeSuccess() {
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+20))
 	AssertEvent(tx, Event{p.StZIL.Addr, "Minted", ParamsMap{
 		"minter":    p.StZIL.Addr,
-		"recipient": sdk.Cfg.Addr1,
+		"recipient": aliceAddr,
 		"amount":    ToStZil(20),
 	}})
 
+	admin := utils.GetAddressByWallet(celestials.Admin)
 	if totalSsnInitialDelegateZil == 0 {
-		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), "")
+		AssertEqual(Field(p.StZIL, "balances", admin), "")
 	} else {
-		AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Admin), ToStZil(totalSsnInitialDelegateZil))
+		AssertEqual(Field(p.StZIL, "balances", admin), ToStZil(totalSsnInitialDelegateZil))
 	}
-	AssertEqual(Field(p.StZIL, "balances", sdk.Cfg.Addr1), ToStZil(20))
+	AssertEqual(Field(p.StZIL, "balances", aliceAddr), ToStZil(20))
 
 	// Check delegate to the next cycle
 	p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare)
@@ -58,14 +61,16 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 	p := tr.DeployAndUpgrade()
 
-	anotherBuffer, err := contracts.NewBufferContract(sdk, p.StZIL.Addr, p.Zproxy.Addr)
+	anotherBuffer, err := contracts.NewBufferContract(sdk, p.StZIL.Addr, p.Zproxy.Addr, celestials.Admin)
 	if err != nil {
 		GetLog().Fatal("Deploy buffer error = " + err.Error())
 	}
 
 	new_buffers := []string{p.GetBuffer().Addr, p.GetBuffer().Addr, anotherBuffer.Addr}
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeBuffers(new_buffers))
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
+	p.StZIL.SetSigner(celestials.Owner)
+	AssertSuccess(p.StZIL.ChangeBuffers(new_buffers))
+
+	p.StZIL.SetSigner(celestials.Admin) //back to admin
 
 	ssnForInput := p.GetSsnAddressForInput()
 	AssertSuccess(p.StZIL.DelegateStake(ToZil(10)))
@@ -75,7 +80,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 	AssertEqual(Field(p.Zimpl, "buff_deposit_deleg", activeBufferAddr, ssnForInput, Field(p.Zimpl, "lastrewardcycle")), ToZil(10))
 
 	//next reward cycle
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	p.Zproxy.SetSigner(verifier)
 	AssertSuccess(p.Zproxy.AssignStakeReward(sdk.Cfg.StZilSsnAddress, sdk.Cfg.StZilSsnRewardShare))
 
 	ssnIn := p.GetSsnAddressForInput()

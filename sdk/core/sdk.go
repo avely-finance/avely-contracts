@@ -99,9 +99,7 @@ func (sdk *AvelySDK) GetBalance(addr string) string {
 	return balAndNonce.Balance
 }
 
-func (sdk *AvelySDK) AddFunds(recipient, amount string) (*transaction.Transaction, error) {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(sdk.Cfg.AdminKey)
+func (sdk *AvelySDK) AddFunds(signer *account.Wallet, recipient, amount string) (*transaction.Transaction, error) {
 	provider := provider2.NewProvider(sdk.Cfg.Api.HttpUrl)
 
 	gasPrice, _ := provider.GetMinimumGasPrice()
@@ -124,7 +122,8 @@ func (sdk *AvelySDK) AddFunds(recipient, amount string) (*transaction.Transactio
 		Priority:     false,
 		Nonce:        "",
 	}
-	wallet.Sign(tx, *provider)
+
+	signer.Sign(tx, *provider)
 	rsp, _ := provider.CreateTransaction(tx.ToTransactionPayload())
 	resMap := rsp.Result.(map[string]interface{})
 	hash := resMap["TranID"].(string)

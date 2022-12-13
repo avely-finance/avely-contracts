@@ -76,8 +76,25 @@ func (z *ZilSwap) SwapExactZILForTokens(tokenAddr, zilAmount, minTokenAmount, re
 	return z.Call("SwapExactZILForTokens", args, zilAmount)
 }
 
-func NewZilSwap(sdk *AvelySDK) (*ZilSwap, error) {
-	contract := buildZilSwapContract(sdk)
+func NewZilSwap(sdk *AvelySDK, deployer *account.Wallet) (*ZilSwap, error) {
+	init := []core.ContractValue{
+		{
+			VName: "_scilla_version",
+			Type:  "Uint32",
+			Value: "0",
+		}, {
+			VName: "initial_owner",
+			Type:  "ByStr20",
+			Value: "0x" + deployer.DefaultAccount.Address,
+		}, {
+			VName: "initial_fee",
+			Type:  "Uint256",
+			Value: "30",
+		},
+	}
+
+	contract := buildZilSwapContract(sdk, init)
+	contract.Signer = deployer
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -103,7 +120,7 @@ func NewZilSwap(sdk *AvelySDK) (*ZilSwap, error) {
 }
 
 func RestoreZilSwap(sdk *AvelySDK, contractAddress string) (*ZilSwap, error) {
-	contract := buildZilSwapContract(sdk)
+	contract := buildZilSwapContract(sdk, []core.ContractValue{})
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -122,33 +139,13 @@ func RestoreZilSwap(sdk *AvelySDK, contractAddress string) (*ZilSwap, error) {
 	return &ZilSwap{Contract: sdkContract}, nil
 }
 
-func buildZilSwapContract(sdk *AvelySDK) contract2.Contract {
+func buildZilSwapContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/zilswap/zilswap.scilla")
-	key := sdk.Cfg.AdminKey
-
-	init := []core.ContractValue{
-		{
-			VName: "_scilla_version",
-			Type:  "Uint32",
-			Value: "0",
-		}, {
-			VName: "initial_owner",
-			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
-		}, {
-			VName: "initial_fee",
-			Type:  "Uint256",
-			Value: "30",
-		},
-	}
-
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }

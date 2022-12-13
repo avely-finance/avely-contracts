@@ -17,8 +17,10 @@ func (tr *Transitions) DrainBuffer() {
 	p := tr.DeployAndUpgrade()
 
 	rewardsFee := "1000" //10% of feeDenom=10000
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).ChangeRewardsFee(rewardsFee))
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey) //back to admin
+	p.StZIL.SetSigner(celestials.Owner)
+	AssertSuccess(p.StZIL.ChangeRewardsFee(rewardsFee))
+
+	p.StZIL.SetSigner(celestials.Admin) //back to admin
 
 	ssnForInput := p.GetSsnAddressForInput()
 	activeBuffer := p.GetActiveBuffer().Addr

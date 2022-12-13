@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -18,14 +19,16 @@ func (tr *Transitions) FungibleAllowanceErrors() {
 	Start("Test ZRC-2 errors")
 
 	p := tr.DeployAndUpgrade()
+	p.StZIL.SetSigner(alice)
+	recipient := utils.GetAddressByWallet(alice)
 
 	amount := ToQA(1000)
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.Key1).DelegateStake(amount))
+	AssertSuccess(p.StZIL.DelegateStake(amount))
 
-	tx, _ := p.StZIL.IncreaseAllowance(sdk.Cfg.Addr1, amount)
+	tx, _ := p.StZIL.IncreaseAllowance(recipient, amount)
 	AssertError(tx, p.StZIL.ErrorCode("CodeIsSender"))
 
-	tx, _ = p.StZIL.DecreaseAllowance(sdk.Cfg.Addr1, amount)
+	tx, _ = p.StZIL.DecreaseAllowance(recipient, amount)
 	AssertError(tx, p.StZIL.ErrorCode("CodeIsSender"))
 }
 
@@ -47,7 +50,7 @@ func (tr *Transitions) AddToSwap() {
 	AssertSuccess(zilSwap.AddLiquidity(stzil.Contract.Addr, liquidityAmount, liquidityAmount, blockNum))
 
 	// Do Swap
-	recipient := sdk.Cfg.Addr1
+	recipient := utils.GetAddressByWallet(alice)
 	AssertSuccess(zilSwap.SwapExactZILForTokens(stzil.Contract.Addr, ToQA(10), "1", recipient, blockNum))
 	AssertEqual(stzil.BalanceOf(recipient).String(), swapOutput)
 }
@@ -58,19 +61,20 @@ func (tr *Transitions) Transfer() {
 	p := tr.DeployAndUpgrade()
 	stzil := p.StZIL
 
-	from := sdk.Cfg.Addr1
-	to := sdk.Cfg.Addr2
+	from := utils.GetAddressByWallet(alice)
+	to := utils.GetAddressByWallet(bob)
 	amount := ToQA(100)
 
-	tx, _ := stzil.WithUser(sdk.Cfg.Key1).Transfer(to, amount)
+	stzil.SetSigner(alice)
+	tx, _ := stzil.Transfer(to, amount)
 	AssertError(tx, p.StZIL.ErrorCode("CodeInsufficientFunds"))
 
-	AssertSuccess(stzil.WithUser(sdk.Cfg.Key1).DelegateStake(amount))
+	AssertSuccess(stzil.DelegateStake(amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), amount)
 	AssertEqual(stzil.BalanceOf(to).String(), ToQA(0))
 
-	AssertSuccess(stzil.WithUser(sdk.Cfg.Key1).Transfer(to, amount))
+	AssertSuccess(stzil.Transfer(to, amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), ToQA(0))
 	AssertEqual(stzil.BalanceOf(to).String(), amount)
@@ -82,12 +86,13 @@ func (tr *Transitions) TransferFrom() {
 	p := tr.DeployAndUpgrade()
 	stzil := p.StZIL
 
-	from := sdk.Cfg.Addr1
-	to := sdk.Cfg.Addr2
+	from := utils.GetAddressByWallet(alice)
+	to := utils.GetAddressByWallet(bob)
 
 	amount := ToQA(100)
 
-	AssertSuccess(stzil.WithUser(sdk.Cfg.Key1).DelegateStake(amount))
+	stzil.SetSigner(alice)
+	AssertSuccess(stzil.DelegateStake(amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), amount)
 	AssertEqual(stzil.BalanceOf(to).String(), ToQA(0))
@@ -96,8 +101,11 @@ func (tr *Transitions) TransferFrom() {
 	AssertError(tx, p.StZIL.ErrorCode("CodeInsufficientAllowance"))
 
 	// Allow admin user to spend User1 money
-	AssertSuccess(stzil.WithUser(sdk.Cfg.Key1).IncreaseAllowance(sdk.Cfg.Admin, amount))
-	AssertSuccess(stzil.WithUser(sdk.Cfg.AdminKey).TransferFrom(from, to, amount))
+	admin := celestials.Admin
+	AssertSuccess(stzil.IncreaseAllowance(utils.GetAddressByWallet(admin), amount))
+
+	stzil.SetSigner(admin)
+	AssertSuccess(stzil.TransferFrom(from, to, amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), ToQA(0))
 	AssertEqual(stzil.BalanceOf(to).String(), amount)

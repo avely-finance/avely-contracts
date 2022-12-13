@@ -79,8 +79,25 @@ func (a *SsnContract) WithdrawComm() (*transaction.Transaction, error) {
 	return a.Call("WithdrawComm", args, "0")
 }
 
-func NewSsnContract(sdk *AvelySDK, init_owner, init_zproxy string) (*SsnContract, error) {
-	contract := buildSsnContract(sdk, init_owner, init_zproxy)
+func NewSsnContract(sdk *AvelySDK, init_owner, init_zproxy string, deployer *account.Wallet) (*SsnContract, error) {
+	init := []core.ContractValue{
+		{
+			VName: "_scilla_version",
+			Type:  "Uint32",
+			Value: "0",
+		}, {
+			VName: "init_owner",
+			Type:  "ByStr20",
+			Value: init_owner,
+		}, {
+			VName: "init_zproxy",
+			Type:  "ByStr20",
+			Value: init_zproxy,
+		},
+	}
+
+	contract := buildSsnContract(sdk, init)
+	contract.Signer = deployer
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -105,8 +122,8 @@ func NewSsnContract(sdk *AvelySDK, init_owner, init_zproxy string) (*SsnContract
 	}
 }
 
-func RestoreSsnContract(sdk *AvelySDK, contractAddress, init_owner, init_zproxy string) (*SsnContract, error) {
-	contract := buildSsnContract(sdk, init_owner, init_zproxy)
+func RestoreSsnContract(sdk *AvelySDK, contractAddress string) (*SsnContract, error) {
+	contract := buildSsnContract(sdk, []core.ContractValue{})
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -125,33 +142,13 @@ func RestoreSsnContract(sdk *AvelySDK, contractAddress, init_owner, init_zproxy 
 	return &SsnContract{Contract: sdkContract}, nil
 }
 
-func buildSsnContract(sdk *AvelySDK, init_owner, init_zproxy string) contract2.Contract {
+func buildSsnContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/ssn.scilla")
-	key := sdk.Cfg.AdminKey
-
-	init := []core.ContractValue{
-		{
-			VName: "_scilla_version",
-			Type:  "Uint32",
-			Value: "0",
-		}, {
-			VName: "init_owner",
-			Type:  "ByStr20",
-			Value: init_owner,
-		}, {
-			VName: "init_zproxy",
-			Type:  "ByStr20",
-			Value: init_zproxy,
-		},
-	}
-
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }

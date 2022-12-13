@@ -4,6 +4,7 @@ import (
 	"flag"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	"github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/tests/transitions"
 )
@@ -12,21 +13,22 @@ const CHAIN = "local"
 
 func main() {
 	config := NewConfig(CHAIN)
+	celestials := LoadCelestialsFromEnv(CHAIN)
 	sdk := NewAvelySDK(*config)
 	log := helpers.GetLog()
 
+	tr := InitTransitions(sdk, celestials)
+
 	shortcuts := map[string]string{
 		"stzilssn": config.StZilSsnAddress,
-		"addr1":    config.Addr1,
-		"addr2":    config.Addr2,
-		"addr3":    config.Addr3,
-		"admin":    config.Admin,
-		"verifier": config.Verifier,
+		"alice":    utils.GetAddressByWallet(tr.Alice),
+		"bob":      utils.GetAddressByWallet(tr.Bob),
+		"eve":      utils.GetAddressByWallet(tr.Eve),
+		"admin":    utils.GetAddressByWallet(celestials.Admin),
+		"verifier": utils.GetAddressByWallet(tr.Verifier),
 	}
 
 	log.AddShortcuts(shortcuts)
-
-	tr := InitTransitions(sdk)
 
 	focusPtr := flag.String("focus", "default", "a focus test suite")
 

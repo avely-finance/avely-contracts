@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
@@ -21,8 +22,7 @@ func ssnChangeOwner(tr *Transitions) {
 	txIdLocal2 := 0
 
 	//deploy multisig
-	owner := sdk.Cfg.Key1
-	owners := []string{sdk.Cfg.Addr1}
+	owners := []string{utils.GetAddressByWallet(alice)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -33,28 +33,31 @@ func ssnChangeOwner(tr *Transitions) {
 
 	//deploy other multisig contract
 	newSignCount := 1
-	newOwner := sdk.Cfg.Key2
-	newOwners := []string{sdk.Cfg.Addr2}
+	newOwners := []string{utils.GetAddressByWallet(bob)}
 	newMultisig := tr.DeployMultisigWallet(newOwners, newSignCount)
 
 	//try to claim owner, expect error
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(ssn.Addr))
-	tx, _ := newMultisig.WithUser(newOwner).ExecuteTransaction(txIdLocal2)
+	newMultisig.SetSigner(bob)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(ssn.Addr))
+	tx, _ := newMultisig.ExecuteTransaction(txIdLocal2)
 	AssertError(tx, ssn.ErrorCode("StagingOwnerNotExists"))
 
 	//initiate owner change
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(ssn.Addr, newMultisig.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal1))
+	multisig.SetSigner(alice)
+	AssertMultisigSuccess(multisig.SubmitChangeOwnerTransaction(ssn.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal1))
 	AssertEqual(Field(ssn, "staging_owner"), newMultisig.Addr)
 
 	//try to claim owner with wrong user, expect error
-	tx, _ = ssn.WithUser(sdk.Cfg.Key2).ClaimOwner()
+	ssn.SetSigner(bob)
+	tx, _ = ssn.ClaimOwner()
 	AssertError(tx, ssn.ErrorCode("StagingOwnerValidationFailed"))
 
 	//claim owner
 	txIdLocal2++
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(ssn.Addr))
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).ExecuteTransaction(txIdLocal2))
+	newMultisig.SetSigner(bob)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(ssn.Addr))
+	AssertMultisigSuccess(newMultisig.ExecuteTransaction(txIdLocal2))
 	AssertEqual(Field(ssn, "owner"), newMultisig.Addr)
 
 }
@@ -64,20 +67,21 @@ func ssnRequireOwner(tr *Transitions) {
 	Start("ssnRequireOwner")
 
 	//deploy SSN
-	init_owner := sdk.Cfg.Admin
+	init_owner := utils.GetAddressByWallet(celestials.Admin)
 	init_zproxy := core.ZeroAddr
 	ssn := tr.DeploySsn(init_owner, init_zproxy)
 
 	// Use non-owner user, expecting errors
-	ssn.UpdateWallet(sdk.Cfg.Key2)
+	ssn.SetSigner(bob)
+	randomAddr := utils.GetAddressByWallet(eve)
 
-	tx, _ := ssn.ChangeOwner(sdk.Cfg.Addr3)
+	tx, _ := ssn.ChangeOwner(randomAddr)
 	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
-	tx, _ = ssn.ChangeZproxy(sdk.Cfg.Addr3)
+	tx, _ = ssn.ChangeZproxy(randomAddr)
 	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
-	tx, _ = ssn.UpdateReceivingAddr(sdk.Cfg.Addr3)
+	tx, _ = ssn.UpdateReceivingAddr(randomAddr)
 	AssertError(tx, ssn.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = ssn.UpdateComm(12345)
@@ -90,8 +94,7 @@ func ssnRequireOwner(tr *Transitions) {
 func ssnChangeZproxy(tr *Transitions) {
 
 	//deploy multisig
-	owner := sdk.Cfg.OwnerKey
-	owners := []string{sdk.Cfg.Owner}
+	owners := []string{utils.GetAddressByWallet(celestials.Owner)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -108,8 +111,9 @@ func ssnChangeZproxy(tr *Transitions) {
 	//change zproxy address, expect success
 	AssertEqual(Field(ssn, "zproxy"), core.ZeroAddr)
 	new_zproxy := p.Zproxy.Addr
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeZproxyTransaction(ssn.Addr, new_zproxy))
-	tx, _ := AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	multisig.SetSigner(celestials.Owner)
+	AssertMultisigSuccess(multisig.SubmitChangeZproxyTransaction(ssn.Addr, new_zproxy))
+	tx, _ := AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEvent(tx, Event{
 		ssn.Addr, //sender
 		"ChangeZproxy",
@@ -121,8 +125,7 @@ func ssnChangeZproxy(tr *Transitions) {
 func ssnOperations(tr *Transitions) {
 
 	//deploy multisig
-	owner := sdk.Cfg.OwnerKey
-	owners := []string{sdk.Cfg.Owner}
+	owners := []string{utils.GetAddressByWallet(celestials.Owner)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -141,7 +144,8 @@ func ssnOperations(tr *Transitions) {
 	//some amount should be delegated to SSN to make it active
 	p.Zproxy.DelegateStake(addr, ToZil(sdk.Cfg.SsnInitialDelegateZil))
 	//whitelist SSN
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).AddSSN(addr))
+	p.StZIL.SetSigner(celestials.Owner)
+	AssertSuccess(p.StZIL.AddSSN(addr))
 
 	//expect SSN added successfully
 	//Ssn: active_status stake_amt rewards name urlraw urlapi buffdeposit comm comm_rewards rec_addr
@@ -153,8 +157,9 @@ func ssnOperations(tr *Transitions) {
 	//change receiving address, expect success
 	txIdLocal := 0
 	treasury_addr := p.Treasury.Addr
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateReceivingAddrTransaction(ssn.Addr, treasury_addr))
-	tx, _ := AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	multisig.SetSigner(celestials.Owner)
+	AssertMultisigSuccess(multisig.SubmitUpdateReceivingAddrTransaction(ssn.Addr, treasury_addr))
+	tx, _ := AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	//data, _ := json.MarshalIndent(tx, "", "     ")
 	//GetLog().Fatal(string(data))
 	AssertEvent(tx, Event{
@@ -174,8 +179,9 @@ func ssnOperations(tr *Transitions) {
 	//comm, default value is 0
 	AssertEqual(Field(p.Zimpl, "ssnlist", addr, "arguments", "7"), "0")
 	new_rate := 123456789
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitUpdateCommTransaction(ssn.Addr, new_rate))
-	tx, _ = AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	multisig.SetSigner(celestials.Owner)
+	AssertMultisigSuccess(multisig.SubmitUpdateCommTransaction(ssn.Addr, new_rate))
+	tx, _ = AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEvent(tx, Event{
 		p.Zimpl.Addr, //sender
 		"UpdateComm",
@@ -190,8 +196,9 @@ func ssnOperations(tr *Transitions) {
 	txIdLocal++
 	//expect comission withdrawn successfully
 	expectedCommission := "8230452599999"
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawCommTransaction(ssn.Addr))
-	tx, _ = AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+	multisig.SetSigner(celestials.Owner)
+	AssertMultisigSuccess(multisig.SubmitWithdrawCommTransaction(ssn.Addr))
+	tx, _ = AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEvent(tx, Event{
 		p.Zimpl.Addr, //sender
 		"SSN withdraw reward",

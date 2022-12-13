@@ -2,6 +2,7 @@ package transitions
 
 import (
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
@@ -12,15 +13,17 @@ func (tr *Transitions) Pause() {
 	unPauseEmptyBuffers()
 
 	p := tr.DeployAndUpgrade()
-	p.StZIL.UpdateWallet(sdk.Cfg.OwnerKey)
+	p.StZIL.SetSigner(celestials.Owner)
 
 	callPausedIn(p)
 	callPausedOut(p)
 	callPausedZrc2(p)
 	callPauseUnpauseNonAdmin(p)
 
+	// make sure we work under owner account
+	p.StZIL.SetSigner(celestials.Owner)
 	//pause-in contract, expecting success
-	tx, _ := AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).PauseIn())
+	tx, _ := AssertSuccess(p.StZIL.PauseIn())
 	AssertEvent(tx, Event{p.StZIL.Addr, "PauseIn", ParamsMap{"is_paused_in": "1"}})
 	AssertEqual(Field(p.StZIL, "is_paused_in"), "True")
 
@@ -51,17 +54,21 @@ func (tr *Transitions) Pause() {
 }
 
 func unPauseEmptyBuffers() {
-	p := contracts.Deploy(sdk, GetLog())
-	tx, _ := p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+	p := contracts.Deploy(sdk, celestials, GetLog())
+	p.StZIL.SetSigner(celestials.Owner)
+
+	tx, _ := p.StZIL.UnpauseIn()
 	AssertError(tx, p.StZIL.ErrorCode("BuffersEmpty"))
-	p.SyncBufferAndHolder()
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn()
+
+	p.SyncBufferAndHolder(celestials.Owner)
+
+	tx, _ = p.StZIL.UnpauseIn()
 	AssertError(tx, p.StZIL.ErrorCode("SsnAddressesEmpty"))
 }
 
 func callPauseUnpauseNonAdmin(p *contracts.Protocol) {
 	//call pause/unpause admin transitions with non-admin user; expecting errors
-	p.StZIL.UpdateWallet(sdk.Cfg.Key1)
+	p.StZIL.SetSigner(alice)
 
 	tx, _ := p.StZIL.PauseIn()
 	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
@@ -92,13 +99,18 @@ func callPausedIn(p *contracts.Protocol) {
 	tx, _ = p.StZIL.DelegateStake(ToZil(10))
 	AssertError(tx, p.StZIL.ErrorCode("PausedIn"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.Key1).ChownStakeConfirmSwap(sdk.Cfg.Addr1)
+	aliceAddr := utils.GetAddressByWallet(alice)
+
+	p.StZIL.SetSigner(alice)
+	tx, _ = p.StZIL.ChownStakeConfirmSwap(aliceAddr)
 	AssertError(tx, p.StZIL.ErrorCode("PausedIn"))
 
-	AssertSuccess(p.StZIL.WithUser(sdk.Cfg.OwnerKey).UnpauseIn())
+	p.StZIL.SetSigner(celestials.Owner)
+	AssertSuccess(p.StZIL.UnpauseIn())
 }
 
 func callPausedOut(p *contracts.Protocol) {
+	p.StZIL.SetSigner(celestials.Owner)
 	//call transitions, when contract is paused-out; expecting errors
 	AssertSuccess(p.StZIL.PauseOut())
 
@@ -122,16 +134,19 @@ func callPausedZrc2(p *contracts.Protocol) {
 	GetLog().Info(tx)
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).TransferFrom(sdk.Cfg.Addr1, sdk.Cfg.Addr2, ToQA(10000))
+	from := utils.GetAddressByWallet(alice)
+	to := utils.GetAddressByWallet(bob)
+
+	tx, _ = p.StZIL.TransferFrom(from, to, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).Transfer(sdk.Cfg.Addr2, ToQA(10000))
+	tx, _ = p.StZIL.Transfer(to, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).IncreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
+	tx, _ = p.StZIL.IncreaseAllowance(from, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
-	tx, _ = p.StZIL.WithUser(sdk.Cfg.OwnerKey).DecreaseAllowance(sdk.Cfg.Addr1, ToQA(10000))
+	tx, _ = p.StZIL.DecreaseAllowance(from, ToQA(10000))
 	AssertError(tx, p.StZIL.ErrorCode("PausedZrc2"))
 
 	AssertSuccess(p.StZIL.UnpauseZrc2())
