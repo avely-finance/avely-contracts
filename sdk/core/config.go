@@ -9,20 +9,12 @@ import (
 )
 
 type ApiConfig struct {
-	HttpUrl         string
-	WebsocketUrl    string
-	WebsocketSchema string
-}
-
-type SlackConfig struct {
-	HookUrl  string
-	LogLevel string
+	HttpUrl string
 }
 
 type Config struct {
 	Chain                    string
 	Api                      ApiConfig
-	Slack                    SlackConfig
 	ChainId                  int
 	TxConfrimMaxAttempts     int
 	TxConfirmIntervalSec     int

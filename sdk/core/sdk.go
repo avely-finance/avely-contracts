@@ -3,7 +3,6 @@ package core
 import (
 	"errors"
 	"log"
-	"net/url"
 	"runtime"
 	"strconv"
 	"time"
@@ -34,14 +33,6 @@ func NewAvelySDK(config Config) *AvelySDK {
 
 func (sdk *AvelySDK) InitProvider() *provider2.Provider {
 	return provider2.NewProvider(sdk.Cfg.Api.HttpUrl)
-}
-
-func (sdk *AvelySDK) GetWsURL() url.URL {
-	return url.URL{
-		Scheme: sdk.Cfg.Api.WebsocketSchema,
-		Host:   sdk.Cfg.Api.WebsocketUrl,
-		Path:   "",
-	}
 }
 
 // IncreaseBlocknum can be called if isolated server works in "manual" mode:
