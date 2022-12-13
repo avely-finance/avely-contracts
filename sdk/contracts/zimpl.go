@@ -50,8 +50,30 @@ func (z *Zimpl) GetLastRewardCycle() int {
 	return int(lrc)
 }
 
-func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
-	contract := buildZimplContract(sdk, ZproxyAddr, GzilAddr)
+func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string, deployer *account.Wallet) (*Zimpl, error) {
+	init := []core.ContractValue{
+		{
+			VName: "_scilla_version",
+			Type:  "Uint32",
+			Value: "0",
+		}, {
+			VName: "init_admin",
+			Type:  "ByStr20",
+			Value: "0x" + deployer.DefaultAccount.Address,
+		}, {
+			VName: "init_proxy_address",
+			Type:  "ByStr20",
+			Value: ZproxyAddr,
+		},
+		{
+			VName: "init_gzil_address",
+			Type:  "ByStr20",
+			Value: GzilAddr,
+		},
+	}
+
+	contract := buildZimplContract(sdk, init)
+	contract.Signer = deployer
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -77,8 +99,8 @@ func NewZimpl(sdk *AvelySDK, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
 	}
 }
 
-func RestoreZimpl(sdk *AvelySDK, contractAddress, ZproxyAddr, GzilAddr string) (*Zimpl, error) {
-	contract := buildZimplContract(sdk, ZproxyAddr, GzilAddr)
+func RestoreZimpl(sdk *AvelySDK, contractAddress string) (*Zimpl, error) {
+	contract := buildZimplContract(sdk, []core.ContractValue{})
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -98,38 +120,13 @@ func RestoreZimpl(sdk *AvelySDK, contractAddress, ZproxyAddr, GzilAddr string) (
 	return &Zimpl{Contract: sdkContract}, nil
 }
 
-func buildZimplContract(sdk *AvelySDK, ZproxyAddr, GzilAddr string) contract2.Contract {
+func buildZimplContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/ssnlist.scilla")
-	key := sdk.Cfg.AdminKey
-
-	init := []core.ContractValue{
-		{
-			VName: "_scilla_version",
-			Type:  "Uint32",
-			Value: "0",
-		}, {
-			VName: "init_admin",
-			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
-		}, {
-			VName: "init_proxy_address",
-			Type:  "ByStr20",
-			Value: ZproxyAddr,
-		},
-		{
-			VName: "init_gzil_address",
-			Type:  "ByStr20",
-			Value: GzilAddr,
-		},
-	}
-
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }

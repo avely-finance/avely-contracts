@@ -464,9 +464,27 @@ func (s *MultisigWallet) SubmitWithdrawCommTransaction(ssnContractAddr string) (
 	return s.Call("SubmitWithdrawCommTransaction", args, "0")
 }
 
-func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
+func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount int, deployer *account.Wallet) (*MultisigWallet, error) {
 	// TOOD: add requiredSignaturesCount validation
-	contract := buildMultisigContract(sdk, owners, strconv.Itoa(requiredSignaturesCount))
+
+	init := []core.ContractValue{
+		{
+			VName: "_scilla_version",
+			Type:  "Uint32",
+			Value: "0",
+		}, {
+			VName: "owners_list",
+			Type:  "List ByStr20",
+			Value: owners,
+		}, {
+			VName: "required_signatures",
+			Type:  "Uint32",
+			Value: strconv.Itoa(requiredSignaturesCount),
+		},
+	}
+
+	contract := buildMultisigContract(sdk, init)
+	contract.Signer = deployer
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -491,8 +509,8 @@ func NewMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount
 	}
 }
 
-func RestoreMultisigContract(sdk *AvelySDK, contractAddress string, owners []string, requiredSignaturesCount int) (*MultisigWallet, error) {
-	contract := buildMultisigContract(sdk, owners, strconv.Itoa(requiredSignaturesCount))
+func RestoreMultisigContract(sdk *AvelySDK, contractAddress string) (*MultisigWallet, error) {
+	contract := buildMultisigContract(sdk, []core.ContractValue{})
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -510,33 +528,13 @@ func RestoreMultisigContract(sdk *AvelySDK, contractAddress string, owners []str
 	return &MultisigWallet{Contract: sdkContract}, nil
 }
 
-func buildMultisigContract(sdk *AvelySDK, owners []string, requiredSignaturesCount string) contract2.Contract {
+func buildMultisigContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/multisig_wallet.scilla")
-	key := sdk.Cfg.AdminKey
-
-	init := []core.ContractValue{
-		{
-			VName: "_scilla_version",
-			Type:  "Uint32",
-			Value: "0",
-		}, {
-			VName: "owners_list",
-			Type:  "List ByStr20",
-			Value: owners,
-		}, {
-			VName: "required_signatures",
-			Type:  "Uint32",
-			Value: requiredSignaturesCount,
-		},
-	}
-
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }

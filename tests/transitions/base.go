@@ -1,47 +1,84 @@
 package transitions
 
 import (
+	"log"
+	"os"
 	"reflect"
 
+	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/avely-finance/avely-contracts/sdk/actions"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	"github.com/joho/godotenv"
 )
 
 var sdk *AvelySDK
+var celestials *Celestials
 
-func InitTransitions(sdkValue *AvelySDK) *Transitions {
+var alice *account.Wallet
+var bob *account.Wallet
+var eve *account.Wallet
+var verifier *account.Wallet
+
+func LoadUsersFromEnv(chain string) {
+	path := ".env." + chain
+	err := godotenv.Load(path)
+	if err != nil {
+		log.Printf("WARNING! There is no '%s' file. Please, make sure you set up the correct ENV manually", path)
+	}
+
+	alice = account.NewWallet()
+	alice.AddByPrivateKey(os.Getenv("KEY1"))
+
+	bob = account.NewWallet()
+	bob.AddByPrivateKey(os.Getenv("KEY2"))
+
+	eve = account.NewWallet()
+	eve.AddByPrivateKey(os.Getenv("KEY3"))
+
+	verifier = account.NewWallet()
+	verifier.AddByPrivateKey(os.Getenv("VERIFIERKEY"))
+}
+
+func InitTransitions(sdkValue *AvelySDK, celestialsValue *Celestials) *Transitions {
 	sdk = sdkValue
+	celestials = celestialsValue
+	LoadUsersFromEnv("local")
 
-	return NewTransitions()
+	return &Transitions{
+		Alice:    alice,
+		Bob:      bob,
+		Eve:      eve,
+		Verifier: verifier,
+	}
 }
 
 type Transitions struct {
-}
-
-func NewTransitions() *Transitions {
-	return &Transitions{}
+	Alice    *account.Wallet
+	Bob      *account.Wallet
+	Eve      *account.Wallet
+	Verifier *account.Wallet
 }
 
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	log := GetLog()
-	p := Deploy(sdk, log)
+	p := Deploy(sdk, celestials, log)
 	sdk.Cfg.ZproxyAddr = p.Zproxy.Addr
 	sdk.Cfg.ZimplAddr = p.Zimpl.Addr
-	SetupZilliqaStaking(sdk, log)
+	SetupZilliqaStaking(sdk, celestials, verifier, log)
 
 	//add buffers to protocol, we need 3
-	buffer2, _ := p.DeployBuffer()
-	buffer3, _ := p.DeployBuffer()
+	buffer2, _ := p.DeployBuffer(celestials.Admin)
+	buffer3, _ := p.DeployBuffer(celestials.Admin)
 	p.Buffers = append(p.Buffers, buffer2, buffer3)
 
-	p.AddSSNs()
-	p.ChangeTreasuryAddress()
-	p.SyncBufferAndHolder()
-	p.Unpause()
+	p.AddSSNs(celestials.Owner)
+	p.ChangeTreasuryAddress(celestials.Owner)
+	p.SyncBufferAndHolder(celestials.Owner)
+	p.Unpause(celestials.Owner)
 	p.InitHolder()
 
 	tr.NextCycle(p)
@@ -53,7 +90,7 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 
 func (tr *Transitions) DeployZilSwap() *ZilSwap {
 	log := GetLog()
-	zilSwap, err := NewZilSwap(sdk)
+	zilSwap, err := NewZilSwap(sdk, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy zilSwap error = " + err.Error())
 	}
@@ -70,7 +107,7 @@ func (tr *Transitions) DeployZilSwap() *ZilSwap {
 
 func (tr *Transitions) DeployASwap(init_owner string) *ASwap {
 	log := GetLog()
-	aswap, err := NewASwap(sdk, init_owner)
+	aswap, err := NewASwap(sdk, init_owner, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy ASwap error = " + err.Error())
 	}
@@ -82,7 +119,7 @@ func (tr *Transitions) DeployASwap(init_owner string) *ASwap {
 
 func (tr *Transitions) DeployTreasury(init_owner string) *TreasuryContract {
 	log := GetLog()
-	treasury, err := NewTreasuryContract(sdk, init_owner)
+	treasury, err := NewTreasuryContract(sdk, init_owner, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy Treasury error = " + err.Error())
 	}
@@ -94,7 +131,7 @@ func (tr *Transitions) DeployTreasury(init_owner string) *TreasuryContract {
 
 func (tr *Transitions) DeploySsn(init_owner, init_zproxy string) *SsnContract {
 	log := GetLog()
-	ssn, err := NewSsnContract(sdk, init_owner, init_zproxy)
+	ssn, err := NewSsnContract(sdk, init_owner, init_zproxy, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy SSN contract error = " + err.Error())
 	}
@@ -106,7 +143,7 @@ func (tr *Transitions) DeploySsn(init_owner, init_zproxy string) *SsnContract {
 
 func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *MultisigWallet {
 	log := GetLog()
-	multisig, err := NewMultisigContract(sdk, owners, signCount)
+	multisig, err := NewMultisigContract(sdk, owners, signCount, celestials.Admin)
 	if err != nil {
 		log.Fatal("deploy MultisigContract error = " + err.Error())
 	}
@@ -123,7 +160,7 @@ func (tr *Transitions) NextCycleWithAmount(p *contracts.Protocol, amountPerSSN i
 	totalAmount := 0
 	prevWallet := p.Zproxy.Contract.Wallet
 
-	p.Zproxy.UpdateWallet(sdk.Cfg.VerifierKey)
+	p.Zproxy.SetSigner(verifier)
 
 	zimplSsnList := p.Zimpl.GetSsnList()
 	ssnRewardFactor := make(map[string]string)
@@ -142,7 +179,8 @@ func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol, options ...bool)
 	tools.TxLogMode(true)
 	tools.TxLogClear()
 	prevWallet := p.StZIL.Contract.Wallet
-	p.StZIL.UpdateWallet(sdk.Cfg.AdminKey)
+	p.StZIL.SetSigner(celestials.Admin)
+
 	err := tools.DrainBufferAuto(p)
 	if err != nil {
 		GetLog().Fatal("Can't drain buffer")

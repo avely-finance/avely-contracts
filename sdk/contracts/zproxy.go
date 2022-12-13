@@ -237,8 +237,25 @@ func (p *Zproxy) ChangeBNumReq(bnum int) (*transaction.Transaction, error) {
 	return p.Call("ChangeBNumReq", args, "0")
 }
 
-func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
-	contract := buildZproxyContract(sdk)
+func NewZproxy(sdk *AvelySDK, deployer *account.Wallet) (*Zproxy, error) {
+	init := []core.ContractValue{
+		{
+			VName: "_scilla_version",
+			Type:  "Uint32",
+			Value: "0",
+		}, {
+			VName: "init_admin",
+			Type:  "ByStr20",
+			Value: "0x" + deployer.DefaultAccount.Address,
+		}, {
+			VName: "init_implementation",
+			Type:  "ByStr20",
+			Value: "0x" + deployer.DefaultAccount.Address,
+		},
+	}
+
+	contract := buildZproxyContract(sdk, init)
+	contract.Signer = deployer
 
 	tx, err := sdk.DeployTo(&contract)
 	if err != nil {
@@ -265,7 +282,7 @@ func NewZproxy(sdk *AvelySDK) (*Zproxy, error) {
 }
 
 func RestoreZproxy(sdk *AvelySDK, contractAddress string) (*Zproxy, error) {
-	contract := buildZproxyContract(sdk)
+	contract := buildZproxyContract(sdk, []core.ContractValue{})
 
 	b32, err := bech32.ToBech32Address(contractAddress)
 
@@ -285,33 +302,13 @@ func RestoreZproxy(sdk *AvelySDK, contractAddress string) (*Zproxy, error) {
 	return &Zproxy{Contract: sdkContract}, nil
 }
 
-func buildZproxyContract(sdk *AvelySDK) contract2.Contract {
+func buildZproxyContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
 	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/proxy.scilla")
-	key := sdk.Cfg.AdminKey
-
-	init := []core.ContractValue{
-		{
-			VName: "_scilla_version",
-			Type:  "Uint32",
-			Value: "0",
-		}, {
-			VName: "init_admin",
-			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
-		}, {
-			VName: "init_implementation",
-			Type:  "ByStr20",
-			Value: sdk.GetAddressFromPrivateKey(key),
-		},
-	}
-
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
 
 	return contract2.Contract{
 		Provider: sdk.InitProvider(),
 		Code:     string(code),
 		Init:     init,
-		Signer:   wallet,
+		Signer:   nil,
 	}
 }

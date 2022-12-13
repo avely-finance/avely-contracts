@@ -5,6 +5,7 @@ import (
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	"github.com/tyler-smith/go-bip39"
@@ -21,8 +22,8 @@ func treasuryChangeOwner(tr *Transitions) {
 	txIdLocal2 := 0
 
 	//deploy multisig
-	owner := sdk.Cfg.Key1
-	owners := []string{sdk.Cfg.Addr1}
+	owner := alice
+	owners := []string{utils.GetAddressByWallet(alice)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -32,36 +33,40 @@ func treasuryChangeOwner(tr *Transitions) {
 
 	//deploy other multisig contract
 	newSignCount := 1
-	newOwner := sdk.Cfg.Key2
-	newOwners := []string{sdk.Cfg.Addr2}
+	newOwner := bob
+	newOwners := []string{utils.GetAddressByWallet(newOwner)}
 	newMultisig := tr.DeployMultisigWallet(newOwners, newSignCount)
 
 	//try to claim owner, expect error
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(treasury.Addr))
-	tx, _ := newMultisig.WithUser(newOwner).ExecuteTransaction(txIdLocal2)
+	newMultisig.SetSigner(bob)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(treasury.Addr))
+	tx, _ := newMultisig.ExecuteTransaction(txIdLocal2)
 	AssertError(tx, treasury.ErrorCode("StagingOwnerNotExists"))
 
 	//initiate owner change
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitChangeOwnerTransaction(treasury.Addr, newMultisig.Addr))
-	AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal1))
+	multisig.SetSigner(owner)
+	AssertMultisigSuccess(multisig.SubmitChangeOwnerTransaction(treasury.Addr, newMultisig.Addr))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal1))
 	AssertEqual(Field(treasury, "staging_owner"), newMultisig.Addr)
 
 	//try to claim owner with wrong user, expect error
-	tx, _ = treasury.WithUser(sdk.Cfg.Key2).ClaimOwner()
+	treasury.SetSigner(bob)
+	tx, _ = treasury.ClaimOwner()
 	AssertError(tx, treasury.ErrorCode("StagingOwnerValidationFailed"))
 
 	//claim owner
 	txIdLocal2++
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).SubmitClaimOwnerTransaction(treasury.Addr))
-	AssertMultisigSuccess(newMultisig.WithUser(newOwner).ExecuteTransaction(txIdLocal2))
+	newMultisig.SetSigner(bob)
+	AssertMultisigSuccess(newMultisig.SubmitClaimOwnerTransaction(treasury.Addr))
+	AssertMultisigSuccess(newMultisig.ExecuteTransaction(txIdLocal2))
 	AssertEqual(Field(treasury, "owner"), newMultisig.Addr)
 
 }
 
 func treasuryFunds(tr *Transitions) {
 	//deploy multisig
-	owner := sdk.Cfg.Key1
-	owners := []string{sdk.Cfg.Addr1}
+	owner := alice
+	owners := []string{utils.GetAddressByWallet(alice)}
 	signCount := 1
 	multisig := tr.DeployMultisigWallet(owners, signCount)
 
@@ -72,11 +77,14 @@ func treasuryFunds(tr *Transitions) {
 	txIdLocal := 0
 
 	//add funds
-	treasury.WithUser(sdk.Cfg.AdminKey).AddFunds(ToQA(100))
+	treasury.SetSigner(celestials.Admin)
+	treasury.AddFunds(ToQA(100))
 
 	//try to withdraw amount exceeding _balance, expect error
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawTransaction(treasury.Addr, sdk.Cfg.Admin, ToQA(12345)))
-	tx, _ := multisig.WithUser(owner).ExecuteTransaction(txIdLocal)
+	admin := utils.GetAddressByWallet(celestials.Admin)
+	multisig.SetSigner(owner)
+	AssertMultisigSuccess(multisig.SubmitWithdrawTransaction(treasury.Addr, admin, ToQA(12345)))
+	tx, _ := multisig.ExecuteTransaction(txIdLocal)
 	AssertError(tx, treasury.ErrorCode("InsufficientFunds"))
 
 	//withdraw valid amount, expect success
@@ -92,13 +100,15 @@ func treasuryFunds(tr *Transitions) {
 	//RcptKey1 := util.EncodeHex(account1.PrivateKey)
 
 	//add some funds to newly created account
-	sdk.AddFunds(RcptAddr1, ToQA(1000))
+	sdk.AddFunds(celestials.Admin, RcptAddr1, ToQA(1000))
 
 	recipient := RcptAddr1
 	balanceBefore, _ := new(big.Int).SetString(sdk.GetBalance(recipient), 10)
 	GetLog().Info(balanceBefore.String())
-	AssertMultisigSuccess(multisig.WithUser(owner).SubmitWithdrawTransaction(treasury.Addr, recipient, ToQA(25)))
-	tx, _ = AssertMultisigSuccess(multisig.WithUser(owner).ExecuteTransaction(txIdLocal))
+
+	multisig.SetSigner(owner)
+	AssertMultisigSuccess(multisig.SubmitWithdrawTransaction(treasury.Addr, recipient, ToQA(25)))
+	tx, _ = AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertTransition(tx, Transition{
 		treasury.Addr, //sender
 		"AddFunds",
@@ -122,9 +132,10 @@ func treasuryRequireOwner(tr *Transitions) {
 	p := tr.DeployAndUpgrade()
 
 	// Use non-owner user, expecting errors
-	p.Treasury.UpdateWallet(sdk.Cfg.Key2)
+	p.Treasury.SetSigner(bob)
+	randomAddr := utils.GetAddressByWallet(eve)
 
-	tx, _ := p.Treasury.ChangeOwner(sdk.Cfg.Addr3)
+	tx, _ := p.Treasury.ChangeOwner(randomAddr)
 	AssertError(tx, p.Treasury.ErrorCode("OwnerValidationFailed"))
 
 	tx, _ = p.Treasury.Withdraw(core.ZeroAddr, "123")
