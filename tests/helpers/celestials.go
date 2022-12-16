@@ -1,7 +1,6 @@
-package core
+package helpers
 
 import (
-	"log"
 	"os"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
