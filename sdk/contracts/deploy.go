@@ -1,24 +1,24 @@
 package contracts
 
 import (
+	"github.com/Zilliqa/gozilliqa-sdk/account"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
-	"github.com/avely-finance/avely-contracts/sdk/utils"
 )
 
-func Deploy(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
+func Deploy(sdk *AvelySDK, ownerAddr string, admin *account.Wallet, log *Log) *Protocol {
 	log.Debug("start to deploy")
 
-	zilliqa := DeployZilliqaStaking(sdk, celestials, log)
+	zilliqa := DeployZilliqaStaking(sdk, admin, log)
 
 	// deploy stzil
-	StZIL, err := NewStZILContract(sdk, utils.GetAddressByWallet(celestials.Owner), zilliqa.Zimpl.Addr, celestials.Admin)
+	StZIL, err := NewStZILContract(sdk, ownerAddr, zilliqa.Zimpl.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy StZIL error = " + err.Error())
 	}
 	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr, celestials.Admin)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -26,14 +26,14 @@ func Deploy(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr, celestials.Admin)
+	Holder, err := NewHolderContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
 	// deploy treasury
-	Treasury, err := NewTreasuryContract(sdk, utils.GetAddressByWallet(celestials.Owner), celestials.Admin)
+	Treasury, err := NewTreasuryContract(sdk, ownerAddr, admin)
 	if err != nil {
 		log.Fatal("deploy Treasury error = " + err.Error())
 	}
@@ -43,7 +43,7 @@ func Deploy(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
 }
 
 // Restore ZProxy + Zimpl and deploy new versions of StZIL, Buffer and Holder
-func DeployOnlyAvely(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol {
+func DeployOnlyAvely(sdk *AvelySDK, ownerAddr string, admin *account.Wallet, log *Log) *Protocol {
 	log.Debug("start to DeployOnlyAvely")
 
 	//Restore Zproxy
@@ -61,7 +61,7 @@ func DeployOnlyAvely(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol 
 	log.Debug("Restore Zimpl succeed, address = " + Zimpl.Addr)
 
 	// deploy stzil
-	StZIL, err := NewStZILContract(sdk, "0x"+celestials.Owner.DefaultAccount.Address, Zimpl.Addr, celestials.Admin)
+	StZIL, err := NewStZILContract(sdk, ownerAddr, Zimpl.Addr, admin)
 
 	if err != nil {
 		log.Fatal("deploy StZIL error = " + err.Error())
@@ -69,7 +69,7 @@ func DeployOnlyAvely(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol 
 	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr, celestials.Admin)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -77,14 +77,14 @@ func DeployOnlyAvely(sdk *AvelySDK, celestials *Celestials, log *Log) *Protocol 
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, StZIL.Addr, Zproxy.Addr, celestials.Admin)
+	Holder, err := NewHolderContract(sdk, StZIL.Addr, Zproxy.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
 	log.Debug("deploy holder succeed, address = " + Holder.Addr)
 
 	// deploy treasury
-	Treasury, err := NewTreasuryContract(sdk, utils.GetAddressByWallet(celestials.Owner), celestials.Admin)
+	Treasury, err := NewTreasuryContract(sdk, ownerAddr, admin)
 	if err != nil {
 		log.Fatal("deploy Treasury error = " + err.Error())
 	}
