@@ -54,7 +54,10 @@ func (tr *Transitions) Pause() {
 }
 
 func unPauseEmptyBuffers() {
-	p := contracts.Deploy(sdk, celestials, GetLog())
+	owner := celestials.Owner
+	admin := celestials.Admin
+
+	p := contracts.Deploy(sdk, utils.GetAddressByWallet(owner), admin, GetLog())
 	p.StZIL.SetSigner(celestials.Owner)
 
 	tx, _ := p.StZIL.UnpauseIn()
