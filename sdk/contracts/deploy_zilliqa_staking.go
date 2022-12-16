@@ -22,25 +22,25 @@ func NewZilliqaStaking(zproxy *Zproxy, zimpl *Zimpl, gzil *Gzil) *ZilliqaStaking
 	}
 }
 
-func DeployZilliqaStaking(sdk *AvelySDK, celestials *Celestials, log *Log) *ZilliqaStaking {
+func DeployZilliqaStaking(sdk *AvelySDK, admin *account.Wallet, log *Log) *ZilliqaStaking {
 	log.Debug("start to deploy zilliqa staking contracts")
 
 	//deploy gzil
-	gzil, err := NewGzil(sdk, celestials.Admin)
+	gzil, err := NewGzil(sdk, admin)
 	if err != nil {
 		log.Fatal("deploy Gzil error = " + err.Error())
 	}
 	log.Debug("deploy Gzil succeed, address = " + gzil.Addr)
 
 	//deploy Zproxy
-	zproxy, err := NewZproxy(sdk, celestials.Admin)
+	zproxy, err := NewZproxy(sdk, admin)
 	if err != nil {
 		log.Fatal("deploy Zproxy error = " + err.Error())
 	}
 	log.Debug("deploy Zproxy succeed, address = " + zproxy.Addr)
 
 	//deploy Zimpl
-	zimpl, err := NewZimpl(sdk, zproxy.Addr, gzil.Addr, celestials.Admin)
+	zimpl, err := NewZimpl(sdk, zproxy.Addr, gzil.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy Zimpl error = " + err.Error())
 	}
@@ -49,14 +49,14 @@ func DeployZilliqaStaking(sdk *AvelySDK, celestials *Celestials, log *Log) *Zill
 	return NewZilliqaStaking(zproxy, zimpl, gzil)
 }
 
-func SetupZilliqaStaking(sdk *AvelySDK, celestials *Celestials, verifier *account.Wallet, log *Log) {
+func SetupZilliqaStaking(sdk *AvelySDK, admin *account.Wallet, verifier *account.Wallet, log *Log) {
 	//Restore Zproxy
 	Zproxy, err := RestoreZproxy(sdk, sdk.Cfg.ZproxyAddr)
 	if err != nil {
 		log.Fatal("Restore Zproxy error = " + err.Error())
 	}
 	log.Debug("Restore Zproxy succeed, address = " + Zproxy.Addr)
-	Zproxy.SetSigner(celestials.Admin)
+	Zproxy.SetSigner(admin)
 
 	args := []core.ContractValue{
 		{

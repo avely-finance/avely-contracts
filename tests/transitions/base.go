@@ -65,10 +65,13 @@ type Transitions struct {
 
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	log := GetLog()
-	p := Deploy(sdk, celestials, log)
+	owner := celestials.Owner
+	admin := celestials.Admin
+
+	p := Deploy(sdk, utils.GetAddressByWallet(owner), admin, log)
 	sdk.Cfg.ZproxyAddr = p.Zproxy.Addr
 	sdk.Cfg.ZimplAddr = p.Zimpl.Addr
-	SetupZilliqaStaking(sdk, celestials, verifier, log)
+	SetupZilliqaStaking(sdk, admin, verifier, log)
 
 	//add buffers to protocol, we need 3
 	buffer2, _ := p.DeployBuffer(celestials.Admin)
