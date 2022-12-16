@@ -155,26 +155,15 @@ func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *Mul
 }
 
 func (tr *Transitions) NextCycle(p *contracts.Protocol) {
-	tr.NextCycleWithAmount(p, 400)
-}
-
-func (tr *Transitions) NextCycleWithAmount(p *contracts.Protocol, amountPerSSN int) {
 	sdk.IncreaseBlocknum(2)
-	totalAmount := 0
+	tools := actions.NewAdminActions(GetLog())
 	prevWallet := p.Zproxy.Contract.Wallet
 
 	p.Zproxy.SetSigner(verifier)
 
-	zimplSsnList := p.Zimpl.GetSsnList()
-	ssnRewardFactor := make(map[string]string)
-	for _, ssn := range zimplSsnList {
-		totalAmount += amountPerSSN
-		ssnRewardFactor[ssn] = utils.ToQA(amountPerSSN)
-	}
-	ssnRewardFactor[sdk.Cfg.StZilSsnAddress] = sdk.Cfg.StZilSsnRewardShare
-	AssertSuccess(p.Zproxy.AssignStakeRewardList(ssnRewardFactor, utils.ToQA(totalAmount)))
+	tools.NextCycleWithAmount(p, 400)
 
-	p.Zproxy.Contract.Wallet = prevWallet
+	p.Zproxy.SetSigner(prevWallet)
 }
 
 func (tr *Transitions) NextCycleOffchain(p *contracts.Protocol, options ...bool) *actions.AdminActions {
