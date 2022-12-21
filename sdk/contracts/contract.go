@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 
+	embedcontracts "github.com/avely-finance/avely-contracts/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
@@ -32,6 +33,17 @@ type Contract struct {
 	Bech32     string
 	Wallet     *account.Wallet
 	ErrorCodes ContractErrorCodes
+}
+
+func Restore(name string, provider *provider2.Provider, init []core.ContractValue) contract2.Contract {
+	code, _ := embedcontracts.GetContractFs().ReadFile("source/" + name + ".scilla")
+
+	return contract2.Contract{
+		Provider: provider,
+		Code:     string(code),
+		Init:     init,
+		Signer:   nil,
+	}
 }
 
 func (c *Contract) UpdateWallet(newKey string) {

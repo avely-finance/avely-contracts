@@ -18,7 +18,7 @@ type Gzil struct {
 }
 
 func NewGzil(sdk *AvelySDK, deployer *account.Wallet) (*Gzil, error) {
-	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/gzil.scilla")
+	code, _ := ioutil.ReadFile("contracts/source/zilliqa_staking/gzil.scilla")
 
 	init := []core.ContractValue{
 		{

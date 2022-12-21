@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -209,12 +208,5 @@ func RestoreHolderContract(sdk *AvelySDK, contractAddress string) (*HolderContra
 }
 
 func buildHolderContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/holder.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("holder", sdk.InitProvider(), init)
 }

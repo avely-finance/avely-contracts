@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
@@ -143,12 +142,5 @@ func RestoreSsnContract(sdk *AvelySDK, contractAddress string) (*SsnContract, er
 }
 
 func buildSsnContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/ssn.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("ssn", sdk.InitProvider(), init)
 }

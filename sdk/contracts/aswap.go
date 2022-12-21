@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"regexp"
 	"strconv"
 
@@ -257,14 +256,7 @@ func RestoreASwap(sdk *AvelySDK, contractAddress string) (*ASwap, error) {
 }
 
 func buildASwapContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/aswap.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("aswap", sdk.InitProvider(), init)
 }
 
 func (a *ASwap) ParseErrorCodes(contractCode string) ContractErrorCodes {

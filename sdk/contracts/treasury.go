@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
 	"github.com/Zilliqa/gozilliqa-sdk/bech32"
@@ -121,12 +120,5 @@ func RestoreTreasuryContract(sdk *AvelySDK, contractAddress string) (*TreasuryCo
 }
 
 func buildTreasuryContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/treasury.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("treasury", sdk.InitProvider(), init)
 }

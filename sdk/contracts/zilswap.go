@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"strconv"
 
 	"github.com/Zilliqa/gozilliqa-sdk/account"
@@ -140,12 +139,5 @@ func RestoreZilSwap(sdk *AvelySDK, contractAddress string) (*ZilSwap, error) {
 }
 
 func buildZilSwapContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/zilswap/zilswap.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("zilswap/zilswap", sdk.InitProvider(), init)
 }

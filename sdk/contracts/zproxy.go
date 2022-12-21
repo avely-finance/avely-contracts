@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"strconv"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
@@ -303,12 +302,5 @@ func RestoreZproxy(sdk *AvelySDK, contractAddress string) (*Zproxy, error) {
 }
 
 func buildZproxyContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/proxy.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("zilliqa_staking/proxy", sdk.InitProvider(), init)
 }
