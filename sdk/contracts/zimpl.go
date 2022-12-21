@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"math/big"
 	"strings"
 
@@ -121,12 +120,5 @@ func RestoreZimpl(sdk *AvelySDK, contractAddress string) (*Zimpl, error) {
 }
 
 func buildZimplContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/zilliqa_staking/ssnlist.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("zilliqa_staking/ssnlist", sdk.InitProvider(), init)
 }

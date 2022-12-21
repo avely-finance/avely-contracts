@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"strconv"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
@@ -529,12 +528,5 @@ func RestoreMultisigContract(sdk *AvelySDK, contractAddress string) (*MultisigWa
 }
 
 func buildMultisigContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/multisig_wallet.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("multisig_wallet", sdk.InitProvider(), init)
 }

@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
@@ -216,12 +215,5 @@ func RestoreBufferContract(sdk *AvelySDK, contractAddress string) (*BufferContra
 }
 
 func buildBufferContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/buffer.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("buffer", sdk.InitProvider(), init)
 }

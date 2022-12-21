@@ -3,7 +3,6 @@ package contracts
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"math/big"
 
 	"github.com/tidwall/gjson"
@@ -527,12 +526,5 @@ func RestoreStZILContract(sdk *AvelySDK, contractAddress string) (*StZIL, error)
 }
 
 func buildStZILContract(sdk *AvelySDK, init []core.ContractValue) contract2.Contract {
-	code, _ := ioutil.ReadFile("contracts/stzil.scilla")
-
-	return contract2.Contract{
-		Provider: sdk.InitProvider(),
-		Code:     string(code),
-		Init:     init,
-		Signer:   nil,
-	}
+	return Restore("stzil", sdk.InitProvider(), init)
 }
