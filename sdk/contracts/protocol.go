@@ -121,7 +121,8 @@ func (p *Protocol) GetSwapRequestsForBuffer(bufferAddr string) []string {
 }
 
 func (p *Protocol) InitHolder() (*transaction.Transaction, error) {
-	return p.Holder.DelegateStake(p.StZIL.Sdk.Cfg.StZilSsnAddress, ToZil(p.StZIL.Sdk.Cfg.HolderInitialDelegateZil))
+	// Select first of available SSNs
+	return p.Holder.DelegateStake(p.StZIL.Sdk.Cfg.SsnAddrs[0], ToZil(p.StZIL.Sdk.Cfg.HolderInitialDelegateZil))
 }
 
 func (p *Protocol) SyncBufferAndHolder(owner *account.Wallet) {
