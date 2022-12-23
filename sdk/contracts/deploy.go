@@ -18,7 +18,7 @@ func Deploy(sdk *AvelySDK, ownerAddr string, admin *account.Wallet, log *Log) *P
 	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr, admin)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr, zilliqa.Zimpl.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
@@ -69,7 +69,7 @@ func DeployOnlyAvely(sdk *AvelySDK, ownerAddr string, admin *account.Wallet, log
 	log.Debug("deploy StZIL succeed, address = " + StZIL.Addr)
 
 	// deploy buffer
-	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr, admin)
+	Buffer, err := NewBufferContract(sdk, StZIL.Addr, Zproxy.Addr, Zimpl.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy buffer error = " + err.Error())
 	}
