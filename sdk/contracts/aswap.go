@@ -20,13 +20,6 @@ type ASwap struct {
 
 const ASwapBlockShift = 3
 
-func (a *ASwap) WithUser(key string) *ASwap {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
-	a.Contract.Wallet = wallet
-	return a
-}
-
 func (a *ASwap) TogglePause() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("TogglePause", args, "0")
