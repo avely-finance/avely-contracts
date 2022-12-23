@@ -15,27 +15,31 @@ let one_msg =
     Cons {Message} msg nil_msg
 
 type Error =
+  | CodeNotOwner
   | StZILValidationFailed
-  | CantFetchZimplAddress
   | ClaimRewardsHolderFundsMismatch
   | CompleteWithdrawalHolderFundsMismatch
   | CompleteWithdrawalHolderFundsZero
   | CompleteWithdrawalHolderNoUnbondedStake
   | HolderAlreadyInitialized
   | ZimplValidationFailed
+  | StagingOwnerValidationFailed
+  | StagingOwnerNotExists
 
 let make_error =
   fun (result: Error) =>
     let result_code =
       match result with
+      | CodeNotOwner                            => Int32 -204
       | StZILValidationFailed                   => Int32 -220
-      | CantFetchZimplAddress                   => Int32 -221
       | ClaimRewardsHolderFundsMismatch         => Int32 -222
       | CompleteWithdrawalHolderFundsMismatch   => Int32 -223
       | CompleteWithdrawalHolderFundsZero       => Int32 -224
       | CompleteWithdrawalHolderNoUnbondedStake => Int32 -225
       | HolderAlreadyInitialized                => Int32 -226
       | ZimplValidationFailed                   => Int32 -227
+      | StagingOwnerNotExists                   => Int32 -235
+      | StagingOwnerValidationFailed            => Int32 -236
       end
     in
     { _exception: "Error"; code: result_code }
@@ -45,15 +49,19 @@ let make_error =
 (***************************************************)
 
 contract Holder(
-  init_stzil_address         : ByStr20,
-  init_zproxy_address       : ByStr20
+  contract_owner            : ByStr20,
+  init_stzil_address        : ByStr20,
+  init_zproxy_address       : ByStr20,
+  init_zimpl_address        : ByStr20
 )
 
-field stzil_address          : ByStr20 = init_stzil_address
+field owner_address         : ByStr20 = contract_owner
+field stzil_address         : ByStr20 = init_stzil_address
 field zproxy_address        : ByStr20 = init_zproxy_address
+field zimpl_address         : ByStr20 = init_zimpl_address
+field staging_owner_address : Option ByStr20 = None {ByStr20}
 
 field initialized           : Bool = False
-field local_zimpl_address   : ByStr20 = bystr20_zero
 field tmp_added_funds       : Uint128 = uint128_zero
 
 (************************************************************)
@@ -63,6 +71,17 @@ field tmp_added_funds       : Uint128 = uint128_zero
 procedure ThrowError(err: Error)
   e = make_error err;
   throw e
+end
+
+procedure RequireOwner()
+  owner <- owner_address;
+  is_owner = builtin eq _sender owner;
+  match is_owner with
+  | True  =>
+  | False =>
+    e = CodeNotOwner;
+    ThrowError e
+  end
 end
 
 procedure RequireStZIL()
@@ -76,22 +95,8 @@ procedure RequireStZIL()
   end
 end
 
-procedure FetchZimplAddress()
-  proxyAddr <- zproxy_address;
-  proxyAddrTypeTest <- & proxyAddr as ByStr20 with contract field implementation : ByStr20 end;
-  match proxyAddrTypeTest with
-  | Some proxy =>
-    zimpl <- & proxy.implementation;
-    local_zimpl_address := zimpl
-  | None =>
-    e = CantFetchZimplAddress;
-    ThrowError e
-  end
-end
-
 procedure RequireZimpl()
-  FetchZimplAddress;
-  var_zimpl_address <- local_zimpl_address;
+  var_zimpl_address <- zimpl_address;
   is_zimpl = builtin eq _sender var_zimpl_address;
   match is_zimpl with
   | True  =>
@@ -115,6 +120,55 @@ procedure ProxyDelegate(ssnaddr: ByStr20, proxy_contract_addr: ByStr20, amount: 
   msg = {_tag: "DelegateStake"; _recipient: proxy_contract_addr; _amount: amount; ssnaddr: ssnaddr};
   msgs = one_msg msg;
   send msgs
+end
+
+(************************************************************)
+(* @dev: Owner actions                                      *)
+(************************************************************)
+
+transition ChangeOwner(new_owner: ByStr20)
+  RequireOwner;
+  var_staging_owner = Some {ByStr20} new_owner;
+  staging_owner_address := var_staging_owner;
+  var_owner_address <- owner_address;
+  e = {_eventname: "ChangeOwner"; current_owner: var_owner_address; new_owner: new_owner};
+  event e
+end
+
+transition ClaimOwner()
+  staging_owner_o <- staging_owner_address;
+  match staging_owner_o with
+  | Some staging_owner =>
+    is_stagingowner = builtin eq staging_owner _sender;
+    match is_stagingowner with
+    | True =>
+      owner_address := _sender;
+      tmp_staging_owner = None {ByStr20};
+      staging_owner_address := tmp_staging_owner;
+      e = {_eventname: "ClaimOwner"; new_owner: _sender};
+      event e
+    | False =>
+      e = StagingOwnerValidationFailed;
+      ThrowError e
+    end
+  | None =>
+    e = StagingOwnerNotExists;
+    ThrowError e
+  end
+end
+
+transition ChangeZproxyAddress(address: ByStr20)
+  RequireOwner;
+  zproxy_address := address;
+  e = { _eventname: "ChangeZproxyAddress"; address: address };
+  event e
+end
+
+transition ChangeZimplAddress(address: ByStr20)
+  RequireOwner;
+  zimpl_address := address;
+  e = { _eventname: "ChangeZimplAddress"; address: address };
+  event e
 end
 
 (************************************************************)
