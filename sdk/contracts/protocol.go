@@ -35,7 +35,7 @@ func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, stzil *StZIL, buffers []*BufferCo
 }
 
 func (p *Protocol) DeployBuffer(deployer *account.Wallet) (*BufferContract, error) {
-	return NewBufferContract(p.StZIL.Sdk, p.StZIL.Addr, p.Zproxy.Addr, deployer)
+	return NewBufferContract(p.StZIL.Sdk, p.StZIL.Addr, p.Zproxy.Addr, p.Zimpl.Addr, deployer)
 }
 
 func (p *Protocol) GetSsnAddressForInput() string {

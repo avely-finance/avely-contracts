@@ -61,7 +61,7 @@ func (tr *Transitions) DelegateStakeBuffersRotation() {
 
 	p := tr.DeployAndUpgrade()
 
-	anotherBuffer, err := contracts.NewBufferContract(sdk, p.StZIL.Addr, p.Zproxy.Addr, celestials.Admin)
+	anotherBuffer, err := contracts.NewBufferContract(sdk, p.StZIL.Addr, p.Zproxy.Addr, p.Zimpl.Addr, celestials.Admin)
 	if err != nil {
 		GetLog().Fatal("Deploy buffer error = " + err.Error())
 	}
