@@ -26,7 +26,7 @@ func Deploy(sdk *AvelySDK, ownerAddr string, admin *account.Wallet, log *Log) *P
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, StZIL.Addr, zilliqa.Zproxy.Addr, admin)
+	Holder, err := NewHolderContract(sdk, ownerAddr, StZIL.Addr, zilliqa.Zproxy.Addr, zilliqa.Zimpl.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}
@@ -77,7 +77,7 @@ func DeployOnlyAvely(sdk *AvelySDK, ownerAddr string, admin *account.Wallet, log
 	buffers := []*BufferContract{Buffer}
 
 	// deploy holder
-	Holder, err := NewHolderContract(sdk, StZIL.Addr, Zproxy.Addr, admin)
+	Holder, err := NewHolderContract(sdk, ownerAddr, StZIL.Addr, Zproxy.Addr, Zimpl.Addr, admin)
 	if err != nil {
 		log.Fatal("deploy holder error = " + err.Error())
 	}

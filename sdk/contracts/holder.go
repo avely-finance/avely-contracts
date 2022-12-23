@@ -17,6 +17,44 @@ type HolderContract struct {
 	Contract
 }
 
+func (b *HolderContract) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"new_owner",
+			"ByStr20",
+			new_addr,
+		},
+	}
+	return b.Call("ChangeOwner", args, "0")
+}
+
+func (b *HolderContract) ClaimOwner() (*transaction.Transaction, error) {
+	args := []core.ContractValue{}
+	return b.Call("ClaimOwner", args, "0")
+}
+
+func (b *HolderContract) ChangeZimplAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			new_addr,
+		},
+	}
+	return b.Call("ChangeZimplAddress", args, "0")
+}
+
+func (b *HolderContract) ChangeZproxyAddress(new_addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"address",
+			"ByStr20",
+			new_addr,
+		},
+	}
+	return b.Call("ChangeZproxyAddress", args, "0")
+}
+
 func (b *HolderContract) AddFunds(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return b.Call("AddFunds", args, amount)
@@ -146,12 +184,16 @@ func (b *HolderContract) DelegateStake(ssnaddr, amount string) (*transaction.Tra
 	return b.Call("DelegateStake", args, amount)
 }
 
-func NewHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string, deployer *account.Wallet) (*HolderContract, error) {
+func NewHolderContract(sdk *AvelySDK, ownerAddr, stZilAddr, zproxyAddr, zimplAddr string, deployer *account.Wallet) (*HolderContract, error) {
 	init := []core.ContractValue{
 		{
 			VName: "_scilla_version",
 			Type:  "Uint32",
 			Value: "0",
+		}, {
+			VName: "contract_owner",
+			Type:  "ByStr20",
+			Value: ownerAddr,
 		}, {
 			VName: "init_stzil_address",
 			Type:  "ByStr20",
@@ -160,6 +202,10 @@ func NewHolderContract(sdk *AvelySDK, stZilAddr, zproxyAddr string, deployer *ac
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
 			Value: zproxyAddr,
+		}, {
+			VName: "init_zimpl_address",
+			Type:  "ByStr20",
+			Value: zimplAddr,
 		},
 	}
 

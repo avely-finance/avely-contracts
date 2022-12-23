@@ -8,11 +8,12 @@ import (
 )
 
 func (tr *Transitions) Owner() {
-
-	Start("StZIL contract owner transitions")
+	Start("StZIL & Holder contract owner transitions")
 
 	p := tr.DeployAndUpgrade()
 	p.StZIL.SetSigner(celestials.Owner)
+	p.Holder.SetSigner(celestials.Owner)
+	p.Buffers[0].SetSigner(celestials.Owner)
 
 	checkChangeAdmin(p)
 	checkChangeBuffersEmpty(p)
@@ -21,35 +22,11 @@ func (tr *Transitions) Owner() {
 	checkChangeRewardsFee(p)
 	checkChangeTreasuryAddress(p)
 	checkChangeZimplAddress(p)
+	checkChangeZproxyAddress(p)
 	checkUpdateStakingParameters(p)
 	//this test is last because all SSNs will be un-whitelisted
 	checkRemoveSSN(p)
-
-	newOwner := eve
-	newOwnerAddr := utils.GetAddressByWallet(eve)
-
-	//claim not existent staging owner, expecting error
-	p.StZIL.SetSigner(newOwner)
-	tx, _ := p.StZIL.ClaimOwner()
-	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerNotExists"))
-
-	//change owner, expecting success
-	p.StZIL.SetSigner(celestials.Owner)
-	tx, _ = AssertSuccess(p.StZIL.ChangeOwner(newOwnerAddr))
-	AssertEvent(tx, Event{p.StZIL.Addr, "ChangeOwner", ParamsMap{"current_owner": utils.GetAddressByWallet(celestials.Owner), "new_owner": newOwnerAddr}})
-	AssertEqual(Field(p.StZIL, "staging_owner_address"), newOwnerAddr)
-
-	//claim owner with wrong user, expecting error
-	p.StZIL.SetSigner(alice)
-	tx, _ = p.StZIL.ClaimOwner()
-	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerValidationFailed"))
-
-	//claim owner with correct user, expecting success
-	p.StZIL.SetSigner(newOwner)
-	tx, _ = AssertSuccess(p.StZIL.ClaimOwner())
-	AssertEvent(tx, Event{p.StZIL.Addr, "ClaimOwner", ParamsMap{"new_owner": newOwnerAddr}})
-	AssertEqual(Field(p.StZIL, "owner_address"), newOwnerAddr)
-	AssertEqual(Field(p.StZIL, "staging_owner_address"), "")
+	changeOwner(p)
 }
 
 func checkChangeAdmin(p *contracts.Protocol) {
@@ -118,10 +95,27 @@ func checkChangeTreasuryAddress(p *contracts.Protocol) {
 
 func checkChangeZimplAddress(p *contracts.Protocol) {
 	zimplAddr := p.Zimpl.Addr
+
+	// stZIL
 	tx, _ := AssertSuccess(p.StZIL.ChangeZimplAddress(core.ZeroAddr))
 	AssertEvent(tx, Event{p.StZIL.Addr, "ChangeZimplAddress", ParamsMap{"address": core.ZeroAddr}})
 	AssertEqual(Field(p.StZIL, "zimpl_address"), core.ZeroAddr)
 	AssertSuccess(p.StZIL.ChangeZimplAddress(zimplAddr))
+
+	// Holder
+	tx, _ = AssertSuccess(p.Holder.ChangeZimplAddress(core.ZeroAddr))
+	AssertEvent(tx, Event{p.Holder.Addr, "ChangeZimplAddress", ParamsMap{"address": core.ZeroAddr}})
+	AssertEqual(Field(p.Holder, "zimpl_address"), core.ZeroAddr)
+	AssertSuccess(p.Holder.ChangeZimplAddress(zimplAddr))
+}
+
+func checkChangeZproxyAddress(p *contracts.Protocol) {
+	zproxyAddr := p.Zproxy.Addr
+
+	tx, _ := AssertSuccess(p.Holder.ChangeZproxyAddress(core.ZeroAddr))
+	AssertEvent(tx, Event{p.Holder.Addr, "ChangeZproxyAddress", ParamsMap{"address": core.ZeroAddr}})
+	AssertEqual(Field(p.Holder, "zproxy_address"), core.ZeroAddr)
+	AssertSuccess(p.Holder.ChangeZproxyAddress(zproxyAddr))
 }
 
 func checkUpdateStakingParameters(p *contracts.Protocol) {
@@ -131,4 +125,58 @@ func checkUpdateStakingParameters(p *contracts.Protocol) {
 	AssertEvent(tx, Event{p.StZIL.Addr, "UpdateStakingParameters", ParamsMap{"min_deleg_stake": testValue}})
 	AssertEqual(Field(p.StZIL, "mindelegstake"), testValue)
 	AssertSuccess(p.StZIL.UpdateStakingParameters(prevValue))
+}
+
+func changeOwner(p *contracts.Protocol) {
+	// stZIL
+	newOwner := eve
+	newOwnerAddr := utils.GetAddressByWallet(eve)
+
+	//claim not existent staging owner, expecting error
+	p.StZIL.SetSigner(newOwner)
+	tx, _ := p.StZIL.ClaimOwner()
+	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerNotExists"))
+
+	//change owner, expecting success
+	p.StZIL.SetSigner(celestials.Owner)
+	tx, _ = AssertSuccess(p.StZIL.ChangeOwner(newOwnerAddr))
+	AssertEvent(tx, Event{p.StZIL.Addr, "ChangeOwner", ParamsMap{"current_owner": utils.GetAddressByWallet(celestials.Owner), "new_owner": newOwnerAddr}})
+	AssertEqual(Field(p.StZIL, "staging_owner_address"), newOwnerAddr)
+
+	//claim owner with wrong user, expecting error
+	p.StZIL.SetSigner(alice)
+	tx, _ = p.StZIL.ClaimOwner()
+	AssertError(tx, p.StZIL.ErrorCode("StagingOwnerValidationFailed"))
+
+	//claim owner with correct user, expecting success
+	p.StZIL.SetSigner(newOwner)
+	tx, _ = AssertSuccess(p.StZIL.ClaimOwner())
+	AssertEvent(tx, Event{p.StZIL.Addr, "ClaimOwner", ParamsMap{"new_owner": newOwnerAddr}})
+	AssertEqual(Field(p.StZIL, "owner_address"), newOwnerAddr)
+	AssertEqual(Field(p.StZIL, "staging_owner_address"), "")
+
+	// Holder
+
+	//claim not existent staging owner, expecting error
+	p.Holder.SetSigner(newOwner)
+	tx, _ = p.Holder.ClaimOwner()
+	AssertError(tx, p.Holder.ErrorCode("StagingOwnerNotExists"))
+
+	//change owner, expecting success
+	p.Holder.SetSigner(celestials.Owner)
+	tx, _ = AssertSuccess(p.Holder.ChangeOwner(newOwnerAddr))
+	AssertEvent(tx, Event{p.Holder.Addr, "ChangeOwner", ParamsMap{"current_owner": utils.GetAddressByWallet(celestials.Owner), "new_owner": newOwnerAddr}})
+	AssertEqual(Field(p.Holder, "staging_owner_address"), newOwnerAddr)
+
+	//claim owner with wrong user, expecting error
+	p.Holder.SetSigner(alice)
+	tx, _ = p.Holder.ClaimOwner()
+	AssertError(tx, p.Holder.ErrorCode("StagingOwnerValidationFailed"))
+
+	//claim owner with correct user, expecting success
+	p.Holder.SetSigner(newOwner)
+	tx, _ = AssertSuccess(p.Holder.ClaimOwner())
+	AssertEvent(tx, Event{p.Holder.Addr, "ClaimOwner", ParamsMap{"new_owner": newOwnerAddr}})
+	AssertEqual(Field(p.Holder, "owner_address"), newOwnerAddr)
+	AssertEqual(Field(p.Holder, "staging_owner_address"), "")
 }

@@ -36,11 +36,11 @@ let one_msg =
 (***************************************************)
 
 contract Buffer(
-  init_stzil_address         : ByStr20,
+  init_stzil_address        : ByStr20,
   init_zproxy_address       : ByStr20
 )
 
-field stzil_address          : ByStr20 = init_stzil_address
+field stzil_address         : ByStr20 = init_stzil_address
 field zproxy_address        : ByStr20 = init_zproxy_address
 
 field local_zimpl_address   : ByStr20 = bystr20_zero
