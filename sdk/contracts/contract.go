@@ -46,12 +46,6 @@ func Restore(name string, provider *provider2.Provider, init []core.ContractValu
 	}
 }
 
-func (c *Contract) UpdateWallet(newKey string) {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(newKey)
-	c.Wallet = wallet
-}
-
 func (c *Contract) SetSigner(wallet *account.Wallet) *Contract {
 	c.Wallet = wallet
 

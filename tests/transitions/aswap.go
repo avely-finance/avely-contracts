@@ -26,7 +26,8 @@ var Aswap *contracts.ASwap
 var Stzil *contracts.StZIL
 var Proto *contracts.Protocol
 
-var Addr1, Addr2, Addr3, Key1, Key2, Key3 string
+var Addr1, Addr2, Addr3 string
+var Wallet1, Wallet2, Wallet3 *account.Wallet
 var Addresses []string
 var Archive BalanceSheet
 
@@ -245,9 +246,18 @@ func (tr *Transitions) setupGoldenFlow() (*contracts.Protocol, *contracts.ASwap,
 	Addr1 = "0x" + account1.Address
 	Addr2 = "0x" + account2.Address
 	Addr3 = "0x" + account3.Address
-	Key1 = util.EncodeHex(account1.PrivateKey)
-	Key2 = util.EncodeHex(account2.PrivateKey)
-	Key3 = util.EncodeHex(account3.PrivateKey)
+	// Key1 := util.EncodeHex(account1.PrivateKey)
+	// Key2 := util.EncodeHex(account2.PrivateKey)
+	// Key3 := util.EncodeHex(account3.PrivateKey)
+	Wallet1 = account.NewWallet()
+	Wallet1.AddByPrivateKey(util.EncodeHex(account1.PrivateKey))
+
+	Wallet2 = account.NewWallet()
+	Wallet2.AddByPrivateKey(util.EncodeHex(account2.PrivateKey))
+
+	Wallet3 = account.NewWallet()
+	Wallet3.AddByPrivateKey(util.EncodeHex(account3.PrivateKey))
+
 	Addresses = make([]string, 4)
 	Addresses[1] = Addr1
 	Addresses[2] = Addr2
@@ -281,12 +291,15 @@ func aswapGolden(tr *Transitions) {
 
 	//1) user 1 add liquidity 1000:1000
 	liqPair := LiquidityPair{zil: ToQA(1000), stzil: ToQA(1000)}
-	tx, _ := AssertSuccess(Stzil.WithUser(Key1).IncreaseAllowance(Aswap.Contract.Addr, liqPair.stzil))
+	Stzil.SetSigner(Wallet1)
+	tx, _ := AssertSuccess(Stzil.IncreaseAllowance(Aswap.Contract.Addr, liqPair.stzil))
 	recordBalance(1, tx)
 	//allowances[_sender][spender] := new_allowance;
 	AssertEqual(Field(Stzil, "allowances", Addr1, Aswap.Addr), liqPair.stzil)
+
 	//func (a *Aswap) AddLiquidity(_amount, tokenAddr, minContributionAmount, tokenAmount string, blockNum int)
-	tx, _ = AssertSuccess(Aswap.WithUser(Key1).AddLiquidity(liqPair.zil, Stzil.Contract.Addr, liqPair.zil, liqPair.stzil, blockNum))
+	Aswap.SetSigner(Wallet1)
+	tx, _ = AssertSuccess(Aswap.AddLiquidity(liqPair.zil, Stzil.Contract.Addr, liqPair.zil, liqPair.stzil, blockNum))
 	recordBalance(1, tx)
 	//pools[Aswap.addr] := [zil, stzil];
 	AssertEqual(Field(Aswap, "pools", Stzil.Addr, "arguments", "0"), liqPair.zil)
@@ -297,12 +310,14 @@ func aswapGolden(tr *Transitions) {
 
 	//2) user 2 sell 500 stzil to swap for zil
 	exactStzil := ToQA(500)
-	tx, _ = AssertSuccess(Stzil.WithUser(Key2).IncreaseAllowance(Aswap.Contract.Addr, exactStzil))
+	Stzil.SetSigner(Wallet2)
+	tx, _ = AssertSuccess(Stzil.IncreaseAllowance(Aswap.Contract.Addr, exactStzil))
 	recordBalance(2, tx)
 	expectedSwapOutput, treasuryFee := calcOutputSwapExactTokensForZil(exactStzil)
 	minZilAmount := "1"
 	//SwapExactTokensForZIL(tokenAddress, tokenAmount, minZilAmount, recipientAddress string, blockNum int)
-	tx, _ = AssertSuccess(Aswap.WithUser(Key2).SwapExactTokensForZIL(Stzil.Contract.Addr, exactStzil, minZilAmount, Addr2, blockNum+1))
+	Aswap.SetSigner(Wallet2)
+	tx, _ = AssertSuccess(Aswap.SwapExactTokensForZIL(Stzil.Contract.Addr, exactStzil, minZilAmount, Addr2, blockNum+1))
 	recordBalance(2, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
@@ -327,7 +342,8 @@ func aswapGolden(tr *Transitions) {
 	expectedSwapOutput = calcOutputSwapExactZilForTokens(exactZil)
 	minTokenAmount := "1"
 
-	tx, _ = AssertSuccess(Aswap.WithUser(Key3).SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr3, blockNum+1))
+	Aswap.SetSigner(Wallet3)
+	tx, _ = AssertSuccess(Aswap.SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr3, blockNum+1))
 	recordBalance(3, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
@@ -342,12 +358,14 @@ func aswapGolden(tr *Transitions) {
 
 	//3b) user 3 add 250 stzil to pool
 	pairIn := calcAddLiquidity(LiquidityPair{stzil: ToQA(250)})
-	tx, _ = AssertSuccess(Stzil.WithUser(Key3).IncreaseAllowance(Aswap.Contract.Addr, pairIn.stzil))
+	Stzil.SetSigner(Wallet3)
+	tx, _ = AssertSuccess(Stzil.IncreaseAllowance(Aswap.Contract.Addr, pairIn.stzil))
 	recordBalance(3, tx)
 	//allowances[_sender][spender] := new_allowance;
 	AssertEqual(Field(Stzil, "allowances", Addr3, Aswap.Addr), pairIn.stzil)
 	//func (a *Aswap) AddLiquidity(_amount, tokenAddr, minContributionAmount, tokenAmount string, blockNum int)
-	tx, _ = AssertSuccess(Aswap.WithUser(Key3).AddLiquidity(pairIn.zil, Stzil.Addr, "1", pairIn.stzil, blockNum+1))
+	Aswap.SetSigner(Wallet3)
+	tx, _ = AssertSuccess(Aswap.AddLiquidity(pairIn.zil, Stzil.Addr, "1", pairIn.stzil, blockNum+1))
 	recordBalance(3, tx)
 	AssertEqual(Stzil.BalanceOf(Addr3).String(), "0")
 	//pools[Aswap.addr] := [zil, stzil];
@@ -359,7 +377,9 @@ func aswapGolden(tr *Transitions) {
 	exactZil = calcInputSwapExactZilForTokens(ToQA(100))
 	expectedSwapOutput = calcOutputSwapExactZilForTokens(exactZil)
 	minTokenAmount = "1"
-	tx, _ = AssertSuccess(Aswap.WithUser(Key2).SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr2, blockNum+1))
+
+	Aswap.SetSigner(Wallet2)
+	tx, _ = AssertSuccess(Aswap.SwapExactZILForTokens(exactZil, Stzil.Contract.Addr, minTokenAmount, Addr2, blockNum+1))
 	recordBalance(2, tx)
 	AssertTransition(tx, Transition{
 		Aswap.Addr, //sender
@@ -377,7 +397,8 @@ func aswapGolden(tr *Transitions) {
 	contribution := ToQA(1000)
 	pairOut := calcRemoveLiquidityOutput(Addr1, contribution)
 	//RemoveLiquidity(tokenAddress, contributionAmount, minZilAmount, minTokenAmount string, blockNum int) (*transaction.Transaction, error)
-	tx, _ = AssertSuccess(Aswap.WithUser(Key1).RemoveLiquidity(Stzil.Addr, contribution, "1", "1", blockNum+1))
+	Aswap.SetSigner(Wallet1)
+	tx, _ = AssertSuccess(Aswap.RemoveLiquidity(Stzil.Addr, contribution, "1", "1", blockNum+1))
 	recordBalance(1, tx)
 	//data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 	//GetLog().Info(string(data))
@@ -402,7 +423,8 @@ func aswapGolden(tr *Transitions) {
 	pairOut3 := calcRemoveLiquidityOutput(Addr3, "all")
 	user3Contribution := Field(Aswap, "balances", Addr3, Stzil.Addr)
 	//RemoveLiquidity(tokenAddress, contributionAmount, minZilAmount, minTokenAmount string, blockNum int) (*transaction.Transaction, error)
-	tx, _ = AssertSuccess(Aswap.WithUser(Key3).RemoveLiquidity(Stzil.Addr, user3Contribution, "1", "1", blockNum+1))
+	Aswap.SetSigner(Wallet3)
+	tx, _ = AssertSuccess(Aswap.RemoveLiquidity(Stzil.Addr, user3Contribution, "1", "1", blockNum+1))
 	recordBalance(3, tx)
 	//data, _ := json.MarshalIndent(tx.Receipt, "", "     ")
 	//GetLog().Info(string(data))

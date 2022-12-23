@@ -92,13 +92,6 @@ func (p *Zproxy) AssignStakeReward(ssn, reward string) (*transaction.Transaction
 	return p.Call("AssignStakeReward", args, reward)
 }
 
-func (p *Zproxy) WithUser(key string) *Zproxy {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
-	p.Contract.Wallet = wallet
-	return p
-}
-
 func (p *Zproxy) AddSSN(addr string, name string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

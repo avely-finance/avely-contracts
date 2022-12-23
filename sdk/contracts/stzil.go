@@ -20,13 +20,6 @@ type StZIL struct {
 	Contract
 }
 
-func (a *StZIL) WithUser(key string) *StZIL {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
-	a.Contract.Wallet = wallet
-	return a
-}
-
 func (s *StZIL) BalanceOf(addr string) *big.Int {
 	rawState := s.Contract.SubState("balances", []string{addr})
 	state := NewState(rawState)
