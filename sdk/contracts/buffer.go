@@ -151,7 +151,7 @@ func (b *BufferContract) ReDelegateStakeSuccessCallBack(ssnaddr, to_ssn, amount 
 	return b.Call("ReDelegateStakeSuccessCallBack", args, "0")
 }
 
-func NewBufferContract(sdk *AvelySDK, stZilAddr, zproxyAddr string, deployer *account.Wallet) (*BufferContract, error) {
+func NewBufferContract(sdk *AvelySDK, stZilAddr, zproxyAddr, zimlpAddr string, deployer *account.Wallet) (*BufferContract, error) {
 	init := []core.ContractValue{
 		{
 			VName: "_scilla_version",
@@ -165,6 +165,10 @@ func NewBufferContract(sdk *AvelySDK, stZilAddr, zproxyAddr string, deployer *ac
 			VName: "init_zproxy_address",
 			Type:  "ByStr20",
 			Value: zproxyAddr,
+		}, {
+			VName: "init_zimpl_address",
+			Type:  "ByStr20",
+			Value: zimlpAddr,
 		},
 	}
 
