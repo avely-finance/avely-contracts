@@ -47,4 +47,14 @@ func (tr *Transitions) IsOwner() {
 	tx, _ = p.StZIL.UpdateStakingParameters(ToZil(100))
 	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
+	// Holder
+	tx, _ = p.Holder.ChangeOwner(randomAddr)
+	AssertError(tx, p.Holder.ErrorCode("CodeNotOwner"))
+
+	p.Holder.SetSigner(bob)
+	tx, _ = p.Holder.ChangeZimplAddress(randomAddr)
+	AssertError(tx, p.Holder.ErrorCode("CodeNotOwner"))
+
+	tx, _ = p.Holder.ChangeZproxyAddress(randomAddr)
+	AssertError(tx, p.Holder.ErrorCode("CodeNotOwner"))
 }
