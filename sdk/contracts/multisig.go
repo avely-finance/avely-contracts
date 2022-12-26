@@ -18,13 +18,6 @@ type MultisigWallet struct {
 	Contract
 }
 
-func (a *MultisigWallet) WithUser(key string) *MultisigWallet {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
-	a.Contract.Wallet = wallet
-	return a
-}
-
 func (s *MultisigWallet) SignTransaction(transactionId int) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

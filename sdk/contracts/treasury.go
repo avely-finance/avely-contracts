@@ -16,13 +16,6 @@ type TreasuryContract struct {
 	Contract
 }
 
-func (a *TreasuryContract) WithUser(key string) *TreasuryContract {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
-	a.Contract.Wallet = wallet
-	return a
-}
-
 func (a *TreasuryContract) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

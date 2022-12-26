@@ -17,13 +17,6 @@ type SsnContract struct {
 	Contract
 }
 
-func (a *SsnContract) WithUser(key string) *SsnContract {
-	wallet := account.NewWallet()
-	wallet.AddByPrivateKey(key)
-	a.Contract.Wallet = wallet
-	return a
-}
-
 func (a *SsnContract) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
