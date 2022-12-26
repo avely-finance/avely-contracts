@@ -305,6 +305,17 @@ func (a *StZIL) DelegateStake(amount string) (*transaction.Transaction, error) {
 	return a.Call("DelegateStake", args, amount)
 }
 
+func (a *StZIL) DelegateStakeWithReferral(amount string, referral string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"referral",
+			"ByStr20",
+			referral,
+		},
+	}
+	return a.Call("DelegateStakeWithReferral", args, amount)
+}
+
 func (a *StZIL) IncreaseAutoRestakeAmount(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("IncreaseAutoRestakeAmount", args, amount)
