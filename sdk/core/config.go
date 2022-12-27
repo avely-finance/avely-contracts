@@ -24,6 +24,7 @@ type Config struct {
 	SsnInitialDelegateZil    int
 	ProtocolRewardsFee       int
 
+	MultisigAddr string
 	ASwapAddr    string
 	ZproxyAddr   string
 	GzilAddr     string

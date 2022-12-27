@@ -98,3 +98,23 @@ func calcActiveBufferAddr(cycle int, buffers []string) string {
 	index := int(cycle) % len(buffers)
 	return buffers[index]
 }
+
+func (tr *Transitions) DelegateStakeReferral() {
+	Start("DelegateStake: Stake 10 ZIL with referral address")
+
+	p := tr.DeployAndUpgrade()
+
+	referral := utils.GetAddressByWallet(bob)
+
+	delegateStakeHolder(p)
+
+	p.StZIL.SetSigner(alice)
+
+	tx, err := p.StZIL.DelegateStakeWithReferral(ToZil(10), referral)
+
+	AssertSuccess(tx, err)
+	AssertEvent(tx, Event{p.StZIL.Addr, "DelegateStakeWithReferral", ParamsMap{
+		"referral": referral,
+		"amount":   ToStZil(10),
+	}})
+}
