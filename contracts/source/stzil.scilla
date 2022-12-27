@@ -1260,7 +1260,7 @@ end
 (************************************************************)
 (* @dev: Deposit undelegated zil, use our node              *)
 (************************************************************)
-transition DelegateStake()
+procedure DelegateStake_()
   RequireNotPausedIn;
 
   accept;
@@ -1273,6 +1273,17 @@ transition DelegateStake()
   tmp_delegator := o_delegator;
 
   BufferDelegate stake_amt
+end
+
+transition DelegateStake()
+  DelegateStake_
+end
+
+transition DelegateStakeWithReferral(referral: ByStr20)
+  DelegateStake_;
+
+  e = { _eventname: "DelegateStakeWithReferral"; referral: referral; amount: _amount };
+  event e
 end
 
 transition DelegateStakeSuccessCallBack(amount: Uint128)
