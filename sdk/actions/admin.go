@@ -80,8 +80,9 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 	//claim rewards from holder
 	for _, ssn := range ssnlist {
 		// TODO: Don't claim if Holder does not have rewards on this SSN
+		txCall := func() (*transaction.Transaction, error) { return p.StZIL.ClaimRewards(p.Holder.Addr, ssn) }
+		tx, err := retryTx(p.StZIL.Sdk.Cfg.TxRetryCount, txCall)
 
-		tx, err := p.StZIL.ClaimRewards(p.Holder.Addr, ssn)
 		fields := logrus.Fields{
 			"tx":             tx.ID,
 			"holder_address": p.Holder.Addr,
@@ -99,7 +100,9 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 	//claim rewards from buffer
 	for _, ssn := range ssnlist {
 		// TODO: Don't claim if Buffer does not have rewards on this SSN
-		tx, err := p.StZIL.ClaimRewards(bufferToDrain, ssn)
+		txCall := func() (*transaction.Transaction, error) { return p.StZIL.ClaimRewards(bufferToDrain, ssn) }
+		tx, err := retryTx(p.StZIL.Sdk.Cfg.TxRetryCount, txCall)
+
 		fields := logrus.Fields{
 			"tx":             tx.ID,
 			"buffer_address": bufferToDrain,
@@ -115,7 +118,9 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 	}
 
 	//transfer stake from buffer to holder
-	tx, err := p.StZIL.ConsolidateInHolder(bufferToDrain)
+	txCall := func() (*transaction.Transaction, error) { return p.StZIL.ConsolidateInHolder(bufferToDrain) }
+	tx, err := retryTx(p.StZIL.Sdk.Cfg.TxRetryCount, txCall)
+
 	a.TxLog("ConsolidateInHolder", tx, err)
 	if err != nil {
 		a.log.WithFields(logrus.Fields{
@@ -152,9 +157,12 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 			"to_ssn":   ssnForInput,
 			"amount":   amountStr,
 		}
+
+		txCall := func() (*transaction.Transaction, error) { return p.StZIL.ChownStakeReDelegate(fromSsn, amountStr) }
+
 		if showOnly {
 			a.log.WithFields(fields).Debug("Need to call StZIL.ChownStakeReDelegate transition")
-		} else if tx, err := p.StZIL.ChownStakeReDelegate(fromSsn, amountStr); err == nil {
+		} else if tx, err := retryTx(p.StZIL.Sdk.Cfg.TxRetryCount, txCall); err == nil {
 			a.TxLog("ChownStakeReDelegate_"+fromSsn, tx, err)
 			fields["tx"] = tx.ID
 			a.log.WithFields(fields).Info("ChownStakeReDelegate OK")
@@ -222,7 +230,9 @@ func (a *AdminActions) AutoRestake(p *Protocol) error {
 	}
 
 	priceBefore := p.StZIL.GetStZilPrice().String()
-	tx, err := p.StZIL.PerformAutoRestake()
+
+	txCall := func() (*transaction.Transaction, error) { return p.StZIL.PerformAutoRestake() }
+	tx, err := retryTx(p.StZIL.Sdk.Cfg.TxRetryCount, txCall)
 
 	if err != nil {
 		a.log.WithFields(logrus.Fields{"txid": tx.ID, "error": tx.Receipt}).Error("AutoRestake failed")
@@ -272,4 +282,19 @@ func (a *AdminActions) ClaimWithdrawal(p *Protocol) error {
 	}
 
 	return nil
+}
+
+func retryTx(count int, txCall func() (*transaction.Transaction, error)) (*transaction.Transaction, error) {
+	var tx *transaction.Transaction
+	var err error
+
+	for i := 0; i < count; i++ {
+		tx, err = txCall()
+
+		if err == nil {
+			break
+		}
+	}
+
+	return tx, err
 }

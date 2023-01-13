@@ -18,6 +18,7 @@ type Config struct {
 	ChainId                  int
 	TxConfrimMaxAttempts     int
 	TxConfirmIntervalSec     int
+	TxRetryCount             int
 	StZilSsnAddress          string
 	StZilSsnRewardShare      string
 	HolderInitialDelegateZil int
