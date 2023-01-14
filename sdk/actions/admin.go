@@ -75,7 +75,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 		return nil
 	}
 
-	ssnlist := p.StZIL.GetSsnWhitelist()
+	ssnlist := p.StZIL.Sdk.Cfg.SsnAddrs
 
 	//claim rewards from holder
 	for _, ssn := range ssnlist {
