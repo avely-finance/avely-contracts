@@ -78,27 +78,21 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 	ssnlist := p.StZIL.Sdk.Cfg.SsnAddrs
 
 	//claim rewards from holder
-	holderDeposits := p.Zimpl.GetDepositAmtDeleg(p.Holder.Addr)
-
 	for _, ssn := range ssnlist {
-		_, notNull := holderDeposits[ssn]
+		txCall := func() (*transaction.Transaction, error) { return p.StZIL.ClaimRewards(p.Holder.Addr, ssn) }
+		tx, err := retryTx(p.StZIL.Sdk.Cfg.TxRetryCount, txCall)
 
-		if notNull {
-			txCall := func() (*transaction.Transaction, error) { return p.StZIL.ClaimRewards(p.Holder.Addr, ssn) }
-			tx, err := retryTx(p.StZIL.Sdk.Cfg.TxRetryCount, txCall)
-
-			fields := logrus.Fields{
-				"tx":             tx.ID,
-				"holder_address": p.Holder.Addr,
-				"ssn_address":    ssn,
-			}
-			a.TxLog("ClaimRewardsHolder_"+ssn, tx, err)
-			if err == nil {
-				a.log.WithFields(fields).Info("ClaimRewards Holder success")
-			} else {
-				fields["error"] = tx.Receipt
-				a.log.WithFields(fields).Error("ClaimRewards Holder error")
-			}
+		fields := logrus.Fields{
+			"tx":             tx.ID,
+			"holder_address": p.Holder.Addr,
+			"ssn_address":    ssn,
+		}
+		a.TxLog("ClaimRewardsHolder_"+ssn, tx, err)
+		if err == nil {
+			a.log.WithFields(fields).Info("ClaimRewards Holder success")
+		} else {
+			fields["error"] = tx.Receipt
+			a.log.WithFields(fields).Error("ClaimRewards Holder error")
 		}
 	}
 
