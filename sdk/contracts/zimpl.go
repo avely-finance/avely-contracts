@@ -11,6 +11,7 @@ import (
 	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
 	"github.com/Zilliqa/gozilliqa-sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/tidwall/gjson"
 )
 
 type Zimpl struct {
@@ -30,6 +31,14 @@ func (z *Zimpl) GetDepositAmtDeleg(delegator string) map[string]*big.Int {
 	state := NewState(rawState)
 	stateItem := state.Dig("result.deposit_amt_deleg." + delegator)
 	return stateItem.MapAddressAmount()
+}
+
+func (z *Zimpl) GetBufferAmtDeleg(delegator string) map[string]gjson.Result {
+	delegator = strings.ToLower(delegator)
+	rawState := z.Contract.SubState("buff_deposit_deleg", []string{delegator})
+	state := NewState(rawState)
+	stateItem := state.Dig("result.buff_deposit_deleg." + delegator)
+	return stateItem.Map()
 }
 
 func (z *Zimpl) GetBnumReq() int {

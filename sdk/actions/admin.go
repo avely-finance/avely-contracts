@@ -97,12 +97,16 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 	}
 
 	//claim rewards from buffer
-	bufferDeposits := p.Zimpl.GetDepositAmtDeleg(bufferToDrain)
+	deposits := p.Zimpl.GetDepositAmtDeleg(bufferToDrain)
+	bufferDeposits := p.Zimpl.GetBufferAmtDeleg(bufferToDrain)
+	a.log.Info(deposits)
+	a.log.Info(bufferDeposits)
 
 	for _, ssn := range ssnlist {
-		_, notNull := bufferDeposits[ssn]
+		_, notNull := deposits[ssn]
+		_, bufferNotNull := bufferDeposits[ssn]
 
-		if notNull {
+		if notNull || bufferNotNull {
 			txCall := func() (*transaction.Transaction, error) { return p.StZIL.ClaimRewards(bufferToDrain, ssn) }
 			tx, err := retryTx(p.StZIL.Sdk.Cfg.TxRetryCount, txCall)
 
@@ -119,7 +123,7 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 				a.log.WithFields(fields).Error("ClaimRewards Buffer error")
 			}
 		} else {
-			a.log.WithFields(logrus.Fields{"ssn": ssn}).Info("Was skipped because does not have stake")
+			a.log.WithFields(logrus.Fields{"buffer_address": bufferToDrain, "ssn": ssn}).Info("Was skipped because does not have stake")
 		}
 	}
 
