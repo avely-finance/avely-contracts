@@ -99,12 +99,10 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 	//claim rewards from buffer
 	deposits := p.Zimpl.GetDepositAmtDeleg(bufferToDrain)
 	bufferDeposits := p.Zimpl.GetBufferAmtDeleg(bufferToDrain)
-	a.log.Info(deposits)
-	a.log.Info(bufferDeposits)
 
 	for _, ssn := range ssnlist {
-		_, notNull := deposits[ssn]
-		_, bufferNotNull := bufferDeposits[ssn]
+		_, notNull := deposits[strings.ToLower(ssn)]
+		_, bufferNotNull := bufferDeposits[strings.ToLower(ssn)]
 
 		if notNull || bufferNotNull {
 			txCall := func() (*transaction.Transaction, error) { return p.StZIL.ClaimRewards(bufferToDrain, ssn) }
