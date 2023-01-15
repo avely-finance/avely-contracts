@@ -118,6 +118,8 @@ func (a *AdminActions) DrainBuffer(p *Protocol, lrc int, bufferToDrain string) e
 				fields["error"] = tx.Receipt
 				a.log.WithFields(fields).Error("ClaimRewards Buffer error")
 			}
+		} else {
+			a.log.WithFields(logrus.Fields{"ssn": ssn}).Info("Was skipped because does not have stake")
 		}
 	}
 
