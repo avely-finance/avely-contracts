@@ -825,7 +825,7 @@ procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Ui
   end
 end
 
-procedure WithdrawalStakeAmt(initiator: ByStr20, from_ssn: ByStr20, withdraw_token_amt: Uint128)
+procedure WithdrawalStakeAmt(initiator: ByStr20, from_ssn: ByStr20, withdraw_token_amt: Uint128, withdraw_stake_amt: Uint128)
   current_token_amount <- balances[initiator];
 
   match current_token_amount with
@@ -833,10 +833,6 @@ procedure WithdrawalStakeAmt(initiator: ByStr20, from_ssn: ByStr20, withdraw_tok
     AdjustDeleg initiator current_token_amt withdraw_token_amt;
 
     (* Illegal withdraw amount could be handled in procedure AdjustDeleg *)
-    (* Calculate token to zil to withdraw *)
-    total_supply_amt <- total_supply;
-    total_stake_amt <- totalstakeamount;
-    withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_supply_amt;
 
     withdrawal_bnum <- & BLOCKNUMBER;
     withdraw_pending_o <- withdrawal_pending[withdrawal_bnum][initiator];
@@ -1364,10 +1360,15 @@ end
 transition WithdrawStakeAmt(amount: Uint128)
   RequireNotPausedOut;
 
-  GetSsnAddressForOutput amount;
+  (* Calculate token to zil to withdraw *)
+  total_supply_amt <- total_supply;
+  total_stake_amt <- totalstakeamount;
+  withdraw_stake_amt = muldiv amount total_stake_amt total_supply_amt;
+
+  GetSsnAddressForOutput withdraw_stake_amt;
   ssnaddr <- tmp_ssn_addr_out;
   (* first we do all checks, then call Holder on success within procedure *)
-  WithdrawalStakeAmt _sender ssnaddr amount;
+  WithdrawalStakeAmt _sender ssnaddr amount withdraw_stake_amt;
 
   msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
     ssnaddr : ssnaddr; amount : amount};
