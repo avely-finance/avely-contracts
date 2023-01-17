@@ -1357,7 +1357,7 @@ transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
 end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
-transition WithdrawStakeAmt(amount: Uint128)
+transition WithdrawTokenAmt(amount: Uint128)
   RequireNotPausedOut;
 
   (* Calculate token to zil to withdraw *)
@@ -1370,7 +1370,27 @@ transition WithdrawStakeAmt(amount: Uint128)
   (* first we do all checks, then call Holder on success within procedure *)
   WithdrawalStakeAmt _sender ssnaddr amount withdraw_stake_amt;
 
-  msg_to_delegator = {_tag : "WithdrawStakeAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
+  msg_to_delegator = {_tag : "WithdrawTokenAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
+    ssnaddr : ssnaddr; amount : amount};
+  msg = one_msg msg_to_delegator;
+  send msg
+end
+
+(* @param amount: Amount of ZIL to withdraw, stZIL stake amount to withdraw will be calculated basing on this parameter *)
+(* Needed as a slashing on the protocol level *)
+transition SlashSSNNode(withdraw_stake_amt: Uint128, ssnaddr: ByStr20)
+  RequireAdmin;
+  RequireNotPausedOut;
+
+  (* Calculate zil to token to withdraw *)
+  total_supply_amt <- total_supply;
+  total_stake_amt <- totalstakeamount;
+  amount = muldiv withdraw_stake_amt total_supply_amt total_stake_amt;
+
+  (* first we do all checks, then call Holder on success within procedure *)
+  WithdrawalStakeAmt _sender ssnaddr amount withdraw_stake_amt;
+
+  msg_to_delegator = {_tag : "WithdrawTokenAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
     ssnaddr : ssnaddr; amount : amount};
   msg = one_msg msg_to_delegator;
   send msg

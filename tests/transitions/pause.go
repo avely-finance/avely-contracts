@@ -120,7 +120,7 @@ func callPausedOut(p *contracts.Protocol) {
 	tx, _ := p.StZIL.PauseOut()
 	AssertError(tx, p.StZIL.ErrorCode("PausedOut"))
 
-	tx, _ = p.StZIL.WithdrawStakeAmt(ToZil(10))
+	tx, _ = p.StZIL.WithdrawTokenAmt(ToZil(10))
 	AssertError(tx, p.StZIL.ErrorCode("PausedOut"))
 
 	tx, _ = p.StZIL.CompleteWithdrawal()
