@@ -337,7 +337,7 @@ func (a *StZIL) UpdateStakingParameters(min_deleg_stake string) (*transaction.Tr
 	return a.Call("UpdateStakingParameters", args, "0")
 }
 
-func (a *StZIL) SlashSSNNode(amount, ssnaddr string) (*transaction.Transaction, error) {
+func (a *StZIL) SlashSSN(amount, ssnaddr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"withdraw_stake_amt",
@@ -350,10 +350,10 @@ func (a *StZIL) SlashSSNNode(amount, ssnaddr string) (*transaction.Transaction, 
 			ssnaddr,
 		},
 	}
-	return a.Call("SlashSSNNode", args, "0")
+	return a.Call("SlashSSN", args, "0")
 }
 
-func (a *StZIL) WithdrawTokenAmt(amount string) (*transaction.Transaction, error) {
+func (a *StZIL) WithdrawTokensAmt(amount string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			"amount",
@@ -361,7 +361,7 @@ func (a *StZIL) WithdrawTokenAmt(amount string) (*transaction.Transaction, error
 			amount,
 		},
 	}
-	return a.Call("WithdrawTokenAmt", args, "0")
+	return a.Call("WithdrawTokensAmt", args, "0")
 }
 
 func (a *StZIL) CompleteWithdrawal() (*transaction.Transaction, error) {

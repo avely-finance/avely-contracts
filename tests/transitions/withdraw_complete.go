@@ -29,7 +29,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tr.NextCycleOffchain(p)
 
 	p.StZIL.SetSigner(alice)
-	tx, _ := AssertSuccess(p.StZIL.WithdrawTokenAmt(ToStZil(10)))
+	tx, _ := AssertSuccess(p.StZIL.WithdrawTokensAmt(ToStZil(10)))
 
 	block1 := tx.Receipt.EpochNum
 	tx, _ = p.StZIL.CompleteWithdrawal()
@@ -177,7 +177,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 
 	//it's impossible to withdraw amount, bigger than amount on heaviest SSN
 	p.StZIL.SetSigner(alice)
-	tx, _ := p.StZIL.WithdrawTokenAmt(ToStZil(7000))
+	tx, _ := p.StZIL.WithdrawTokensAmt(ToStZil(7000))
 	AssertError(tx, p.StZIL.ErrorCode("WithdrawAmountTooBig"))
 
 	//slash SSNs
@@ -187,7 +187,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 
 	//withdraw and check from which SSN stake will be withdrawn
 	p.StZIL.SetSigner(alice)
-	tx, _ = AssertSuccess(p.StZIL.WithdrawTokenAmt(ToStZil(3000)))
+	tx, _ = AssertSuccess(p.StZIL.WithdrawTokensAmt(ToStZil(3000)))
 	//first is from heaviest slashed SSN
 	AssertTransition(tx, Transition{
 		p.StZIL.Addr,       //sender
@@ -200,7 +200,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 
 	//there are not enough balance on slashed SSNs now, so withdraw will go from heaviest whitelisted SSN
 	p.StZIL.SetSigner(alice)
-	tx, _ = AssertSuccess(p.StZIL.WithdrawTokenAmt(ToStZil(5000)))
+	tx, _ = AssertSuccess(p.StZIL.WithdrawTokensAmt(ToStZil(5000)))
 	AssertTransition(tx, Transition{
 		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
@@ -211,7 +211,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnWhitelistHeavy), ToZil(sdk.Cfg.HolderInitialDelegateZil))
 
 	//next withdraw is going from current heaviest slashed SSN (it was not heaviest before, but now it is)
-	tx, _ = AssertSuccess(p.StZIL.WithdrawTokenAmt(ToStZil(3000)))
+	tx, _ = AssertSuccess(p.StZIL.WithdrawTokensAmt(ToStZil(3000)))
 	AssertTransition(tx, Transition{
 		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
@@ -223,7 +223,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnSlashLight), "")
 
 	//withdraw rest from ssnSlashHeavy
-	tx, _ = AssertSuccess(p.StZIL.WithdrawTokenAmt(ToStZil(1000)))
+	tx, _ = AssertSuccess(p.StZIL.WithdrawTokensAmt(ToStZil(1000)))
 	AssertTransition(tx, Transition{
 		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
@@ -234,7 +234,7 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", p.Holder.Addr, ssnSlashHeavy), "")
 
 	//next withdraw will go from ssnWhitelistLight, because it's heaviest now
-	tx, _ = AssertSuccess(p.StZIL.WithdrawTokenAmt(ToStZil(5000)))
+	tx, _ = AssertSuccess(p.StZIL.WithdrawTokensAmt(ToStZil(5000)))
 	AssertTransition(tx, Transition{
 		p.StZIL.Addr,       //sender
 		"WithdrawStakeAmt", //tag
