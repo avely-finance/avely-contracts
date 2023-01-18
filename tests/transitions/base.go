@@ -225,6 +225,7 @@ func (tr *Transitions) RunAll() {
 		tr.DrainBuffer()
 		tr.CompleteWithdrawalSuccess()
 		tr.CompleteWithdrawalMultiSsn()
-		tr.WithdrawStakeAmount()
+		tr.SlashSSN()
+		tr.WithdrawTokenAmount()
 	}
 }
