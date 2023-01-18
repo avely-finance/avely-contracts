@@ -825,7 +825,7 @@ procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Ui
   end
 end
 
-procedure WithdrawalStakeAmt(initiator: ByStr20, from_ssn: ByStr20, withdraw_token_amt: Uint128, withdraw_stake_amt: Uint128)
+procedure DoWithdrawal(initiator: ByStr20, from_ssn: ByStr20, withdraw_token_amt: Uint128, withdraw_stake_amt: Uint128)
   current_token_amount <- balances[initiator];
 
   match current_token_amount with
@@ -1203,7 +1203,6 @@ end
 (* offchain-tools calls this transition every new cycle *)
 transition PerformAutoRestake()
   RequireAdmin;
-  RequireNotPausedIn;
 
   auto_restake_amt <- autorestakeamount;
   IsDelegStakeSufficient auto_restake_amt;
@@ -1357,7 +1356,7 @@ transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
 end
 
 (* @param amount: Amount of tokens to withdraw, ZIL stake amount to withdraw will be calculated basing on this parameter *)
-transition WithdrawTokenAmt(amount: Uint128)
+transition WithdrawTokensAmt(amount: Uint128)
   RequireNotPausedOut;
 
   (* Calculate token to zil to withdraw *)
@@ -1368,9 +1367,9 @@ transition WithdrawTokenAmt(amount: Uint128)
   GetSsnAddressForOutput withdraw_stake_amt;
   ssnaddr <- tmp_ssn_addr_out;
   (* first we do all checks, then call Holder on success within procedure *)
-  WithdrawalStakeAmt _sender ssnaddr amount withdraw_stake_amt;
+  DoWithdrawal _sender ssnaddr amount withdraw_stake_amt;
 
-  msg_to_delegator = {_tag : "WithdrawTokenAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
+  msg_to_delegator = {_tag : "WithdrawTokensAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
     ssnaddr : ssnaddr; amount : amount};
   msg = one_msg msg_to_delegator;
   send msg
@@ -1378,9 +1377,8 @@ end
 
 (* @param amount: Amount of ZIL to withdraw, stZIL stake amount to withdraw will be calculated basing on this parameter *)
 (* Needed as a slashing on the protocol level *)
-transition SlashSSNNode(withdraw_stake_amt: Uint128, ssnaddr: ByStr20)
+transition SlashSSN(withdraw_stake_amt: Uint128, ssnaddr: ByStr20)
   RequireAdmin;
-  RequireNotPausedOut;
 
   (* Calculate zil to token to withdraw *)
   total_supply_amt <- total_supply;
@@ -1388,9 +1386,9 @@ transition SlashSSNNode(withdraw_stake_amt: Uint128, ssnaddr: ByStr20)
   amount = muldiv withdraw_stake_amt total_supply_amt total_stake_amt;
 
   (* first we do all checks, then call Holder on success within procedure *)
-  WithdrawalStakeAmt _sender ssnaddr amount withdraw_stake_amt;
+  DoWithdrawal _sender ssnaddr amount withdraw_stake_amt;
 
-  msg_to_delegator = {_tag : "WithdrawTokenAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
+  msg_to_delegator = {_tag : "WithdrawTokensAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
     ssnaddr : ssnaddr; amount : amount};
   msg = one_msg msg_to_delegator;
   send msg
@@ -1528,7 +1526,6 @@ end
 (* transfers funds from other ssn to active ssn *)
 transition ChownStakeReDelegate(from_ssn: ByStr20, amount: Uint128)
   RequireAdmin;
-  RequireNotPausedIn;
 
   var_ssn_addresses <- ssn_addresses;
   is_whitelisted = is_addr_in_list var_ssn_addresses from_ssn;

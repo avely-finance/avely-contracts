@@ -6,9 +6,9 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
-func (tr *Transitions) SlashSSNNode() {
+func (tr *Transitions) SlashSSN() {
 
-	Start("SlashSSNNode")
+	Start("SlashSSN")
 
 	// deploy smart contract
 	p := tr.DeployAndUpgrade()
@@ -20,7 +20,7 @@ func (tr *Transitions) SlashSSNNode() {
 	p.StZIL.SetSigner(bob)
 	AssertSuccess(p.StZIL.DelegateStake(stakeAmt))
 	ssnNode1 := sdk.Cfg.SsnAddrs[0]
-	txn, _ := p.StZIL.SlashSSNNode(ToStZil(10), ssnNode1)
+	txn, _ := p.StZIL.SlashSSN(ToStZil(10), ssnNode1)
 
 	AssertError(txn, p.StZIL.ErrorCode("AdminValidationFailed"))
 
@@ -33,7 +33,7 @@ func (tr *Transitions) SlashSSNNode() {
 
 	p.StZIL.SetSigner(celestials.Admin)
 
-	AssertSuccess(p.StZIL.SlashSSNNode(stakeAmt, ssnNode1))
+	AssertSuccess(p.StZIL.SlashSSN(stakeAmt, ssnNode1))
 	bnum1 := txn.Receipt.EpochNum
 
 	withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum1, adminAddr).Withdrawal()

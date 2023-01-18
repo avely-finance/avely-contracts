@@ -27,7 +27,7 @@ func (tr *Transitions) WithdrawTokenAmount() {
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 1")
 	p.StZIL.SetSigner(eve)
-	txn, _ := p.StZIL.WithdrawTokenAmt(ToStZil(10))
+	txn, _ := p.StZIL.WithdrawTokensAmt(ToStZil(10))
 
 	AssertError(txn, p.StZIL.ErrorCode("DelegDoesNotExistAtSSN"))
 
@@ -43,7 +43,7 @@ func (tr *Transitions) WithdrawTokenAmount() {
 	 *******************************************************************************/
 
 	Start("WithdwarStakeAmount, step 2A")
-	txn, _ = p.StZIL.WithdrawTokenAmt(ToStZil(100))
+	txn, _ = p.StZIL.WithdrawTokensAmt(ToStZil(100))
 
 	AssertError(txn, p.StZIL.ErrorCode("DelegHasNoSufficientAmt"))
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+15))
@@ -53,7 +53,7 @@ func (tr *Transitions) WithdrawTokenAmount() {
 	 * TODO: how to be sure about size of mindelegatestake here?
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 2C")
-	txn, _ = p.StZIL.WithdrawTokenAmt(ToStZil(10))
+	txn, _ = p.StZIL.WithdrawTokensAmt(ToStZil(10))
 
 	AssertError(txn, p.StZIL.ErrorCode("DelegStakeNotEnough"))
 	AssertEqual(Field(p.StZIL, "total_supply"), ToStZil(totalSsnInitialDelegateZil+15))
@@ -66,7 +66,7 @@ func (tr *Transitions) WithdrawTokenAmount() {
 	 *******************************************************************************/
 	Start("WithdwarStakeAmount, step 3A")
 
-	txn, _ = p.StZIL.WithdrawTokenAmt(ToStZil(5))
+	txn, _ = p.StZIL.WithdrawTokensAmt(ToStZil(5))
 	AssertTransition(txn, Transition{
 		p.StZIL.Addr,
 		"WithdrawStakeAmt",
@@ -98,7 +98,7 @@ func (tr *Transitions) WithdrawTokenAmount() {
 	 * Balances should be empty
 	 *******************************************************************************/
 	Start("WithdrawStakeAmount, step 3B")
-	txn, _ = p.StZIL.WithdrawTokenAmt(ToStZil(10))
+	txn, _ = p.StZIL.WithdrawTokensAmt(ToStZil(10))
 	bnum2 := txn.Receipt.EpochNum
 	AssertEvent(txn, Event{p.StZIL.Addr, "WithdrawStakeAmt",
 		ParamsMap{"withdraw_amount": ToStZil(10), "withdraw_stake_amount": ToZil(10)}})
