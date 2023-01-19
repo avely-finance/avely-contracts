@@ -51,6 +51,7 @@ type Error =
   | StagingOwnerNotExists
   | StagingOwnerValidationFailed
   | WithdrawAmountTooBig
+  | WithdrawTokensAmtLessThanFee
 
 let make_error =
   fun (result: Error) =>
@@ -96,6 +97,7 @@ let make_error =
       | StagingOwnerNotExists            => Int32 -135
       | StagingOwnerValidationFailed     => Int32 -136
       | WithdrawAmountTooBig             => Int32 -137
+      | WithdrawTokensAmtLessThanFee     => Int32 -138
       end
     in
     { _exception: "Error"; code: result_code }
@@ -330,14 +332,15 @@ contract StZIL(
   init_supply               : Uint128
 )
 
-field owner_address         : ByStr20 = contract_owner
-field admin_address         : ByStr20 = init_admin_address
-field treasury_address      : ByStr20 = init_admin_address
-field zimpl_address         : ByStr20 = init_zimpl_address
-field holder_address        : ByStr20 = bystr20_zero
-field buffers_addresses     : List ByStr20 = Nil {ByStr20}
-field ssn_addresses         : List ByStr20 = Nil {ByStr20}
-field staging_owner_address : Option ByStr20 = None {ByStr20}
+field owner_address          : ByStr20 = contract_owner
+field admin_address          : ByStr20 = init_admin_address
+field treasury_address       : ByStr20 = init_admin_address
+field withdrawal_fee_address : ByStr20 = init_admin_address
+field zimpl_address          : ByStr20 = init_zimpl_address
+field holder_address         : ByStr20 = bystr20_zero
+field buffers_addresses      : List ByStr20 = Nil {ByStr20}
+field ssn_addresses          : List ByStr20 = Nil {ByStr20}
+field staging_owner_address  : Option ByStr20 = None {ByStr20}
 
 field is_paused_in  : Bool = True
 field is_paused_out : Bool = True
@@ -345,6 +348,7 @@ field is_paused_zrc2: Bool = True
 
 (* 10 ZIL expresssed in Qa where 1 ZIL = 10^12 Qa *)
 field mindelegstake     : Uint128 = Uint128 10000000000000
+field withdrawal_fee    : Uint128 = Uint128 0
 field rewards_fee       : Uint128 = uint128_zero
 field totalstakeamount  : Uint128 = uint128_zero
 field autorestakeamount : Uint128 = uint128_zero
@@ -1359,24 +1363,49 @@ end
 transition WithdrawTokensAmt(amount: Uint128)
   RequireNotPausedOut;
 
-  (* Calculate token to zil to withdraw *)
-  total_supply_amt <- total_supply;
-  total_stake_amt <- totalstakeamount;
-  withdraw_stake_amt = muldiv amount total_stake_amt total_supply_amt;
+  var_withdrawal_fee <- withdrawal_fee;
 
-  GetSsnAddressForOutput withdraw_stake_amt;
-  ssnaddr <- tmp_ssn_addr_out;
-  (* first we do all checks, then call Holder on success within procedure *)
-  DoWithdrawal _sender ssnaddr amount withdraw_stake_amt;
+  is_fee_less_than_amount = builtin lt var_withdrawal_fee amount;
+  match is_fee_less_than_amount with
+  | True =>
+    (* Apply withdrawal fees *)
+    withdraw_token_amt = builtin sub amount var_withdrawal_fee;
+    is_zero_fees = builtin eq var_withdrawal_fee uint128_zero;
 
-  msg_to_delegator = {_tag : "WithdrawTokensAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
-    ssnaddr : ssnaddr; amount : amount};
-  msg = one_msg msg_to_delegator;
-  send msg
+    match is_zero_fees with
+    | True =>
+      (* Do nothing *)
+    | False =>
+      (* Add fees to withdrawal fees address *)
+      var_withdrawal_fee_address <- withdrawal_fee_address;
+      o_current_balance <- balances[var_withdrawal_fee_address];
+      current_balance = option_uint128_value o_current_balance;
+      new_balance = builtin add current_balance var_withdrawal_fee;
+      balances[var_withdrawal_fee_address] := new_balance
+    end;
+
+    (* Calculate token to zil to withdraw *)
+    total_supply_amt <- total_supply;
+    total_stake_amt <- totalstakeamount;
+    withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_supply_amt;
+
+    GetSsnAddressForOutput withdraw_stake_amt;
+    ssnaddr <- tmp_ssn_addr_out;
+    (* first we do all checks, then call Holder on success within procedure *)
+    DoWithdrawal _sender ssnaddr withdraw_token_amt withdraw_stake_amt;
+
+    msg_to_delegator = {_tag : "WithdrawTokensAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
+      ssnaddr : ssnaddr; amount : withdraw_token_amt};
+    msg = one_msg msg_to_delegator;
+    send msg
+  | False =>
+    e = WithdrawTokensAmtLessThanFee;
+    ThrowError e
+  end
 end
 
 (* @param amount: Amount of ZIL to withdraw, stZIL stake amount to withdraw will be calculated basing on this parameter *)
-(* Needed as a slashing on the protocol level *)
+(* Needed as a slashing on the protocol level. Withdrawal fee does not apply *)
 transition SlashSSN(withdraw_stake_amt: Uint128, ssnaddr: ByStr20)
   RequireAdmin;
 
