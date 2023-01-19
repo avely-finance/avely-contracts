@@ -105,7 +105,7 @@ func (s *MultisigWallet) SubmitChangeZimplAddressTransaction(stZilAddr string, a
 	return s.Call("SubmitChangeZimplAddressTransaction", args, "0")
 }
 
-func (s *MultisigWallet) SubmitChangeRewardsFeeTransaction(stZilAddr string, newFee string) (*transaction.Transaction, error) {
+func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(stZilAddr, newMinDelegStake, newRewardsFee, newWithdrawalFee string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
 			VName: "calleeContract",
@@ -113,26 +113,19 @@ func (s *MultisigWallet) SubmitChangeRewardsFeeTransaction(stZilAddr string, new
 			Value: stZilAddr,
 		},
 		{
-			VName: "new_fee",
+			VName: "new_mindelegstake",
 			Type:  "Uint128",
-			Value: newFee,
-		},
-	}
-
-	return s.Call("SubmitChangeRewardsFeeTransaction", args, "0")
-}
-
-func (s *MultisigWallet) SubmitUpdateStakingParametersTransaction(stZilAddr string, minDelegStake string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			VName: "calleeContract",
-			Type:  "ByStr20",
-			Value: stZilAddr,
+			Value: newMinDelegStake,
 		},
 		{
-			VName: "min_deleg_stake",
+			VName: "new_rewards_fee",
 			Type:  "Uint128",
-			Value: minDelegStake,
+			Value: newRewardsFee,
+		},
+		{
+			VName: "new_withdrawal_fee",
+			Type:  "Uint128",
+			Value: newWithdrawalFee,
 		},
 	}
 
