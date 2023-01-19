@@ -1234,25 +1234,23 @@ transition IncreaseAutoRestakeAmount()
   event e
 end
 
-transition ChangeRewardsFee(new_fee: Uint128)
+(* @dev: Set the staking parameters of contract. *)
+transition UpdateStakingParameters(new_mindelegstake: Uint128, new_rewards_fee: Uint128, new_withdrawal_fee: Uint128)
   RequireOwner;
-  is_valid_fee = uint128_le new_fee fee_denom;
+
+  is_valid_fee = uint128_le new_rewards_fee fee_denom;
   match is_valid_fee with
   | False =>
     e = InvalidRewardsFee;
     ThrowError e
   | True =>
-    rewards_fee := new_fee
-  end
-end
+    rewards_fee := new_rewards_fee
+  end;
 
-(* @dev: Set the staking parameters of contract. *)
-(* @param min_deleg_stake: New mindelegstake value *)
-transition UpdateStakingParameters(min_deleg_stake: Uint128)
-  RequireOwner;
-  mindelegstake := min_deleg_stake;
+  mindelegstake := new_mindelegstake;
+  withdrawal_fee := new_withdrawal_fee;
 
-  e = { _eventname: "UpdateStakingParameters"; min_deleg_stake: min_deleg_stake };
+  e = { _eventname: "UpdateStakingParameters"; mindelegstake: new_mindelegstake; rewards_fee: new_rewards_fee; withdrawal_fee: new_withdrawal_fee };
   event e
 end
 

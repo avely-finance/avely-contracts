@@ -122,9 +122,9 @@ func (tr *Transitions) CompleteWithdrawalMultiSsn() {
 	p := tr.DeployAndUpgrade()
 	aliceAddr := utils.GetAddressByWallet(alice)
 
-	rewardsFee := "1000" //10% of feeDenom=10000
-	p.StZIL.SetSigner(celestials.Owner)
-	AssertSuccess(p.StZIL.ChangeRewardsFee(rewardsFee))
+	// rewardsFee := "1000" //10% of feeDenom=10000
+	// p.StZIL.SetSigner(celestials.Owner)
+	// AssertSuccess(p.StZIL.ChangeRewardsFee(rewardsFee))
 	p.StZIL.SetSigner(celestials.Admin)
 
 	//totalSsnInitialDelegateZil := len(sdk.Cfg.SsnAddrs) * sdk.Cfg.SsnInitialDelegateZil
