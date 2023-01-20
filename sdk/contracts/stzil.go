@@ -251,6 +251,17 @@ func (a *StZIL) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction
 	return a.Call("ChangeTreasuryAddress", args, "0")
 }
 
+func (a *StZIL) ChangeWithdrawalFeeAddress(address string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "address",
+			Type:  "ByStr20",
+			Value: address,
+		},
+	}
+	return a.Call("ChangeWithdrawalFeeAddress", args, "0")
+}
+
 func (a *StZIL) SetHolderAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -313,17 +324,6 @@ func (a *StZIL) IncreaseAutoRestakeAmount(amount string) (*transaction.Transacti
 func (a *StZIL) PerformAutoRestake() (*transaction.Transaction, error) {
 	args := []core.ContractValue{}
 	return a.Call("PerformAutoRestake", args, "0")
-}
-
-func (a *StZIL) UpdateWithdrawalFeeAddress(newWithdrawalFeeAddress string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			VName: "new_withdrawal_fee_address",
-			Type:  "ByStr20",
-			Value: newWithdrawalFeeAddress,
-		},
-	}
-	return a.Call("UpdateWithdrawalFeeAddress", args, "0")
 }
 
 func (a *StZIL) UpdateStakingParameters(newMinDelegStake, newRewardsFee, newWithdrawalFee string) (*transaction.Transaction, error) {

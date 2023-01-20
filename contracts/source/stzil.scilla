@@ -1096,6 +1096,12 @@ transition ChangeTreasuryAddress(address: ByStr20)
   treasury_address := address
 end
 
+
+transition ChangeWithdrawalFeeAddress(address: ByStr20)
+  RequireOwner;
+  withdrawal_fee_address := address
+end
+
 transition SetHolderAddress(address: ByStr20)
   RequireOwner;
   var_holder_addr <- holder_address;
@@ -1231,15 +1237,6 @@ transition IncreaseAutoRestakeAmount()
   IncreaseAutoRestakeAmt amount;
 
   e = { _eventname: "IncreaseAutoRestakeAmount"; amount: amount };
-  event e
-end
-
-transition UpdateWithdrawalFeeAddress(new_withdrawal_fee_address: ByStr20)
-  RequireOwner;
-
-  withdrawal_fee_address := new_withdrawal_fee_address;
-
-  e = { _eventname: "UpdateWithdrawalFeeAddress"; withdrawal_fee_address: new_withdrawal_fee_address };
   event e
 end
 

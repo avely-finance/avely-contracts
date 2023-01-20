@@ -73,6 +73,8 @@ type CalleeTransaction =
 | ChangeAdmin of ByStr20
 (* ChangeTreasuryAddress(address: ByStr20)           *)
 | ChangeTreasuryAddress of ByStr20
+(* ChangeWithdrawalFeeAddress(address: ByStr20)      *)
+| ChangeWithdrawalFeeAddress of ByStr20
 (* ChangeZimplAddress(address: ByStr20)              *)
 | ChangeZimplAddress of ByStr20
 (* UpdateStakingParameters(                          *)
@@ -191,6 +193,12 @@ let custom_transaction_msg_as_list =
          _tag: "ChangeTreasuryAddress";
          _amount: Uint128 0;
          address : address }
+      (* ChangeWithdrawalFeeAddress(address: ByStr20) *)
+      | ChangeWithdrawalFeeAddress address =>
+        {_recipient: calleeContract ;
+         _tag: "ChangeWithdrawalFeeAddress";
+         _amount: Uint128 0;
+         address : address }
       (* ChangeZimplAddress(address: ByStr20) *)
       | ChangeZimplAddress address =>
         {_recipient: calleeContract ;
@@ -204,8 +212,7 @@ let custom_transaction_msg_as_list =
          _amount: Uint128 0;
          new_mindelegstake : new_mindelegstake;
          new_rewards_fee : new_rewards_fee;
-         new_withdrawal_fee : new_withdrawal_fee
-        }
+         new_withdrawal_fee : new_withdrawal_fee }
       (* SetHolderAddress(address: ByStr20) *)
       | SetHolderAddress address =>
         {_recipient: calleeContract ;
@@ -524,6 +531,12 @@ end
 (* Submit a new ChangeTreasuryAddress transaction for future signoff *)
 transition SubmitChangeTreasuryAddressTransaction (calleeContract : ByStr20, address : ByStr20)
   transaction = ChangeTreasuryAddress address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new UpdateStakingParameters transaction for future signoff *)
+transition SubmitChangeWithdrawalFeeAddressTransaction (calleeContract : ByStr20, address : ByStr20)
+  transaction = ChangeWithdrawalFeeAddress address;
   SubmitCustomTransaction calleeContract transaction
 end
 
