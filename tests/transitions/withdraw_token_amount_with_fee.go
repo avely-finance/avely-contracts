@@ -24,8 +24,13 @@ func (tr *Transitions) WithdrawTokenAmountWithFee() {
 	tokens := ToZil(12)
 	AssertSuccess(p.StZIL.DelegateStake(tokens))
 	txn, _ := p.StZIL.WithdrawTokensAmt(tokens)
-
 	bnum1 := txn.Receipt.EpochNum
+
+	AssertEvent(txn, Event{
+		Sender:    p.StZIL.Addr,
+		EventName: "TransferSuccess",
+		Params:    ParamsMap{"sender": bobAddr, "recipient": aliceAddr, "amount": fees},
+	})
 
 	withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum1, bobAddr).Withdrawal()
 
