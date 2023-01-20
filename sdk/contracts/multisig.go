@@ -88,6 +88,23 @@ func (s *MultisigWallet) SubmitChangeTreasuryAddressTransaction(stZilAddr string
 	return s.Call("SubmitChangeTreasuryAddressTransaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitChangeWithdrawalFeeAddressTransaction(stZilAddr string, addr string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: stZilAddr,
+		},
+		{
+			VName: "address",
+			Type:  "ByStr20",
+			Value: addr,
+		},
+	}
+
+	return s.Call("SubmitChangeWithdrawalFeeAddressTransaction", args, "0")
+}
+
 func (s *MultisigWallet) SubmitChangeZimplAddressTransaction(stZilAddr string, addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{

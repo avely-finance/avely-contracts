@@ -13,6 +13,7 @@ func (tr *Transitions) MultisigWalletTests() {
 	multisigGoldenFlowTest(tr)
 	multisigUpdateOwner(tr)
 	multisigChangeAdminTest(tr)
+	multisigChangeWithdrawalFeeAddressTest(tr)
 	multisigChangeBuffersTest(tr)
 	multisigAddRemoveSSNTest(tr)
 	multisigManagableActions(tr)
@@ -83,6 +84,24 @@ func multisigChangeAdminTest(tr *Transitions) {
 	AssertMultisigSuccess(multisig.SubmitChangeAdminTransaction(stzil.Addr, newAdmin))
 	AssertMultisigSuccess(multisig.ExecuteTransaction(txId))
 	AssertEqual(Field(stzil, "admin_address"), newAdmin)
+}
+
+func multisigChangeWithdrawalFeeAddressTest(tr *Transitions) {
+	owners := []string{utils.GetAddressByWallet(alice)}
+	signCount := 1
+	multisig := tr.DeployMultisigWallet(owners, signCount)
+
+	p := tr.DeployAndUpgrade()
+
+	stzil, _ := NewStZILContract(sdk, multisig.Addr, p.Zimpl.Addr, celestials.Admin)
+
+	newWithdrawalFee := utils.GetAddressByWallet(bob)
+
+	// after submitting transaction it automatically signed by the _sender
+	multisig.SetSigner(alice)
+	AssertMultisigSuccess(multisig.SubmitChangeWithdrawalFeeAddressTransaction(stzil.Addr, newWithdrawalFee))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txId))
+	AssertEqual(Field(stzil, "withdrawal_fee_address"), newWithdrawalFee)
 }
 
 func multisigUpdateOwner(tr *Transitions) {
