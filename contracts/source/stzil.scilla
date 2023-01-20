@@ -804,6 +804,33 @@ procedure UpdateTokenBalance(initiator: ByStr20, stake_amt: Uint128)
 
 end
 
+procedure RequireValidWithdrawAmount(withdrawal_fee: Uint128, amount: Uint128)
+  is_fee_less_than_amount = builtin lt withdrawal_fee amount;
+
+  match is_fee_less_than_amount with
+  | True =>
+    (* Do Nothing *)
+  | False =>
+    e = WithdrawTokensAmtLessThanFee;
+    ThrowError e
+  end
+end
+
+procedure TakeWithdrawalFee(withdrawal_fee: Uint128)
+  is_zero_fees = builtin eq withdrawal_fee uint128_zero;
+
+  match is_zero_fees with
+  | True =>
+    (* Do nothing *)
+  | False =>
+    var_withdrawal_fee_address <- withdrawal_fee_address;
+    o_current_balance <- balances[var_withdrawal_fee_address];
+    current_balance = option_uint128_value o_current_balance;
+    new_balance = builtin add current_balance withdrawal_fee;
+    balances[var_withdrawal_fee_address] := new_balance
+  end
+end
+
 procedure AdjustDeleg(deleg: ByStr20, total_amount: Uint128, withdraw_amount: Uint128)
   sufficient = uint128_le withdraw_amount total_amount;
   match sufficient with
@@ -1366,45 +1393,26 @@ end
 transition WithdrawTokensAmt(amount: Uint128)
   RequireNotPausedOut;
 
+  (* Handle withdrawal fee *)
   var_withdrawal_fee <- withdrawal_fee;
+  RequireValidWithdrawAmount var_withdrawal_fee amount;
+  TakeWithdrawalFee var_withdrawal_fee;
+  withdraw_token_amt = builtin sub amount var_withdrawal_fee;
 
-  is_fee_less_than_amount = builtin lt var_withdrawal_fee amount;
-  match is_fee_less_than_amount with
-  | True =>
-    (* Apply withdrawal fees *)
-    withdraw_token_amt = builtin sub amount var_withdrawal_fee;
-    is_zero_fees = builtin eq var_withdrawal_fee uint128_zero;
+  (* Calculate token to zil to withdraw *)
+  total_supply_amt <- total_supply;
+  total_stake_amt <- totalstakeamount;
+  withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_supply_amt;
 
-    match is_zero_fees with
-    | True =>
-      (* Do nothing *)
-    | False =>
-      (* Add fees to withdrawal fees address *)
-      var_withdrawal_fee_address <- withdrawal_fee_address;
-      o_current_balance <- balances[var_withdrawal_fee_address];
-      current_balance = option_uint128_value o_current_balance;
-      new_balance = builtin add current_balance var_withdrawal_fee;
-      balances[var_withdrawal_fee_address] := new_balance
-    end;
+  GetSsnAddressForOutput withdraw_stake_amt;
+  ssnaddr <- tmp_ssn_addr_out;
+  (* first we do all checks, then call Holder on success within procedure *)
+  DoWithdrawal _sender ssnaddr withdraw_token_amt withdraw_stake_amt;
 
-    (* Calculate token to zil to withdraw *)
-    total_supply_amt <- total_supply;
-    total_stake_amt <- totalstakeamount;
-    withdraw_stake_amt = muldiv withdraw_token_amt total_stake_amt total_supply_amt;
-
-    GetSsnAddressForOutput withdraw_stake_amt;
-    ssnaddr <- tmp_ssn_addr_out;
-    (* first we do all checks, then call Holder on success within procedure *)
-    DoWithdrawal _sender ssnaddr withdraw_token_amt withdraw_stake_amt;
-
-    msg_to_delegator = {_tag : "WithdrawTokensAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
-      ssnaddr : ssnaddr; amount : withdraw_token_amt};
-    msg = one_msg msg_to_delegator;
-    send msg
-  | False =>
-    e = WithdrawTokensAmtLessThanFee;
-    ThrowError e
-  end
+  msg_to_delegator = {_tag : "WithdrawTokensAmtSuccessCallBack"; _recipient : _sender; _amount : uint128_zero;
+    ssnaddr : ssnaddr; amount : withdraw_token_amt};
+  msg = one_msg msg_to_delegator;
+  send msg
 end
 
 (* @param amount: Amount of ZIL to withdraw, stZIL stake amount to withdraw will be calculated basing on this parameter *)
