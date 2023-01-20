@@ -15,13 +15,13 @@ func (tr *Transitions) WithdrawTokenAmountWithFee() {
 	aliceAddr := utils.GetAddressByWallet(alice)
 
 	p.StZIL.SetSigner(celestials.Owner)
-	fees := ToStZil(1)
+	fees := ToStZil(2)
 	AssertSuccess(p.StZIL.UpdateStakingParameters("0", "0", fees))
 	AssertSuccess(p.StZIL.ChangeWithdrawalFeeAddress(aliceAddr))
 
 	p.StZIL.SetSigner(bob)
 
-	tokens := ToZil(15)
+	tokens := ToZil(12)
 	AssertSuccess(p.StZIL.DelegateStake(tokens))
 	txn, _ := p.StZIL.WithdrawTokensAmt(tokens)
 
@@ -29,9 +29,12 @@ func (tr *Transitions) WithdrawTokenAmountWithFee() {
 
 	withdrawal := Dig(p.StZIL, "withdrawal_pending", bnum1, bobAddr).Withdrawal()
 
-	AssertEqual(withdrawal.TokenAmount.String(), ToStZil(14))
-	AssertEqual(withdrawal.StakeAmount.String(), ToStZil(14))
+	AssertEqual(withdrawal.TokenAmount.String(), ToStZil(10))
+	AssertEqual(withdrawal.StakeAmount.String(), ToStZil(10))
 
 	// alice should have withdrawal fees
 	AssertEqual(Field(p.StZIL, "balances", aliceAddr), fees)
+
+	tx, _ := p.StZIL.WithdrawTokensAmt(ToStZil(1))
+	AssertError(tx, p.StZIL.ErrorCode("WithdrawTokensAmtLessThanFee"))
 }
