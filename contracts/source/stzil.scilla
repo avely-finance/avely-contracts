@@ -1234,6 +1234,15 @@ transition IncreaseAutoRestakeAmount()
   event e
 end
 
+transition UpdateWithdrawalFeeAddress(new_withdrawal_fee_address: ByStr20)
+  RequireOwner;
+
+  withdrawal_fee_address := new_withdrawal_fee_address;
+
+  e = { _eventname: "UpdateWithdrawalFeeAddress"; withdrawal_fee_address: new_withdrawal_fee_address };
+  event e
+end
+
 (* @dev: Set the staking parameters of contract. *)
 transition UpdateStakingParameters(new_mindelegstake: Uint128, new_rewards_fee: Uint128, new_withdrawal_fee: Uint128)
   RequireOwner;

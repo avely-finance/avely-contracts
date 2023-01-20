@@ -315,6 +315,17 @@ func (a *StZIL) PerformAutoRestake() (*transaction.Transaction, error) {
 	return a.Call("PerformAutoRestake", args, "0")
 }
 
+func (a *StZIL) UpdateWithdrawalFeeAddress(newWithdrawalFeeAddress string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "new_withdrawal_fee_address",
+			Type:  "ByStr20",
+			Value: newWithdrawalFeeAddress,
+		},
+	}
+	return a.Call("UpdateWithdrawalFeeAddress", args, "0")
+}
+
 func (a *StZIL) UpdateStakingParameters(newMinDelegStake, newRewardsFee, newWithdrawalFee string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
