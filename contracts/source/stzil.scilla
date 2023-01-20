@@ -816,7 +816,7 @@ procedure RequireValidWithdrawAmount(withdrawal_fee: Uint128, amount: Uint128)
   end
 end
 
-procedure TakeWithdrawalFee(withdrawal_fee: Uint128)
+procedure TakeWithdrawalFee(sender: ByStr20, withdrawal_fee: Uint128)
   is_zero_fees = builtin eq withdrawal_fee uint128_zero;
 
   match is_zero_fees with
@@ -827,7 +827,10 @@ procedure TakeWithdrawalFee(withdrawal_fee: Uint128)
     o_current_balance <- balances[var_withdrawal_fee_address];
     current_balance = option_uint128_value o_current_balance;
     new_balance = builtin add current_balance withdrawal_fee;
-    balances[var_withdrawal_fee_address] := new_balance
+    balances[var_withdrawal_fee_address] := new_balance;
+
+    e = {_eventname : "TransferSuccess"; sender : sender; recipient : var_withdrawal_fee_address; amount : withdrawal_fee};
+    event e
   end
 end
 
@@ -1396,7 +1399,7 @@ transition WithdrawTokensAmt(amount: Uint128)
   (* Handle withdrawal fee *)
   var_withdrawal_fee <- withdrawal_fee;
   RequireValidWithdrawAmount var_withdrawal_fee amount;
-  TakeWithdrawalFee var_withdrawal_fee;
+  TakeWithdrawalFee _sender var_withdrawal_fee;
   withdraw_token_amt = builtin sub amount var_withdrawal_fee;
 
   (* Calculate token to zil to withdraw *)
