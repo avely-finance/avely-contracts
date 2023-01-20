@@ -22,9 +22,6 @@ func (tr *Transitions) IsAdmin() {
 	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
 	tx, _ = p.StZIL.ClaimRewards(p.GetBuffer().Addr, sdk.Cfg.SsnAddrs[0])
 	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
-	readyBlocks := []string{}
-	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
-	AssertError(tx, p.StZIL.ErrorCode("AdminValidationFailed"))
 
 	eveAddr := utils.GetAddressByWallet(eve)
 	tx, _ = p.StZIL.ChownStakeReDelegate(eveAddr, ToZil(1))

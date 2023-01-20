@@ -1340,7 +1340,6 @@ end
 (********************************************************************************)
 
 transition ClaimWithdrawal(blocks_to_withdraw: List BNum)
-  RequireAdmin;
   FetchRemoteZimplFields;
 
   current_bnum <- & BLOCKNUMBER;
