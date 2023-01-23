@@ -18,7 +18,7 @@ func (tr *Transitions) DrainBuffer() {
 
 	rewardsFee := "1000" //10% of feeDenom=10000
 	p.StZIL.SetSigner(celestials.Owner)
-	AssertSuccess(p.StZIL.ChangeRewardsFee(rewardsFee))
+	AssertSuccess(p.StZIL.UpdateStakingParameters("0", rewardsFee, "0"))
 
 	p.StZIL.SetSigner(celestials.Admin) //back to admin
 

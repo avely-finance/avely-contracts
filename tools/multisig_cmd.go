@@ -60,8 +60,6 @@ func main() {
 		removeSSN(m, stZilAddr, ssnaddr)
 	case "SubmitClaimOwnerTransaction":
 		claimOwner(m, stZilAddr)
-	case "SubmitChangeRewardsFeeTransaction":
-		changeRewardsFee(m, stZilAddr, strconv.Itoa(sdk.Cfg.ProtocolRewardsFee))
 	case "SubmitChangeTreasuryAddressTransaction":
 		changeTreasuryAddress(m, stZilAddr, sdk.Cfg.TreasuryAddr)
 	case "SubmitUnPauseInTransaction":
@@ -91,10 +89,6 @@ func addSSN(m *MultisigWallet, callee string, ssnaddr string) {
 
 func removeSSN(m *MultisigWallet, callee string, ssnaddr string) {
 	check(m.SubmitRemoveSSNTransaction(callee, ssnaddr))
-}
-
-func changeRewardsFee(m *MultisigWallet, callee string, value string) {
-	check(m.SubmitChangeRewardsFeeTransaction(callee, value))
 }
 
 func changeTreasuryAddress(m *MultisigWallet, callee string, value string) {

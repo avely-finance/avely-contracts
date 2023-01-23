@@ -251,6 +251,17 @@ func (a *StZIL) ChangeTreasuryAddress(new_addr string) (*transaction.Transaction
 	return a.Call("ChangeTreasuryAddress", args, "0")
 }
 
+func (a *StZIL) ChangeWithdrawalFeeAddress(address string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "address",
+			Type:  "ByStr20",
+			Value: address,
+		},
+	}
+	return a.Call("ChangeWithdrawalFeeAddress", args, "0")
+}
+
 func (a *StZIL) SetHolderAddress(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
@@ -260,17 +271,6 @@ func (a *StZIL) SetHolderAddress(new_addr string) (*transaction.Transaction, err
 		},
 	}
 	return a.Contract.Call("SetHolderAddress", args, "0")
-}
-
-func (a *StZIL) ChangeRewardsFee(new_fee string) (*transaction.Transaction, error) {
-	args := []core.ContractValue{
-		{
-			"new_fee",
-			"Uint128",
-			new_fee,
-		},
-	}
-	return a.Call("ChangeRewardsFee", args, "0")
 }
 
 func (a *StZIL) ChownStakeConfirmSwap(delegator string) (*transaction.Transaction, error) {
@@ -326,12 +326,22 @@ func (a *StZIL) PerformAutoRestake() (*transaction.Transaction, error) {
 	return a.Call("PerformAutoRestake", args, "0")
 }
 
-func (a *StZIL) UpdateStakingParameters(min_deleg_stake string) (*transaction.Transaction, error) {
+func (a *StZIL) UpdateStakingParameters(newMinDelegStake, newRewardsFee, newWithdrawalFee string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
-			"min_deleg_stake",
-			"Uint128",
-			min_deleg_stake,
+			VName: "new_mindelegstake",
+			Type:  "Uint128",
+			Value: newMinDelegStake,
+		},
+		{
+			VName: "new_rewards_fee",
+			Type:  "Uint128",
+			Value: newRewardsFee,
+		},
+		{
+			VName: "new_withdrawal_fee",
+			Type:  "Uint128",
+			Value: newWithdrawalFee,
 		},
 	}
 	return a.Call("UpdateStakingParameters", args, "0")
