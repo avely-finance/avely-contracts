@@ -88,7 +88,7 @@ func DeployOnlyAvely(sdk *AvelySDK, ownerAddr string, admin *account.Wallet, log
 	if err != nil {
 		log.Fatal("deploy Treasury error = " + err.Error())
 	}
-	log.Debug("deploy Treasury succeed, address = " + StZIL.Addr)
+	log.Debug("deploy Treasury succeed, address = " + Treasury.Addr)
 
 	return NewProtocol(Zproxy, Zimpl, StZIL, buffers, Holder, Treasury)
 }
