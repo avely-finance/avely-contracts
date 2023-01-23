@@ -35,7 +35,6 @@ func (tr *Transitions) IsOwner() {
 	tx, _ = p.StZIL.SetHolderAddress(randomAddr)
 	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
-	tx, _ = p.StZIL.ChangeRewardsFee("100")
 	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
 	tx, _ = p.StZIL.ChangeTreasuryAddress(randomAddr)
@@ -44,7 +43,10 @@ func (tr *Transitions) IsOwner() {
 	tx, _ = p.StZIL.ChangeZimplAddress(randomAddr)
 	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
-	tx, _ = p.StZIL.UpdateStakingParameters(ToZil(100))
+	tx, _ = p.StZIL.ChangeWithdrawalFeeAddress(randomAddr)
+	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
+
+	tx, _ = p.StZIL.UpdateStakingParameters(ToZil(100), "10", ToZil(100))
 	AssertError(tx, p.StZIL.ErrorCode("CodeNotOwner"))
 
 	// Holder
