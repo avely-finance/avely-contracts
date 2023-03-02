@@ -745,4 +745,10 @@ func aswapOwnerOnly(tr *Transitions) {
 
 	tx, _ = aswap.ChangeOwner(core.ZeroAddr)
 	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
+
+	tx, _ = aswap.AllowToken(core.ZeroAddr)
+	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
+
+	tx, _ = aswap.DisallowToken(core.ZeroAddr)
+	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
 }

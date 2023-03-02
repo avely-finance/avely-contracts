@@ -166,6 +166,28 @@ func (a *ASwap) SwapExactTokensForZIL(tokenAddress, tokenAmount, minZilAmount, r
 	return a.Call("SwapExactTokensForZIL", args, "0")
 }
 
+func (a *ASwap) AllowToken(token_address string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"token_address",
+			"ByStr20",
+			token_address,
+		},
+	}
+	return a.Call("AllowToken", args, "0")
+}
+
+func (a *ASwap) DisallowToken(token_address string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			"token_address",
+			"ByStr20",
+			token_address,
+		},
+	}
+	return a.Call("DisallowToken", args, "0")
+}
+
 func (a *ASwap) ChangeOwner(new_addr string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
