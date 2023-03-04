@@ -791,12 +791,18 @@ func aswapTokenWhitelist(tr *Transitions) {
 	//allow token, expect sucess
 	AssertSuccess(aswap.AllowToken(testToken))
 
+	//check state
+	AssertContain(Field(aswap, "allowed_tokens"), testToken)
+
 	//allow same token, expect error
 	tx, _ = aswap.AllowToken(testToken)
 	AssertASwapError(tx, aswap.ErrorCode("CodeTokenIsAlreadyAllowed"))
 
 	//disallow token, expect sucess
 	AssertSuccess(aswap.DisallowToken(testToken))
+
+	//check state
+	AssertEqual(Field(aswap, "allowed_tokens"), "[]")
 
 	//disallow same token, expect error
 	tx, _ = aswap.DisallowToken(testToken)
