@@ -50,6 +50,7 @@ func (tr *Transitions) ASwap() {
 	aswapGolden(tr)
 	aswapMultisig(tr)
 	aswapOwnerOnly(tr)
+	aswapTokenWhitelist(tr)
 }
 
 func aswapBasic(tr *Transitions) {
@@ -62,14 +63,28 @@ func aswapBasic(tr *Transitions) {
 	aswap := tr.DeployASwap(init_owner_addr)
 	stzil := p.StZIL
 
+	//basic test will work in "strict" mode, when only one token is allowed
+	//allow fake token address, just for test
+	AssertSuccess(aswap.AllowToken(p.Holder.Addr))
+
 	liquidityAmount := ToQA(1000)
 
 	AssertSuccess(stzil.DelegateStake(liquidityAmount))
 
 	blockNum := p.GetBlockHeight()
 
-	//add liquidity
+	//increase stzil allowance for aswap
 	AssertSuccess(stzil.IncreaseAllowance(aswap.Contract.Addr, ToQA(10000)))
+
+	//expect error, because stzil token is not allowed
+	tx, _ := aswap.AddLiquidity(liquidityAmount, stzil.Contract.Addr, "0", liquidityAmount, blockNum)
+	AssertASwapError(tx, aswap.ErrorCode("CodeTokenIsNotAllowed"))
+
+	//allow stzil token, disallow fake token
+	AssertSuccess(aswap.AllowToken(stzil.Addr))
+	AssertSuccess(aswap.DisallowToken(p.Holder.Addr))
+
+	//retry add liquidity for allowed token, expect success
 	AssertSuccess(aswap.AddLiquidity(liquidityAmount, stzil.Contract.Addr, "0", liquidityAmount, blockNum))
 
 	//toggle pause
@@ -105,7 +120,7 @@ func aswapBasic(tr *Transitions) {
 	AssertSuccess(aswap.TogglePause())
 	aliceAddr := utils.GetAddressByWallet(alice)
 
-	tx, _ := AssertSuccess(aswap.SwapExactZILForTokens(ToQA(100), stzil.Contract.Addr, "90", aliceAddr, blockNum))
+	tx, _ = AssertSuccess(aswap.SwapExactZILForTokens(ToQA(100), stzil.Contract.Addr, "90", aliceAddr, blockNum))
 	AssertTransition(tx, Transition{
 		aswap.Addr, //sender
 		"AddFunds",
@@ -202,6 +217,7 @@ func aswapMultisig(tr *Transitions) {
 }
 
 func (tr *Transitions) setupGoldenFlow() (*contracts.Protocol, *contracts.ASwap, *contracts.StZIL) {
+	//golden flow test will work in "free" mode, when whitelist is empty, i.e. any token is allowed
 
 	Proto = tr.DeployAndUpgrade()
 
@@ -751,4 +767,39 @@ func aswapOwnerOnly(tr *Transitions) {
 
 	tx, _ = aswap.DisallowToken(core.ZeroAddr)
 	AssertASwapError(tx, aswap.ErrorCode("CodeNotContractOwner"))
+}
+
+func aswapTokenWhitelist(tr *Transitions) {
+
+	Start("aswapTokenWhitelist")
+
+	init_owner_addr := utils.GetAddressByWallet(celestials.Admin)
+	aswap := tr.DeployASwap(init_owner_addr)
+	aswap.SetSigner(celestials.Admin)
+	testToken := utils.GetAddressByWallet(alice)
+
+	//test AllowToken transition
+	tx, _ := aswap.AllowToken(core.ZeroAddr)
+	AssertASwapError(tx, aswap.ErrorCode("CodeEmptyAddress"))
+
+	tx, _ = aswap.AllowToken(init_owner_addr)
+	AssertASwapError(tx, aswap.ErrorCode("CodeSameAddress"))
+
+	tx, _ = aswap.AllowToken(aswap.Addr)
+	AssertASwapError(tx, aswap.ErrorCode("CodeSameAddress"))
+
+	//allow token, expect sucess
+	AssertSuccess(aswap.AllowToken(testToken))
+
+	//allow same token, expect error
+	tx, _ = aswap.AllowToken(testToken)
+	AssertASwapError(tx, aswap.ErrorCode("CodeTokenIsAlreadyAllowed"))
+
+	//disallow token, expect sucess
+	AssertSuccess(aswap.DisallowToken(testToken))
+
+	//disallow same token, expect error
+	tx, _ = aswap.DisallowToken(testToken)
+	AssertASwapError(tx, aswap.ErrorCode("CodeTokenIsNotAllowed"))
+
 }

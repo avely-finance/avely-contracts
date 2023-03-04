@@ -314,7 +314,6 @@ field min_lp: Uint128 = Uint128 100000000000000
 field pause: Uint32 = zero32
 
 
-
 procedure ThrowError(err : Error)
   e = make_error err;
   throw e
@@ -382,7 +381,7 @@ procedure ThrowIfNotAllowed(token_address: ByStr20)
     found = is_addr_in_list var_allowed_tokens token_address;
     match found with
     | True =>
-      (* token found in whitelist, everything ok *)
+      (* token found in whitelist, everything is ok *)
     | False =>
       e = CodeTokenIsNotAllowed;
       ThrowError e
