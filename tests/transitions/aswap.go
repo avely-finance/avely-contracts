@@ -47,10 +47,10 @@ t.LogDebug()
 
 func (tr *Transitions) ASwap() {
 	aswapBasic(tr)
-	//aswapGolden(tr)
-	//aswapMultisig(tr)
-	//aswapOwnerOnly(tr)
-	//aswapTokenWhitelist(tr)
+	aswapGolden(tr)
+	aswapMultisig(tr)
+	aswapOwnerOnly(tr)
+	aswapTokenWhitelist(tr)
 }
 
 func aswapBasic(tr *Transitions) {
