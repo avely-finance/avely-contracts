@@ -1,0 +1,79 @@
+scilla_version 0
+
+library Fraction
+
+let zero256 = Uint256 0
+let one256 = Uint256 1
+
+let grow_u128: Uint128 -> Uint256 =
+  fun (v : Uint128) =>
+    let some_big = builtin to_uint256 v in
+    match some_big with
+    | Some big => big
+    | None => builtin div zero256 zero256 (* should never happen *)
+    end
+
+let fall_u256: Uint256 -> Uint128 =
+  fun (v : Uint256) =>
+    let some_u128 = builtin to_uint128 v in
+    let zero128 = Uint128 0 in
+    match some_u128 with
+    | Some u => u
+    | None => builtin div zero128 zero128 (* should never happen *)
+    end
+
+(* computes the amount of the fraction x / d that is in y *)
+let fraction: Uint256 -> Uint256 -> Uint256 -> Uint256 =
+  fun (d: Uint256) =>
+  fun (x: Uint256) =>
+  fun (y: Uint256) =>
+    let d_times_y = builtin mul d y in
+      builtin div d_times_y x
+
+(* computes the amount of the fraction x / d that is in y, rounding up *)
+let fractionCeil: Uint256 -> Uint256 -> Uint256 -> Uint256 =
+  fun (d: Uint256) =>
+  fun (x: Uint256) =>
+  fun (y: Uint256) =>
+    let d_times_y = builtin mul d y in
+    let quotient = builtin div d_times_y x in
+    let remainder = builtin rem d_times_y x in
+    let is_rem_zero = builtin eq remainder zero256 in
+    match is_rem_zero with
+    | True => quotient
+    | False =>
+      builtin add quotient one256
+    end
+
+contract Fraction
+(
+)
+
+transition Fraction(amount : Uint128, x : Uint128, y : Uint128)
+
+  amount256 = grow_u128 amount;
+  x256 = grow_u128 x;
+  y256 = grow_u128 y;
+
+  result256 = fraction amount256 x256 y256;
+  result128 = fall_u256 result256;
+
+  e = { _eventname: "Result"; value: result128 };
+  event e
+
+end
+
+transition FractionCeil(amount : Uint128, x : Uint128, y : Uint128)
+
+  amount256 = grow_u128 amount;
+  x256 = grow_u128 x;
+  y256 = grow_u128 y;
+
+  result256 = fractionCeil amount256 x256 y256;
+  result128 = fall_u256 result256;
+
+  e = { _eventname: "Result"; value: result128 };
+  event e
+
+end
+

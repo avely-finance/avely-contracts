@@ -51,6 +51,7 @@ func (tr *Transitions) ASwap() {
 	aswapMultisig(tr)
 	aswapOwnerOnly(tr)
 	aswapTokenWhitelist(tr)
+	aswapFraction(tr)
 }
 
 func aswapBasic(tr *Transitions) {
@@ -836,5 +837,28 @@ func aswapTokenWhitelist(tr *Transitions) {
 	//disallow same token, expect error
 	tx, _ = aswap.DisallowToken(testToken)
 	AssertASwapError(tx, aswap.ErrorCode("CodeTokenIsNotAllowed"))
+
+}
+
+func aswapFraction(tr *Transitions) {
+
+	Start("aswapFraction")
+
+	zilReserve := 1024
+	stzilReserve := 1
+	zilAmount := 1023
+	expectedFractionFloor := "0"
+	expectedFractionCeil := "1"
+
+	fraction := tr.DeployFraction()
+
+	//dY = dX * Y / X
+	//stzilAmount = zilAmount * stzilReserve / zilReserve
+
+	tx, _ := AssertSuccess(fraction.Fraction(zilAmount, zilReserve, stzilReserve))
+	AssertEvent(tx, Event{fraction.Addr, "Result", ParamsMap{"value": expectedFractionFloor}})
+
+	tx, _ = AssertSuccess(fraction.FractionCeil(zilAmount, zilReserve, stzilReserve))
+	AssertEvent(tx, Event{fraction.Addr, "Result", ParamsMap{"value": expectedFractionCeil}})
 
 }
