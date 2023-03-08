@@ -160,7 +160,7 @@ func (sdk *AvelySDK) CallFor(c *contract2.Contract, transition string, args []co
 		Version:      strconv.FormatInt(int64(util.Pack(sdk.Cfg.ChainId, 1)), 10),
 		Nonce:        "",
 		GasPrice:     gasPrice,
-		GasLimit:     "40000",
+		GasLimit:     "400000",
 		Amount:       amount,
 		SenderPubKey: "",
 	}
