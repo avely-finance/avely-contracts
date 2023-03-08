@@ -830,7 +830,6 @@ transition RemoveLiquidity(
   ThrowZero contribution_amount;
   ThrowZero min_zil_amount;
   ThrowZero min_token_amount;
-  ThrowIfNotAllowed token_address;
 
   some_pool <- pools[token_address];
 

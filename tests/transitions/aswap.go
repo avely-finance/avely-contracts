@@ -136,6 +136,11 @@ func aswapBasic(tr *Transitions) {
 	})
 	AssertEqual(stzil.BalanceOf(aliceAddr).String(), expectedSwapOutput)
 
+	//disallow Stzil token, it should be still possible to remove stzil liquidity
+	//event if contract is in strict mode, i.e. whitelist is not empty (p.Holder fake token whitelisted)
+	AssertSuccess(aswap.AllowToken(p.Holder.Addr))
+	AssertSuccess(aswap.DisallowToken(stzil.Addr))
+
 	//take all liquidity back
 	expectedSwapOutputZil := "1099866666666667"
 	expectedSwapOutputStzil := "990112080687534"
