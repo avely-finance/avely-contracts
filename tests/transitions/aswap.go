@@ -51,6 +51,7 @@ func (tr *Transitions) ASwap() {
 	aswapMultisig(tr)
 	aswapOwnerOnly(tr)
 	aswapTokenWhitelist(tr)
+	aswapFraction(tr)
 }
 
 func aswapBasic(tr *Transitions) {
@@ -67,6 +68,7 @@ func aswapBasic(tr *Transitions) {
 	//allow fake token address, just for test
 	AssertSuccess(aswap.AllowToken(p.Holder.Addr))
 
+	liquidityAmountHalf := ToQA(500)
 	liquidityAmount := ToQA(1000)
 
 	AssertSuccess(stzil.DelegateStake(liquidityAmount))
@@ -85,7 +87,11 @@ func aswapBasic(tr *Transitions) {
 	AssertSuccess(aswap.DisallowToken(p.Holder.Addr))
 
 	//retry add liquidity for allowed token, expect success
-	AssertSuccess(aswap.AddLiquidity(liquidityAmount, stzil.Contract.Addr, "0", liquidityAmount, blockNum))
+	//first half, pool created
+	tx, _ = AssertSuccess(aswap.AddLiquidity(liquidityAmountHalf, stzil.Contract.Addr, "0", liquidityAmountHalf, blockNum))
+	AssertEvent(tx, Event{aswap.Addr, "PoolCreated", ParamsMap{"pool": stzil.Contract.Addr}})
+	//second half, into existent pool
+	AssertSuccess(aswap.AddLiquidity(liquidityAmountHalf, stzil.Contract.Addr, "0", liquidityAmountHalf, blockNum))
 
 	//toggle pause
 	AssertSuccess(aswap.TogglePause())
@@ -129,6 +135,35 @@ func aswapBasic(tr *Transitions) {
 		ParamsMap{},
 	})
 	AssertEqual(stzil.BalanceOf(aliceAddr).String(), expectedSwapOutput)
+
+	//disallow Stzil token, it should be still possible to remove stzil liquidity
+	//event if contract is in strict mode, i.e. whitelist is not empty (p.Holder fake token whitelisted)
+	AssertSuccess(aswap.AllowToken(p.Holder.Addr))
+	AssertSuccess(aswap.DisallowToken(stzil.Addr))
+
+	//take all liquidity back
+	expectedSwapOutputZil := "1099866666666667"
+	expectedSwapOutputStzil := "990112080687534"
+	pairOut := calcRemoveLiquidityOutput(aswap, stzil, init_owner_addr, liquidityAmount)
+	AssertEqual(pairOut.zil, expectedSwapOutputZil)
+	AssertEqual(pairOut.stzil, expectedSwapOutputStzil)
+	tx, _ = AssertSuccess(aswap.RemoveLiquidity(stzil.Addr, liquidityAmount, "1", "1", blockNum+1))
+	AssertTransition(tx, Transition{
+		aswap.Addr, //sender
+		"AddFunds",
+		init_owner_addr,
+		expectedSwapOutputZil,
+		ParamsMap{},
+	})
+	AssertTransition(tx, Transition{
+		aswap.Addr, //sender
+		"Transfer",
+		stzil.Addr,
+		"0",
+		ParamsMap{"to": init_owner_addr, "amount": expectedSwapOutputStzil},
+	})
+	AssertEqual(Field(aswap, "balances"), "{}")
+	AssertEqual(Field(aswap, "pools"), "{}")
 
 	//change owner
 	new_owner_addr := utils.GetAddressByWallet(eve)
@@ -411,7 +446,7 @@ func aswapGolden(tr *Transitions) {
 
 	//5) user1 remove liquidity
 	contribution := ToQA(1000)
-	pairOut := calcRemoveLiquidityOutput(Addr1, contribution)
+	pairOut := calcRemoveLiquidityOutput(Aswap, Stzil, Addr1, contribution)
 	//RemoveLiquidity(tokenAddress, contributionAmount, minZilAmount, minTokenAmount string, blockNum int) (*transaction.Transaction, error)
 	Aswap.SetSigner(Wallet1)
 	tx, _ = AssertSuccess(Aswap.RemoveLiquidity(Stzil.Addr, contribution, "1", "1", blockNum+1))
@@ -436,7 +471,7 @@ func aswapGolden(tr *Transitions) {
 	AssertEqual(Field(Aswap, "balances", Addr1), "")
 
 	//6) user3 remove liquidity
-	pairOut3 := calcRemoveLiquidityOutput(Addr3, "all")
+	pairOut3 := calcRemoveLiquidityOutput(Aswap, Stzil, Addr3, "all")
 	user3Contribution := Field(Aswap, "balances", Addr3, Stzil.Addr)
 	//RemoveLiquidity(tokenAddress, contributionAmount, minZilAmount, minTokenAmount string, blockNum int) (*transaction.Transaction, error)
 	Aswap.SetSigner(Wallet3)
@@ -496,7 +531,7 @@ func calcAddLiquidity(pair LiquidityPair) LiquidityPair {
 	panic("Calculation of stzil by zil not implemented")
 }
 
-func calcRemoveLiquidityOutput(senderAddr, contribution string) LiquidityPair {
+func calcRemoveLiquidityOutput(Aswap *contracts.ASwap, Stzil *contracts.StZIL, senderAddr, contribution string) LiquidityPair {
 	if Field(Aswap, "pools", Stzil.Addr) == "" {
 		panic("Pool does not exist")
 	} else if Field(Aswap, "balances", senderAddr, Stzil.Addr) == "" {
@@ -807,5 +842,28 @@ func aswapTokenWhitelist(tr *Transitions) {
 	//disallow same token, expect error
 	tx, _ = aswap.DisallowToken(testToken)
 	AssertASwapError(tx, aswap.ErrorCode("CodeTokenIsNotAllowed"))
+
+}
+
+func aswapFraction(tr *Transitions) {
+
+	Start("aswapFraction")
+
+	zilReserve := 1024
+	stzilReserve := 1
+	zilAmount := 1023
+	expectedFractionFloor := "0"
+	expectedFractionCeil := "1"
+
+	fraction := tr.DeployFraction()
+
+	//dY = dX * Y / X
+	//stzilAmount = zilAmount * stzilReserve / zilReserve
+
+	tx, _ := AssertSuccess(fraction.Fraction(zilAmount, zilReserve, stzilReserve))
+	AssertEvent(tx, Event{fraction.Addr, "Result", ParamsMap{"value": expectedFractionFloor}})
+
+	tx, _ = AssertSuccess(fraction.FractionCeil(zilAmount, zilReserve, stzilReserve))
+	AssertEvent(tx, Event{fraction.Addr, "Result", ParamsMap{"value": expectedFractionCeil}})
 
 }
