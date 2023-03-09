@@ -23,6 +23,8 @@ type Error =
   | CodePausedContract
   | CodeStagingOwnerMissing
   | CodeStagingOwnerInvalid
+  | CodeTokenIsAlreadyAllowed
+  | CodeTokenIsNotAllowed
 
 type Denom =
   | Zil
@@ -45,6 +47,7 @@ let one32 = Uint32 1
 let two32 = Uint32 2
 let two256 = Uint256 2
 let one128 = Uint128 1
+let one256 = Uint256 1
 let fee_demon = Uint256 10000
 
 let nil_addr_list = Nil {ByStr20}
@@ -120,6 +123,16 @@ let make_error =
         _exception: "Staging owner validation failed";
         code: Int32 -12
       }
+    | CodeTokenIsAlreadyAllowed =>
+      {
+        _exception: "Token is already whitelisted";
+        code: Int32 -13
+      }
+    | CodeTokenIsNotAllowed =>
+      {
+        _exception: "Token not found in whitelist";
+        code: Int32 -14
+      }
     end
 
 let option_value =
@@ -131,13 +144,11 @@ let option_value =
     | None => default
     end
 
-
 let option_uint128 = @option_value Uint128
 let option_uint32 = @option_value Uint32
 let option_list_addr = @option_value (List ByStr20)
 let addr_exists = @list_exists ByStr20
 let list_length_addr = @list_length ByStr20
-
 
 let grow_u128: Uint128 -> Uint256 =
   fun (v : Uint128) =>
@@ -162,6 +173,21 @@ let fraction: Uint256 -> Uint256 -> Uint256 -> Uint256 =
   fun (y: Uint256) =>
     let d_times_y = builtin mul d y in
       builtin div d_times_y x
+
+(* computes the amount of the fraction x / d that is in y, rounding up *)
+let fractionCeil: Uint256 -> Uint256 -> Uint256 -> Uint256 =
+  fun (d: Uint256) =>
+  fun (x: Uint256) =>
+  fun (y: Uint256) =>
+    let d_times_y = builtin mul d y in
+    let quotient = builtin div d_times_y x in
+    let remainder = builtin rem d_times_y x in
+    let is_rem_zero = builtin eq remainder zero256 in
+    match is_rem_zero with
+    | True => quotient
+    | False =>
+      builtin add quotient one256
+    end
 
 let output_for =
   fun (input_amount: Uint128) =>
@@ -202,6 +228,36 @@ let pool_from_denom =
       let new_y = builtin add y input_amount in
         Pair {Uint128 Uint128} new_x new_y
     end
+
+let bystr20_eq =
+  fun (x : ByStr20) =>
+  fun (y : ByStr20) =>
+    builtin eq x y
+
+let bystr20_neq : ByStr20 -> ByStr20 -> Bool =
+  fun (a: ByStr20) =>
+  fun(b: ByStr20) =>
+    let equal = builtin eq a b in
+    negb equal (* from BoolUtils *)
+
+(* check whether address is in a list of addresses *)
+let is_addr_in_list =
+  fun(l: List ByStr20) =>
+  fun(addr: ByStr20) =>
+    let feq = bystr20_eq addr in
+    let flist_exists = @list_exists ByStr20 in
+    flist_exists feq l
+
+let remove_addr_from_list = fun(addr: ByStr20) => fun(l: List ByStr20) =>
+  let f = bystr20_neq addr in
+  let filterBystr20 = @list_filter ByStr20 in
+  filterBystr20 f l
+
+let list_bystr20_length =
+  fun (l : List ByStr20) =>
+    let flist_length = @list_length ByStr20 in
+    flist_length l
+
 
 let is_empty_pool =
   fun (x: Uint128) =>
@@ -245,6 +301,9 @@ field owner: ByStr20 = init_owner
 
 (* Staging contract owner *)
 field staging_owner : Option ByStr20 = None {ByStr20}
+
+(* token whitelist *)
+field allowed_tokens: List ByStr20 = Nil {ByStr20}
 
 (* POOL token -> Pair{zil_reserve, token_reserve} *)
 field pools: Map ByStr20 (Pair Uint128 Uint128) = Emp ByStr20 (Pair Uint128 Uint128)
@@ -323,6 +382,26 @@ procedure ThrowIfSameAddress(address1: ByStr20, address2: ByStr20)
   | True =>
     err = CodeSameAddress;
     ThrowError err
+  end
+end
+
+procedure ThrowIfNotAllowed(token_address: ByStr20)
+  var_allowed_tokens <- allowed_tokens;
+  llen = list_bystr20_length var_allowed_tokens;
+  whitelist_empty = builtin eq zero32 llen;
+  match whitelist_empty with
+  | True =>
+    (* whitelist is empty, so any token is allowed *)
+  | False =>
+    (* whitelist is not empty *)
+    found = is_addr_in_list var_allowed_tokens token_address;
+    match found with
+    | True =>
+      (* token found in whitelist, everything is ok *)
+    | False =>
+      e = CodeTokenIsNotAllowed;
+      ThrowError e
+    end
   end
 end
 
@@ -654,6 +733,7 @@ transition AddLiquidity(
   ThrowZero max_token_amount;
   ThrowIfSameAddress token_address _sender;
   ThrowIfSameAddress token_address _this_address;
+  ThrowIfNotAllowed token_address;
 
   some_pool <- pools[token_address];
 
@@ -690,7 +770,7 @@ transition AddLiquidity(
 
       (* dY = dX * Y / X *)
       (* dX is always the QA transferred *)
-      result_u256 = fraction amount_u256 zil_reserve_u256 token_reserve_u256;
+      result_u256 = fractionCeil amount_u256 zil_reserve_u256 token_reserve_u256;
       result_u128 = fall_u256 result_u256;
 
       (* (_amount *  total_contribution) / x *)
@@ -850,6 +930,7 @@ transition SwapExactZILForTokens(
   ThrowZero _amount;
   ThrowZero min_token_amount;
   ThrowZeroAddress recipient_address;
+  ThrowIfNotAllowed token_address;
 
   direction = ZilToToken;
 
@@ -876,6 +957,7 @@ transition SwapExactTokensForZIL(
   ThrowZero token_amount;
   ThrowZero min_zil_amount;
   ThrowZeroAddress recipient_address;
+  ThrowIfNotAllowed token_address;
 
   direction = TokenToZil;
 
@@ -904,6 +986,8 @@ transition SwapExactTokensForTokens(
   ThrowZero min_token1_amount;
   ThrowZeroAddress recipient_address;
   ThrowIfSameAddress token0_address token1_address;
+  ThrowIfNotAllowed token0_address;
+  ThrowIfNotAllowed token1_address;
 
   direction = TokensToTokens;
 
@@ -973,7 +1057,41 @@ transition ClaimOwner()
     ThrowError err
   end
 end
-(* admin interactions *)
+
+transition AllowToken(token_address: ByStr20)
+  OwnerOnly;
+
+  ThrowZeroAddress token_address;
+  ThrowIfSameAddress token_address _sender;
+  ThrowIfSameAddress token_address _this_address;
+
+  var_allowed_tokens <- allowed_tokens;
+  found = is_addr_in_list var_allowed_tokens token_address;
+  match found with
+  | True =>
+    e = CodeTokenIsAlreadyAllowed;
+    ThrowError e
+  | False =>
+  end;
+  new_list = Cons {ByStr20} token_address var_allowed_tokens;
+  allowed_tokens := new_list
+end
+
+transition DisallowToken(token_address: ByStr20)
+  OwnerOnly;
+
+  var_allowed_tokens <- allowed_tokens;
+  found = is_addr_in_list var_allowed_tokens token_address;
+
+  match found with
+  | True =>
+    new_list = remove_addr_from_list token_address var_allowed_tokens;
+    allowed_tokens := new_list
+  | False =>
+    e = CodeTokenIsNotAllowed;
+    ThrowError e
+  end
+end
 
 (* callbacks *)
 transition RecipientAcceptTransfer(sender: ByStr20, recipient: ByStr20, amount: Uint128)
@@ -987,4 +1105,3 @@ end
 
 transition TransferSuccessCallBack(sender: ByStr20, recipient: ByStr20, amount: Uint128)
 end
-(* callbacks *)
