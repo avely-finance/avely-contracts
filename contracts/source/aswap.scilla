@@ -47,6 +47,7 @@ let one32 = Uint32 1
 let two32 = Uint32 2
 let two256 = Uint256 2
 let one128 = Uint128 1
+let one256 = Uint256 1
 let fee_demon = Uint256 10000
 
 let nil_addr_list = Nil {ByStr20}
@@ -172,6 +173,21 @@ let fraction: Uint256 -> Uint256 -> Uint256 -> Uint256 =
   fun (y: Uint256) =>
     let d_times_y = builtin mul d y in
       builtin div d_times_y x
+
+(* computes the amount of the fraction x / d that is in y, rounding up *)
+let fractionCeil: Uint256 -> Uint256 -> Uint256 -> Uint256 =
+  fun (d: Uint256) =>
+  fun (x: Uint256) =>
+  fun (y: Uint256) =>
+    let d_times_y = builtin mul d y in
+    let quotient = builtin div d_times_y x in
+    let remainder = builtin rem d_times_y x in
+    let is_rem_zero = builtin eq remainder zero256 in
+    match is_rem_zero with
+    | True => quotient
+    | False =>
+      builtin add quotient one256
+    end
 
 let output_for =
   fun (input_amount: Uint128) =>
@@ -754,7 +770,7 @@ transition AddLiquidity(
 
       (* dY = dX * Y / X *)
       (* dX is always the QA transferred *)
-      result_u256 = fraction amount_u256 zil_reserve_u256 token_reserve_u256;
+      result_u256 = fractionCeil amount_u256 zil_reserve_u256 token_reserve_u256;
       result_u128 = fall_u256 result_u256;
 
       (* (_amount *  total_contribution) / x *)
@@ -814,7 +830,6 @@ transition RemoveLiquidity(
   ThrowZero contribution_amount;
   ThrowZero min_zil_amount;
   ThrowZero min_token_amount;
-  ThrowIfNotAllowed token_address;
 
   some_pool <- pools[token_address];
 
