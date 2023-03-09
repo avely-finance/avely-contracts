@@ -207,6 +207,20 @@ func aswapMultisig(tr *Transitions) {
 	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
 	AssertEqual(Field(aswap, "pause"), "1")
 
+	//test ASwap.AllowToken()
+	txIdLocal++
+	token_address := utils.GetAddressByWallet(bob) //fake token
+	AssertEqual(Field(aswap, "allowed_tokens"), "[]")
+	AssertMultisigSuccess(multisig.SubmitAllowTokenTransaction(aswap.Addr, token_address))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "allowed_tokens.0"), token_address)
+
+	//test ASwap.DisallowToken()
+	txIdLocal++
+	AssertMultisigSuccess(multisig.SubmitDisallowTokenTransaction(aswap.Addr, token_address))
+	AssertMultisigSuccess(multisig.ExecuteTransaction(txIdLocal))
+	AssertEqual(Field(aswap, "allowed_tokens"), "[]")
+
 	//test ASwap.SetTreasuryFee()
 	txIdLocal++
 	new_fee := "12345"
