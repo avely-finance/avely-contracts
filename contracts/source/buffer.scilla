@@ -6,11 +6,9 @@ scilla_version 0
 library Buffer
 
 let uint128_zero = Uint128 0
-let bystr20_zero = 0x0000000000000000000000000000000000000000
 
 type Error =
   | StZILValidationFailed
-  | CantFetchZimplAddress
   | ClaimRewardsBufferFundsMismatch
   | ZimplValidationFailed
 
@@ -19,7 +17,6 @@ let make_error =
     let result_code =
       match result with
       | StZILValidationFailed           => Int32 -200
-      | CantFetchZimplAddress           => Int32 -201
       | ClaimRewardsBufferFundsMismatch => Int32 -202
       | ZimplValidationFailed           => Int32 -203
       end

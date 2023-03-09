@@ -30,7 +30,6 @@ type Error =
 | NoSignatureListFound
 | AlreadySigned
 | NotAlreadySigned
-| InvalidContract
 | InvalidAmount
 | NotEnoughSignatures
 | SenderMayNotExecute
@@ -48,7 +47,6 @@ let mk_error_event =
     | NoSignatureListFound      => Int32 -4
     | AlreadySigned             => Int32 -5
     | NotAlreadySigned          => Int32 -6
-    | InvalidContract           => Int32 -7
     | InvalidAmount             => Int32 -8
     | NotEnoughSignatures       => Int32 -9
     | SenderMayNotExecute       => Int32 -10
@@ -58,9 +56,7 @@ let mk_error_event =
   { _eventname : "WalletError" ; err_code : err_code }
 
 let t = True
-let f = False
 let zero = Uint32 0
-let zeroUint128 = Uint128 0
 let one = Uint32 1
 let transaction_inc = one
 

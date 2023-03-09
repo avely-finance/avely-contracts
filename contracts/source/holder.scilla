@@ -6,7 +6,6 @@ scilla_version 0
 library Holder
 
 let uint128_zero = Uint128 0
-let bystr20_zero = 0x0000000000000000000000000000000000000000
 let true = True
 
 let one_msg =
