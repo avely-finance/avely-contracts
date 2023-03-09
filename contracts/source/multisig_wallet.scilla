@@ -105,6 +105,10 @@ type CalleeTransaction =
 (*****************************************************)
 (*               ASwap Transitions                   *)
 (*****************************************************)
+(* AllowToken(token_address: ByStr20)                *)
+| AllowToken of ByStr20
+(* DisallowToken(token_address: ByStr20)             *)
+| DisallowToken of ByStr20
 (* SetTreasuryFee(new_fee: Uint128)                  *)
 | SetTreasuryFee of Uint128
 (* SetTreasuryAddress(new_address: ByStr20           *)
@@ -258,6 +262,18 @@ let custom_transaction_msg_as_list =
 
       (* ASwap transitions *)
 
+      (* AllowToken(token_address: ByStr20) *)
+      | AllowToken token_address =>
+        {_recipient: calleeContract ;
+         _tag: "AllowToken";
+         _amount: Uint128 0;
+         token_address : token_address }
+      (* DisallowToken(token_address: ByStr20) *)
+      | DisallowToken token_address =>
+        {_recipient: calleeContract ;
+         _tag: "DisallowToken";
+         _amount: Uint128 0;
+         token_address : token_address }
       (* SetTreasuryFee(new_fee: Uint128) *)
       | SetTreasuryFee new_fee =>
         {_recipient: calleeContract ;
@@ -616,6 +632,18 @@ end
 (***************************************************)
 (*               ASwap Transitions                 *)
 (***************************************************)
+
+(* Submit a new AllowToken transaction for future signoff *)
+transition SubmitAllowTokenTransaction (calleeContract : ByStr20, token_address : ByStr20)
+  transaction = AllowToken token_address;
+  SubmitCustomTransaction calleeContract transaction
+end
+
+(* Submit a new DisallowToken transaction for future signoff *)
+transition SubmitDisallowTokenTransaction (calleeContract : ByStr20, token_address : ByStr20)
+  transaction = DisallowToken token_address;
+  SubmitCustomTransaction calleeContract transaction
+end
 
 (* Submit a new SetTreasuryFee transaction for future signoff *)
 transition SubmitSetTreasuryFeeTransaction (calleeContract : ByStr20, new_fee : Uint128)

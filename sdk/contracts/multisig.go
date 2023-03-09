@@ -289,6 +289,40 @@ func (s *MultisigWallet) SubmitUnPauseZrc2Transaction(stZilAddr string) (*transa
 	return s.Call("SubmitUnPauseZrc2Transaction", args, "0")
 }
 
+func (s *MultisigWallet) SubmitAllowTokenTransaction(aswapAddr string, token_address string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: aswapAddr,
+		},
+		{
+			VName: "token_address",
+			Type:  "ByStr20",
+			Value: token_address,
+		},
+	}
+
+	return s.Call("SubmitAllowTokenTransaction", args, "0")
+}
+
+func (s *MultisigWallet) SubmitDisallowTokenTransaction(aswapAddr string, token_address string) (*transaction.Transaction, error) {
+	args := []core.ContractValue{
+		{
+			VName: "calleeContract",
+			Type:  "ByStr20",
+			Value: aswapAddr,
+		},
+		{
+			VName: "token_address",
+			Type:  "ByStr20",
+			Value: token_address,
+		},
+	}
+
+	return s.Call("SubmitDisallowTokenTransaction", args, "0")
+}
+
 func (s *MultisigWallet) SubmitSetTreasuryFeeTransaction(aswapAddr string, newFee string) (*transaction.Transaction, error) {
 	args := []core.ContractValue{
 		{
