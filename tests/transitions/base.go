@@ -154,6 +154,18 @@ func (tr *Transitions) DeployMultisigWallet(owners []string, signCount int) *Mul
 	return multisig
 }
 
+func (tr *Transitions) DeployFraction() *FractionContract {
+	log := GetLog()
+	fraction, err := NewFractionContract(sdk, celestials.Admin)
+	if err != nil {
+		log.Fatal("deploy Fraction error = " + err.Error())
+	}
+
+	log.Info("deploy Fraction succeed, address = " + fraction.Addr)
+
+	return fraction
+}
+
 func (tr *Transitions) NextCycle(p *contracts.Protocol) {
 	sdk.IncreaseBlocknum(2)
 	tools := actions.NewAdminActions(GetLog())
