@@ -14,6 +14,7 @@ type ApiConfig struct {
 
 type Config struct {
 	Chain                    string
+	GasLimit                 string
 	Api                      ApiConfig
 	ChainId                  int
 	TxConfrimMaxAttempts     int
