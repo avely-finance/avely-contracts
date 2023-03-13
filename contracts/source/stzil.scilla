@@ -375,7 +375,6 @@ field ssn_index: Uint128 = uint128_zero
 field tmp_delegator                     : Option ByStr20 = None {ByStr20}
 field tmp_stake_delegate_amount         : Uint128        = uint128_zero
 field tmp_complete_withdrawal_available : Uint128        = uint128_zero
-field tmp_buffer                        : ByStr20        = bystr20_zero
 field tmp_ssn_addr_in                   : ByStr20        = bystr20_zero
 field tmp_ssn_addr_out                  : ByStr20        = bystr20_zero
 field tmp_bnum                          : BNum           = BNum 0
