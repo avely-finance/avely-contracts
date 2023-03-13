@@ -41,16 +41,12 @@ let zero_address = 0x0000000000000000000000000000000000000000
 let zero128 = Uint128 0
 let zero256 = Uint256 0
 let zero32 = Uint32 0
-let zerobn = BNum 0
 
 let one32 = Uint32 1
-let two32 = Uint32 2
 let two256 = Uint256 2
 let one128 = Uint128 1
 let one256 = Uint256 1
 let fee_demon = Uint256 10000
-
-let nil_addr_list = Nil {ByStr20}
 
 let zil_denom = Zil
 let zrc_denom = Token
@@ -145,10 +141,6 @@ let option_value =
     end
 
 let option_uint128 = @option_value Uint128
-let option_uint32 = @option_value Uint32
-let option_list_addr = @option_value (List ByStr20)
-let addr_exists = @list_exists ByStr20
-let list_length_addr = @list_length ByStr20
 
 let grow_u128: Uint128 -> Uint256 =
   fun (v : Uint128) =>
@@ -1034,8 +1026,7 @@ end
 transition ChangeOwner(new_owner: ByStr20)
   OwnerOnly;
   var_staging_owner = Some {ByStr20} new_owner;
-  staging_owner := var_staging_owner;
-  var_owner <- owner
+  staging_owner := var_staging_owner
 end
 
 transition ClaimOwner()
