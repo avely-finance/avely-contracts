@@ -91,23 +91,6 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	return p
 }
 
-func (tr *Transitions) DeployZilSwap() *ZilSwap {
-	log := GetLog()
-	zilSwap, err := NewZilSwap(sdk, celestials.Admin)
-	if err != nil {
-		log.Fatal("deploy zilSwap error = " + err.Error())
-	}
-
-	_, err = zilSwap.Initialize()
-	if err != nil {
-		log.Fatal("deploy zilSwap error = " + err.Error())
-	}
-
-	log.Info("deploy zilSwap succeed, address = " + zilSwap.Addr)
-
-	return zilSwap
-}
-
 func (tr *Transitions) DeployASwap(init_owner string) *ASwap {
 	log := GetLog()
 	aswap, err := NewASwap(sdk, init_owner, celestials.Admin)
