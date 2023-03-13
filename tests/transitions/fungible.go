@@ -6,7 +6,7 @@ import (
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 )
 
-const swapOutput = "9871580343970"
+const swapOutput = "9881383789778"
 
 func (tr *Transitions) Fungible() {
 	tr.FungibleAllowanceErrors()
@@ -33,10 +33,11 @@ func (tr *Transitions) FungibleAllowanceErrors() {
 }
 
 func (tr *Transitions) AddToSwap() {
-	Start("Swap via ZilSwap")
+	Start("Swap via aswap")
 
 	p := tr.DeployAndUpgrade()
-	zilSwap := tr.DeployZilSwap()
+	init_owner_addr := utils.GetAddressByWallet(celestials.Admin)
+	aswap := tr.DeployASwap(init_owner_addr)
 	stzil := p.StZIL
 
 	liquidityAmount := ToQA(1000)
@@ -46,12 +47,12 @@ func (tr *Transitions) AddToSwap() {
 	blockNum := p.GetBlockHeight()
 
 	// Add AddLiquidity
-	AssertSuccess(stzil.IncreaseAllowance(zilSwap.Contract.Addr, ToQA(10000)))
-	AssertSuccess(zilSwap.AddLiquidity(stzil.Contract.Addr, liquidityAmount, liquidityAmount, blockNum))
+	AssertSuccess(stzil.IncreaseAllowance(aswap.Contract.Addr, ToQA(10000)))
+	AssertSuccess(aswap.AddLiquidity(liquidityAmount, stzil.Contract.Addr, "0", liquidityAmount, blockNum))
 
 	// Do Swap
 	recipient := utils.GetAddressByWallet(alice)
-	AssertSuccess(zilSwap.SwapExactZILForTokens(stzil.Contract.Addr, ToQA(10), "1", recipient, blockNum))
+	AssertSuccess(aswap.SwapExactZILForTokens(ToQA(10), stzil.Contract.Addr, "1", recipient, blockNum))
 	AssertEqual(stzil.BalanceOf(recipient).String(), swapOutput)
 }
 
