@@ -11,7 +11,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     container:
-      image: ezil/avely-dev:0.0.1
+      image: ezil/avely-dev:v0.0.1
     env:
       CI: "1"
     steps:
