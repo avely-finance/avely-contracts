@@ -65,8 +65,8 @@ func (sdk *AvelySDK) IncreaseBlocknum(delta int) error {
 	}
 }
 
-//this function will only works for testnet or mainnet
-//it will not work for local server in manual mode
+// this function will only works for testnet or mainnet
+// it will not work for local server in manual mode
 func (sdk *AvelySDK) GetBlockHeight() (int, error) {
 	provider := sdk.InitProvider()
 	result, err := provider.GetNumTxBlocks()

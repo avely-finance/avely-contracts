@@ -139,11 +139,12 @@ func (a *StZIL) ClaimOwner() (*transaction.Transaction, error) {
 }
 
 // returns
-// {"id":"1","jsonrpc":"2.0","result":{
-//			"buffer_drained_cycle":
-//	  						 {"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6":"123",
-//                  "0xbfb3bbde860bcd17315ec0e171ac971de7bea9a3":"124"}
-// }
+//
+//	{"id":"1","jsonrpc":"2.0","result":{
+//				"buffer_drained_cycle":
+//		  						 {"0x79c7e38dd3b3c88a3fb182f26b66d8889e61cbd6":"123",
+//	                 "0xbfb3bbde860bcd17315ec0e171ac971de7bea9a3":"124"}
+//	}
 func (a *StZIL) GetDrainedBuffers() map[string]gjson.Result {
 	rawState := a.Contract.SubState("buffer_drained_cycle", []string{})
 	state := NewState(rawState)

@@ -28,8 +28,8 @@ type Event struct {
 	Params    ParamsMap
 }
 
-//replacement for core.EventLog, because of strange "undefined type" error
-//we have https://github.com/Zilliqa/gozilliqa-sdk/blob/master/core/types.go#L107
+// replacement for core.EventLog, because of strange "undefined type" error
+// we have https://github.com/Zilliqa/gozilliqa-sdk/blob/master/core/types.go#L107
 type EventLog struct {
 	EventName string               `json:"_eventname"`
 	Address   string               `json:"address"`
@@ -155,19 +155,20 @@ func AssertContainRaw(code, s1, s2, file string, no int) {
 
 /*
 https://github.com/Zilliqa/gozilliqa-sdk/blob/master/core/types.go#L129
-type Transition struct {
-	Accept bool               `json:"accept"`
-	Addr   string             `json:"addr"`
-	Depth  int                `json:"depth"`
-	Msg    TransactionMessage `json:"msg"`
-}
 
-type TransactionMessage struct {
-	Amount    string          `json:"_amount"`
-	Recipient string          `json:"_recipient"`
-	Tag       string          `json:"_tag"`
-	Params    []ContractValue `json:"params"`
-}
+	type Transition struct {
+		Accept bool               `json:"accept"`
+		Addr   string             `json:"addr"`
+		Depth  int                `json:"depth"`
+		Msg    TransactionMessage `json:"msg"`
+	}
+
+	type TransactionMessage struct {
+		Amount    string          `json:"_amount"`
+		Recipient string          `json:"_recipient"`
+		Tag       string          `json:"_tag"`
+		Params    []ContractValue `json:"params"`
+	}
 */
 func AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
 	found := false

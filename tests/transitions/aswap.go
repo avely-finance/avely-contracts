@@ -597,18 +597,19 @@ func calcOutputSwapExactZilForTokens(amntIn string) string {
 
 /*
 let output_for =
-  fun (input_amount: Uint128) =>
-  fun (input_reserve: Uint128) =>
-  fun (output_reserve: Uint128) =>
-  fun (fee: Uint256) =>
-    let exact_amount_u256 = grow_u128 input_amount in
-    let input_reserve_u256 = grow_u128 input_reserve in
-    let output_reserve_u256 = grow_u128 output_reserve in
-    let exact_amount_after_fee = builtin mul exact_amount_u256 fee in
-    let numerator = builtin mul exact_amount_after_fee output_reserve_u256 in
-    let input_reserve_after_fee = builtin mul input_reserve_u256 fee_demon in
-    let denominator = builtin add input_reserve_after_fee exact_amount_after_fee in
-      builtin div numerator denominator
+
+	fun (input_amount: Uint128) =>
+	fun (input_reserve: Uint128) =>
+	fun (output_reserve: Uint128) =>
+	fun (fee: Uint256) =>
+	  let exact_amount_u256 = grow_u128 input_amount in
+	  let input_reserve_u256 = grow_u128 input_reserve in
+	  let output_reserve_u256 = grow_u128 output_reserve in
+	  let exact_amount_after_fee = builtin mul exact_amount_u256 fee in
+	  let numerator = builtin mul exact_amount_after_fee output_reserve_u256 in
+	  let input_reserve_after_fee = builtin mul input_reserve_u256 fee_demon in
+	  let denominator = builtin add input_reserve_after_fee exact_amount_after_fee in
+	    builtin div numerator denominator
 */
 func calcOutputSwapExactTokensForZil(amntIn string) (string, string) {
 	//1) constant product formula

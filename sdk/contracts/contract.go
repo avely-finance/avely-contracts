@@ -104,9 +104,10 @@ func (c *Contract) BuildBatchParams(fields []string) [][]interface{} {
 // Inspired by https://github.com/Zilliqa/gozilliqa-sdk/blob/2ff222c97fc6fa2855ef2c5bffbd56faddd6291f/provider/provider.go#L877
 //
 // To build params use BuildBatchParams or:
-//   var params [][]interface{}
-//   params = append(params, []interface{}{"total_supply", []string{}})
-//   params = append(params, []interface{}{"totalstakeamount", []string{}})
+//
+//	var params [][]interface{}
+//	params = append(params, []interface{}{"total_supply", []string{}})
+//	params = append(params, []interface{}{"totalstakeamount", []string{}})
 func (c *Contract) BatchSubState(params [][]interface{}) (string, error) {
 	//we should hack here for now
 	type req struct {
