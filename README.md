@@ -14,3 +14,14 @@ For local development you'll need .env.local file, copied from .env.example.
 ## Docs
 
 - [Isolated Server know how](docs/isolated_server.md)
+
+## License Information
+
+Please note that the following files and/or directories are subject to a restricted license:
+
+- [contracts/stzil.scilla]
+- [contracts/holder.scilla]
+- [contracts/holder.scilla]
+- [sdk]
+
+These files and directories are protected by a separate license, which only allows viewing of the code. You may not use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of this code without the express written permission of the author. For more details, please refer to the RESTRICTED_LICENSE file in the root of this repository.
