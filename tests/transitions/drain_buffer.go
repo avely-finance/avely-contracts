@@ -16,7 +16,9 @@ func (tr *Transitions) DrainBuffer() {
 
 	p := tr.DeployAndUpgrade()
 
-	rewardsFee := "1000" //10% of feeDenom=10000
+	treasuryAddr := p.StZIL.GetTreasuryAddress()
+
+	rewardsFee := "10000" //10% of feeDenom=10000
 	p.StZIL.SetSigner(celestials.Owner)
 	AssertSuccess(p.StZIL.UpdateStakingParameters("0", rewardsFee, "0"))
 
@@ -106,6 +108,10 @@ func (tr *Transitions) DrainBuffer() {
 	//repeat consolidate with non-buffer address, excepting BufferAddrUnknown error
 	txn, _ = p.StZIL.ConsolidateInHolder(core.ZeroAddr)
 	AssertError(txn, p.StZIL.ErrorCode("BufferAddrUnknown"))
+
+	treasuryBalance := sdk.GetBalance(treasuryAddr[2:])
+
+	AssertEqual(treasuryBalance, "19")
 }
 
 func checkRewards(p *Protocol, txn *transaction.Transaction, bufferToDrain string) {
