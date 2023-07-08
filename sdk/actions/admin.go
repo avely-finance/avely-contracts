@@ -161,7 +161,7 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 
 	for fromSsn, amount := range mapSsnAmount {
 		if contains(ssnlist, fromSsn) {
-			a.log.WithFields(logrus.Fields{"from_ssn": fromSsn, "amount": amount}).Info("SSN is in the list of whitelisted SSNs")
+			a.log.WithFields(logrus.Fields{"from_ssn": fromSsn, "amount": amount}).Info("SSN is in the list of whitelisted SSNs!")
 			continue
 		}
 

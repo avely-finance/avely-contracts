@@ -59,7 +59,7 @@ func (cw *BlockWatcher) Start() {
 				blockNum, err := cw.sdk.GetBlockHeight()
 
 				if err != nil {
-					log.Error("Got fatal error during fetchin block height: " + err.Error())
+					log.Debug("Got fatal error during fetchin block height: " + err.Error())
 				}
 
 				cw.NotifyAll(blockNum)
