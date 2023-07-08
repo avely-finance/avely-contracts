@@ -49,8 +49,8 @@ func (s *SocketError) isExpired() bool {
 func (cw *BlockWatcher) Start() {
 	log := cw.log
 
-	log.Debug("Block short polling watcher is ready to tick every 10 seconds")
-	ticker := time.NewTicker(time.Second * 10).C
+	log.Debug("Block short polling watcher is ready to tick every 30 seconds")
+	ticker := time.NewTicker(time.Second * 30).C
 
 	go func() {
 		for {
