@@ -157,7 +157,14 @@ func (a *AdminActions) ChownStakeReDelegate(p *Protocol, showOnly bool) error {
 		return nil
 	}
 
+	ssnlist := p.StZIL.Sdk.Cfg.SsnAddrs
+
 	for fromSsn, amount := range mapSsnAmount {
+		if contains(ssnlist, fromSsn) {
+			a.log.WithFields(logrus.Fields{"from_ssn": fromSsn, "amount": amount}).Info("SSN is in the list of whitelisted SSNs")
+			continue
+		}
+
 		amountStr := amount.String()
 		ssnForInput := p.GetSsnAddressForInput()
 		fields := logrus.Fields{
@@ -305,4 +312,13 @@ func retryTx(count int, txCall func() (*transaction.Transaction, error)) (*trans
 	}
 
 	return tx, err
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
