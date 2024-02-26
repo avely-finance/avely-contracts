@@ -23,7 +23,7 @@ x-dapp: &dapp
   depends_on:
     - zilliqa_server
   networks:
-      default:
+    default:
 
 services:
   runner:
@@ -33,19 +33,19 @@ services:
     ports: []
 
   zilliqa_server:
-    image: zilliqa/zilliqa-isolated-server:latest
+    image: bazel/products/isolated-server:latest
     #volumes:
     #  - zilliqa_server:/zilliqa/persistence
     environment:
       MANUAL_MODE: "true"
     #  MODE: "load"
     ports:
-      - '5555:5555'
+      - "5555:5555"
 
   devex:
     image: zilliqa/devex
     ports:
-      - '5557:80'
+      - "5557:80"
     volumes:
       - ./devex/networks.json:/usr/share/nginx/html/networks.json
     depends_on:
