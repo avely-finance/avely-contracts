@@ -2,6 +2,7 @@
 
 ## Docker Compose Setup
 
+- setup Zilliqa's Isolated Server as [described](https://github.com/Zilliqa/zilliqa-developer?tab=readme-ov-file#building-and-running-docker-images)
 - `docker-compose run --rm runner` to start bash with scilla and local blockchain
 - `docker-compose up devex` to start the [zilliqa blockchain explorer](https://github.com/Zilliqa/devex)
 
