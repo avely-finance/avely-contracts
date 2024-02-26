@@ -5,7 +5,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/Zilliqa/gozilliqa-sdk/account"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
 	"github.com/avely-finance/avely-contracts/sdk/actions"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"

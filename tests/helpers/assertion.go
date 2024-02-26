@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/core"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/transaction"
 	sdk "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
@@ -29,7 +29,7 @@ type Event struct {
 }
 
 // replacement for core.EventLog, because of strange "undefined type" error
-// we have https://github.com/Zilliqa/gozilliqa-sdk/blob/master/core/types.go#L107
+// we have https://github.com/Zilliqa/gozilliqa-sdk/v3/blob/master/core/types.go#L107
 type EventLog struct {
 	EventName string               `json:"_eventname"`
 	Address   string               `json:"address"`
@@ -154,7 +154,7 @@ func AssertContainRaw(code, s1, s2, file string, no int) {
 }
 
 /*
-https://github.com/Zilliqa/gozilliqa-sdk/blob/master/core/types.go#L129
+https://github.com/Zilliqa/gozilliqa-sdk/v3/blob/master/core/types.go#L129
 
 	type Transition struct {
 		Accept bool               `json:"accept"`

@@ -4,8 +4,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/Zilliqa/gozilliqa-sdk/account"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )

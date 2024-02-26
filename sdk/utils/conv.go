@@ -3,7 +3,7 @@ package utils
 import (
 	"strconv"
 
-	"github.com/Zilliqa/gozilliqa-sdk/account"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
 )
 
 func ArrayAtoi(input []string) []int {

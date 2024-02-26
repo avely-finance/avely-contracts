@@ -3,7 +3,7 @@ package helpers
 import (
 	"os"
 
-	"github.com/Zilliqa/gozilliqa-sdk/account"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
 	"github.com/joho/godotenv"
 )
 

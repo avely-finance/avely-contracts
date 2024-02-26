@@ -12,11 +12,11 @@ import (
 	embedcontracts "github.com/avely-finance/avely-contracts/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
-	"github.com/Zilliqa/gozilliqa-sdk/account"
-	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
-	"github.com/Zilliqa/gozilliqa-sdk/core"
-	provider2 "github.com/Zilliqa/gozilliqa-sdk/provider"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
+	contract2 "github.com/Zilliqa/gozilliqa-sdk/v3/contract"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/core"
+	provider2 "github.com/Zilliqa/gozilliqa-sdk/v3/provider"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/transaction"
 )
 
 // Basic type for all protocol contracts
@@ -101,7 +101,7 @@ func (c *Contract) BuildBatchParams(fields []string) [][]interface{} {
 	return params
 }
 
-// Inspired by https://github.com/Zilliqa/gozilliqa-sdk/blob/2ff222c97fc6fa2855ef2c5bffbd56faddd6291f/provider/provider.go#L877
+// Inspired by https://github.com/Zilliqa/gozilliqa-sdk/v3/blob/2ff222c97fc6fa2855ef2c5bffbd56faddd6291f/provider/provider.go#L877
 //
 // To build params use BuildBatchParams or:
 //

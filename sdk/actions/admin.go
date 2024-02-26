@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/transaction"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
 	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"

@@ -6,11 +6,11 @@ import (
 
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 
-	"github.com/Zilliqa/gozilliqa-sdk/account"
-	"github.com/Zilliqa/gozilliqa-sdk/bech32"
-	contract2 "github.com/Zilliqa/gozilliqa-sdk/contract"
-	"github.com/Zilliqa/gozilliqa-sdk/core"
-	"github.com/Zilliqa/gozilliqa-sdk/transaction"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/bech32"
+	contract2 "github.com/Zilliqa/gozilliqa-sdk/v3/contract"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/core"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/transaction"
 )
 
 type HolderContract struct {

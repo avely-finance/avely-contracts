@@ -1,7 +1,7 @@
 package contracts
 
 import (
-	"github.com/Zilliqa/gozilliqa-sdk/account"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 )
 
