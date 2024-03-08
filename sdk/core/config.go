@@ -12,10 +12,15 @@ type ApiConfig struct {
 	HttpUrl string
 }
 
+type EvmConfig struct {
+	ChainId int
+}
+
 type Config struct {
 	Chain                    string
 	GasLimit                 string
 	Api                      ApiConfig
+	Evm                      EvmConfig
 	ChainId                  int
 	TxConfrimMaxAttempts     int
 	TxConfirmIntervalSec     int

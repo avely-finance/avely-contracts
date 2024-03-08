@@ -1,7 +1,10 @@
 {
   "local": {
     "Api": {
-      "HttpUrl": "http://172.17.0.1:8081"
+      "HttpUrl": "http://zilliqa_network:5555"
+    },
+    "Evm": {
+      "ChainId": 32990
     },
     "ChainId": 222,
     "GasLimit": "40000",
@@ -34,6 +37,9 @@
     "Api": {
       "HttpUrl": "https://dev-api.zilliqa.com"
     },
+    "Evm": {
+      "ChainId": 32769
+    },
     "ChainId": 333,
     "GasLimit": "40000",
     "TxConfrimMaxAttempts": 10,
@@ -64,6 +70,9 @@
   "mainnet": {
     "Api": {
       "HttpUrl": "https://api.zilliqa.com"
+    },
+    "Evm": {
+      "ChainId": 33101
     },
     "ChainId": 1,
     "GasLimit": "40000",
