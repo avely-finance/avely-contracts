@@ -1,4 +1,4 @@
-version: "3"
+version: "3.9"
 x-app: &app
   build:
     context: .
@@ -14,6 +14,7 @@ x-dapp: &dapp
     - ${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}
     - ~/.ssh:/root/.ssh
     - ~/.bash_history:/root/.bash_history
+    - go-modules:/root/go/pkg/mod
   environment: &environment
     EDITOR: vi
   security_opt:
@@ -44,20 +45,8 @@ services:
       - 5555:5555
     environment:
       - MANUAL_MODE=true
+      - T=0
     #  MODE: "load"
-
-  mitmproxy:
-    image: mitmproxy/mitmproxy
-    container_name: mitmdump.avely
-    command: mitmdump -s /scripts/mitm.py --save-stream-file /scripts/mitm.log --flow-detail 4 --verbose --mode reverse:http://zilliqa_server:5555 -p 5556
-    volumes:
-      - ./sandbox:/scripts
-    expose:
-      - 5556
-    ports:
-      - "5556:5556"
-    depends_on:
-      - zilliqa_server
 
   devex:
     image: zilliqa/devex
@@ -71,3 +60,4 @@ services:
 
 volumes:
   zilliqa_server:
+  go-modules:

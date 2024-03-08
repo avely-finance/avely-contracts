@@ -1,7 +1,7 @@
 {
   "local": {
     "Api": {
-      "HttpUrl": "http://mitmproxy:5556"
+      "HttpUrl": "http://172.17.0.1:8081"
     },
     "ChainId": 222,
     "GasLimit": "40000",
