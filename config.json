@@ -1,7 +1,7 @@
 {
   "local": {
     "Api": {
-      "HttpUrl": "http://zilliqa_server:5555"
+      "HttpUrl": "http://mitmproxy:5556"
     },
     "ChainId": 222,
     "GasLimit": "40000",
@@ -13,7 +13,6 @@
     "HolderInitialDelegateZil": "1000",
     "SsnInitialDelegateZil": "1000",
     "ProtocolRewardsFee": "100",
-
     "ASwapAddr": "",
     "GzilAddr": "",
     "ZproxyAddr": "",
@@ -45,7 +44,6 @@
     "HolderInitialDelegateZil": "10",
     "SsnInitialDelegateZil": "1000",
     "ProtocolRewardsFee": "100",
-
     "ASwapAddr": "",
     "GzilAddr": "0x1054ca352567d936f5636d86aad23ac080cf685e",
     "ZproxyAddr": "0x310dbc947ae5250b7f84247eb52a4fdb85b5e35a",
@@ -77,7 +75,6 @@
     "HolderInitialDelegateZil": "1000",
     "SsnInitialDelegateZil": "1000",
     "ProtocolRewardsFee": "100",
-
     "ASwapAddr": "",
     "GzilAddr": "0xa845C1034CD077bD8D32be0447239c7E4be6cb21",
     "ZproxyAddr": "0x62A9d5D611CDCaE8D78005F31635898330e06B93",
