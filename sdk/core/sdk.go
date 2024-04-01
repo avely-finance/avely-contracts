@@ -23,11 +23,14 @@ const ZeroAddr = "0x0000000000000000000000000000000000000000"
 
 type AvelySDK struct {
 	Cfg Config
+	Evm Evm
 }
 
 func NewAvelySDK(config Config) *AvelySDK {
+	evm := NewEvm(config)
 	return &AvelySDK{
 		Cfg: config,
+		Evm: *evm,
 	}
 }
 

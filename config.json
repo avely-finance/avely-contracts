@@ -4,6 +4,7 @@
       "HttpUrl": "http://zilliqa_network:5555"
     },
     "Evm": {
+      "HttpUrl": "http://zilliqa_network:5555",
       "ChainId": 32990
     },
     "ChainId": 222,
@@ -38,6 +39,7 @@
       "HttpUrl": "https://dev-api.zilliqa.com"
     },
     "Evm": {
+      "HttpUrl": "https://dev-api.zilliqa.com",
       "ChainId": 32769
     },
     "ChainId": 333,
@@ -72,6 +74,7 @@
       "HttpUrl": "https://api.zilliqa.com"
     },
     "Evm": {
+      "HttpUrl": "https://api.zilliqa.com",
       "ChainId": 33101
     },
     "ChainId": 1,

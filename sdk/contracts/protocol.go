@@ -6,6 +6,7 @@ import (
 
 	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
 	"github.com/Zilliqa/gozilliqa-sdk/v3/transaction"
+	"github.com/avely-finance/avely-contracts/sdk/contracts/evm"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 )
@@ -17,6 +18,7 @@ type Protocol struct {
 	Buffers  []*BufferContract
 	Holder   *HolderContract
 	Treasury *TreasuryContract
+	EvmStZIL *evm.StZIL
 }
 
 func NewProtocol(zproxy *Zproxy, zimpl *Zimpl, stzil *StZIL, buffers []*BufferContract, holder *HolderContract, treasury *TreasuryContract) *Protocol {

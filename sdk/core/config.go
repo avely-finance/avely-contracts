@@ -13,6 +13,7 @@ type ApiConfig struct {
 }
 
 type EvmConfig struct {
+	HttpUrl string
 	ChainId int
 }
 

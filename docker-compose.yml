@@ -35,7 +35,7 @@ services:
     ports: []
 
   zilliqa_server:
-    image: zilliqaisolatedserver:933
+    image: zilliqaisolatedserver:932
     container_name: zilliqa.avely
     #volumes:
     #  - zilliqa_server:/zilliqa/persistence
@@ -45,7 +45,7 @@ services:
       - 5555:5555
     environment:
       - MANUAL_MODE=true
-      - T=0
+    #  - T=0
     #  MODE: "load"
 
   devex:

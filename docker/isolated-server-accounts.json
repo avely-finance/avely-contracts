@@ -39,6 +39,11 @@
     "amount": "1000000000000000000000",
     "nonce": 0
   },
+  "74D3DdA05ad2Bc6412e19Cc5B4b5CFC2F5fa9822": {
+    "privateKey": "1080d2cca18ace8225354ac021f9977404cee46f1d12e9981af8c36322eac1a4",
+    "amount": "1000000000000000000000",
+    "nonce": 0
+  },
   "ec902fe17d90203d0bddd943d97b29576ece3177": {
     "privateKey": "254d9924fc1dcdca44ce92d80255c6a0bb690f867abde80e626fbfef4d357004",
     "amount": "1000000000000000000000",
@@ -50,4 +55,3 @@
     "nonce": 0
   }
 }
-

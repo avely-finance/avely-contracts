@@ -13,22 +13,29 @@ func (tr *Transitions) Fungible() {
 	tr.AddToSwap()
 	tr.TransferFrom()
 	tr.Transfer()
+
+	tr.EvmOn()
+
+	tr.FungibleAllowanceErrors()
+	//tr.AddToSwap() // aswap bridge not implemented
+	tr.TransferFrom()
+	tr.Transfer()
 }
 
 func (tr *Transitions) FungibleAllowanceErrors() {
 	Start("Test ZRC-2 errors")
 
 	p := tr.DeployAndUpgrade()
-	p.StZIL.SetSigner(alice)
-	recipient := utils.GetAddressByWallet(alice)
+	tr.GetStZIL().SetSigner(alice)
+	recipient := tr.GetAddressByWallet(alice)
 
 	amount := ToQA(1000)
-	AssertSuccess(p.StZIL.DelegateStake(amount))
+	AssertSuccessAny(tr.GetStZIL().DelegateStake(amount))
 
-	tx, _ := p.StZIL.IncreaseAllowance(recipient, amount)
+	tx, _ := tr.GetStZIL().IncreaseAllowance(recipient, amount)
 	AssertError(tx, p.StZIL.ErrorCode("CodeIsSender"))
 
-	tx, _ = p.StZIL.DecreaseAllowance(recipient, amount)
+	tx, _ = tr.GetStZIL().DecreaseAllowance(recipient, amount)
 	AssertError(tx, p.StZIL.ErrorCode("CodeIsSender"))
 }
 
@@ -62,20 +69,20 @@ func (tr *Transitions) Transfer() {
 	p := tr.DeployAndUpgrade()
 	stzil := p.StZIL
 
-	from := utils.GetAddressByWallet(alice)
-	to := utils.GetAddressByWallet(bob)
+	from := tr.GetAddressByWallet(alice)
+	to := tr.GetAddressByWallet(bob)
 	amount := ToQA(100)
 
-	stzil.SetSigner(alice)
-	tx, _ := stzil.Transfer(to, amount)
+	tr.GetStZIL().SetSigner(alice)
+	tx, _ := tr.GetStZIL().Transfer(to, amount)
 	AssertError(tx, p.StZIL.ErrorCode("CodeInsufficientFunds"))
 
-	AssertSuccess(stzil.DelegateStake(amount))
+	AssertSuccessAny(tr.GetStZIL().DelegateStake(amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), amount)
 	AssertEqual(stzil.BalanceOf(to).String(), ToQA(0))
 
-	AssertSuccess(stzil.Transfer(to, amount))
+	AssertSuccessAny(tr.GetStZIL().Transfer(to, amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), ToQA(0))
 	AssertEqual(stzil.BalanceOf(to).String(), amount)
@@ -87,26 +94,26 @@ func (tr *Transitions) TransferFrom() {
 	p := tr.DeployAndUpgrade()
 	stzil := p.StZIL
 
-	from := utils.GetAddressByWallet(alice)
-	to := utils.GetAddressByWallet(bob)
+	from := tr.GetAddressByWallet(alice)
+	to := tr.GetAddressByWallet(bob)
 
 	amount := ToQA(100)
 
-	stzil.SetSigner(alice)
-	AssertSuccess(stzil.DelegateStake(amount))
+	tr.GetStZIL().SetSigner(alice)
+	AssertSuccessAny(tr.GetStZIL().DelegateStake(amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), amount)
 	AssertEqual(stzil.BalanceOf(to).String(), ToQA(0))
 
-	tx, _ := stzil.TransferFrom(from, to, amount)
+	tx, _ := tr.GetStZIL().TransferFrom(from, to, amount)
 	AssertError(tx, p.StZIL.ErrorCode("CodeInsufficientAllowance"))
 
 	// Allow admin user to spend User1 money
 	admin := celestials.Admin
-	AssertSuccess(stzil.IncreaseAllowance(utils.GetAddressByWallet(admin), amount))
+	AssertSuccessAny(tr.GetStZIL().IncreaseAllowance(tr.GetAddressByWallet(admin), amount))
 
-	stzil.SetSigner(admin)
-	AssertSuccess(stzil.TransferFrom(from, to, amount))
+	tr.GetStZIL().SetSigner(admin)
+	AssertSuccessAny(tr.GetStZIL().TransferFrom(from, to, amount))
 
 	AssertEqual(stzil.BalanceOf(from).String(), ToQA(0))
 	AssertEqual(stzil.BalanceOf(to).String(), amount)

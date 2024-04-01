@@ -13,8 +13,8 @@ const CHAIN = "local"
 
 func main() {
 	config := NewConfig(".", CHAIN)
-	celestials := helpers.LoadCelestialsFromEnv(CHAIN)
 	sdk := NewAvelySDK(*config)
+	celestials := helpers.LoadCelestialsFromEnv(sdk, CHAIN)
 	log := helpers.GetLog()
 
 	tr := InitTransitions(sdk, celestials)

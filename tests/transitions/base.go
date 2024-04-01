@@ -4,14 +4,20 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strings"
 
+	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
 	"github.com/avely-finance/avely-contracts/sdk/actions"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
+	"github.com/avely-finance/avely-contracts/sdk/contracts/evm"
 	. "github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/avely-finance/avely-contracts/sdk/utils"
+	"github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/joho/godotenv"
 )
 
@@ -53,14 +59,50 @@ func InitTransitions(sdkValue *AvelySDK, celestialsValue *Celestials) *Transitio
 		Bob:      bob,
 		Eve:      eve,
 		Verifier: verifier,
+		evmOn:    false,
 	}
 }
 
 type Transitions struct {
-	Alice    *account.Wallet
-	Bob      *account.Wallet
-	Eve      *account.Wallet
-	Verifier *account.Wallet
+	Alice        *account.Wallet
+	Bob          *account.Wallet
+	Eve          *account.Wallet
+	Verifier     *account.Wallet
+	p            *Protocol
+	evmOn        bool
+	adapterStzil StZILContract
+}
+
+func (tr *Transitions) EvmOn() {
+	tr.evmOn = true
+}
+
+func (tr *Transitions) GetStZIL() StZILContract {
+	return tr.adapterStzil
+}
+
+func (tr *Transitions) GetAddressByWallet(signer interface{}) string {
+
+	if tr.evmOn {
+		// return evm-encoded adresses
+		if acc, ok := signer.(*accounts.Account); ok {
+			return acc.Address.Hex()
+		} else if wallet, ok := signer.(*account.Wallet); ok {
+			pkstr := util.EncodeHex(wallet.DefaultAccount.PrivateKey)
+			privateKey, err := crypto.HexToECDSA(pkstr)
+			if err != nil {
+				helpers.GetLog().Fatal(err)
+			}
+			// zilliqa tx receipts have addresses in lowercase
+			return strings.ToLower(crypto.PubkeyToAddress(privateKey.PublicKey).Hex())
+		}
+	} else {
+		if wallet, ok := signer.(*account.Wallet); ok {
+			return "0x" + wallet.DefaultAccount.Address
+		}
+	}
+	helpers.GetLog().Fatal("can't get address by wallet")
+	return ""
 }
 
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
@@ -84,11 +126,39 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	p.Unpause(celestials.Owner)
 	p.InitHolder()
 
+	// deploy evm only if evmOn flag is set
+	tr.p = p
+	if tr.evmOn {
+		p.EvmStZIL = tr.DeployEvm()
+
+	}
+	tr.adapterStzil = NewStZILAdapter(p.StZIL, p.EvmStZIL, tr.evmOn)
+
 	tr.NextCycle(p)
 
 	p.SetupShortcuts(log)
 
 	return p
+}
+
+func (tr *Transitions) DeployEvm() *evm.StZIL {
+	log := GetLog()
+
+	stzilEvm, err := evm.NewStZILContract(sdk, tr.p.StZIL.Addr, celestials.EvmDeployer)
+	if err != nil {
+		log.Fatal("deploy Evm-StZIL error = " + err.Error())
+	}
+	log.Info("deploy Evm-StZIL succeed, address = " + stzilEvm.Addr)
+
+	// pre-fill celestials.EvmDeployer with stzil tokens
+	// we'll StZIL.Transfer(these tokens) instead of EvmStZIL.Delegate(these tokens)
+	// see explanation in StZILAdapter.DelegateStake()
+	curSigner := tr.p.StZIL.Wallet
+	tr.p.StZIL.SetSigner(celestials.Verifier)
+	tr.p.StZIL.DelegateStake(utils.ToQA(10_000*10 ^ 12))
+	tr.p.StZIL.SetSigner(curSigner)
+
+	return stzilEvm
 }
 
 func (tr *Transitions) DeployASwap(init_owner string) *ASwap {

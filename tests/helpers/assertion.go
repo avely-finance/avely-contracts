@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"runtime"
@@ -10,6 +11,7 @@ import (
 	"github.com/Zilliqa/gozilliqa-sdk/v3/core"
 	"github.com/Zilliqa/gozilliqa-sdk/v3/transaction"
 	sdk "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type ParamsMap map[string]string
@@ -80,17 +82,47 @@ func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transac
 	return tx, err
 }
 
-func AssertError(txn *transaction.Transaction, code string) {
-	_, file, no, _ := runtime.Caller(1)
-
-	if txn.Receipt.Success && txn.Status == core.Confirmed {
-		GetLog().Error("ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
+// func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
+func AssertSuccessAny(tx interface{}, err error) (interface{}, error) {
+	if err != nil {
+		_, file, no, _ := runtime.Caller(1)
+		GetLog().Error(tx)
+		GetLog().Fatal("TRANSACTION FAILED, " + file + ":" + strconv.Itoa(no))
 	}
+	return tx, err
+}
 
-	receipt, _ := json.Marshal(txn.Receipt)
-	txError := string(receipt)
+func AssertError(tx interface{}, code string) {
+	var txError string
+	var file string
+	var no int
+	var title string
+
+	_, file, no, _ = runtime.Caller(1)
+
+	if txn, ok := tx.(*transaction.Transaction); ok {
+		title = "ASSERT_ERROR"
+		if txn.Receipt.Success && txn.Status == core.Confirmed {
+			GetLog().Error("ASSERT_ERROR FAILED. Tx does not have an issue, " + file + ":" + strconv.Itoa(no))
+		}
+		receipt, _ := json.Marshal(txn.Receipt)
+		txError = string(receipt)
+	} else if txEvm, ok := tx.(*types.Transaction); ok {
+		title = "ASSERT_ERROR_EVM"
+		receipt, err := _sdk.Evm.Client.TransactionReceipt(context.Background(), txEvm.Hash())
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, log := range receipt.Logs {
+			res, found := _sdk.Evm.DecodeScillaErrorOrException(log)
+			if found {
+				txError += res.Description + "\n"
+			}
+		}
+		txError = strings.ReplaceAll(txError, `"`, `\"`)
+	}
 	errorMessage := fmt.Sprintf("Exception thrown: (Message [(_exception : (String \\\"Error\\\")) ; (code : (Int32 %s))])", code)
-	AssertContainRaw("ASSERT_ERROR", txError, errorMessage, file, no)
+	AssertContainRaw(title, txError, errorMessage, file, no)
 }
 
 func AssertMultisigSuccess(txn *transaction.Transaction, err error) (*transaction.Transaction, error) {
@@ -142,14 +174,14 @@ func AssertASwapError(txn *transaction.Transaction, code string) {
 	AssertContainRaw("ASSERT_ASWAP_ERROR", txError, errorMessage, file, no)
 }
 
-func AssertContainRaw(code, s1, s2, file string, no int) {
+func AssertContainRaw(title, s1, s2, file string, no int) {
 	if !strings.Contains(s1, s2) {
-		GetLog().Error(code + " FAILED, " + file + ":" + strconv.Itoa(no))
-		GetLog().Error(s1)
-		GetLog().Error(s2)
+		GetLog().Error(title + " FAILED, " + file + ":" + strconv.Itoa(no))
+		GetLog().Error("body: " + s1)
+		GetLog().Error("pattern: " + s2)
 		GetLog().Fatal("TESTS ARE FAILED")
 	} else {
-		GetLog().Info(code)
+		GetLog().Info(title)
 	}
 }
 
@@ -197,7 +229,12 @@ func AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
 	}
 }
 
-func AssertEvent(txn *transaction.Transaction, expectedEvent Event) {
+// func AssertEvent(txn *transaction.Transaction, expectedEvent Event) {
+func AssertEvent(tx interface{}, expectedEvent Event) {
+	txn, ok := tx.(*transaction.Transaction)
+	if !ok {
+		GetLog().Fatal("ASSERT_EVENT FAILED: evm transactions are not supported yet")
+	}
 	found := false
 	if txn.Receipt.EventLogs != nil {
 		for _, el := range txn.Receipt.EventLogs {
