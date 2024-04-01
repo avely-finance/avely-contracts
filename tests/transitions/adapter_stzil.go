@@ -9,6 +9,7 @@ import (
 )
 
 type StZILContract interface {
+	SetEvm(state bool)
 	SetSigner(signer interface{}) StZILContract
 	IncreaseAllowance(to, amount string) (interface{}, error)
 	DecreaseAllowance(to, amount string) (interface{}, error)
@@ -29,6 +30,10 @@ func NewStZILAdapter(scilla *contracts.StZIL, evm *evm.StZIL, evmOn bool) *StZIL
 		evmContract:    evm,
 		evmOn:          evmOn,
 	}
+}
+
+func (a *StZILAdapter) SetEvm(state bool) {
+	a.evmOn = state
 }
 
 func (a *StZILAdapter) SetSigner(signer interface{}) StZILContract {

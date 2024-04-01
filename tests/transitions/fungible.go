@@ -15,11 +15,11 @@ func (tr *Transitions) Fungible() {
 	tr.Transfer()
 
 	tr.EvmOn()
-
 	tr.FungibleAllowanceErrors()
 	//tr.AddToSwap() // aswap bridge not implemented
 	tr.TransferFrom()
 	tr.Transfer()
+	tr.EvmOff()
 }
 
 func (tr *Transitions) FungibleAllowanceErrors() {

@@ -75,9 +75,20 @@ type Transitions struct {
 
 func (tr *Transitions) EvmOn() {
 	tr.evmOn = true
+	if tr.p.StZIL != nil && tr.p.EvmStZIL == nil {
+		// protocol is deployed, but evm-bridge is not
+		tr.p.EvmStZIL = tr.DeployEvm()
+		// re-init adapter
+		tr.adapterStzil = NewStZILAdapter(tr.p.StZIL, tr.p.EvmStZIL, tr.evmOn)
+	}
+}
+
+func (tr *Transitions) EvmOff() {
+	tr.evmOn = false
 }
 
 func (tr *Transitions) GetStZIL() StZILContract {
+	tr.adapterStzil.SetEvm(tr.evmOn)
 	return tr.adapterStzil
 }
 
@@ -130,7 +141,6 @@ func (tr *Transitions) DeployAndUpgrade() *Protocol {
 	tr.p = p
 	if tr.evmOn {
 		p.EvmStZIL = tr.DeployEvm()
-
 	}
 	tr.adapterStzil = NewStZILAdapter(p.StZIL, p.EvmStZIL, tr.evmOn)
 
