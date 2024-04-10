@@ -1,12 +1,30 @@
 package transitions
 
 import (
+	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/sdk/utils"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
+	"github.com/ethereum/go-ethereum/core/types"
 )
+
+func (tr *Transitions) Withdrawal() {
+	//tr.CompleteWithdrawalSuccess()
+	//tr.CompleteWithdrawalMultiSsn()
+	//tr.WithdrawTokenAmount()
+	//tr.WithdrawTokenAmountWithFee()
+
+	tr.EvmOn()
+	tr.CompleteWithdrawalSuccess()
+	//tr.CompleteWithdrawalMultiSsn()
+	//tr.WithdrawTokenAmount()``
+	//tr.WithdrawTokenAmountWithFee()
+	tr.EvmOff()
+
+}
 
 func (tr *Transitions) CompleteWithdrawalSuccess() {
 
@@ -19,8 +37,8 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	totalSsnInitialDelegateZil := 0
 	aliceAddr := utils.GetAddressByWallet(alice)
 
-	p.StZIL.SetSigner(alice)
-	AssertSuccess(p.StZIL.DelegateStake(ToZil(10)))
+	tr.GetStZIL().SetSigner(alice)
+	AssertSuccessAny(tr.GetStZIL().DelegateStake(ToZil(10)))
 
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
@@ -28,20 +46,36 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
 
-	p.StZIL.SetSigner(alice)
-	tx, _ := AssertSuccess(p.StZIL.WithdrawTokensAmt(ToStZil(10)))
+	tr.GetStZIL().SetSigner(alice)
+	txAny, _ := AssertSuccessAny(tr.GetStZIL().WithdrawTokensAmt(ToStZil(10)))
+	receipt, err := sdk.Evm.Client.TransactionReceipt(context.Background(), txAny.(*types.Transaction).Hash())
+	if err != nil {
+		GetLog().Fatal(err)
+	}
+	fmt.Printf("Receipt: %+v\n", receipt)
+	res, _ := sdk.Evm.DecodeScillaEvent(receipt.Logs[1])
+	fmt.Printf("%+v", res)
+	res, _ = sdk.Evm.DecodeScillaEvent(receipt.Logs[2])
+	fmt.Printf("%+v", res)
 
-	block1 := tx.Receipt.EpochNum
-	tx, _ = p.StZIL.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
+	partialState := p.StZIL.Contract.SubState("withdrawal_pending", []string{})
+	fmt.Printf("%+v", partialState)
 
-	p.StZIL.SetSigner(bob)
-	tx, _ = p.StZIL.CompleteWithdrawal()
-	AssertEvent(tx, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
+	// [BUG] &BLOCKNUMBER is zero in scilla contract, when call is performed from the EVM-side #3923
+	// https://github.com/Zilliqa/Zilliqa/issues/3923
+	panic(0)
+
+	block1 := tr.GetBlockNumber(txAny)
+	txAny, _ = AssertSuccessAny(tr.GetStZIL().CompleteWithdrawal())
+	AssertEvent(txAny, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
+
+	tr.GetStZIL().SetSigner(bob)
+	txAny, _ = tr.GetStZIL().CompleteWithdrawal()
+	AssertEvent(txAny, Event{p.StZIL.Addr, "NoUnbondedStake", ParamsMap{}})
 
 	p.StZIL.SetSigner(celestials.Admin)
 	readyBlocks = append(readyBlocks, block1)
-	tx, _ = p.StZIL.ClaimWithdrawal(readyBlocks)
+	tx, _ := p.StZIL.ClaimWithdrawal(readyBlocks)
 	AssertError(tx, p.StZIL.ErrorCode("ClaimWithdrawalNoUnbonded"))
 
 	delta, _ := strconv.ParseInt(StrAdd(Field(p.Zimpl, "bnum_req"), "1"), 10, 32)
@@ -52,6 +86,7 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 
 	unbondedWithdrawalsBlocks := p.GetClaimWithdrawalBlocks()
 	AssertEqual(readyBlocks[0], strconv.Itoa(unbondedWithdrawalsBlocks[0]))
+	panic(1)
 	tools.ShowClaimWithdrawal(p)
 
 	withdrawal := Dig(p.StZIL, "withdrawal_pending_of_delegator", aliceAddr, block1).Withdrawal()
@@ -77,8 +112,8 @@ func (tr *Transitions) CompleteWithdrawalSuccess() {
 		ParamsMap{},
 	})
 
-	p.StZIL.SetSigner(alice)
-	tx, _ = p.StZIL.CompleteWithdrawal()
+	tr.GetStZIL().SetSigner(alice)
+	txAny, _ = tr.GetStZIL().CompleteWithdrawal()
 	AssertEvent(tx, Event{p.StZIL.Addr, "CompleteWithdrawal", ParamsMap{"amount": ToZil(10), "delegator": aliceAddr}})
 	AssertTransition(tx, Transition{
 		p.StZIL.Addr,
