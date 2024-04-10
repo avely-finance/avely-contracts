@@ -9,7 +9,13 @@ interface IZRC2Allowances {
     function decreaseAllowance(address,uint256) external returns (bool);
 }
 
-contract StZIL is ERC20ZRC2Bridge, IZRC2Allowances {
+interface IStaking {
+    function chownStakeConfirmSwap(address) external returns (bool);
+    function withdrawTokensAmt(uint128) external returns (bool success);
+    function completeWithdrawal() external returns (bool success);
+}
+
+contract StZIL is ERC20ZRC2Bridge, IZRC2Allowances, IStaking {
 
     constructor(address zrc2Address) ERC20ZRC2Bridge(zrc2Address, msg.sender) {
     }
@@ -55,6 +61,36 @@ contract StZIL is ERC20ZRC2Bridge, IZRC2Allowances {
             spender
         );
         emit Approval(msg.sender, spender, currentAllowance128);
+        return true;
+    }
+
+    function chownStakeConfirmSwap(
+        address delegator
+    ) external override returns (bool success) {
+        _scillaCallAddress(
+            _zrc2Address,
+            "ChownStakeConfirmSwap",
+            delegator
+        );
+        return true;
+    }
+
+    function withdrawTokensAmt(
+        uint128 amount
+    ) external override returns (bool success) {
+        _scillaCallUint128(
+            _zrc2Address,
+            "WithdrawTokensAmt",
+            amount
+        );
+        return true;
+    }
+
+    function completeWithdrawal() external override returns (bool success) {
+        _scillaCall(
+            _zrc2Address,
+            "CompleteWithdrawal"
+        );
         return true;
     }
 

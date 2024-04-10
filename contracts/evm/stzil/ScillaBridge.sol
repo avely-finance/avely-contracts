@@ -36,6 +36,51 @@ contract ScillaBridge {
         }
     }
 
+    function _scillaCall(address contractAddress, string memory transitionName) internal {
+        bytes memory encodedArgs = abi.encode(contractAddress, transitionName, _CALL_MODE_SENDER_IS_MSG_SENDER);
+        uint256 argsLength = encodedArgs.length;
+        bool success;
+        assembly {
+            success := call(_CALL_GAS, _SCILLA_CALL2_PRECOMPILE, 0, add(encodedArgs, 0x20), argsLength, 0x20, 0)
+        }
+        if (!success) {
+            revert ScillaCallFailed();
+        }
+    }
+
+    function _scillaCallUint128(
+        address contractAddress,
+        string memory transitionName,
+        uint128 amount
+    ) internal {
+        bytes memory encodedArgs = abi.encode(
+            contractAddress,
+            transitionName,
+            _CALL_MODE_SENDER_IS_MSG_SENDER,
+            amount
+        );
+        uint256 argsLength = encodedArgs.length;
+        bool success;
+        assembly {
+            success := call(_CALL_GAS, _SCILLA_CALL2_PRECOMPILE, 0, add(encodedArgs, 0x20), argsLength, 0x20, 0)
+        }
+        if (!success) {
+            revert ScillaCallFailed();
+        }
+    }
+
+    function _scillaCallAddress(address contractAddress, string memory transitionName, address addr1) internal {
+        bytes memory encodedArgs = abi.encode(contractAddress, transitionName, _CALL_MODE_SENDER_IS_MSG_SENDER, addr1);
+        uint256 argsLength = encodedArgs.length;
+        bool success;
+        assembly {
+            success := call(_CALL_GAS, _SCILLA_CALL2_PRECOMPILE, 0, add(encodedArgs, 0x20), argsLength, 0x20, 0)
+        }
+        if (!success) {
+            revert ScillaCallFailed();
+        }
+    }
+
     function _scillaCallAddressUint128(
         address contractAddress,
         string memory transitionName,

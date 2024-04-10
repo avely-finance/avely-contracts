@@ -85,6 +85,11 @@ https://github.com/Zilliqa/zilliqa-isolated-server/blob/master/boot.json
         "amount": "1000000000000000000",
         "nonce": 0
     },
+    "3c801087d2956ddD2A65297bd78237637d2D825D": {
+        "privateKey": "b8fc4e270594d87d3f728d0873a38fb0896ea83bd6f96b4f3c9ff0a29122efe4",
+        "amount": "1000000000000000000",
+        "nonce": 0
+    },
     "6cd3667ba79310837e33f0aecbe13688a6cbca32": {
         "privateKey": "b87f4ba7dcd6e60f2cca8352c89904e3993c5b2b0b608d255002edcda6374de4",
         "amount": "1000000000000000000",

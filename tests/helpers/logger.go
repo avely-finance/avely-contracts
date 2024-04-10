@@ -22,6 +22,8 @@ type ColorIconHook struct {
 
 func (hook *ColorIconHook) Fire(entry *logrus.Entry) error {
 	switch entry.Level {
+	case logrus.DebugLevel:
+		entry.Message = "⚪️ " + entry.Message
 	case logrus.InfoLevel:
 		entry.Message = "🟢 " + entry.Message
 	case logrus.FatalLevel:

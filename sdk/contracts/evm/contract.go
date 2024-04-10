@@ -1,7 +1,7 @@
 package evm
 
 import (
-	. "github.com/avely-finance/avely-contracts/sdk/core"
+	"github.com/avely-finance/avely-contracts/sdk/core"
 	"github.com/ethereum/go-ethereum/accounts"
 )
 
@@ -11,9 +11,9 @@ type ProtocolContract interface {
 }
 
 type Contract struct {
-	Sdk     *AvelySDK
-	Addr    string
+	Sdk     *core.AvelySDK
 	Account *accounts.Account
+	Addr    string
 }
 
 func (c *Contract) SetSigner(account *accounts.Account) *Contract {

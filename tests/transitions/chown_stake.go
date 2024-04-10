@@ -15,6 +15,14 @@ func (tr *Transitions) ChownStakeAll() {
 	tr.ChownStakeStZilErrors()
 	tr.ChownStakeZimplErrors()
 	tr.ChownStakeRequireDrainBuffer()
+
+	tr.EvmOn()
+	tr.ChownStakeSuccess()
+	tr.ChownStakeManySsnSuccess()
+	tr.ChownStakeStZilErrors()
+	tr.ChownStakeZimplErrors()
+	tr.ChownStakeRequireDrainBuffer()
+	tr.EvmOff()
 }
 
 func (tr *Transitions) ChownStakeSuccess() {
@@ -77,9 +85,13 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
 
 	//offchain-tool calls ChownStakeConfirmSwap(addr1), expecting success
-	p.StZIL.SetSigner(verifier)
-	tx, _ = AssertSuccess(p.StZIL.ChownStakeConfirmSwap(addr1))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
+	tr.GetStZIL().SetSigner(celestials.Verifier)
+	txAny, _ := AssertSuccessAny(tr.GetStZIL().ChownStakeConfirmSwap(addr1))
+
+	// check whether ConfirmDelegatorSwap was done on Zimpl side
+	AssertEvent(txAny, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
+
+	// check expected state changes
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr1), "")
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn[1]), stake1_1)
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn[2]), stake1_2)
@@ -89,8 +101,11 @@ func (tr *Transitions) ChownStakeSuccess() {
 	AssertEqual(Field(p.StZIL, "total_supply"), StrAdd(total_supply, Field(p.StZIL, "balances", addr1)))
 
 	//offchain-tool calls ChownStakeConfirmSwap(addr2), expecting success
-	tx, _ = AssertSuccess(p.StZIL.ChownStakeConfirmSwap(addr2))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
+	//tx, _ = AssertSuccess(p.StZIL.ChownStakeConfirmSwap(addr2))
+	txAny, _ = AssertSuccessAny(tr.GetStZIL().ChownStakeConfirmSwap(addr2))
+	AssertEvent(txAny, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr2, "new_deleg": nextBuffer}})
+
+	// check expected state changes
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", addr2), "")
 	AssertEqual(Field(p.Zimpl, "deposit_amt_deleg", nextBuffer, ssn[1]), StrAdd(stake1_1, stake2_1))
 	AssertEqual(Field(p.Zimpl, "ssn_deleg_amt", ssn[1], nextBuffer), StrAdd(stake1_1, stake2_1))
@@ -146,7 +161,7 @@ func (tr *Transitions) ChownStakeSuccess() {
 }
 
 func (tr *Transitions) ChownStakeManySsnSuccess() {
-	Start("Chown Stake Success")
+	Start("Chown Stake Many SSNs Success")
 
 	p := tr.DeployAndUpgrade()
 
@@ -183,9 +198,9 @@ func (tr *Transitions) ChownStakeManySsnSuccess() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
 	//offchain-tool calls ChownStakeConfirmSwap(addr1), expecting success
-	p.StZIL.SetSigner(verifier)
-	tx, _ = AssertSuccess(p.StZIL.ChownStakeConfirmSwap(addr1))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
+	tr.GetStZIL().SetSigner(verifier)
+	txAny, _ := AssertSuccessAny(tr.GetStZIL().ChownStakeConfirmSwap(addr1))
+	AssertEvent(txAny, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer}})
 
 	tr.NextCycle(p)
 	tr.NextCycleOffchain(p)
@@ -240,17 +255,17 @@ func (tr *Transitions) ChownStakeStZilErrors() {
 	AssertSuccess(p.Zproxy.WithdrawStakeRewards(ssn[1]))
 
 	//offchain-tool calls ChownStakeConfirmSwap(addr1), but addr1 didn't called RequestDelegatorSwap before, expecting error
-	p.StZIL.SetSigner(verifier)
-	tx, _ := p.StZIL.ChownStakeConfirmSwap(addr1)
-	AssertError(tx, p.StZIL.ErrorCode("ChownStakeSwapRequestNotFound"))
+	tr.GetStZIL().SetSigner(celestials.Verifier)
+	txAny, _ := tr.GetStZIL().ChownStakeConfirmSwap(addr1)
+	AssertError(txAny, p.StZIL.ErrorCode("ChownStakeSwapRequestNotFound"))
 
 	//key1 requests swap with NOT buffer address
 	p.Zproxy.SetSigner(alice)
-	tx, _ = AssertSuccess(p.Zproxy.RequestDelegatorSwap(ssn[2]))
+	tx, _ := AssertSuccess(p.Zproxy.RequestDelegatorSwap(ssn[2]))
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.StZIL.ChownStakeConfirmSwap(addr1)
-	AssertError(tx, p.StZIL.ErrorCode("BufferAddrUnknown"))
+	txAny, _ = tr.GetStZIL().ChownStakeConfirmSwap(addr1)
+	AssertError(txAny, p.StZIL.ErrorCode("BufferAddrUnknown"))
 
 	//key1 requests swap with NOT next buffer address
 	activeBuffer := p.GetActiveBuffer()
@@ -258,8 +273,8 @@ func (tr *Transitions) ChownStakeStZilErrors() {
 	tx, _ = AssertSuccess(p.Zproxy.RequestDelegatorSwap(activeBuffer.Addr))
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.StZIL.ChownStakeConfirmSwap(addr1)
-	AssertTransition(tx, Transition{
+	txAny, _ = tr.GetStZIL().ChownStakeConfirmSwap(addr1)
+	AssertTransition(txAny, Transition{
 		activeBuffer.Addr, //sender
 		"RejectDelegatorSwap",
 		p.Zproxy.Addr,
@@ -274,8 +289,8 @@ func (tr *Transitions) ChownStakeStZilErrors() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": addr1, "new_deleg": nextBuffer.Addr}})
 
 	//call ChownStake for addr1, expecting error
-	tx, _ = p.StZIL.ChownStakeConfirmSwap(addr1)
-	AssertTransition(tx, Transition{
+	txAny, _ = tr.GetStZIL().ChownStakeConfirmSwap(addr1)
+	AssertTransition(txAny, Transition{
 		nextBuffer.Addr, //sender
 		"RejectDelegatorSwap",
 		p.Zproxy.Addr,
@@ -290,16 +305,16 @@ func (tr *Transitions) ChownStakeStZilErrors() {
 	AssertEqual(Field(p.Zimpl, "deleg_swap_request", addr2), nextBuffer.Addr)
 
 	//call ChownStake for addr2, expecting swap reject
-	p.StZIL.SetSigner(celestials.Admin)
-	tx, _ = AssertSuccess(p.StZIL.ChownStakeConfirmSwap(addr2))
-	AssertTransition(tx, Transition{
+	tr.GetStZIL().SetSigner(celestials.Admin)
+	txAny, _ = AssertSuccessAny(tr.GetStZIL().ChownStakeConfirmSwap(addr2))
+	AssertTransition(txAny, Transition{
 		nextBuffer.Addr, //sender
 		"RejectDelegatorSwap",
 		p.Zproxy.Addr,
 		"0",
 		ParamsMap{"requestor": addr2},
 	})
-	AssertEvent(tx, Event{p.Zimpl.Addr, "RejectDelegatorSwap", ParamsMap{"requestor": addr2, "new_deleg": nextBuffer.Addr}})
+	AssertEvent(txAny, Event{p.Zimpl.Addr, "RejectDelegatorSwap", ParamsMap{"requestor": addr2, "new_deleg": nextBuffer.Addr}})
 }
 
 func (tr *Transitions) ChownStakeZimplErrors() {
@@ -425,14 +440,14 @@ func (tr *Transitions) ChownStakeRequireDrainBuffer() {
 	AssertEvent(tx, Event{p.Zimpl.Addr, "RequestDelegatorSwap", ParamsMap{"initial_deleg": aliceAddr, "new_deleg": nextBuffer}})
 
 	//offchain-tool calls ChownStakeConfirmSwap(aliceAddr) before DrainBuffer(), expecting error
-	p.StZIL.SetSigner(verifier)
-	tx, _ = p.StZIL.ChownStakeConfirmSwap(aliceAddr)
-	AssertError(tx, p.StZIL.ErrorCode("BufferNotDrained"))
+	tr.GetStZIL().SetSigner(verifier)
+	txAny, _ := tr.GetStZIL().ChownStakeConfirmSwap(aliceAddr)
+	AssertError(txAny, p.StZIL.ErrorCode("BufferNotDrained"))
 
 	//drain buffer
 	tr.NextCycleOffchain(p)
 
 	//offchain-tool re-calls ChownStakeConfirmSwap(aliceAddr) after DrainBuffer(), expecting success
-	tx, _ = AssertSuccess(p.StZIL.ChownStakeConfirmSwap(aliceAddr))
-	AssertEvent(tx, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": aliceAddr, "new_deleg": nextBuffer}})
+	txAny, _ = AssertSuccessAny(tr.GetStZIL().ChownStakeConfirmSwap(aliceAddr))
+	AssertEvent(txAny, Event{p.Zimpl.Addr, "ConfirmDelegatorSwap", ParamsMap{"initial_deleg": aliceAddr, "new_deleg": nextBuffer}})
 }

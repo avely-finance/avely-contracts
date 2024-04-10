@@ -82,7 +82,6 @@ func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transac
 	return tx, err
 }
 
-// func AssertSuccess(tx *transaction.Transaction, err error) (*transaction.Transaction, error) {
 func AssertSuccessAny(tx interface{}, err error) (interface{}, error) {
 	if err != nil {
 		_, file, no, _ := runtime.Caller(1)
@@ -114,9 +113,9 @@ func AssertError(tx interface{}, code string) {
 			log.Fatal(err)
 		}
 		for _, log := range receipt.Logs {
-			res, found := _sdk.Evm.DecodeScillaErrorOrException(log)
+			res, found := _sdk.Evm.DecodeScillaEvent(log)
 			if found {
-				txError += res.Description + "\n"
+				txError += res.Text + "\n"
 			}
 		}
 		txError = strings.ReplaceAll(txError, `"`, `\"`)
@@ -202,8 +201,19 @@ https://github.com/Zilliqa/gozilliqa-sdk/v3/blob/master/core/types.go#L129
 		Params    []ContractValue `json:"params"`
 	}
 */
-func AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
-	found := false
+func AssertTransition(txAny interface{}, expectedTxn Transition) {
+	if _, ok := txAny.(*types.Transaction); ok {
+		// see https://github.com/Zilliqa/Zilliqa/issues/3924
+		// [FEATURE REQUEST] add Scilla transitions to the EVM transaction receipt #3924
+		GetLog().Debug("ASSERT_TRANSITION_EVM NOT SUPPORTED")
+		return
+	}
+
+	txn, ok := txAny.(*transaction.Transaction)
+	if !ok {
+		GetLog().Fatal("Transaction type not supported")
+	}
+
 	if txn.Receipt.Transitions != nil {
 		for _, txTransition := range txn.Receipt.Transitions {
 			if txTransition.Addr == expectedTxn.Sender &&
@@ -211,54 +221,75 @@ func AssertTransition(txn *transaction.Transaction, expectedTxn Transition) {
 				txTransition.Msg.Tag == expectedTxn.Tag &&
 				txTransition.Msg.Amount == expectedTxn.Amount &&
 				compareParams(txTransition.Msg.Params, convertParams(expectedTxn.Params)) {
-				found = true
-				break
+				GetLog().Info("ASSERT_TRANSITION SUCCESS")
+				return
 			}
 		}
 	}
-	if found {
-		GetLog().Info("ASSERT_TRANSITION SUCCESS")
-	} else {
-		_, file, no, _ := runtime.Caller(1)
-		GetLog().Error("ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
-		actual, _ := json.MarshalIndent(txn, "", "     ")
-		expected, _ := json.MarshalIndent(expectedTxn, "", "     ")
-		GetLog().Error(fmt.Sprintf("Expected: %s", expected))
-		GetLog().Error(fmt.Sprintf("Actual: %s", actual))
-		GetLog().Fatal("TESTS ARE FAILED")
-	}
+	_, file, no, _ := runtime.Caller(1)
+	GetLog().Error("ASSERT_TRANSITION FAILED, " + file + ":" + strconv.Itoa(no))
+	actual, _ := json.MarshalIndent(txn, "", "     ")
+	expected, _ := json.MarshalIndent(expectedTxn, "", "     ")
+	GetLog().Error(fmt.Sprintf("Expected: %s", expected))
+	GetLog().Error(fmt.Sprintf("Actual: %s", actual))
+	GetLog().Fatal("TESTS ARE FAILED")
 }
 
-// func AssertEvent(txn *transaction.Transaction, expectedEvent Event) {
 func AssertEvent(tx interface{}, expectedEvent Event) {
-	txn, ok := tx.(*transaction.Transaction)
-	if !ok {
-		GetLog().Fatal("ASSERT_EVENT FAILED: evm transactions are not supported yet")
-	}
-	found := false
-	if txn.Receipt.EventLogs != nil {
-		for _, el := range txn.Receipt.EventLogs {
-			txEvent := convertEventLog(el, GetLog())
-			if txEvent.Address == expectedEvent.Sender &&
-				txEvent.EventName == expectedEvent.EventName &&
-				compareParams(txEvent.Params, convertParams(expectedEvent.Params)) {
-				found = true
-				break
+	title := ""
+
+	var eventLogs []*EventLog
+
+	if txn, ok := tx.(*transaction.Transaction); ok {
+		title = "ASSERT_EVENT"
+		if txn.Receipt.EventLogs != nil {
+			for _, el := range txn.Receipt.EventLogs {
+				txEvent := convertEventLog(el, GetLog())
+				eventLogs = append(eventLogs, &txEvent)
+
+				if txEvent.Address == expectedEvent.Sender &&
+					txEvent.EventName == expectedEvent.EventName &&
+					compareParams(txEvent.Params, convertParams(expectedEvent.Params)) {
+					GetLog().Info(title + " SUCCESS")
+					return
+				}
 			}
 		}
+	} else if txn, ok := tx.(*types.Transaction); ok {
+		title = "ASSERT_EVENT_EVM"
+		receipt, err := _sdk.Evm.Client.TransactionReceipt(context.Background(), txn.Hash())
+		if err != nil {
+			GetLog().Fatal(err)
+		}
+		for _, logEntry := range receipt.Logs {
+			res, evtFound := _sdk.Evm.DecodeScillaEvent(logEntry)
+			if evtFound && res.Kind == sdk.ForwardedScillaEvent {
+				var txEvent EventLog
+				err = json.Unmarshal([]byte(res.Text), &txEvent)
+				if err != nil {
+					GetLog().Fatal(err)
+				}
+				eventLogs = append(eventLogs, &txEvent)
+
+				if txEvent.Address == expectedEvent.Sender &&
+					txEvent.EventName == expectedEvent.EventName &&
+					compareParams(txEvent.Params, convertParams(expectedEvent.Params)) {
+					GetLog().Info(title + " SUCCESS")
+					return
+				}
+			}
+		}
+	} else {
+		GetLog().Fatal("Unknown transaction type")
 	}
 
-	if found {
-		GetLog().Info("ASSERT_EVENT SUCCESS")
-	} else {
-		_, file, no, _ := runtime.Caller(1)
-		GetLog().Error("ASSERT_EVENT FAILED, " + file + ":" + strconv.Itoa(no))
-		expected, _ := json.Marshal(expectedEvent)
-		GetLog().Error(fmt.Sprintf("EXPECTED: %s", expected))
-		actual, _ := json.Marshal(txn.Receipt.EventLogs)
-		GetLog().Error(fmt.Sprintf("ACTUAL: %s", actual))
-		GetLog().Fatal("TESTS ARE FAILED")
-	}
+	_, file, no, _ := runtime.Caller(1)
+	GetLog().Error(title + " FAILED, " + file + ":" + strconv.Itoa(no))
+	expected, _ := json.Marshal(expectedEvent)
+	GetLog().Error(fmt.Sprintf("EXPECTED: %s", expected))
+	actual, _ := json.Marshal(eventLogs)
+	GetLog().Error(fmt.Sprintf("ACTUAL: %s", actual))
+	GetLog().Fatal("TESTS ARE FAILED")
 }
 
 func convertParams(pmap ParamsMap) []core.ContractValue {

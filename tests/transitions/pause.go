@@ -22,7 +22,7 @@ func (tr *Transitions) Pause() {
 	tr.PauseUnpauseAdmin()
 
 	tr.EvmOn()
-	//tr.PausedIn()
+	tr.PausedIn()
 	//tr.PausedOut()
 	tr.PausedZrc2()
 	tr.EvmOff()
@@ -113,14 +113,14 @@ func (tr *Transitions) PausedIn() {
 	tx, _ := p.StZIL.PauseIn()
 	AssertError(tx, p.StZIL.ErrorCode("PausedIn"))
 
-	tx, _ = p.StZIL.DelegateStake(ToZil(10))
-	AssertError(tx, p.StZIL.ErrorCode("PausedIn"))
+	txAny, _ := tr.GetStZIL().DelegateStake(ToZil(10))
+	AssertError(txAny, p.StZIL.ErrorCode("PausedIn"))
 
-	aliceAddr := utils.GetAddressByWallet(alice)
+	aliceAddr := tr.GetAddressByWallet(alice)
 
-	p.StZIL.SetSigner(alice)
-	tx, _ = p.StZIL.ChownStakeConfirmSwap(aliceAddr)
-	AssertError(tx, p.StZIL.ErrorCode("PausedIn"))
+	tr.GetStZIL().SetSigner(alice)
+	txAny, _ = tr.GetStZIL().ChownStakeConfirmSwap(aliceAddr)
+	AssertError(txAny, p.StZIL.ErrorCode("PausedIn"))
 
 	p.StZIL.SetSigner(celestials.Owner)
 	AssertSuccess(p.StZIL.UnpauseIn())

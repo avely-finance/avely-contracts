@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -27,20 +28,21 @@ type ManagedAccount struct {
 	PrivateKey *ecdsa.PrivateKey
 }
 
-// ScillaKind represents the kind of Scilla message.
-type ScillaKind int
+// ScillaEventType represents the kind of Scilla message.
+type ScillaEventType int
 
 // Enumeration of Scilla message kinds.
 const (
-	Unknown ScillaKind = iota // Use of iota for automatic increment.
+	Unknown ScillaEventType = iota // Use of iota for automatic increment.
 	ForwardedScillaError
 	ForwardedScillaException
+	ForwardedScillaEvent
 )
 
-// ScillaDecoded represents the decoded structure for Scilla logs.
-type ScillaDecoded struct {
-	Kind        ScillaKind
-	Description string
+// ScillaEvent represents the decoded structure for Scilla logs.
+type ScillaEvent struct {
+	Kind ScillaEventType
+	Text string
 }
 
 func NewEvm(config Config) *Evm {
@@ -109,7 +111,7 @@ func (evm *Evm) GetTransactOpts(fromAccount *accounts.Account) (*bind.TransactOp
 	opts.Nonce = big.NewInt(int64(nonce))
 	opts.Value = big.NewInt(0) // in wei
 	// opts.GasLimit = uint64(300000)         // in units
-	opts.GasLimit = uint64(750000)         // in units
+	opts.GasLimit = uint64(20_000_000)     // in units
 	opts.GasPrice = big.NewInt(1000000000) // in wei
 
 	return opts, nil
@@ -123,12 +125,12 @@ func (evm *Evm) GetTransactOptsOrPanic(fromAccount *accounts.Account) *bind.Tran
 	return opts
 }
 
-// decodeScillaErrorOrException checks if the log is a Scilla error or exception and decodes the message.
-func (evm *Evm) DecodeScillaErrorOrException(log *types.Log) (*ScillaDecoded, bool) {
+// DecodeScillaEvent checks if the log is a Scilla error or exception and decodes the message.
+func (evm *Evm) DecodeScillaEvent(log *types.Log) (*ScillaEvent, bool) {
 	scillaErrorTopic := crypto.Keccak256Hash([]byte("ScillaError(string)")).String()
 	scillaExceptionTopic := crypto.Keccak256Hash([]byte("ScillaException(string)")).String()
 
-	var kind ScillaKind
+	var kind ScillaEventType
 
 	// Compare the first topic of the log to identify the kind of Scilla message.
 	switch log.Topics[0].Hex() {
@@ -137,26 +139,33 @@ func (evm *Evm) DecodeScillaErrorOrException(log *types.Log) (*ScillaDecoded, bo
 	case scillaExceptionTopic:
 		kind = ForwardedScillaException
 	default:
-		return nil, false // Log does not match known Scilla topics.
+		kind = ForwardedScillaEvent
+	}
+
+	if len(log.Data) < 64 {
+		return nil, false
 	}
 
 	// Extracts the string length: The first 32 bytes are the offset, followed by 32 bytes for the string's length.
 	stringLength := big.NewInt(0).SetBytes(log.Data[32:64]).Int64()
 
 	// Extract the string, starting at byte 64 for the length of stringLength
-	description := string(log.Data[64 : 64+stringLength])
+	text := string(log.Data[64 : 64+stringLength])
 
-	// for scilla event we could use this
-	/*var eventData map[string]interface{}
-	if err := json.Unmarshal([]byte(description), &eventData); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %v", err)
+	if kind == ForwardedScillaEvent {
+		var eventData map[string]interface{}
+		if err := json.Unmarshal([]byte(text), &eventData); err != nil {
+			//fmt.Printf("failed to unmarshal JSON: %v", err)
+			return nil, true
+		}
+		if _, ok := eventData["_eventname"]; !ok {
+			//fmt.Printf("_eventname is required but not found")
+			return nil, true
+		}
 	}
-	if _, ok := eventData["_eventname"]; !ok {
-		return nil, errors.New("_eventname is required but not found")
-		}*/
 
-	return &ScillaDecoded{
-		Kind:        kind,
-		Description: description,
+	return &ScillaEvent{
+		Kind: kind,
+		Text: text,
 	}, true
 }

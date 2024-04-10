@@ -2,6 +2,7 @@ build/
 README.html
 .env.*
 !.env.example
+sdk/contracts/evm/bind/
 
 # Created by https://www.toptal.com/developers/gitignore/api/yarn,node,linux,sublimetext,macos,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=yarn,node,linux,sublimetext,macos,windows

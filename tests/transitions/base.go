@@ -1,6 +1,7 @@
 package transitions
 
 import (
+	"context"
 	"log"
 	"os"
 	"reflect"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/Zilliqa/gozilliqa-sdk/util"
 	"github.com/Zilliqa/gozilliqa-sdk/v3/account"
+	"github.com/Zilliqa/gozilliqa-sdk/v3/transaction"
 	"github.com/avely-finance/avely-contracts/sdk/actions"
 	"github.com/avely-finance/avely-contracts/sdk/contracts"
 	. "github.com/avely-finance/avely-contracts/sdk/contracts"
@@ -17,6 +19,7 @@ import (
 	"github.com/avely-finance/avely-contracts/tests/helpers"
 	. "github.com/avely-finance/avely-contracts/tests/helpers"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/joho/godotenv"
 )
@@ -75,7 +78,7 @@ type Transitions struct {
 
 func (tr *Transitions) EvmOn() {
 	tr.evmOn = true
-	if tr.p.StZIL != nil && tr.p.EvmStZIL == nil {
+	if tr.p != nil && tr.p.EvmStZIL == nil {
 		// protocol is deployed, but evm-bridge is not
 		tr.p.EvmStZIL = tr.DeployEvm()
 		// re-init adapter
@@ -114,6 +117,20 @@ func (tr *Transitions) GetAddressByWallet(signer interface{}) string {
 	}
 	helpers.GetLog().Fatal("can't get address by wallet")
 	return ""
+}
+
+func (tr *Transitions) GetBlockNumber(tx interface{}) string {
+	if txn, ok := tx.(*transaction.Transaction); ok {
+		return txn.Receipt.EpochNum
+	} else if txn, ok := tx.(*types.Transaction); ok {
+		receipt, err := sdk.Evm.Client.TransactionReceipt(context.Background(), txn.Hash())
+		if err != nil {
+			GetLog().Fatal(err)
+		}
+		return receipt.BlockNumber.String()
+	}
+	GetLog().Fatal("Unknown transaction type")
+	return "0"
 }
 
 func (tr *Transitions) DeployAndUpgrade() *Protocol {
