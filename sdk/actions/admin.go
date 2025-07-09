@@ -286,10 +286,12 @@ func (a *AdminActions) ClaimWithdrawal(p *Protocol) error {
 	}
 	blocksStr := utils.ArrayItoa(blocks)
 	a.log.WithFields(logrus.Fields{"blocks_count": cnt, "blocks_list": strings.Join(blocksStr, ", ")}).Debug("Found blocks with unbonded withdrawals")
+
+	// blocstr := []string{"4739385"}              // blocksStr
 	tx, err := p.StZIL.ClaimWithdrawal(blocksStr)
 
 	if err != nil {
-		a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt}).Error("Withdrawals claim failed")
+		a.log.WithFields(logrus.Fields{"tx": tx.ID, "error": tx.Receipt, "err": err}).Error("Withdrawals claim failed")
 
 		return errors.New("Withdrawals claim failed")
 	} else {
